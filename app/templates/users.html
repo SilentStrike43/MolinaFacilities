@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">User Management</h5>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6>Create User</h6>
+        <form method="post">
+          <input type="hidden" name="action" value="create">
+          <label class="form-label">Username</label>
+          <input class="form-control" name="new_username" required>
+          <label class="form-label mt-2">Password</label>
+          <input class="form-control" name="new_password" required>
+          <label class="form-label mt-2">Role</label>
+          <select class="form-select" name="new_role">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+          <button class="btn btn-primary mt-3">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6>Change Password</h6>
+        <form method="post">
+          <input type="hidden" name="action" value="changepw">
+          <label class="form-label">Username</label>
+          <input class="form-control" name="chg_username" required>
+          <label class="form-label mt-2">New Password</label>
+          <input class="form-control" name="chg_password" required>
+          <button class="btn btn-warning mt-3">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h6>Existing Users</h6>
+<div class="table-responsive">
+  <table class="table table-sm">
+    <thead><tr><th>User</th><th>Role</th></tr></thead>
+    <tbody>
+    {% for u,rec in users.items() %}
+      <tr><td>{{ u }}</td><td>{{ rec.role }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

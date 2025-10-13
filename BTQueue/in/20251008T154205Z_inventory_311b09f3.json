@@ -1,0 +1,11 @@
+{
+  "CheckInDate": "2025-10-08",
+  "InventoryID": 1000000004,
+  "ItemType": "Equipment",
+  "Manufacturer": "Dell Technologies",
+  "ProductName": "Dell Display P2423D",
+  "SubmitterName": "Christopher Gonzalez",
+  "Notes": "Dell 27\" Monitor - Black",
+  "Printer": "",
+  "Template": "C:\\BTManifest\\BTTemplates\\InventoryTemplate.btw"
+}

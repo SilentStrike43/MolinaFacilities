@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Molina Facilities</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --sidebar-width: 230px;
+      --sidebar-collapsed: 64px;
+      --brand-bg: #2ea3a2;       /* Molina teal-like */
+      --brand-top: #0f2f36;      /* dark for topbar text/icons */
+    }
+    html, body { height: 100%; }
+    body { overflow-y: scroll; }
+
+    /* Top bar */
+    .topbar {
+      height: 58px;
+      border-bottom: 1px solid #e6e6e6;
+      display: flex; align-items: center;
+      padding: 0 16px; gap: 12px;
+      position: sticky; top: 0; background: #fff; z-index: 1020;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; color: var(--brand-top);
+    }
+    .brand img { height: 28px; width: auto; }
+
+    /* Layout wrapper */
+    .app-wrap {
+      display: flex; min-height: calc(100vh - 58px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: #e8f4f4;
+      border-right: 1px solid #d7e6e6;
+      padding: 12px 8px;
+      position: sticky; top: 58px;
+      height: calc(100vh - 58px);
+      overflow-y: auto;
+      transition: width .2s ease;
+    }
+    .sidebar .section-title {
+      font-size: .85rem; color:#2b6469; letter-spacing:.02em; margin:6px 10px 8px;
+      text-transform: uppercase;
+    }
+    .nav-vertical .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: .5rem .75rem; border-radius: .5rem; color:#134348;
+    }
+    .nav-vertical .nav-link:hover { background: #d7eeee; }
+    .nav-vertical .nav-link.active { background: #2ea3a2; color: #fff; }
+    .nav-vertical small { color:#4b7a7f; margin-left: 1.8rem; display:block; }
+
+    /* Collapsed state */
+    .sidebar.collapsed { width: var(--sidebar-collapsed); }
+    .sidebar.collapsed .label, .sidebar.collapsed .section-title, .sidebar.collapsed small { display:none; }
+    .sidebar .icon { width: 24px; text-align:center; }
+
+    /* Main content */
+    .content-wrap {
+      flex: 1;
+      padding: 16px;
+      transition: margin-left .2s ease;
+    }
+
+    /* Flash message spacing */
+    .flash-area { margin-top: 4px; }
+
+    /* Responsive: collapse sidebar on <= 992px by default */
+    @media (max-width: 992px){
+      .sidebar { width: var(--sidebar-collapsed); }
+      .sidebar .label, .sidebar .section-title, .sidebar small { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <button id="toggleSidebar" class="btn btn-sm btn-outline-secondary" aria-label="Toggle menu">
+      <i class="bi bi-list"></i>
+    </button>
+    <div class="brand">
+      <img src="{{ url_for('static', filename='img/Molina_Healthcare_logo.svg.png') }}" alt="Molina">
+      <span>Molina Facilities</span>
+    </div>
+
+    <div class="ms-auto dropdown">
+      {% set cu = (g._cu if g and g._cu else None) %}
+      <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" data-bs-toggle="dropdown">
+        {{ cu.username if cu else 'Guest' }}
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        {% if cu %}
+          <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">Change password</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+        {% else %}
+          <li><a class="dropdown-item" href="{{ url_for('auth.login') }}">Login</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Below top bar -->
+  <div class="app-wrap">
+    <!-- Left sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="section-title">Operations</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active in ['send','send-tracking'] else '' }}" href="{{ url_for('mail.page') }}">
+          <span class="icon"><i class="bi bi-send"></i></span> <span class="label">Send</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='send-tracking' else '' }}" href="{{ url_for('mail.tracking') }}">
+          <span class="icon"><i class="bi bi-binoculars"></i></span> <span class="label">Tracking</span>
+        </a>
+      </nav>
+
+      <div class="section-title mt-2">Inventory</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active=='asset' else '' }}" href="{{ url_for('inventory.index') }}">
+          <span class="icon"><i class="bi bi-box-seam"></i></span> <span class="label">Asset</span>
+        </a>
+      </nav>
+
+      <div class="section-title mt-2">Reports</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active=='insights' and (tab=='mail') else '' }}" href="{{ url_for('reports.mail') }}">
+          <span class="icon"><i class="bi bi-graph-up"></i></span> <span class="label">Insights (Mail)</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='insights' and (tab!='mail') else '' }}" href="{{ url_for('reports.inventory') }}">
+          <span class="icon"><i class="bi bi-clipboard-data"></i></span> <span class="label">Insights (Inventory)</span>
+        </a>
+      </nav>
+
+      <div class="section-title mt-2">People</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active=='users' and tab=='list' else '' }}" href="{{ url_for('users.user_list') }}">
+          <span class="icon"><i class="bi bi-people"></i></span> <span class="label">Users</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='users' and tab=='manage' else '' }}" href="{{ url_for('users.manage') }}">
+          <span class="icon"><i class="bi bi-person-plus"></i></span> <span class="label">Modify Users</span>
+        </a>
+      </nav>
+
+      <div class="section-title mt-2">Admin</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active=='admin' and page=='fields' else '' }}" href="{{ url_for('admin.modify_fields') }}">
+          <span class="icon"><i class="bi bi-sliders"></i></span> <span class="label">Modify Fields</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='admin' and page=='audit' else '' }}" href="{{ url_for('admin.audit') }}">
+          <span class="icon"><i class="bi bi-journal-text"></i></span> <span class="label">Audit Logs</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='admin' and page=='permissions' else '' }}" href="{{ url_for('admin.permissions') }}">
+          <span class="icon"><i class="bi bi-shield-lock"></i></span> <span class="label">User Permissions</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Content area -->
+    <main class="content-wrap container-fluid">
+      <div class="flash-area">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat if cat in ['success','danger','warning','info'] else 'info' }} py-2">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+      {% block body %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Sidebar toggle with persistence
+    const key = 'mf_sidebar_collapsed';
+    const sidebar = document.getElementById('sidebar');
+    function applyState() {
+      const collapsed = localStorage.getItem(key) === '1';
+      if (collapsed) sidebar.classList.add('collapsed');
+      else sidebar.classList.remove('collapsed');
+    }
+    applyState();
+    document.getElementById('toggleSidebar').addEventListener('click', () => {
+      const collapsed = !(localStorage.getItem(key) === '1');
+      localStorage.setItem(key, collapsed ? '1' : '0');
+      applyState();
+    });
+    setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.remove()), 3500);
+  </script>
+</body>
+</html>

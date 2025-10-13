@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Users — User List</h5>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr><th>Username</th><th>Name</th><th>Department</th><th>Position</th><th>E-mail</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for u in rows %}
+      <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.first_name }} {{ u.last_name }}</td>
+        <td>{{ u.department }}</td>
+        <td>{{ u.position }}</td>
+        <td>{{ u.email }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('users.view_user', uid=u.id) }}">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+
+      {% if not rows %}
+      <tr>
+        <td colspan="6" class="bg-light text-center py-5">
+          <div class="mb-2">No users.</div>
+          <a class="btn btn-primary" href="{{ url_for('users.manage') }}">Create first user</a>
+          <div class="small text-muted mt-2">
+            Note: the built-in <em>App Administrator</em> account is hidden from this list.
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+

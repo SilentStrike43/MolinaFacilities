@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Request</h5>
+{% if flashmsg and flashmsg[0] %}
+  <div class="alert alert-{{ 'success' if flashmsg[1] else 'danger' }} py-2">{{ flashmsg[0] }}</div>
+{% endif %}
+<form method="post" enctype="multipart/form-data" class="border rounded p-3">
+  <div class="row g-3">
+    <div class="col-md-8">
+      <label class="form-label">Description</label>
+      <input class="form-control" name="Description" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Date Due</label>
+      <input type="date" class="form-control" name="DateDue">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Upload Files</label>
+      <input class="form-control" type="file" name="Files" multiple>
+      <div class="form-text">No limit on count or size (internal network constraints apply).</div>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Total Pages</label>
+      <input class="form-control" type="number" name="PageCount" min="0" placeholder="0 = unknown">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Print Type</label>
+      <select class="form-select" name="PrintType">
+        <option>Black and White</option><option>Color</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Paper Size</label>
+      <select class="form-select" name="PaperSize">
+        <option>8.5x11</option><option>8.5x14</option><option>11x17</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Paper Stock</label>
+      <select class="form-select" name="PaperStock">
+        <option>#20 White Paper</option><option>#24 White Paper</option><option>Color Paper</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Paper Color</label>
+      <select class="form-select" name="PaperColor">
+        <option>White</option><option>Blue</option><option>Yellow</option><option>Other</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Paper Sides</label>
+      <select class="form-select" name="PaperSides">
+        <option>Single Sided</option><option>Double Sided</option><option>Exactly as Original</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Binding</label>
+      <select class="form-select" name="Binding">
+        <option>None</option><option>Spiral</option><option>Booklet Staple</option><option>Staple</option>
+        <option>Binder Clip</option><option>Paper Clip</option><option>Rebind Original</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Covers</label>
+      <select class="form-select" name="Covers">
+        <option>None</option><option>Frosted Cover/Black Back</option><option>Other</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Tabs</label>
+      <select class="form-select" name="Tabs">
+        <option>None</option><option>Custom Tabs</option><option>Same as Original</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Finishing</label>
+      <select class="form-select" name="Finishing">
+        <option>None</option><option>3-Hole Punch</option><option>Fold</option><option>Collate</option><option>Uncollate</option>
+      </select>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Additional Details</label>
+      <textarea class="form-control" name="AdditionalDetails" rows="2"></textarea>
+    </div>
+  </div>
+  <div class="mt-3 d-flex gap-2">
+    <button class="btn btn-primary">Submit Request</button>
+  </div>
+</form>
+{% endblock %}

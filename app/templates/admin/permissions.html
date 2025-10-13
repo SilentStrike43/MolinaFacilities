@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Admin — User Permissions</h5>
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Username</th><th>Name</th><th>Send</th><th>Asset</th><th>Insights</th><th>Users</th><th>Admin</th><th class="text-end">Save</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in rows %}
+      <tr>
+        <form method="post">
+          <input type="hidden" name="uid" value="{{ u.id }}">
+          <td>{{ u.username }}</td>
+          <td>{{ u.first_name }} {{ u.last_name }}</td>
+          <td><input type="checkbox" name="can_send"     {{ 'checked' if u.can_send else '' }}></td>
+          <td><input type="checkbox" name="can_asset"    {{ 'checked' if u.can_asset else '' }}></td>
+          <td><input type="checkbox" name="can_insights" {{ 'checked' if u.can_insights else '' }}></td>
+          <td><input type="checkbox" name="can_users"    {{ 'checked' if u.can_users else '' }}></td>
+          <td><input type="checkbox" name="is_admin"     {{ 'checked' if u.is_admin else '' }}></td>
+          <td><input type="checkbox" name="can_fulfillment_staff"    {{ 'checked' if u.can_fulfillment_staff else '' }}></td>
+          <td><input type="checkbox" name="can_fulfillment_customer" {{ 'checked' if u.can_fulfillment_customer else '' }}></td>
+          <td class="text-end"><button class="btn btn-sm btn-primary">Save</button></td>
+        </form>
+      </tr>
+      {% endfor %}
+      {% if not rows %}<tr><td colspan="8" class="text-center text-muted py-4">No users.</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+<p class="small text-muted">Systems Administrator can grant/revoke “Systems Administrator” in the Users → Modify Users area.</p>
+{% endblock %}
+

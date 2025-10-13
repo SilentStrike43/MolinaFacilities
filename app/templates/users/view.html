@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Users — Profile</h5>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div><strong>Username:</strong> {{ row.username }}</div>
+        <div><strong>Name:</strong> {{ row.first_name }} {{ row.last_name }}</div>
+        <div><strong>Email:</strong> {{ row.email }}</div>
+        <div><strong>Department:</strong> {{ row.department }}</div>
+        <div><strong>Position:</strong> {{ row.position }}</div>
+        <div><strong>Phone:</strong> {{ row.phone or '—' }}</div>
+        <div class="mt-2">
+          <span class="badge bg-secondary">{{ row.can_send and 'Send Access' or 'No Send' }}</span>
+          <span class="badge bg-secondary">{{ row.can_asset and 'Asset Access' or 'No Asset' }}</span>
+          <span class="badge bg-secondary">{{ row.can_insights and 'Insights Access' or 'No Insights' }}</span>
+          <span class="badge bg-secondary">{{ row.can_users and 'Users Access' or 'No Users' }}</span>
+          {% if row.is_admin %}<span class="badge bg-primary">Administrator</span>{% endif %}
+          {% if row.is_sysadmin %}<span class="badge bg-danger">Systems Administrator</span>{% endif %}
+        </div>
+      </div>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('users.user_list') }}">Back</a>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block body %}
+
+<form class="row gy-2 gx-3 align-items-end mb-3" method="get" action="/reports">
+  <div class="col-md-3">
+    <label class="form-label">Search (any field)</label>
+    <input class="form-control" name="q" value="{{ q }}" placeholder="Jane, 1Z..., PACK..., 1000...">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Tracking #</label>
+    <input class="form-control" name="tracking" value="{{ tracking }}">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">CheckInID</label>
+    <input class="form-control" name="checkin_id" value="{{ checkin_id }}">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Package Type</label>
+    <select class="form-select" name="ptype">
+      <option value=""   {{ ''==ptype and 'selected' or '' }}>Any</option>
+      <option value="ENV" {{ 'ENV'==ptype and 'selected' or '' }}>ENV only</option>
+      <option value="PACK"{{ 'PACK'==ptype and 'selected' or '' }}>PACK only</option>
+    </select>
+  </div>
+
+  <div class="col-md-2 d-grid">
+    <button class="btn btn-primary">Apply</button>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">CheckInDate From</label>
+    <input class="form-control" type="date" name="date_from" value="{{ date_from }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">CheckInDate To</label>
+    <input class="form-control" type="date" name="date_to" value="{{ date_to }}">
+  </div>
+
+  <div class="col-md-2 d-grid">
+    <a class="btn btn-outline-secondary" href="/reports">Clear</a>
+  </div>
+</form>
+
+<form method="get" action="/reports/export.csv" class="d-flex justify-content-end align-items-center gap-3 mb-2">
+  <input type="hidden" name="q"          value="{{ q }}">
+  <input type="hidden" name="tracking"   value="{{ tracking }}">
+  <input type="hidden" name="checkin_id" value="{{ checkin_id }}">
+  <input type="hidden" name="date_from"  value="{{ date_from }}">
+  <input type="hidden" name="date_to"    value="{{ date_to }}">
+  <input type="hidden" name="ptype"      value="{{ ptype }}">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" name="pii" id="pii" checked>
+    <label class="form-check-label" for="pii">Include Recipient</label>
+  </div>
+  <button class="btn btn-success">Export CSV</button>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>ID</th><th>UTC</th><th>CheckInID</th><th>PackageID</th>
+        <th>Recipient</th><th>Tracking</th>
+        <th>CheckInDate</th><th>Status</th><th>Printer</th><th>Template</th><th>JSON</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="text-nowrap">{{ r.ts_utc }}</td>
+        <td>{{ r.checkin_id }}</td>
+        <td>{{ r.package_id }}</td>
+        <td class="text-truncate" style="max-width:180px">{{ r.recipient_name }}</td>
+        <td class="text-nowrap">{{ r.tracking_number }}</td>
+        <td class="text-nowrap">{{ r.checkin_date }}</td>
+        <td><span class="badge bg-secondary">{{ r.status }}</span></td>
+        <td>{{ r.printer }}</td>
+        <td>{{ r.template }}</td>
+        <td><a href="/reports/json/{{ r.id }}" target="_blank">view</a></td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="11" class="text-center text-muted py-4">No results.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

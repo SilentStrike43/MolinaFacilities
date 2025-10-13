@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Service Queue</h5>
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Service ID</th><th>Description</th><th>Requester</th>
+        <th>Date Submitted</th><th>Date Due</th><th>Status</th><th class="text-end">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">{{ r.service_id }}</td>
+        <td class="text-truncate" style="max-width:280px">{{ r.description }}</td>
+        <td>{{ r.requester_name }}</td>
+        <td>{{ r.date_submitted }}</td>
+        <td>{{ r.date_due or '—' }}</td>
+        <td>{{ as_badge(r.status)|safe }}</td>
+        <td class="text-end">
+          <form method="post" class="d-inline">
+            <input type="hidden" name="rid" value="{{ r.id }}">
+            <select class="form-select form-select-sm d-inline w-auto" name="status">
+              {% for s,_ in statuses %}<option value="{{ s }}" {{ 'selected' if s==r.status else '' }}>{{ s }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-sm btn-primary ms-2">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="7" class="text-center text-muted py-4">No active jobs.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

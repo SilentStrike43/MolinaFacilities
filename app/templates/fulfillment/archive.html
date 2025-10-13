@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Service Archive</h5>
+<div class="accordion" id="arch">
+  {% for r in rows %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="h{{ r.id }}">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c{{ r.id }}">
+        {{ r.service_id }} — {{ r.description }} ({{ r.status }})
+      </button>
+    </h2>
+    <div id="c{{ r.id }}" class="accordion-collapse collapse" data-bs-parent="#arch">
+      <div class="accordion-body">
+        <div class="mb-2"><strong>Requester:</strong> {{ r.requester_name }}</div>
+        <div class="mb-2"><strong>Submitted:</strong> {{ r.date_submitted }} | <strong>Due:</strong> {{ r.date_due or '—' }}</div>
+        <div class="mb-2"><strong>Options:</strong> {{ r.print_type }}, {{ r.paper_size }}, {{ r.paper_stock }}, {{ r.paper_color }}, {{ r.paper_sides }}, {{ r.binding }}, {{ r.covers }}, {{ r.tabs }}, {{ r.finishing }}</div>
+        <div class="mb-2"><strong>Pages:</strong> {{ r.page_count or '—' }}</div>
+        <div class="mb-3"><strong>Additional Details:</strong><br>{{ r.additional_details or '—' }}</div>
+        <div><strong>Files:</strong></div>
+        <ul class="mb-0">
+          {% for f in files.get(r.id, []) %}
+          <li>
+            <span class="{{ 'text-success' if f.status=='success' else 'text-danger' }}">{{ f.filename }}</span>
+            {% if f.status=='success' %}<small class="text-muted">({{ f.bytes }} bytes)</small>{% endif %}
+          </li>
+          {% endfor %}
+          {% if not files.get(r.id) %}<li class="text-muted">No files.</li>{% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% if not rows %}<div class="text-center text-muted py-4">Archive is empty.</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block body %}
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab=='mail' else '' }}" href="{{ url_for('reports.mail') }}">Mail</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab=='inventory' else '' }}" href="{{ url_for('reports.inventory') }}">Inventory</a></li>
+</ul>
+
+<form class="row gy-2 gx-3 align-items-end mb-3" method="get" action="{{ url_for('reports.mail') }}">
+  <div class="col-md-3">
+    <label class="form-label">Search (any field)</label>
+    <input class="form-control" name="q" value="{{ q }}" placeholder="Jane, 1Z..., PACK..., 1000...">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Tracking #</label>
+    <input class="form-control" name="tracking" value="{{ tracking }}">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">CheckInID</label>
+    <input class="form-control" name="checkin_id" value="{{ checkin_id }}">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Package Type</label>
+    <select class="form-select" name="ptype">
+      <option value=""    {{ ''==ptype and 'selected' or '' }}>Any</option>
+      <option value="Box"       {{ 'Box'==ptype and 'selected' or '' }}>Box</option>
+      <option value="Envelope"  {{ 'Envelope'==ptype and 'selected' or '' }}>Envelope</option>
+      <option value="Packs"     {{ 'Packs'==ptype and 'selected' or '' }}>Packs</option>
+      <option value="Tubes"     {{ 'Tubes'==ptype and 'selected' or '' }}>Tubes</option>
+      <option value="Certified" {{ 'Certified'==ptype and 'selected' or '' }}>Certified</option>
+      <option value="Sensitive" {{ 'Sensitive'==ptype and 'selected' or '' }}>Sensitive</option>
+      <option value="Critical"  {{ 'Critical'==ptype and 'selected' or '' }}>Critical</option>
+    </select>
+  </div>
+
+  <div class="col-md-2 d-grid">
+    <button class="btn btn-primary">Apply</button>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">CheckInDate From</label>
+    <input class="form-control" type="date" name="date_from" value="{{ date_from }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">CheckInDate To</label>
+    <input class="form-control" type="date" name="date_to" value="{{ date_to }}">
+  </div>
+
+  <div class="col-md-2 d-grid">
+    <a class="btn btn-outline-secondary" href="{{ url_for('reports.mail') }}">Clear</a>
+  </div>
+
+  <div class="col-md-4 d-flex align-items-end justify-content-end gap-2">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="pii" name="pii" {{ 'checked' if pii=='on' else '' }}>
+      <label class="form-check-label" for="pii">Include Recipient</label>
+    </div>
+    <a class="btn btn-success"
+       href="{{ url_for('reports.export_mail',
+                        q=q, tracking=tracking, checkin_id=checkin_id,
+                        date_from=date_from, date_to=date_to, ptype=ptype, pii=pii) }}">
+      Export Mail CSV
+    </a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>UTC</th>
+        <th>CheckInID</th>
+        <th>Package Type</th>
+        <th>PackageID</th>
+        <th>Recipient</th>
+        <th>Tracking</th>
+        <th>CheckInDate</th>
+        <th>Status</th>
+        <th>Printer</th>
+        <th>Template</th>
+        <th>JSON</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="text-nowrap">{{ r.ts_utc }}</td>
+        <td>{{ r.checkin_id }}</td>
+        <td>{{ r.package_type }}</td>
+        <td>{{ r.package_id }}</td>
+        <td class="text-truncate" style="max-width:180px">{{ r.recipient_name }}</td>
+        <td class="text-nowrap">{{ r.tracking_number }}</td>
+        <td class="text-nowrap">{{ r.checkin_date }}</td>
+        <td><span class="badge bg-secondary">{{ r.status }}</span></td>
+        <td>{{ r.printer }}</td>
+        <td>{{ r.template }}</td>
+        <td><a href="{{ url_for('reports.json_view_mail', job_id=r.id) }}" target="_blank">view</a></td>
+        <td class="text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('reports.edit_mail', rid=r.id) }}">Edit</a>
+          <form method="post"
+                action="{{ url_for('reports.delete_mail', rid=r.id) }}"
+                class="d-inline"
+                onsubmit="return confirm('Delete this record?');">
+            <button class="btn btn-sm btn-outline-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="13" class="text-center text-muted py-4">No results.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

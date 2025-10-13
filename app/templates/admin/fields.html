@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Admin — Modify Fields</h5>
+{% if msg %}<div class="alert alert-success py-2">{{ msg }}</div>{% endif %}
+<form method="post" class="row g-3" style="max-width:640px">
+  <div class="col-md-6">
+    <label class="form-label">Base CheckInID</label>
+    <input class="form-control" name="BASE_CHECKIN" value="{{ cfg.get('BASE_CHECKIN', 10000000000) }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Base Package Number</label>
+    <input class="form-control" name="BASE_PACKAGE" value="{{ cfg.get('BASE_PACKAGE', 10000000000) }}">
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">Save</button>
+  </div>
+</form>
+
+<ul class="nav nav-pills mt-4">
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.audit') }}">Audit Logs</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.permissions') }}">User Permissions</a></li>
+</ul>
+{% endblock %}
+

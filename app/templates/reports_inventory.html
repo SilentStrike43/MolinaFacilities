@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Insights — Inventory</h5>
+
+<form class="row gy-2 gx-3 align-items-end mb-3" method="get" action="{{ url_for('reports.inventory') }}">
+  <div class="col-md-3">
+    <label class="form-label">Search (any)</label>
+    <input class="form-control" name="q" value="{{ q }}" placeholder="Mfr, product, submitter, type, ID...">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Inventory ID</label>
+    <input class="form-control" name="inventory_id" value="{{ inventory_id }}">
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Item Type</label>
+    <select class="form-select" name="item_type">
+      <option value="">Any</option>
+      <option value="Part"      {{ 'Part'==item_type and 'selected' or '' }}>Part</option>
+      <option value="Equipment" {{ 'Equipment'==item_type and 'selected' or '' }}>Equipment</option>
+      <option value="Sensitive" {{ 'Sensitive'==item_type and 'selected' or '' }}>Sensitive</option>
+      <option value="Supplies"  {{ 'Supplies'==item_type and 'selected' or '' }}>Supplies</option>
+      <option value="Accessory" {{ 'Accessory'==item_type and 'selected' or '' }}>Accessory</option>
+      <option value="Critical"  {{ 'Critical'==item_type and 'selected' or '' }}>Critical</option>
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label">Manufacturer</label>
+    <input class="form-control" name="manufacturer" value="{{ manufacturer }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Product Name</label>
+    <input class="form-control" name="product_name" value="{{ product_name }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Submitter</label>
+    <input class="form-control" name="submitter_name" value="{{ submitter_name }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Check-In From</label>
+    <input class="form-control" type="date" name="date_from" value="{{ date_from }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Check-In To</label>
+    <input class="form-control" type="date" name="date_to" value="{{ date_to }}">
+  </div>
+
+  <div class="col-md-1 d-grid">
+    <button class="btn btn-primary">Apply</button>
+  </div>
+  <div class="col-md-2 d-grid">
+    <a class="btn btn-outline-secondary" href="{{ url_for('reports.inventory') }}">Clear</a>
+  </div>
+
+  <div class="col-md-3 d-flex align-items-end justify-content-end gap-2 ms-auto">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="pii" id="pii" {{ 'checked' if pii=='on' else '' }}>
+      <label class="form-check-label" for="pii">Include Submitter</label>
+    </div>
+    <a class="btn btn-success"
+       href="{{ url_for('reports.export_inventory',
+                        q=q, inventory_id=inventory_id, item_type=item_type,
+                        manufacturer=manufacturer, product_name=product_name,
+                        submitter_name=submitter_name, date_from=date_from, date_to=date_to, pii=pii) }}">
+      Export CSV
+    </a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>UTC</th>
+        <th>CheckInDate</th>
+        <th>InventoryID</th>
+        <th>ItemType</th>
+        <th>Manufacturer</th>
+        <th>ProductName</th>
+        <th>Submitter</th>
+        <th>Notes</th>
+        <th>Part #</th>
+        <th>Serial #</th>
+        <th>Count</th>
+        <th>Location</th>
+        <th>Template</th>
+        <th>Printer</th>
+        <th>Status</th>
+        <th>JSON</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="text-nowrap">{{ r.ts_utc }}</td>
+        <td class="text-nowrap">{{ r.checkin_date }}</td>
+        <td>{{ r.inventory_id }}</td>
+        <td>{{ r.item_type }}</td>
+        <td class="text-truncate" style="max-width:140px">{{ r.manufacturer }}</td>
+        <td class="text-truncate" style="max-width:160px">{{ r.product_name }}</td>
+        <td class="text-truncate" style="max-width:140px">{{ r.submitter_name }}</td>
+        <td class="text-truncate" style="max-width:220px">{{ r.notes }}</td>
+        <td class="text-truncate" style="max-width:140px">{{ r.part_number }}</td>
+        <td class="text-truncate" style="max-width:140px">{{ r.serial_number }}</td>
+        <td>{{ r.count }}</td>
+        <td class="text-truncate" style="max-width:140px">{{ r.location }}</td>
+        <td class="text-truncate" style="max-width:160px">{{ r.template }}</td>
+        <td>{{ r.printer }}</td>
+        <td><span class="badge bg-secondary">{{ r.status }}</span></td>
+        <td><a href="{{ url_for('reports.json_view_inventory', rec_id=r.id) }}" target="_blank">view</a></td>
+        <td class="text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('reports.edit_inventory', rid=r.id) }}">Edit</a>
+          <form method="post"
+                action="{{ url_for('reports.delete_inventory', rid=r.id) }}"
+                class="d-inline"
+                onsubmit="return confirm('Delete this record?');">
+            <button class="btn btn-sm btn-outline-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="18" class="text-center text-muted py-4">No results.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
