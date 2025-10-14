@@ -1,88 +1,113 @@
 # app/common/security.py
-import functools, hashlib, time
-from flask import session, redirect, url_for, request, flash, g
+from functools import wraps
+from flask import g, session, redirect, url_for, flash, request
+from .users import get_user_by_id, record_audit
 
-from .users import get_user_by_id, get_user_by_username, record_audit
+# ---- helpers ----
 
-def _sha256(s: str) -> str:
-    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+def _row_to_dict(row):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        d = row.copy()
+    else:
+        # sqlite3.Row is mapping-like: convert to plain dict
+        d = {k: row[k] for k in row.keys()}
+    # normalize truthy flags to bool
+    for k in (
+        "can_send","can_asset","can_insights","can_users",
+        "is_admin","is_sysadmin","is_system","active",
+        "can_fulfillment_staff","can_fulfillment_customer",
+    ):
+        if k in d:
+            d[k] = bool(d[k])
+        else:
+            d[k] = False
+    # permission inheritance:
+    # Admins / SysAdmins (and the built-in system account) implicitly have all can_* permissions.
+    if d.get("is_admin") or d.get("is_sysadmin") or d.get("is_system"):
+        d["can_send"] = True
+        d["can_asset"] = True
+        d["can_insights"] = True
+        d["can_users"] = True
+        d["can_fulfillment_staff"] = True
+        d["can_fulfillment_customer"] = True
+    return d
 
 def current_user():
+    """Return the current user as a dict with normalized boolean flags and inherited permissions."""
     uid = session.get("uid")
-    if not uid:
-        return None
+    # fast path: cached and matches
     if getattr(g, "_cu", None) and g._cu.get("id") == uid:
         return g._cu
-    user = get_user_by_id(uid)
+    if not uid:
+        g._cu = None
+        return None
+    row = get_user_by_id(uid)
+    user = _row_to_dict(row)
     g._cu = user
     return user
 
 def login_user(user_row):
-    session["uid"] = user_row["id"]
-    # record login audit
-    record_audit(user_row, "login", "auth", f"User {user_row['username']} logged in")
+    """Accepts either a sqlite row or a dict; stores session + caches normalized user dict."""
+    d = _row_to_dict(user_row)
+    session["uid"] = d["id"]
+    g._cu = d
+    try:
+        record_audit(d, "login", "auth", f"Login from {request.remote_addr}", request.remote_addr)
+    except Exception:
+        pass
+    return d
 
 def logout_user():
     u = current_user()
-    if u:
-        record_audit(u, "logout", "auth", f"User {u['username']} logged out")
-    session.clear()
+    try:
+        record_audit(u, "logout", "auth", f"Logout from {request.remote_addr}", request.remote_addr)
+    except Exception:
+        pass
+    session.pop("uid", None)
+    g._cu = None
+
+# ---- decorators ----
 
 def login_required(view):
-    @functools.wraps(view)
+    @wraps(view)
     def wrapped(*args, **kwargs):
         if not current_user():
-            flash("Please log in.", "warning")
-            return redirect(url_for("auth.login", next=request.full_path))
+            flash("Please sign in.", "warning")
+            return redirect(url_for("auth.login"))
         return view(*args, **kwargs)
     return wrapped
 
-def _has_perm(u, perm: str) -> bool:
-    if not u: return False
-    if u["is_admin"] or u["is_sysadmin"]:
-        return True
-    return bool(u.get(perm))
-
-def require_perm(perm: str):
-    def deco(view):
-        @functools.wraps(view)
-        def wrapped(*args, **kwargs):
-            u = current_user()
-            if not u:
-                flash("Please log in.", "warning")
-                return redirect(url_for("auth.login", next=request.full_path))
-            if not _has_perm(u, perm):
-                flash("You do not have permission to access this area.", "danger")
-                return redirect(url_for("home"))
-            return view(*args, **kwargs)
-        return wrapped
-    return deco
-
 def require_admin(view):
-    @functools.wraps(view)
+    @wraps(view)
     def wrapped(*args, **kwargs):
         u = current_user()
-        if not u:
-            flash("Please log in.", "warning")
-            return redirect(url_for("auth.login", next=request.full_path))
-        if not (u["is_admin"] or u["is_sysadmin"]):
-            flash("Administrator permission required.", "danger")
+        if not u or not (u.get("is_admin") or u.get("is_sysadmin")):
+            flash("Administrator access required.", "danger")
             return redirect(url_for("home"))
         return view(*args, **kwargs)
     return wrapped
 
 def require_sysadmin(view):
-    @functools.wraps(view)
+    @wraps(view)
     def wrapped(*args, **kwargs):
         u = current_user()
-        if not u:
-            flash("Please log in.", "warning")
-            return redirect(url_for("auth.login", next=request.full_path))
-        if not u["is_sysadmin"]:
-            flash("Systems Administrator permission required.", "danger")
+        if not u or not u.get("is_sysadmin"):
+            flash("Systems Administrator access required.", "danger")
             return redirect(url_for("home"))
         return view(*args, **kwargs)
     return wrapped
 
-
-
+def require_perm(flag_name):
+    """Gate a view by a specific can_* flag; Admin/SysAdmin inherit all perms via _row_to_dict."""
+    def decorator(view):
+        @wraps(view)
+        def wrapped(*args, **kwargs):
+            u = current_user()
+            if not u or not u.get(flag_name):
+                flash("Access denied.", "danger")
+                return redirect(url_for("home"))
+            return view(*args, **kwargs)
+        return wrapped
+    return decorator

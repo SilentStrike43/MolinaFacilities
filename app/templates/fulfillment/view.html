@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Request {{ row.service_id }}</h5>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="mb-2"><strong>Description:</strong> {{ row.description }}</div>
+        <div class="mb-2"><strong>Requester:</strong> {{ row.requester_name }}</div>
+        <div class="mb-2"><strong>Submitted:</strong> {{ row.date_submitted }} |
+          <strong>Due:</strong> {{ row.date_due or '—' }}</div>
+        <div class="mb-2"><strong>Status:</strong> {{ as_badge(row.status)|safe }}</div>
+
+        <hr class="my-3">
+
+        <div class="row">
+          <div class="col-md-6"><strong>Print Type:</strong> {{ row.print_type }}</div>
+          <div class="col-md-6"><strong>Page Count:</strong> {{ row.page_count or '—' }}</div>
+          <div class="col-md-6"><strong>Paper Size:</strong> {{ row.paper_size }}</div>
+          <div class="col-md-6"><strong>Paper Stock:</strong> {{ row.paper_stock }}</div>
+          <div class="col-md-6"><strong>Paper Color:</strong> {{ row.paper_color }}</div>
+          <div class="col-md-6"><strong>Paper Sides:</strong> {{ row.paper_sides }}</div>
+          <div class="col-md-6"><strong>Binding:</strong> {{ row.binding }}</div>
+          <div class="col-md-6"><strong>Covers:</strong> {{ row.covers }}</div>
+          <div class="col-md-6"><strong>Tabs:</strong> {{ row.tabs }}</div>
+          <div class="col-md-6"><strong>Finishing:</strong> {{ row.finishing }}</div>
+        </div>
+
+        <div class="mt-3"><strong>Additional Details:</strong><br>{{ row.additional_details or '—' }}</div>
+      </div>
+    </div>
+
+    <a class="btn btn-outline-secondary" href="{{ url_for('fulfillment.queue') }}">Back to Queue</a>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header">Files</div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          {% if files %}
+            {% for f in files %}
+              <li class="mb-2">
+                {% if f.status == 'success' %}
+                  <a href="{{ url_for('fulfillment.download_file', file_id=f.id) }}">{{ f.filename }}</a>
+                  <small class="text-muted">({{ f.bytes }} bytes)</small>
+                {% else %}
+                  <span class="text-danger">{{ f.filename }}</span>
+                  <small class="text-muted">(failed)</small>
+                {% endif %}
+              </li>
+            {% endfor %}
+          {% else %}
+            <li class="text-muted">No files uploaded.</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Update Status</div>
+      <div class="card-body">
+        <form method="post">
+          <select class="form-select" name="status">
+            {% for s,_ in statuses %}
+              <option value="{{ s }}" {{ 'selected' if s==row.status else '' }}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary mt-2">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

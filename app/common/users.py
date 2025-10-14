@@ -38,7 +38,9 @@ def ensure_user_schema():
           active        INTEGER DEFAULT 1,
           last_login_at TEXT,
           created_at    TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-          updated_at    TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+          updated_at    TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+          can_fulfillment_staff    INTEGER DEFAULT 0,
+          can_fulfillment_customer INTEGER DEFAULT 0
         )
     """)
     con.execute("""
@@ -53,27 +55,21 @@ def ensure_user_schema():
           ip       TEXT
         )
     """)
+    # Legacy add columns if missing
+    for ddl in (
+        "ALTER TABLE users ADD COLUMN can_fulfillment_staff INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN can_fulfillment_customer INTEGER DEFAULT 0",
+    ):
+        try: con.execute(ddl)
+        except Exception: pass
     con.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
     con.execute("CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_logs(ts_utc)")
     con.commit(); con.close()
-
-def ensure_user_schema():
-    con = _conn()
-    # ... existing tables ...
-    try: con.execute("ALTER TABLE users ADD COLUMN can_fulfillment_staff INTEGER DEFAULT 0")
-    except Exception: pass
-    try: con.execute("ALTER TABLE users ADD COLUMN can_fulfillment_customer INTEGER DEFAULT 0")
-    except Exception: pass
-    con.commit(); con.close()
-
 
 def _sha256(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 def ensure_first_sysadmin():
-    """
-    Seed the 'App Administrator' account once. Hidden from user list (is_system=1).
-    """
     con = _conn()
     row = con.execute("SELECT id FROM users WHERE username=?", ("App Administrator",)).fetchone()
     if not row:
@@ -118,27 +114,31 @@ def create_user(data: Dict):
         INSERT INTO users(username, password_hash, email, first_name, last_name,
                           department, position, phone,
                           can_send, can_asset, can_insights, can_users, is_admin, is_sysadmin,
-                          is_system, active)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                          is_system, active, can_fulfillment_staff, can_fulfillment_customer)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         data["username"], _sha256(data["password"]),
         data.get("email"), data.get("first_name"), data.get("last_name"),
         data.get("department"), data.get("position"), data.get("phone"),
         int(data.get("can_send",0)), int(data.get("can_asset",0)), int(data.get("can_insights",0)), int(data.get("can_users",0)),
         int(data.get("is_admin",0)), int(data.get("is_sysadmin",0)),
-        int(data.get("is_system",0)), 1
+        int(data.get("is_system",0)), 1,
+        int(data.get("can_fulfillment_staff",0)), int(data.get("can_fulfillment_customer",0))
     ))
     con.commit(); con.close()
 
 def update_user(uid: int, data: Dict):
     con = _conn()
     sets = ["email=?","first_name=?","last_name=?","department=?","position=?","phone=?",
-            "can_send=?","can_asset=?","can_insights=?","can_users=?","is_admin=?","is_sysadmin=?","updated_at=(strftime('%Y-%m-%dT%H:%M:%SZ','now'))"]
+            "can_send=?","can_asset=?","can_insights=?","can_users=?","is_admin=?","is_sysadmin=?",
+            "can_fulfillment_staff=?","can_fulfillment_customer=?",
+            "updated_at=(strftime('%Y-%m-%dT%H:%M:%SZ','now'))"]
     params = [
         data.get("email"), data.get("first_name"), data.get("last_name"), data.get("department"),
         data.get("position"), data.get("phone"),
         int(data.get("can_send",0)), int(data.get("can_asset",0)), int(data.get("can_insights",0)), int(data.get("can_users",0)),
-        int(data.get("is_admin",0)), int(data.get("is_sysadmin",0))
+        int(data.get("is_admin",0)), int(data.get("is_sysadmin",0)),
+        int(data.get("can_fulfillment_staff",0)), int(data.get("can_fulfillment_customer",0))
     ]
     if data.get("password"):
         sets.append("password_hash=?")

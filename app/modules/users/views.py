@@ -31,30 +31,38 @@ def view_user(uid: int):
 
 # ---------- Modify Users (Admin) ----------
 @users_bp.route("/manage", methods=["GET","POST"])
-@require_admin
+@login_required
 def manage():
     rows = list_users(include_system=False)
-    return render_template("users/manage.html", active="users", tab="manage", rows=rows)
+    # ... any POST handling ...
+    return render_template(
+        "users/manage.html",
+        active="users",
+        tab="manage",
+        rows=rows,
+        row=None,            # <-- ensure defined
+    )
 
 @users_bp.route("/create", methods=["POST"])
 @require_admin
 def create():
     data = {
-        "username": (request.form.get("username") or "").strip(),
-        "password": (request.form.get("password") or "").strip(),
-        "email": request.form.get("email"),
-        "first_name": request.form.get("first_name"),
-        "last_name": request.form.get("last_name"),
-        "department": request.form.get("department"),
-        "position": request.form.get("position"),
-        "phone": request.form.get("phone"),
-        "can_send": int(bool(request.form.get("can_send"))),
-        "can_asset": int(bool(request.form.get("can_asset"))),
-        "can_insights": int(bool(request.form.get("can_insights"))),
-        "can_users": int(bool(request.form.get("can_users"))),
-        "is_admin": int(bool(request.form.get("is_admin"))),
-        "is_sysadmin": 0  # cannot grant sysadmin here
+  "email": request.form.get("email"),
+  "first_name": request.form.get("first_name"),
+  "last_name": request.form.get("last_name"),
+  "department": request.form.get("department"),
+  "position": request.form.get("position"),
+  "phone": request.form.get("phone"),
+  "can_send": int(bool(request.form.get("can_send"))),
+  "can_asset": int(bool(request.form.get("can_asset"))),
+  "can_insights": int(bool(request.form.get("can_insights"))),
+  "can_users": int(bool(request.form.get("can_users"))),
+  # Fulfillment toggles now live here:
+  "can_fulfillment_staff": int(bool(request.form.get("can_fulfillment_staff"))),
+  "can_fulfillment_customer": int(bool(request.form.get("can_fulfillment_customer"))),
     }
+# NOTE: do NOT let this page set is_admin / is_sysadmin
+
     if not data["username"] or not data["password"] or not data["email"] or not data["first_name"] or not data["last_name"] or not data["department"] or not data["position"]:
         flash("Please fill all required fields.", "danger")
         return redirect(url_for("users.manage"))

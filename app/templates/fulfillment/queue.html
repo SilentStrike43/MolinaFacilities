@@ -1,12 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
 <h5 class="mb-3">Fulfillment — Service Queue</h5>
+
 <div class="table-responsive">
   <table class="table table-sm table-striped align-middle">
     <thead>
       <tr>
-        <th>Service ID</th><th>Description</th><th>Requester</th>
-        <th>Date Submitted</th><th>Date Due</th><th>Status</th><th class="text-end">Action</th>
+        <th>Service ID</th>
+        <th>Description</th>
+        <th>Requester</th>
+        <th>Date Submitted</th>
+        <th>Date Due</th>
+        <th>Status</th>
+        <th class="text-end">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -19,10 +25,13 @@
         <td>{{ r.date_due or '—' }}</td>
         <td>{{ as_badge(r.status)|safe }}</td>
         <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary me-2" href="{{ url_for('fulfillment.view_request', rid=r.id) }}">View</a>
           <form method="post" class="d-inline">
             <input type="hidden" name="rid" value="{{ r.id }}">
             <select class="form-select form-select-sm d-inline w-auto" name="status">
-              {% for s,_ in statuses %}<option value="{{ s }}" {{ 'selected' if s==r.status else '' }}>{{ s }}</option>{% endfor %}
+              {% for s,_ in statuses %}
+                <option value="{{ s }}" {{ 'selected' if s==r.status else '' }}>{{ s }}</option>
+              {% endfor %}
             </select>
             <button class="btn btn-sm btn-primary ms-2">Update</button>
           </form>

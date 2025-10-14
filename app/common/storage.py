@@ -35,7 +35,7 @@ def ensure_jobs_schema():
     con.execute("""
         CREATE TABLE IF NOT EXISTS print_jobs(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          module          TEXT NOT NULL,                -- 'mail'
+          module          TEXT NOT NULL,
           job_type        TEXT,
           payload         TEXT,
           checkin_date    TEXT,
@@ -50,7 +50,6 @@ def ensure_jobs_schema():
           ts_utc          TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
         )
     """)
-    # legacy adds
     try: con.execute("ALTER TABLE print_jobs ADD COLUMN package_type TEXT")
     except Exception: pass
     con.execute("CREATE INDEX IF NOT EXISTS pj_idx_module   ON print_jobs(module)")
@@ -66,7 +65,6 @@ def ensure_jobs_schema():
 # -------------------------------------------------
 def ensure_mail_sequences():
     con = jobs_db()
-    # single CheckInID row
     con.execute("""
         CREATE TABLE IF NOT EXISTS checkin_id_seq(
           id INTEGER PRIMARY KEY CHECK (id=1),
@@ -75,9 +73,7 @@ def ensure_mail_sequences():
     """)
     row = con.execute("SELECT last_value FROM checkin_id_seq WHERE id=1").fetchone()
     if not row:
-        con.execute("INSERT INTO checkin_id_seq(id, last_value) VALUES (1, 9999999999)")  # next => 10000000000
-
-    # per-package counters
+        con.execute("INSERT INTO checkin_id_seq(id, last_value) VALUES (1, 9999999999)")
     con.execute("""
         CREATE TABLE IF NOT EXISTS package_seq(
           package_type TEXT PRIMARY KEY,
@@ -159,7 +155,6 @@ def ensure_inventory_schema():
           payload         TEXT
         )
     """)
-    # legacy columns
     for ddl in (
         "ALTER TABLE inventory_reports ADD COLUMN part_number TEXT",
         "ALTER TABLE inventory_reports ADD COLUMN serial_number TEXT",
@@ -190,7 +185,7 @@ def ensure_inventory_seq():
     """)
     row = con.execute("SELECT last_value FROM inventory_id_seq WHERE id=1").fetchone()
     if not row:
-        con.execute("INSERT INTO inventory_id_seq(id, last_value) VALUES (1, 999999999)")  # next => 1000000000
+        con.execute("INSERT INTO inventory_id_seq(id, last_value) VALUES (1, 999999999)")
     con.commit(); con.close()
 
 def next_inventory_id() -> int:
@@ -210,31 +205,48 @@ def peek_next_inventory_id() -> int:
     con.close()
     return last + 1
 
-# --- Fulfillment schema (requests + files) ---
+# -------------------------------------------------
+# Tracking cache (for /mail/tracking)
+# -------------------------------------------------
+def ensure_cache_schema():
+    con = cache_db()
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS cache(
+          tracking TEXT PRIMARY KEY,
+          carrier  TEXT,
+          payload  TEXT,
+          updated  TEXT
+        )
+    """)
+    con.commit(); con.close()
+
+# -------------------------------------------------
+# Fulfillment Center schema + sequence
+# -------------------------------------------------
 def ensure_fulfillment_schema():
     con = jobs_db()
     con.execute("""
         CREATE TABLE IF NOT EXISTS fulfillment_requests(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          service_id       TEXT UNIQUE,                     -- human-readable ticket (Fnnnnnn)
+          service_id       TEXT UNIQUE,
           description      TEXT,
-          requester_user_id INTEGER,                        -- FK to users.id (not enforced)
-          requester_name   TEXT,                            -- denormalized for convenience
-          date_submitted   TEXT,                            -- ISO (YYYY-MM-DD)
-          date_due         TEXT,                            -- ISO or NULL
-          status           TEXT,                            -- ENUM below
-          print_type       TEXT,                            -- BW | Color
-          paper_size       TEXT,                            -- 8.5x11 | 8.5x14 | 11x17
-          paper_stock      TEXT,                            -- #20 White | #24 White | Color Paper
-          paper_color      TEXT,                            -- White | Blue | Yellow | Other
-          paper_sides      TEXT,                            -- Single | Double | Original
-          binding          TEXT,                            -- None | Spiral | Booklet Staple | Staple | Binder Clip | Paper Clip | Rebind Original
-          covers           TEXT,                            -- None | Frosted/Black | Other
-          tabs             TEXT,                            -- None | Custom | Same as Original
-          finishing        TEXT,                            -- None | 3-Hole | Fold | Collate | Uncollate
-          page_count       INTEGER,                         -- auto-detected or user provided
+          requester_user_id INTEGER,
+          requester_name   TEXT,
+          date_submitted   TEXT,
+          date_due         TEXT,
+          status           TEXT,
+          print_type       TEXT,
+          paper_size       TEXT,
+          paper_stock      TEXT,
+          paper_color      TEXT,
+          paper_sides      TEXT,
+          binding          TEXT,
+          covers           TEXT,
+          tabs             TEXT,
+          finishing        TEXT,
+          page_count       INTEGER,
           additional_details TEXT,
-          meta_json        TEXT,                            -- any extras
+          meta_json        TEXT,
           ts_utc           TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
         )
     """)
@@ -245,7 +257,7 @@ def ensure_fulfillment_schema():
           filename   TEXT,
           stored_path TEXT,
           bytes      INTEGER,
-          status     TEXT,             -- success | failed
+          status     TEXT,
           note       TEXT,
           uploaded_utc TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
         )
@@ -277,31 +289,6 @@ def next_service_id() -> str:
     con.commit(); con.close()
     return f"F{nxt:06d}"
 
-
-# call from init_all_dbs()
-def init_all_dbs():
-    ensure_jobs_schema()
-    ensure_mail_sequences()
-    ensure_inventory_schema()
-    ensure_inventory_seq()
-    ensure_cache_schema()
-    ensure_fulfillment_schema()
-
-# -------------------------------------------------
-# Tracking cache (for /mail/tracking)
-# -------------------------------------------------
-def ensure_cache_schema():
-    con = cache_db()
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS cache(
-          tracking TEXT PRIMARY KEY,
-          carrier  TEXT,
-          payload  TEXT,
-          updated  TEXT
-        )
-    """)
-    con.commit(); con.close()
-
 # -------------------------------------------------
 # One-shot initializer
 # -------------------------------------------------
@@ -311,5 +298,5 @@ def init_all_dbs():
     ensure_inventory_schema()
     ensure_inventory_seq()
     ensure_cache_schema()
-
-
+    ensure_fulfillment_schema()   
+    ensure_fulfillment_seq()      

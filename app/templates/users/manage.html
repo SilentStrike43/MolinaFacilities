@@ -23,7 +23,20 @@
             <label class="form-check"><input class="form-check-input" type="checkbox" name="can_asset"> Asset Access</label>
             <label class="form-check"><input class="form-check-input" type="checkbox" name="can_insights"> Insights Access</label>
             <label class="form-check"><input class="form-check-input" type="checkbox" name="can_users"> Users Access</label>
-            <label class="form-check"><input class="form-check-input" type="checkbox" name="is_admin"> Administrator</label>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="can_fulfillment_customer" id="f_cust" {{ 'checked' if row.can_fulfillment_customer else '' }}>
+                  <label class="form-check-label" for="f_cust">Fulfillment — Customer</label>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="can_fulfillment_staff" id="f_staff" {{ 'checked' if row.can_fulfillment_staff else '' }}>
+                  <label class="form-check-label" for="f_staff">Fulfillment — Staff</label>
+                </div>
+              </div>
+            </div>            
           </div>
           <div class="mt-3"><button class="btn btn-primary">Create</button></div>
         </form>
