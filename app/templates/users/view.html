@@ -6,10 +6,10 @@
     <div class="card mb-3">
       <div class="card-body">
         <div><strong>Username:</strong> {{ row.username }}</div>
-        <div><strong>Name:</strong> {{ row.first_name }} {{ row.last_name }}</div>
-        <div><strong>Email:</strong> {{ row.email }}</div>
-        <div><strong>Department:</strong> {{ row.department }}</div>
-        <div><strong>Position:</strong> {{ row.position }}</div>
+        <div><strong>Name:</strong> {{ (row.first_name or '') ~ ' ' ~ (row.last_name or '') }}</div>
+        <div><strong>Email:</strong> {{ row.email or '' }}</div>
+        <div><strong>Department:</strong> {{ row.department or '' }}</div>
+        <div><strong>Position:</strong> {{ row.position or '' }}</div>
         <div><strong>Phone:</strong> {{ row.phone or '—' }}</div>
         <div class="mt-2">
           <span class="badge bg-secondary">{{ row.can_send and 'Send Access' or 'No Send' }}</span>
@@ -25,4 +25,3 @@
   </div>
 </div>
 {% endblock %}
-

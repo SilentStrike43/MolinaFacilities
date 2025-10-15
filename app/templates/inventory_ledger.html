@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block body %}
+<h4 class="mb-3">Asset — Ledger</h4>
+
+<form class="row g-3 mb-3" method="get" action="{{ url_for('asset_ledger.ledger_home') }}">
+  <div class="col-md-6">
+    <label class="form-label">Asset</label>
+    <select class="form-select" name="asset_id" onchange="this.form.submit()">
+      <option value="">Select an asset…</option>
+      {% for a in assets %}
+        {% set label = (a.sku or '—') ~ ' — ' ~ (a.product or '') %}
+        <option value="{{ a.id }}" {{ 'selected' if asset and a.id==asset.id else '' }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+{% if asset %}
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-semibold">{{ asset.product or 'Asset' }}</div>
+            <div class="text-muted small">SKU: {{ asset.sku or '—' }} | UOM: {{ asset.uom or '—' }}</div>
+            <div class="text-muted small">Location: {{ asset.location or '—' }}</div>
+          </div>
+          <div class="display-6">{{ asset.qty_on_hand }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header py-2">Check In</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('asset_ledger.ledger_checkin') }}" class="row g-2">
+          <input type="hidden" name="asset_id" value="{{ asset.id }}">
+          <div class="col-5">
+            <input class="form-control" type="number" name="qty" min="1" placeholder="Qty" required>
+          </div>
+          <div class="col-7">
+            <input class="form-control" name="note" placeholder="Note (optional)">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-success w-100">Check In</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header py-2">Check Out</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('asset_ledger.ledger_checkout') }}" class="row g-2">
+          <input type="hidden" name="asset_id" value="{{ asset.id }}">
+          <div class="col-5">
+            <input class="form-control" type="number" name="qty" min="1" placeholder="Qty" required>
+          </div>
+          <div class="col-7">
+            <input class="form-control" name="note" placeholder="Note (optional)">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-outline-danger w-100">Check Out</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header py-2">Movement Ledger</div>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle mb-0">
+          <thead>
+            <tr><th>UTC</th><th>Action</th><th class="text-end">Qty</th><th>User</th><th>Note</th></tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr>
+                <td class="text-nowrap">{{ r.ts_utc }}</td>
+                <td>
+                  {% if r.action == 'CHECKIN' %}
+                    <span class="badge bg-success">Check In</span>
+                  {% elif r.action == 'CHECKOUT' %}
+                    <span class="badge bg-danger">Check Out</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ r.action }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">{{ r.qty }}</td>
+                <td class="text-nowrap">{{ r.username or '—' }}</td>
+                <td class="text-truncate" style="max-width:360px">{{ r.note or '—' }}</td>
+              </tr>
+            {% endfor %}
+            {% if not rows %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No movements.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+  <div class="alert alert-info">Choose an asset to view and record movements.</div>
+{% endif %}
+{% endblock %}

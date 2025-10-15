@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block body %}
+<h4 class="mb-3">Insights — Fulfillment</h4>
+
+<form class="row g-3 align-items-end mb-3" method="get" action="{{ url_for('reports_fulfillment.fulfillment_report') }}">
+  <div class="col-md-3">
+    <label class="form-label">Search (any)</label>
+    <input class="form-control" name="q" value="{{ q }}" placeholder="F000123, description, requester, staff...">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Requester</label>
+    <input class="form-control" name="requester" value="{{ requester }}" placeholder="Jane Doe">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Status</label>
+    <select class="form-select" name="status">
+      {% set statuses = ['', 'Received','Hold','In-Progress','Suspended','Cancelled','Completed','Archive'] %}
+      {% for s in statuses %}
+        <option value="{{ s }}" {{ 'selected' if s==status else '' }}>{{ s or 'Any' }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">From</label>
+    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">To</label>
+    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+  </div>
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-primary">Apply</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('reports_fulfillment.fulfillment_report') }}">Clear</a>
+    <a class="btn btn-success ms-auto"
+       href="{{ url_for('reports_fulfillment.fulfillment_report_csv', q=q, requester=requester, status=status, date_from=date_from, date_to=date_to) }}">
+      Export CSV
+    </a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Service ID</th>
+        <th>Description</th>
+        <th>Requester</th>
+        <th>Date Submitted</th>
+        <th>Status</th>
+        <th>Staff</th>
+        <th>Date Completed</th>
+        <th>Files</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">{{ r.service_id }}</td>
+        <td class="text-truncate" style="max-width:320px">{{ r.description }}</td>
+        <td class="text-nowrap">{{ r.requester_name }}</td>
+        <td class="text-nowrap">{{ r.submitted_at }}</td>
+        <td>
+          {% set color = 'secondary' %}
+          {% if r.status == 'Completed' %}{% set color = 'success' %}
+          {% elif r.status == 'Suspended' %}{% set color = 'warning' %}
+          {% elif r.status == 'Cancelled' %}{% set color = 'danger' %}
+          {% endif %}
+          <span class="badge bg-{{ color }}">{{ r.status }}</span>
+        </td>
+        <td class="text-nowrap">{{ r.fulfilled_by or '—' }}</td>
+        <td class="text-nowrap">{{ r.completed_at or '—' }}</td>
+        <td>
+          {% if r.files_json %}
+            <code class="small">{{ r.files_json[:60] }}{{ '…' if r.files_json|length > 60 }}</code>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="8" class="text-center text-muted py-4">No results.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

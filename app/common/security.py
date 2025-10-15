@@ -1,80 +1,87 @@
 # app/common/security.py
+from __future__ import annotations
 from functools import wraps
-from flask import g, session, redirect, url_for, flash, request
-from .users import get_user_by_id, record_audit
+from typing import Any, Dict, Optional, Mapping
 
-# ---- helpers ----
+from flask import session, redirect, url_for, flash
 
-def _row_to_dict(row):
-    if row is None:
-        return None
-    if isinstance(row, dict):
-        d = row.copy()
-    else:
-        # sqlite3.Row is mapping-like: convert to plain dict
-        d = {k: row[k] for k in row.keys()}
-    # normalize truthy flags to bool
-    for k in (
-        "can_send","can_asset","can_insights","can_users",
-        "is_admin","is_sysadmin","is_system","active",
-        "can_fulfillment_staff","can_fulfillment_customer",
-    ):
-        if k in d:
-            d[k] = bool(d[k])
-        else:
-            d[k] = False
-    # permission inheritance:
-    # Admins / SysAdmins (and the built-in system account) implicitly have all can_* permissions.
-    if d.get("is_admin") or d.get("is_sysadmin") or d.get("is_system"):
-        d["can_send"] = True
-        d["can_asset"] = True
-        d["can_insights"] = True
-        d["can_users"] = True
-        d["can_fulfillment_staff"] = True
-        d["can_fulfillment_customer"] = True
-    return d
+# -------------------------------------------------------------------
+# Session helpers + compatibility shims for legacy imports
+# -------------------------------------------------------------------
 
-def current_user():
-    """Return the current user as a dict with normalized boolean flags and inherited permissions."""
-    uid = session.get("uid")
-    # fast path: cached and matches
-    if getattr(g, "_cu", None) and g._cu.get("id") == uid:
-        return g._cu
-    if not uid:
-        g._cu = None
-        return None
-    row = get_user_by_id(uid)
-    user = _row_to_dict(row)
-    g._cu = user
-    return user
+# We store a slim user dict in the session after auth.
+SESSION_KEY = "user"
 
-def login_user(user_row):
-    """Accepts either a sqlite row or a dict; stores session + caches normalized user dict."""
-    d = _row_to_dict(user_row)
-    session["uid"] = d["id"]
-    g._cu = d
-    try:
-        record_audit(d, "login", "auth", f"Login from {request.remote_addr}", request.remote_addr)
-    except Exception:
-        pass
-    return d
+def _row_to_user_dict(row: Mapping[str, Any]) -> Dict[str, Any]:
+    """
+    Legacy-compatible serializer. Accepts a sqlite3.Row or plain dict
+    and returns the minimal user payload we keep in session.
+    """
+    g = row.get if hasattr(row, "get") else (lambda k, d=None: row[k] if k in row else d)
+    return {
+        "id":                g("id"),
+        "username":          g("username"),
+        "email":             g("email"),
+        "first_name":        g("first_name"),
+        "last_name":         g("last_name"),
+        "department":        g("department"),
+        "position":          g("position"),
+        "phone":             g("phone"),
+        # perms
+        "can_send":              int(bool(g("can_send", 0))),
+        "can_asset":             int(bool(g("can_asset", 0))),
+        "can_insights":          int(bool(g("can_insights", 0))),
+        "can_users":             int(bool(g("can_users", 0))),
+        "can_fulfillment_staff": int(bool(g("can_fulfillment_staff", 0))),
+        "can_fulfillment_customer": int(bool(g("can_fulfillment_customer", 0))),
+        # elevated
+        "is_admin":    int(bool(g("is_admin", 0))),
+        "is_sysadmin": int(bool(g("is_sysadmin", 0))),
+        "is_system":   int(bool(g("is_system", 0))),
+        "active":      int(bool(g("active", 1))),
+    }
 
-def logout_user():
-    u = current_user()
-    try:
-        record_audit(u, "logout", "auth", f"Logout from {request.remote_addr}", request.remote_addr)
-    except Exception:
-        pass
-    session.pop("uid", None)
-    g._cu = None
+def login_user(user_row_or_dict: Mapping[str, Any]) -> None:
+    """
+    Legacy API expected by auth module.
+    Serializes the DB row/dict into a safe session payload.
+    """
+    session[SESSION_KEY] = _row_to_user_dict(user_row_or_dict)
 
-# ---- decorators ----
+def logout_user() -> None:
+    """Legacy API expected by auth module."""
+    session.pop(SESSION_KEY, None)
+
+def current_user() -> Optional[Dict[str, Any]]:
+    """Return None if not logged in."""
+    return session.get(SESSION_KEY) or None
+
+
+# -------------------------------------------------------------------
+# Role/permission helpers
+# -------------------------------------------------------------------
+
+def _is_elevated(u: Optional[Dict]) -> bool:
+    return bool(u and (u.get("is_admin") or u.get("is_sysadmin") or u.get("is_system")))
+
+def _has_insights(u: Optional[Dict]) -> bool:
+    return bool(u and (u.get("can_insights") or _is_elevated(u)))
+
+def _has_fulfillment_any(u: Optional[Dict]) -> bool:
+    return bool(u and (_is_elevated(u) or u.get("can_fulfillment_staff") or u.get("can_fulfillment_customer")))
+
+def _has_fulfillment_staff(u: Optional[Dict]) -> bool:
+    return bool(u and (_is_elevated(u) or u.get("can_fulfillment_staff")))
+
+
+# -------------------------------------------------------------------
+# Decorators
+# -------------------------------------------------------------------
 
 def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not current_user():
-            flash("Please sign in.", "warning")
             return redirect(url_for("auth.login"))
         return view(*args, **kwargs)
     return wrapped
@@ -83,7 +90,7 @@ def require_admin(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         u = current_user()
-        if not u or not (u.get("is_admin") or u.get("is_sysadmin")):
+        if not u or not (u.get("is_admin") or u.get("is_sysadmin") or u.get("is_system")):
             flash("Administrator access required.", "danger")
             return redirect(url_for("home"))
         return view(*args, **kwargs)
@@ -93,21 +100,46 @@ def require_sysadmin(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         u = current_user()
-        if not u or not u.get("is_sysadmin"):
+        if not u or not (u.get("is_sysadmin") or u.get("is_system")):
             flash("Systems Administrator access required.", "danger")
             return redirect(url_for("home"))
         return view(*args, **kwargs)
     return wrapped
 
-def require_perm(flag_name):
-    """Gate a view by a specific can_* flag; Admin/SysAdmin inherit all perms via _row_to_dict."""
-    def decorator(view):
-        @wraps(view)
-        def wrapped(*args, **kwargs):
-            u = current_user()
-            if not u or not u.get(flag_name):
-                flash("Access denied.", "danger")
-                return redirect(url_for("home"))
-            return view(*args, **kwargs)
-        return wrapped
-    return decorator
+def require_insights(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        u = current_user()
+        if not _has_insights(u):
+            flash("Insights access required.", "danger")
+            return redirect(url_for("home"))
+        return view(*args, **kwargs)
+    return wrapped
+
+def require_fulfillment_any(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        u = current_user()
+        if not _has_fulfillment_any(u):
+            flash("Fulfillment access required.", "danger")
+            return redirect(url_for("home"))
+        return view(*args, **kwargs)
+    return wrapped
+
+def require_fulfillment_staff(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        u = current_user()
+        if not _has_fulfillment_staff(u):
+            flash("Fulfillment access required.", "danger")
+            return redirect(url_for("home"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+# Explicit re-exports for legacy imports elsewhere
+__all__ = [
+    "login_user", "logout_user", "current_user",
+    "login_required", "require_admin", "require_sysadmin",
+    "require_insights", "require_fulfillment_any", "require_fulfillment_staff",
+]

@@ -1,82 +1,129 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Users — Modify Users</h5>
+<h5 class="mb-3">Users — Modify</h5>
+
+{% set u = row if row is defined else None %}
 
 <div class="row">
-  <div class="col-lg-5">
+  <div class="col-lg-7">
     <div class="card mb-3">
       <div class="card-body">
-        <h6 class="mb-3">Create User</h6>
-        <form method="post" action="{{ url_for('users.create') }}">
-          <div class="row g-2">
-            <div class="col-md-6"><input class="form-control" name="username" placeholder="Username" required></div>
-            <div class="col-md-6"><input class="form-control" type="password" name="password" placeholder="Password" required></div>
-            <div class="col-md-6"><input class="form-control" name="email" placeholder="Email" required></div>
-            <div class="col-md-6"><input class="form-control" name="phone" placeholder="Phone (optional)"></div>
-            <div class="col-md-6"><input class="form-control" name="first_name" placeholder="First Name" required></div>
-            <div class="col-md-6"><input class="form-control" name="last_name"  placeholder="Last Name" required></div>
-            <div class="col-md-6"><input class="form-control" name="department" placeholder="Department" required></div>
-            <div class="col-md-6"><input class="form-control" name="position"   placeholder="Position" required></div>
+        <form method="post">
+          {% if u %}<input type="hidden" name="uid" value="{{ u.id }}">{% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Username</label>
+              <input class="form-control" name="username" required
+                     value="{{ u.username if u else '' }}" {{ 'readonly' if u else '' }}>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">First name</label>
+              <input class="form-control" name="first_name" value="{{ u.first_name if u else '' }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Last name</label>
+              <input class="form-control" name="last_name" value="{{ u.last_name if u else '' }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" name="email" value="{{ u.email if u else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Department</label>
+              <input class="form-control" name="department" value="{{ u.department if u else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Position</label>
+              <input class="form-control" name="position" value="{{ u.position if u else '' }}">
+            </div>
+
+            {% if not u %}
+            <div class="col-md-4">
+              <label class="form-label">Initial password</label>
+              <input class="form-control" type="password" name="password" required>
+            </div>
+            {% endif %}
           </div>
-          <div class="mt-2 d-flex flex-wrap gap-2">
-            <label class="form-check"><input class="form-check-input" type="checkbox" name="can_send"> Send Access</label>
-            <label class="form-check"><input class="form-check-input" type="checkbox" name="can_asset"> Asset Access</label>
-            <label class="form-check"><input class="form-check-input" type="checkbox" name="can_insights"> Insights Access</label>
-            <label class="form-check"><input class="form-check-input" type="checkbox" name="can_users"> Users Access</label>
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="can_fulfillment_customer" id="f_cust" {{ 'checked' if row.can_fulfillment_customer else '' }}>
-                  <label class="form-check-label" for="f_cust">Fulfillment — Customer</label>
-                </div>
+
+          <hr class="my-4">
+
+          <h6 class="mb-2">Module Access</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="can_send" name="can_send"
+                       {{ 'checked' if u and u.can_send else '' }}>
+                <label class="form-check-label" for="can_send">Send</label>
               </div>
-              <div class="col-md-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="can_fulfillment_staff" id="f_staff" {{ 'checked' if row.can_fulfillment_staff else '' }}>
-                  <label class="form-check-label" for="f_staff">Fulfillment — Staff</label>
-                </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="can_asset" name="can_asset"
+                       {{ 'checked' if u and u.can_asset else '' }}>
+                <label class="form-check-label" for="can_asset">Asset</label>
               </div>
-            </div>            
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="can_insights" name="can_insights"
+                       {{ 'checked' if u and u.can_insights else '' }}>
+                <label class="form-check-label" for="can_insights">Insights</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="can_users" name="can_users"
+                       {{ 'checked' if u and u.can_users else '' }}>
+                <label class="form-check-label" for="can_users">Users</label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small text-muted">Fulfillment Center</label>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="f_cust" name="can_fulfillment_customer"
+                       {{ 'checked' if u and u.can_fulfillment_customer else '' }}>
+                <label class="form-check-label" for="f_cust">Customer (Request Fulfillment)</label>
+              </div>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="f_staff" name="can_fulfillment_staff"
+                       {{ 'checked' if u and u.can_fulfillment_staff else '' }}>
+                <label class="form-check-label" for="f_staff">Staff (Queue & Archive)</label>
+              </div>
+            </div>
           </div>
-          <div class="mt-3"><button class="btn btn-primary">Create</button></div>
+
+          <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-primary">{{ 'Update' if u else 'Create user' }}</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('users.user_list') }}">Back</a>
+          </div>
         </form>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-7">
+  <div class="col-lg-5">
     <div class="card">
       <div class="card-body">
         <h6 class="mb-3">Existing Users</h6>
         <div class="table-responsive">
           <table class="table table-sm table-striped align-middle">
-            <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Admin</th><th>SysAdmin</th><th class="text-end">Actions</th></tr></thead>
+            <thead><tr><th>Username</th><th>Name</th><th>Email</th><th></th></tr></thead>
             <tbody>
-              {% for u in rows %}
+              {% for r in rows %}
               <tr>
-                <td>{{ u.username }}</td>
-                <td>{{ u.first_name }} {{ u.last_name }}</td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.is_admin and 'Yes' or 'No' }}</td>
-                <td>{{ u.is_sysadmin and 'Yes' or 'No' }}</td>
+                <td>{{ r.username }}</td>
+                <td>{{ (r.first_name or '') ~ ' ' ~ (r.last_name or '') }}</td>
+                <td>{{ r.email or '' }}</td>
                 <td class="text-end">
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('users.edit', uid=u.id) }}">Edit</a>
-                  <form method="post" class="d-inline" action="{{ url_for('users.remove', uid=u.id) }}" onsubmit="return confirm('Delete this user?');">
-                    <button class="btn btn-sm btn-outline-danger">Delete</button>
-                  </form>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('users.manage', uid=r.id) }}">Edit</a>
                 </td>
               </tr>
               {% endfor %}
               {% if not rows %}
-              <tr><td colspan="6" class="text-center text-muted py-4">No users.</td></tr>
+              <tr><td colspan="4" class="text-center text-muted py-4">No users yet.</td></tr>
               {% endif %}
             </tbody>
           </table>
         </div>
-        <p class="small text-muted mb-0">Only a Systems Administrator can grant/revoke <strong>Systems Administrator</strong> using the dedicated actions (ask your App Administrator).</p>
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
-
