@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Users — Modify Users</h5>
+<div class="alert alert-info py-2">
+  <div>Admin/SysAdmin can set <strong>Fulfillment</strong> permissions here. Elevated roles (Administrator / Systems Administrator) are managed in <em>Admin → Elevated User Actions</em>.</div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th style="min-width:200px;">Profile</th>
+        <th class="text-center">Send</th>
+        <th class="text-center">Asset</th>
+        <th class="text-center">Insights</th>
+        <th class="text-center">Users</th>
+        <th class="text-center">Fulfillment (Staff)</th>
+        <th class="text-center">Fulfillment (Customer)</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">
+          <div class="fw-semibold">{{ r.username }}</div>
+          <div class="text-muted small">
+            {% if r.is_system %}<span class="badge bg-warning text-dark">System</span> {% endif %}
+            {% if r.is_sysadmin %}<span class="badge bg-secondary">SysAdmin</span> {% endif %}
+            {% if r.is_admin %}<span class="badge bg-dark">Admin</span> {% endif %}
+          </div>
+        </td>
+
+        <td>
+          <form method="post" class="row g-2">
+            <input type="hidden" name="uid" value="{{ r.id }}">
+            <div class="col-md-6"><input class="form-control form-control-sm" name="first_name" value="{{ r.first_name or '' }}" placeholder="First name"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="last_name"  value="{{ r.last_name or '' }}"  placeholder="Last name"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="email"      value="{{ r.email or '' }}"      placeholder="Email"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="phone"      value="{{ r.phone or '' }}"      placeholder="Phone"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="department" value="{{ r.department or '' }}" placeholder="Department"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="position"   value="{{ r.position or '' }}"   placeholder="Position"></div>
+        </td>
+
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_send" {{ 'checked' if r.can_send else '' }}>
+        </td>
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_asset" {{ 'checked' if r.can_asset else '' }}>
+        </td>
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_insights" {{ 'checked' if r.can_insights else '' }}>
+        </td>
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_users" {{ 'checked' if r.can_users else '' }}>
+        </td>
+
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_fulfillment_staff"
+                 {{ 'checked' if r.can_fulfillment_staff else '' }}
+                 {{ '' if can_set_fulfillment else 'disabled' }}>
+        </td>
+        <td class="text-center align-middle">
+          <input class="form-check-input" type="checkbox" name="can_fulfillment_customer"
+                 {{ 'checked' if r.can_fulfillment_customer else '' }}
+                 {{ '' if can_set_fulfillment else 'disabled' }}>
+        </td>
+
+        <td class="text-end align-middle">
+            <button class="btn btn-sm btn-primary">Save</button>
+            {% if not r.is_system %}
+            <form class="d-inline" method="post" action="{{ url_for('users.delete', uid=r.id) }}"
+                  onsubmit="return confirm('Deactivate this user?');">
+              <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+            </form>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="9" class="text-center text-muted py-4">No users.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Insights — Inventory</h5>
+
+<form class="row g-2 mb-3" method="get" action="{{ url_for('inventory.insights') }}">
+  <div class="col-md-3"><input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search text"></div>
+  <div class="col-md-2"><input class="form-control" name="inventory_id" value="{{ inventory_id or '' }}" placeholder="Inventory ID"></div>
+  <div class="col-md-2"><input class="form-control" name="product_name" value="{{ product_name or '' }}" placeholder="Product"></div>
+  <div class="col-md-2"><input class="form-control" name="manufacturer" value="{{ manufacturer or '' }}" placeholder="Manufacturer"></div>
+  <div class="col-md-2"><input class="form-control" name="item_type" value="{{ item_type or '' }}" placeholder="Item Type"></div>
+  <div class="col-md-1">
+    <button class="btn btn-primary w-100" type="submit">Go</button>
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" name="submitter_name" value="{{ submitter_name or '' }}" placeholder="Submitter">
+  </div>
+  <div class="col-md-2"><input class="form-control" name="pii" value="{{ pii or '' }}" placeholder="PII"></div>
+  <div class="col-md-2"><input class="form-control" name="date_from" value="{{ date_from or '' }}" placeholder="From (YYYY-MM-DD)"></div>
+  <div class="col-md-2"><input class="form-control" name="date_to" value="{{ date_to or '' }}" placeholder="To (YYYY-MM-DD)"></div>
+  <div class="col-md-1">
+    <a class="btn btn-outline-secondary w-100"
+       href="{{ url_for('inventory.insights_export',
+                        q=q or '', inventory_id=inventory_id or '', product_name=product_name or '',
+                        manufacturer=manufacturer or '', item_type=item_type or '', submitter_name=submitter_name or '',
+                        pii=pii or '', date_from=date_from or '', date_to=date_to or '') }}">
+      Export
+    </a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr><th>UTC</th><th>Inv ID</th><th>Product</th><th>Manufacturer</th><th>Type</th><th>Submitter</th><th>PII</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td class="text-nowrap">{{ r.ts_utc }}</td>
+          <td class="text-nowrap">{{ r.inventory_id }}</td>
+          <td>{{ r.product_name }}</td>
+          <td>{{ r.manufacturer }}</td>
+          <td>{{ r.item_type }}</td>
+          <td>{{ r.submitter_name }}</td>
+          <td>{{ r.pii }}</td>
+          <td class="small">{{ r.notes }}</td>
+        </tr>
+      {% endfor %}
+      {% if not rows %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No results.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

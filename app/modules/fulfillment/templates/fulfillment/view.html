@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Request #{{ row.id }}</h5>
+
+<div class="row">
+  <div class="col-md-7">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div><strong>Description:</strong> {{ row.description or '—' }}</div>
+        <div><strong>Requester:</strong> {{ row.requester_name or '—' }}</div>
+        <div><strong>Date Submitted:</strong> {{ row.date_submitted or row.ts_utc }}</div>
+        <div><strong>Date Due:</strong> {{ row.date_due or '—' }}</div>
+        <div><strong>Total Pages:</strong> {{ row.total_pages or '—' }}</div>
+        <div class="mt-2">
+          {% set s = row.status or 'Received' %}
+          <span class="badge bg-secondary">{{ s }}</span>
+          {% if s == 'Suspended' %}
+            <span class="badge bg-warning text-dark">Suspended</span>
+          {% elif s == 'Completed' %}
+            <span class="badge bg-success">Completed</span>
+          {% endif %}
+          {% if row.is_archived %}<span class="badge bg-dark">Archived</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header py-2">Files</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>Name</th><th>Size</th><th></th></tr></thead>
+          <tbody>
+            {% for f in files %}
+            <tr>
+              <td class="text-truncate" style="max-width:420px">{{ f.orig_name }}</td>
+              <td class="text-nowrap">{{ f.bytes or 0 }} bytes</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fulfillment.download_file', fid=f.id) }}">Download</a>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not files %}
+            <tr><td colspan="3" class="text-center text-muted py-3">No files attached.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-md-5">
+    <div class="card mb-3">
+      <div class="card-header py-2">Options</div>
+      <div class="card-body small">
+        <div><strong>Print Type:</strong> {{ opts.print_type or '—' }}</div>
+        <div><strong>Paper Size:</strong> {{ opts.paper_size or '—' }}</div>
+        <div><strong>Paper Stock:</strong> {{ opts.paper_stock or '—' }}</div>
+        <div><strong>Paper Color:</strong> {{ opts.paper_color or '—' }}</div>
+        <div><strong>Paper Sides:</strong> {{ opts.paper_sides or '—' }}</div>
+        <div><strong>Binding:</strong> {{ opts.binding or '—' }}</div>
+        <div><strong>Covers:</strong> {{ opts.covers or '—' }}</div>
+        <div><strong>Tabs:</strong> {{ opts.tabs or '—' }}</div>
+        <div><strong>Finishing:</strong> {{ opts.finishing or '—' }}</div>
+        <div class="mt-2"><strong>Additional Details:</strong><br>{{ row.notes or '—' }}</div>
+      </div>
+    </div>
+
+    {% if cu and (cu.is_admin or cu.is_sysadmin or cu.is_system or cu.can_fulfillment_staff) %}
+    <div class="card">
+      <div class="card-header py-2">Update Status</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('fulfillment.queue') }}" class="d-flex gap-2">
+          <input type="hidden" name="rid" value="{{ row.id }}">
+          <select class="form-select" name="status">
+            {% for s in ['Received','Hold','In-Progress','Suspended','Cancelled','Completed','Archive'] %}
+              <option value="{{ s }}" {{ 'selected' if s==row.status else '' }}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-outline-primary">Save</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Admin — Elevated User Actions</h5>
+
+<div class="alert alert-info py-2">
+  Only the <strong>App Developer</strong> account can grant/revoke <strong>Systems Administrator</strong>.
+  Administrators may toggle <strong>Administrator</strong>.
+</div>
+
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Name</th>
+        <th class="text-center">Administrator</th>
+        <th class="text-center">Systems Administrator</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">{{ r.username }}</td>
+        <td class="text-truncate" style="max-width:240px;">
+          {{ r.first_name or '' }} {{ r.last_name or '' }}
+        </td>
+        <td class="text-center">
+          <form method="post" class="d-inline">
+            <input type="hidden" name="uid" value="{{ r.id }}">
+            <input type="hidden" name="is_sysadmin" value="{{ r.is_sysadmin }}">
+            <div class="form-check d-inline-block">
+              <input class="form-check-input" type="checkbox" name="is_admin" {{ 'checked' if r.is_admin else '' }}>
+            </div>
+            <button class="btn btn-sm btn-outline-primary ms-1">Save</button>
+          </form>
+        </td>
+        <td class="text-center">
+          <form method="post" class="d-inline">
+            <input type="hidden" name="uid" value="{{ r.id }}">
+            <input type="hidden" name="is_admin" value="{{ r.is_admin }}">
+            <div class="form-check d-inline-block">
+              <input class="form-check-input" type="checkbox" name="is_sysadmin"
+                     {{ 'checked' if r.is_sysadmin else '' }}
+                     {{ 'disabled' if not cu.is_system else '' }}>
+            </div>
+            <button class="btn btn-sm btn-outline-primary ms-1" {{ 'disabled' if not cu.is_system else '' }}>Save</button>
+          </form>
+        </td>
+        <td class="text-end">
+          {% if r.is_system %}
+            <span class="badge bg-warning text-dark">System</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="5" class="text-center text-muted py-4">No users.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

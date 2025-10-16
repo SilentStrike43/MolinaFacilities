@@ -1,69 +1,106 @@
 # app/modules/inventory/views.py
-from flask import Blueprint, render_template, request
-import datetime
+from __future__ import annotations
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+import datetime, sqlite3
+
+from ...common.security import login_required, require_asset
 from ...common.printing import drop_to_bartender
-from ...common.storage import peek_next_inventory_id, next_inventory_id
+from ...common.storage import insights_db
 
 inventory_bp = Blueprint("inventory", __name__, template_folder="../../templates")
 
+bp = inventory_bp
+
 ITEM_TYPES = ["Part","Equipment","Sensitive","Supplies","Accessory","Critical"]
 
+
+def _peek_next_inventory_id() -> int:
+    """Suggest the next InventoryID based on max(inventory_id) in insights table."""
+    con = insights_db()
+    try:
+        row = con.execute("SELECT COALESCE(MAX(inventory_id), 10000000) + 1 AS nxt FROM inventory_reports").fetchone()
+        nxt = row["nxt"] if row else 10000001
+    except sqlite3.OperationalError:
+        # table may not exist yet; start a reasonable base
+        nxt = 10000001
+    finally:
+        con.close()
+    return int(nxt)
+
+
 @inventory_bp.route("/", methods=["GET", "POST"])
+@login_required
+@require_asset
 def index():
-    msg, ok = None, True
+    """Asset — Add Item (queues an inventory label + writes Insights record)."""
     today = datetime.date.today().isoformat()
-    suggested_id = peek_next_inventory_id()
+    suggested_id = _peek_next_inventory_id()
+    flashmsg = None
 
     if request.method == "POST":
-        checkin_date   = (request.form.get("CheckInDate") or today).strip()
-        inventory_id   = (request.form.get("InventoryID") or "").strip()
-        item_type      = (request.form.get("ItemType") or "").strip()
-        manufacturer   = (request.form.get("Manufacturer") or "").strip()
-        product_name   = (request.form.get("ProductName") or "").strip()
-        submitter_name = (request.form.get("SubmitterName") or "").strip()
-        notes          = (request.form.get("Notes") or "").strip()
+        data = {
+            "CheckInDate":   request.form.get("CheckInDate") or today,
+            "InventoryID":   (request.form.get("InventoryID") or "").strip(),
+            "ItemType":      request.form.get("ItemType") or "",
+            "Manufacturer":  (request.form.get("Manufacturer") or "").strip(),
+            "ProductName":   (request.form.get("ProductName") or "").strip(),
+            "SubmitterName": (request.form.get("SubmitterName") or "").strip(),
+            "Notes":         (request.form.get("Notes") or "").strip(),
+            "PartNumber":    (request.form.get("PartNumber") or "").strip() or "N/A",
+            "SerialNumber":  (request.form.get("SerialNumber") or "").strip() or "N/A",
+            "Count":         (request.form.get("Count") or "0").strip(),
+            "Location":      (request.form.get("Location") or "").strip(),
+            "Template":      "Inventory_Label.btw",
+            "Printer":       "",
+            "Status":        "queued",
+        }
 
-        part_number    = (request.form.get("PartNumber") or "").strip()
-        serial_number  = (request.form.get("SerialNumber") or "").strip()
-        count_str      = (request.form.get("Count") or "").strip()
-        location       = (request.form.get("Location") or "").strip()
+        # auto-assign InventoryID if empty/non-numeric
+        if not data["InventoryID"].isdigit():
+            data["InventoryID"] = str(_peek_next_inventory_id())
 
-        # validations
-        if not count_str.isdigit() or int(count_str) <= 0:
-            msg, ok = "Count is required and must be a positive number.", False
-        elif not location:
-            msg, ok = "Location is required.", False
-        elif not item_type or item_type not in ITEM_TYPES:
-            msg, ok = "Select a valid Item Type.", False
-        elif not manufacturer or not product_name or not submitter_name:
-            msg, ok = "Manufacturer, Product Name, and Submitter are required.", False
+        # minimal validation
+        required = ["ItemType","Manufacturer","ProductName","SubmitterName","Count","Location"]
+        missing = [k for k in required if not data[k]]
+        if missing:
+            flashmsg = (f"Missing: {', '.join(missing)}", False)
         else:
-            inv_id_val = int(inventory_id) if inventory_id.isdigit() else next_inventory_id()
-            if not part_number and not serial_number:
-                part_number, serial_number = "N/A", "N/A"
-            payload = {
-                "CheckInDate":   checkin_date,
-                "InventoryID":   inv_id_val,
-                "ItemType":      item_type,
-                "Manufacturer":  manufacturer,
-                "ProductName":   product_name,
-                "SubmitterName": submitter_name,
-                "Notes":         notes,
-                "PartNumber":    part_number,
-                "SerialNumber":  serial_number,
-                "Count":         int(count_str),
-                "Location":      location,
-                "Printer":       ""
-            }
-            job = drop_to_bartender(payload, hint="inventory", module="inventory")
-            msg, ok = f"Inventory queued. JSON file: {job['json_file']}", True
-            suggested_id = inv_id_val + 1
+            drop_to_bartender(data, hint="inventory", module="inventory")
+            flashmsg = ("Queued inventory label.", True)
+            suggested_id = int(data["InventoryID"]) + 1
 
     return render_template(
         "inventory/index.html",
         active="asset",
-        flashmsg=(msg, ok),
+        flashmsg=flashmsg,
         today=today,
         suggested_id=suggested_id,
-        item_types=ITEM_TYPES
+        item_types=ITEM_TYPES,
     )
+
+
+@inventory_bp.route("/print", methods=["GET", "POST"])
+@login_required
+@require_asset
+def print_label():
+    """Inventory — ad-hoc simple label."""
+    flashmsg = None
+    if request.method == "POST":
+        payload = {
+            "ItemSKU":   (request.form.get("ItemSKU") or "").strip(),
+            "ItemName":  (request.form.get("ItemName") or "").strip(),
+            "Count":     int(request.form.get("Count") or "1"),
+            "Location":  (request.form.get("Location") or "").strip(),
+            "Template":  "Inventory_Simple.btw",
+            "Printer":   "",
+            "Status":    "queued",
+        }
+        if not payload["ItemSKU"] or not payload["ItemName"]:
+            flashmsg = ("Item SKU and Name are required.", False)
+        else:
+            drop_to_bartender(payload, hint="inventory_simple", module="inventory")
+            flashmsg = ("Queued label for printing.", True)
+
+    return render_template("inventory/print.html",
+                           active="asset",
+                           flashmsg=flashmsg)

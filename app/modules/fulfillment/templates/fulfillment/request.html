@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Request</h5>
+
+<form method="post" enctype="multipart/form-data" class="border rounded p-3">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <input class="form-control" name="description" placeholder="Short summary of what you need printed/copied" required>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Date Due (optional)</label>
+      <input type="date" class="form-control" name="date_due">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Number of Total Pages (optional)</label>
+      <input class="form-control" type="number" min="0" name="total_pages" placeholder="If known">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Upload Files</label>
+      <input class="form-control" type="file" name="files" multiple>
+      <div class="form-text">You can attach multiple files. Large uploads depend on server limits.</div>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Print Type</label>
+      <select class="form-select" name="print_type">
+        <option>Black and White</option>
+        <option>Color</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Paper Size</label>
+      <select class="form-select" name="paper_size">
+        <option>8.5x11</option>
+        <option>8.5x14</option>
+        <option>11x17</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Paper Stock</label>
+      <select class="form-select" name="paper_stock">
+        <option>#20 White Paper</option>
+        <option>#24 White Paper</option>
+        <option>Color Paper</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Paper Color</label>
+      <select class="form-select" name="paper_color">
+        <option>White</option>
+        <option>Blue</option>
+        <option>Yellow</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Paper Sides</label>
+      <select class="form-select" name="paper_sides">
+        <option>Single Sided</option>
+        <option>Double Sided</option>
+        <option>Exactly as Original</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Binding</label>
+      <select class="form-select" name="binding">
+        <option>None</option>
+        <option>Spiral</option>
+        <option>Booklet Staple</option>
+        <option>Staple</option>
+        <option>Binder Clip</option>
+        <option>Paper Clip</option>
+        <option>Rebind Original</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Covers</label>
+      <select class="form-select" name="covers">
+        <option>None</option>
+        <option>Frosted Cover/Black Back</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Tabs</label>
+      <select class="form-select" name="tabs">
+        <option>None</option>
+        <option>Custom Tabs</option>
+        <option>Same as Original</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Finishing</label>
+      <select class="form-select" name="finishing">
+        <option>None</option>
+        <option>3-Hole Punch</option>
+        <option>Fold</option>
+        <option>Collate</option>
+        <option>Uncollate</option>
+      </select>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Additional Details</label>
+      <textarea class="form-control" name="additional" rows="3"
+                placeholder="Anything else we should know (e.g., special instructions, paper color if 'Other')"></textarea>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <button class="btn btn-primary">Submit Request</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Inventory — Asset Ledger</h5>
+
+<form class="row g-2 mb-3" method="get" action="{{ url_for('inventory.ledger') }}">
+  <div class="col-md-6"><input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search inventory id, product, manufacturer, actor"></div>
+  <div class="col-md-2"><input class="form-control" name="date_from" value="{{ date_from or '' }}" placeholder="From (YYYY-MM-DD)"></div>
+  <div class="col-md-2"><input class="form-control" name="date_to" value="{{ date_to or '' }}" placeholder="To (YYYY-MM-DD)"></div>
+  <div class="col-md-1">
+    <button class="btn btn-primary w-100" type="submit">Search</button>
+  </div>
+  <div class="col-md-1">
+    <a class="btn btn-outline-secondary w-100"
+       href="{{ url_for('inventory.ledger_export', q=q or '', date_from=date_from or '', date_to=date_to or '') }}">
+      Export
+    </a>
+  </div>
+</form>
+
+<div class="alert alert-info py-2">
+  <strong>Quick update:</strong> Use this mini-form to add a ledger entry.
+</div>
+<form class="row gy-2 gx-2 mb-3" method="post">
+  <div class="col-md-2">
+    <input class="form-control" name="asset_id" placeholder="Asset ID (numeric)" required>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="action" required>
+      <option value="check_in">Check In (+)</option>
+      <option value="check_out">Check Out (-)</option>
+      <option value="adjust">Adjust (±)</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <input class="form-control" name="qty" type="number" min="1" placeholder="Qty" required>
+  </div>
+  <div class="col-md-5">
+    <input class="form-control" name="notes" placeholder="Notes (optional)">
+  </div>
+  <div class="col-12">
+    <button class="btn btn-success">Apply</button>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr>
+        <th>UTC</th><th>Inv ID</th><th>Product</th><th>Mfr</th><th>Action</th><th class="text-end">Qty</th><th>Actor</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td class="text-nowrap">{{ r.ts_utc }}</td>
+          <td class="text-nowrap">{{ r.inventory_id }}</td>
+          <td>{{ r.product_name }}</td>
+          <td>{{ r.manufacturer }}</td>
+          <td class="text-nowrap">{{ r.action }}</td>
+          <td class="text-end">{{ r.qty }}</td>
+          <td>{{ r.actor }}</td>
+          <td class="small">{{ r.notes }}</td>
+        </tr>
+      {% endfor %}
+      {% if not rows %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No ledger entries.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -17,9 +17,11 @@
       --dark-surface:#363a3f;
       --dark-text:#e9ecef;
     }
+
     html, body { height:100%; }
     body { overflow-y:scroll; color:#212529; }
 
+    /* Topbar */
     .topbar{
       height:58px; display:flex; align-items:center; gap:12px;
       padding:0 16px; position:sticky; top:0; z-index:1020;
@@ -29,60 +31,83 @@
     .brand{ display:flex; align-items:center; gap:10px; font-weight:600; }
     .brand img{ height:28px; width:auto; }
     .topbar .btn, .topbar .dropdown-toggle{ color:#fff; border-color:rgba(255,255,255,.55); }
+    .topbar .btn:hover{ border-color:#fff; }
 
+    /* Layout */
     .app-wrap{ display:flex; min-height:calc(100vh - 58px); }
 
+    /* Sidebar */
     .sidebar{
       width:var(--sidebar-width);
       background:#e8f4f4; border-right:1px solid #d7e6e6;
       padding:12px 8px; position:sticky; top:58px; height:calc(100vh - 58px);
       overflow-y:auto; transition:width .2s ease;
     }
-    .sidebar .section-title{ font-size:.85rem; color:#2b6469; margin:6px 10px 8px; text-transform:uppercase; letter-spacing:.02em; }
-    .nav-vertical .nav-link{ display:flex; align-items:center; gap:10px; padding:.5rem .75rem; border-radius:.5rem; color:#134348; }
+    .sidebar .section-title{
+      font-size:.85rem; color:#2b6469; margin:6px 10px 8px; text-transform:uppercase; letter-spacing:.02em;
+    }
+    .nav-vertical .nav-link{
+      display:flex; align-items:center; gap:10px; padding:.5rem .75rem; border-radius:.5rem; color:#134348;
+    }
     .nav-vertical .nav-link:hover{ background:#d7eeee; }
     .nav-vertical .nav-link.active{ background:var(--molina-teal); color:#fff; }
     .sidebar .icon{ width:24px; text-align:center; }
 
+    /* Collapsed */
     .sidebar.collapsed{ width:var(--sidebar-collapsed); }
     .sidebar.collapsed .label, .sidebar.collapsed .section-title{ display:none; }
 
+    /* Main */
     .content-wrap{ flex:1; padding:16px; }
 
-    /* badges (top-right) */
+    /* Badges (top-right) */
     .badge-perm{padding:.35em .5em; border-radius:.5rem; font-weight:600; font-size:.7rem}
-    .badge-fulfill{background:#0d6efd;} .badge-insights{background:#198754;}
-    .badge-send{background:#0a8e89;} .badge-asset{background:#dc3545;}
-    .badge-users{background:#6f42c1;} .badge-admin{background:#000;}
-    .badge-sysadmin{background:#6c757d;} .badge-dev{background:#fd7e14;}
+    .badge-fulfill{background:#0d6efd;}
+    .badge-insights{background:#198754;}
+    .badge-send{background:#0a8e89;}
+    .badge-asset{background:#dc3545;}
+    .badge-users{background:#6f42c1;}
+    .badge-admin{background:#000;}
+    .badge-sysadmin{background:#6c757d;}
+    .badge-dev{background:#fd7e14;}
 
-    /* dark */
+    /* Dark mode */
     html[data-theme="dark"] body{ background:var(--dark-bg); color:var(--dark-text); }
+    html[data-theme="dark"] a{ color:#8ecbff; }
     html[data-theme="dark"] .sidebar{ background:#2e3338; border-right-color:#3a3f45; }
     html[data-theme="dark"] .nav-vertical .nav-link:hover{ background:#3a4248; }
     html[data-theme="dark"] .nav-vertical .nav-link.active{ background:#1f6d69; }
     html[data-theme="dark"] .card{ background:var(--dark-surface); color:var(--dark-text); }
-    html[data-theme="dark"] a{ color:#8ecbff; }
 
     .footer-version{ position:fixed; right:.75rem; bottom:.5rem; font-size:.75rem; opacity:.7; }
+
+    /* Responsive */
+    @media (max-width: 992px){
+      .sidebar { width:var(--sidebar-collapsed); }
+      .sidebar .label, .sidebar .section-title { display:none; }
+    }
   </style>
 </head>
 <body>
   {% set cu = (g._cu if g and g._cu else None) %}
   {% set elevated = cu and (cu.is_admin or cu.is_sysadmin or cu.is_system) %}
 
+  <!-- Top bar -->
   <div class="topbar">
     <button id="toggleSidebar" class="btn btn-sm btn-outline-light" aria-label="Toggle menu">
       <i class="bi bi-list"></i>
     </button>
+
     <div class="brand">
       <img src="{{ url_for('static', filename='img/Molina_Healthcare_logo.svg.png') }}" alt="Molina">
       <span>Molina Facilities</span>
     </div>
 
     <div class="ms-auto d-flex align-items-center gap-2">
+      <!-- Dark mode -->
       <button id="themeToggle" class="btn btn-sm btn-outline-light" type="button" title="Toggle dark mode">🌓</button>
 
+      <!-- Role badges with precedence -->
       <div class="d-flex align-items-center gap-2">
         {% if cu %}
           {% if cu.is_system %}
@@ -92,9 +117,7 @@
           {% elif cu.is_admin %}
             <span class="badge-perm badge-admin">Administrator</span>
           {% else %}
-            {% if cu.can_fulfillment_customer or cu.can_fulfillment_staff %}
-              <span class="badge-perm badge-fulfill">Fulfillment</span>
-            {% endif %}
+            {% if cu.can_fulfillment_customer or cu.can_fulfillment_staff %}<span class="badge-perm badge-fulfill">Fulfillment</span>{% endif %}
             {% if cu.can_insights %}<span class="badge-perm badge-insights">Insights</span>{% endif %}
             {% if cu.can_send %}<span class="badge-perm badge-send">Send</span>{% endif %}
             {% if cu.can_asset %}<span class="badge-perm badge-asset">Asset</span>{% endif %}
@@ -103,6 +126,7 @@
         {% endif %}
       </div>
 
+      <!-- User menu -->
       <div class="dropdown">
         <a class="btn btn-sm btn-outline-light dropdown-toggle" href="#" data-bs-toggle="dropdown">
           {{ cu.username if cu else 'Guest' }}
@@ -119,62 +143,67 @@
     </div>
   </div>
 
+  <!-- Shell -->
   <div class="app-wrap">
     <aside id="sidebar" class="sidebar">
 
-      <div class="section-title">Operations</div>
+      <!-- SEND (visible if user has Send OR elevated) -->
+      {% if elevated or (cu and cu.can_send) %}
+      <div class="section-title">Send</div>
       <nav class="nav nav-vertical flex-column">
-        <a class="nav-link {{ 'active' if active in ['send','send-tracking'] else '' }}" href="{{ url_for('mail.page') }}">
-          <span class="icon"><i class="bi bi-send"></i></span><span class="label">Send</span>
+        <a class="nav-link {{ 'active' if active in ['send','send-tracking'] else '' }}" href="{{ url_for('send.page') }}">
+          <span class="icon"><i class="bi bi-send"></i></span><span class="label">Print Label</span>
         </a>
-        <a class="nav-link {{ 'active' if active=='send-tracking' else '' }}" href="{{ url_for('mail.tracking') }}">
+        <a class="nav-link {{ 'active' if active=='send-tracking' else '' }}" href="{{ url_for('send.tracking') }}">
           <span class="icon"><i class="bi bi-binoculars"></i></span><span class="label">Tracking</span>
         </a>
+        <a class="nav-link {{ 'active' if active=='send-insights' else '' }}" href="{{ url_for('send.insights') }}">
+          <span class="icon"><i class="bi bi-graph-up"></i></span><span class="label">Insights (Send)</span>
+        </a>
       </nav>
+      {% endif %}
 
+      <!-- FULFILLMENT (visible if user has either fulfillment role OR elevated) -->
+      {% if elevated or (cu and (cu.can_fulfillment_customer or cu.can_fulfillment_staff)) %}
       <div class="section-title mt-2">Fulfillment Center</div>
       <nav class="nav nav-vertical flex-column">
-        {% if cu and (cu.can_fulfillment_customer or cu.can_fulfillment_staff or elevated) %}
-          <a class="nav-link {{ 'active' if active=='fulfillment' and page=='request' else '' }}"
-             href="{{ url_for('fulfillment.request_form') }}">
-            <span class="icon"><i class="bi bi-cloud-upload"></i></span><span class="label">Request Fulfillment</span>
-          </a>
-          <a class="nav-link {{ 'active' if active=='fulfillment' and page=='queue' else '' }}"
-             href="{{ url_for('fulfillment.queue') }}">
-            <span class="icon"><i class="bi bi-list-check"></i></span><span class="label">Service Queue</span>
-          </a>
-          <a class="nav-link {{ 'active' if active=='fulfillment' and page=='archive' else '' }}"
-             href="{{ url_for('fulfillment.archive') }}">
-            <span class="icon"><i class="bi bi-archive"></i></span><span class="label">Service Archive</span>
-          </a>
+        {% if elevated or (cu and cu.can_fulfillment_customer) %}
+        <a class="nav-link {{ 'active' if active=='fulfillment' and page=='request' else '' }}" href="{{ url_for('fulfillment.request_form') }}">
+          <span class="icon"><i class="bi bi-cloud-upload"></i></span><span class="label">Request Fulfillment</span>
+        </a>
         {% endif %}
-      </nav>
-
-      <div class="section-title mt-2">Inventory</div>
-      <nav class="nav nav-vertical flex-column">
-        <a class="nav-link {{ 'active' if active=='asset' and (tab!='ledger') else '' }}"
-           href="{{ url_for('inventory.index') }}">
-          <span class="icon"><i class="bi bi-box-seam"></i></span><span class="label">Asset</span>
+        <a class="nav-link {{ 'active' if active=='fulfillment' and page=='queue' else '' }}" href="{{ url_for('fulfillment.queue') }}">
+          <span class="icon"><i class="bi bi-list-check"></i></span><span class="label">Service Queue</span>
         </a>
-        <a class="nav-link {{ 'active' if active=='asset' and tab=='ledger' else '' }}"
-           href="{{ url_for('asset_ledger.ledger_home') }}">
-          <span class="icon"><i class="bi bi-journal-text"></i></span><span class="label">Asset Ledger</span>
+        <a class="nav-link {{ 'active' if active=='fulfillment' and page=='archive' else '' }}" href="{{ url_for('fulfillment.archive') }}">
+          <span class="icon"><i class="bi bi-archive"></i></span><span class="label">Service Archive</span>
         </a>
-      </nav>
-
-      <div class="section-title mt-2">Reports</div>
-      <nav class="nav nav-vertical flex-column">
-        <a class="nav-link {{ 'active' if active=='insights' and tab=='mail' else '' }}" href="{{ url_for('reports.mail') }}">
-          <span class="icon"><i class="bi bi-graph-up"></i></span><span class="label">Insights (Mail)</span>
-        </a>
-        <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('reports.inventory') }}">
-          <span class="icon"><i class="bi bi-clipboard-data"></i></span><span class="label">Insights (Inventory)</span>
-        </a>
+        {% if 'reports_f' in current_app.blueprints %}
         <a class="nav-link {{ 'active' if active=='insights' and tab=='fulfillment' else '' }}" href="{{ url_for('reports_f.fulfillment') }}">
           <span class="icon"><i class="bi bi-bar-chart-line"></i></span><span class="label">Insights (Fulfillment)</span>
         </a>
+        {% endif %}
       </nav>
+      {% endif %}
 
+      <!-- INVENTORY (visible if user has Asset OR elevated) -->
+      {% if elevated or (cu and cu.can_asset) %}
+      <div class="section-title mt-2">Inventory</div>
+      <nav class="nav nav-vertical flex-column">
+        <a class="nav-link {{ 'active' if active=='asset' else '' }}" href="{{ url_for('inventory.asset') }}">
+          <span class="icon"><i class="bi bi-box-seam"></i></span><span class="label">Asset</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='asset-ledger' else '' }}" href="{{ url_for('inventory.ledger') }}">
+          <span class="icon"><i class="bi bi-clipboard-check"></i></span><span class="label">Asset Ledger</span>
+        </a>
+        <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
+          <span class="icon"><i class="bi bi-clipboard-data"></i></span><span class="label">Insights (Inventory)</span>
+        </a>
+      </nav>
+      {% endif %}
+
+      <!-- PEOPLE (visible if user has Users OR elevated) -->
+      {% if elevated or (cu and cu.can_users) %}
       <div class="section-title mt-2">People</div>
       <nav class="nav nav-vertical flex-column">
         <a class="nav-link {{ 'active' if active=='users' and tab=='list' else '' }}" href="{{ url_for('users.user_list') }}">
@@ -184,7 +213,10 @@
           <span class="icon"><i class="bi bi-person-plus"></i></span><span class="label">Modify Users</span>
         </a>
       </nav>
+      {% endif %}
 
+      <!-- ADMIN (only elevated) -->
+      {% if elevated %}
       <div class="section-title mt-2">Admin</div>
       <nav class="nav nav-vertical flex-column">
         <a class="nav-link {{ 'active' if active=='admin' and page=='fields' else '' }}" href="{{ url_for('admin.modify_fields') }}">
@@ -193,12 +225,13 @@
         <a class="nav-link {{ 'active' if active=='admin' and page=='audit' else '' }}" href="{{ url_for('admin.audit') }}">
           <span class="icon"><i class="bi bi-journal-text"></i></span><span class="label">Audit Logs</span>
         </a>
-        {% if cu and (cu.is_sysadmin or cu.is_system) %}
+        {% if cu.is_sysadmin or cu.is_system %}
         <a class="nav-link {{ 'active' if active=='admin' and page=='elevated' else '' }}" href="{{ url_for('admin.elevated') }}">
           <span class="icon"><i class="bi bi-shield-lock"></i></span><span class="label">Elevated User Actions</span>
         </a>
         {% endif %}
       </nav>
+      {% endif %}
 
     </aside>
 
@@ -218,12 +251,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Sidebar persistence
     (function(){
       const key='mf_sidebar_collapsed', s=document.getElementById('sidebar');
       function apply(){ (localStorage.getItem(key)==='1') ? s.classList.add('collapsed') : s.classList.remove('collapsed'); }
       apply();
-      document.getElementById('toggleSidebar')?.addEventListener('click', ()=>{ const next = !(localStorage.getItem(key)==='1'); localStorage.setItem(key, next?'1':'0'); apply(); });
+      document.getElementById('toggleSidebar')?.addEventListener('click', ()=>{
+        const next = !(localStorage.getItem(key)==='1');
+        localStorage.setItem(key, next?'1':'0'); apply();
+      });
     })();
+    // Dark mode persistence
     (function(){
       const key="theme", html=document.documentElement;
       function apply(t){ t==="dark" ? html.setAttribute("data-theme","dark") : html.removeAttribute("data-theme"); }
@@ -233,8 +271,10 @@
         apply(next); localStorage.setItem(key, next);
       });
     })();
+    // Auto-dismiss flashes
     setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.remove()), 3500);
   </script>
+
   <div class="footer-version text-muted">v{{ APP_VERSION }}</div>
 </body>
 </html>

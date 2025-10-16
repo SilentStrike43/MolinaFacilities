@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block body %}
+<h3>Insights (Fulfillment)</h3>
+<form class="row g-2 mb-3" method="get" action="{{ url_for('fulfillment.insights') }}">
+  <div class="col-md-4"><input class="form-control" name="q" value="{{ q }}" placeholder="Search id/requester/staff/status"></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Search</button></div>
+  <div class="col-md-2 ms-auto text-end">
+    <a class="btn btn-success w-100" href="{{ url_for('fulfillment.export') }}"><i class="bi bi-download"></i> Export CSV</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead><tr>
+        <th>#</th><th>Service ID</th><th>Requester</th><th>Submitted</th><th>Status</th><th>Staff</th><th>Completed</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.id }}</td><td>{{ r.service_id }}</td><td>{{ r.requester }}</td>
+            <td>{{ r.ts_utc }}</td><td>{{ r.status }}</td><td>{{ r.staff or '-' }}</td><td>{{ r.completed_utc or '-' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="text-muted">No rows.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

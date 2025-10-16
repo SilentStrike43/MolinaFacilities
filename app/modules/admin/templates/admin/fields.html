@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Admin — Fields / Settings</h5>
+
+<form method="post" class="border rounded p-3">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">BASE_CHECKIN</label>
+      <input class="form-control" name="BASE_CHECKIN" value="{{ cfg.BASE_CHECKIN or 10000000000 }}">
+      <div class="form-text">Default seed for generated Check-In IDs.</div>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">BASE_PACKAGE</label>
+      <input class="form-control" name="BASE_PACKAGE" value="{{ cfg.BASE_PACKAGE or 10000000000 }}">
+      <div class="form-text">Default seed for generated Package IDs.</div>
+    </div>
+  </div>
+  <div class="mt-3">
+    <button class="btn btn-primary">Save</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Fulfillment — Service Queue</h5>
+
+<div class="table-responsive">
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Service ID</th>
+        <th>Description</th>
+        <th>Requester</th>
+        <th>Date Submitted</th>
+        <th>Date Due</th>
+        <th>Status</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="text-truncate" style="max-width:260px">{{ r.description or '—' }}</td>
+        <td>{{ r.requester_name or '—' }}</td>
+        <td class="text-nowrap">{{ r.date_submitted or r.ts_utc }}</td>
+        <td class="text-nowrap">{{ r.date_due or '—' }}</td>
+        <td>
+          {% set s = r.status or 'Received' %}
+          {% if s == 'Suspended' %}
+            <span class="badge bg-warning text-dark">Suspended</span>
+          {% elif s == 'Completed' %}
+            <span class="badge bg-success">Completed</span>
+          {% elif s == 'Cancelled' %}
+            <span class="badge bg-secondary">Cancelled</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ s }}</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fulfillment.view_request', rid=r.id) }}">View</a>
+          <form method="post" class="d-inline">
+            <input type="hidden" name="rid" value="{{ r.id }}">
+            <select class="form-select form-select-sm d-inline-block w-auto" name="status">
+              {% for s in statuses %}
+                <option value="{{ s }}" {{ 'selected' if s==r.status else '' }}>{{ s }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-sm btn-outline-secondary">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="7" class="text-center text-muted py-4">No requests in queue.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+

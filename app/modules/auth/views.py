@@ -1,50 +1,69 @@
 # app/modules/auth/views.py
+from __future__ import annotations
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from ...common.users import get_user_by_username, update_user, record_audit
-from ...common.security import login_user, logout_user, current_user
-from ...common.users import _sha256  # reuse hasher
+import hashlib
 
-auth_bp = Blueprint("auth", __name__, template_folder="../../templates")
+from app.common.security import login_user, logout_user, current_user, login_required
+from app.common.users import get_user_by_username
+# use users' connection helper to update only the password (avoid wiping other fields)
+from app.common.users import _conn as _users_conn
 
-@auth_bp.route("/login", methods=["GET","POST"])
+# Place templates under: app/modules/auth/templates/auth/
+auth_bp = Blueprint("auth", __name__, template_folder="templates/auth")
+bp = auth_bp  # <-- standard export name used by app.py
+
+def _sha256(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+def _set_password(uid: int, raw: str) -> None:
+    con = _users_conn()
+    con.execute(
+        "UPDATE users SET password_hash=?, updated_at=(strftime('%Y-%m-%dT%H:%M:%SZ','now')) WHERE id=?",
+        (_sha256(raw), uid),
+    )
+    con.commit()
+    con.close()
+
+@bp.route("/login", methods=["GET", "POST"])
 def login():
-    nxt = request.args.get("next") or url_for("home")
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
-        password = (request.form.get("password") or "").strip()
-        user = get_user_by_username(username)
-        if not user or user["active"] != 1:
-            flash("Invalid credentials.", "danger")
-        else:
-            if user["password_hash"] == _sha256(password):
-                login_user(user)
-                flash("Welcome.", "success")
-                return redirect(nxt)
-            flash("Invalid credentials.", "danger")
+        password = request.form.get("password") or ""
+        row = get_user_by_username(username)
+        if row and row.get("password_hash") == _sha256(password):
+            login_user(row)
+            flash("Signed in.", "success")
+            nxt = request.args.get("next") or url_for("home")
+            return redirect(nxt)
+        flash("Invalid username or password.", "danger")
     return render_template("auth/login.html")
 
-@auth_bp.route("/logout")
+@bp.route("/logout")
+@login_required
 def logout():
     logout_user()
-    flash("Logged out.", "info")
+    flash("Signed out.", "info")
     return redirect(url_for("auth.login"))
 
-@auth_bp.route("/password", methods=["GET","POST"])
+@bp.route("/change-password", methods=["GET", "POST"])
+@login_required
 def change_password():
-    u = current_user()
-    if not u:
-        return redirect(url_for("auth.login"))
     if request.method == "POST":
-        old = request.form.get("old") or ""
-        new1 = request.form.get("new1") or ""
-        new2 = request.form.get("new2") or ""
-        if _sha256(old) != u["password_hash"]:
+        cur = current_user()
+        old = request.form.get("old_password") or ""
+        new1 = request.form.get("new_password") or ""
+        new2 = request.form.get("confirm_password") or ""
+        if not cur:
+            return redirect(url_for("auth.login"))
+        if cur.get("password_hash") != _sha256(old):
             flash("Current password is incorrect.", "danger")
-        elif not new1 or new1 != new2:
-            flash("New passwords do not match.", "danger")
+        elif not new1:
+            flash("New password cannot be blank.", "danger")
+        elif new1 != new2:
+            flash("New password and confirmation do not match.", "danger")
         else:
-            update_user(u["id"], {"password": new1})
+            _set_password(int(cur["id"]), new1)
             flash("Password updated.", "success")
-            record_audit(u, "change_password", "auth", "User changed own password")
             return redirect(url_for("home"))
-    return render_template("auth/change_password.html", user=u)
+    return render_template("auth/change_password.html")

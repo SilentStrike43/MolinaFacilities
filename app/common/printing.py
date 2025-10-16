@@ -1,8 +1,13 @@
 # app/common/printing.py
+from __future__ import annotations
 import os, json, datetime, uuid
-from .storage import jobs_db, ensure_jobs_schema, ensure_inventory_schema
+from .storage import (
+    jobs_db,
+    ensure_jobs_schema,
+    ensure_inventory_schema,
+)
 
-# Single shared BarTender drop
+# Single shared BarTender drop (same path you had)
 SPOOL_DIR = r"C:\BTManifest\BTInvDrop"
 os.makedirs(SPOOL_DIR, exist_ok=True)
 
@@ -14,12 +19,13 @@ def _spool_json(payload: dict, hint: str):
     ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     name = f"{ts}_{hint}_{uuid.uuid4().hex[:8]}.json"
     path = os.path.join(SPOOL_DIR, name)
-    tmp = path + ".tmp"
+    tmp  = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
     return path
 
+# --- loggers ------------------------------------------------------------------
 def log_mail_job(payload: dict, hint: str):
     ensure_jobs_schema()
     con = jobs_db()
@@ -71,7 +77,11 @@ def log_inventory_job(payload: dict, hint: str):
     ))
     con.commit(); con.close()
 
+# --- public entry -------------------------------------------------------------
 def drop_to_bartender(payload: dict, hint: str, module: str):
+    """
+    Spool a JSON and log to insights db. Module decides which table to log to.
+    """
     if module == "inventory":
         json_file = _spool_json(payload, "inventory")
         log_inventory_job(payload, "inventory")
@@ -80,5 +90,3 @@ def drop_to_bartender(payload: dict, hint: str, module: str):
         json_file = _spool_json(payload, hint or "manifest")
         log_mail_job(payload, hint or "manifest")
         return {"json_file": json_file}
-
-

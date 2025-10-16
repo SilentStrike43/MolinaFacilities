@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block body %}
+<h5 class="mb-3">Users — Directory</h5>
+
+<form class="row g-2 mb-3" method="get" action="{{ url_for('users.user_list') }}">
+  <div class="col-md-4">
+    <input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search name, email, dept, phone...">
+  </div>
+  <div class="col-md-2 form-check d-flex align-items-center">
+    <input class="form-check-input me-2" type="checkbox" id="all" name="all" {{ 'checked' if show_all else '' }}>
+    <label for="all" class="form-check-label">Include inactive</label>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">Search</button>
+  </div>
+  <div class="col-md-4 text-end">
+    <a class="btn btn-success" href="{{ url_for('users.create') }}">New User</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('users.manage') }}">Modify Users</a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Username</th><th>Name</th><th>Email</th><th>Dept</th><th>Position</th><th>Phone</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">{{ r.username }}</td>
+        <td class="text-truncate" style="max-width:200px">{{ (r.first_name or '') ~ (' ' ~ r.last_name if r.last_name else '') }}</td>
+        <td class="text-truncate" style="max-width:220px">{{ r.email or '—' }}</td>
+        <td class="text-truncate" style="max-width:160px">{{ r.department or '—' }}</td>
+        <td class="text-truncate" style="max-width:160px">{{ r.position or '—' }}</td>
+        <td class="text-nowrap">{{ r.phone or '—' }}</td>
+        <td>
+          {% if r.active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="7" class="text-center text-muted py-4">No users.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
