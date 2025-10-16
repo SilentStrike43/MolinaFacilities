@@ -1,15 +1,12 @@
-# app/modules/fulfillment/views.py
-from __future__ import annotations
-from flask import Blueprint, render_template, request, send_file, abort, flash, redirect, url_for, g
-import os, json, mimetypes
-from werkzeug.utils import secure_filename
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from ...common.security import login_required, current_user
-from ...common.users import record_audit
-from .storage import (
-    ensure_schema, create_request, list_queue, list_archive, get_request,
-    update_status, list_files, add_file, UPLOAD_DIR
+from app.core.auth import (
+    login_required,
+    require_fulfillment_any,  # or staff/customer as needed
 )
+
+# module-local DB
+from app.modules.fulfillment.storage import queue_db, ensure_schema as ensure_fulfillment_schema
 
 fulfillment_bp = Blueprint("fulfillment", __name__, url_prefix="/fulfillment", template_folder="templates")
 

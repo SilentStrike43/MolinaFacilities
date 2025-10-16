@@ -1,11 +1,9 @@
-# app/modules/inventory/ledger_views.py
-from __future__ import annotations
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g
-from ...common.security import login_required, require_asset
-from ...common.assets import (
-    ensure_assets_schema, list_assets, get_asset,
-    ledger_for_asset, adjust_qty,
-)
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+
+from app.core.auth import login_required, require_asset  # or require_inventory
+
+# asset ledger keeps its own DB
+from app.modules.inventory.assets import db as assets_db, ensure_schema as ensure_assets_schema
 
 # Keep the old endpoint name so existing base.html links keep working:
 asset_ledger_bp = Blueprint("asset_ledger", __name__, url_prefix="/inventory/ledger",

@@ -1,11 +1,10 @@
-# app/modules/users/views.py
-from __future__ import annotations
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from ...common.security import login_required, current_user
-from ...common.users import (
-    list_users, get_user_by_id, create_user, delete_user, record_audit
+
+from app.core.auth import (
+    login_required, require_admin,          # or require_sysadmin
+    get_user_by_username, create_user, set_password,  # if used, or call via helper funcs you expose
+    # If you didn’t expose helpers above, import direct from app.core.auth:
 )
-from ...common.storage import get_db
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
 

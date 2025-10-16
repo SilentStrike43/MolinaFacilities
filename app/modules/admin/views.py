@@ -1,13 +1,9 @@
-# app/modules/admin/views.py
-from __future__ import annotations
-import os, io, csv, json
-from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for
-from ...common.security import login_required, require_admin, current_user
-from ...common.users import (
-    list_users, get_user_by_id, record_audit, query_audit,
-    set_elevated_flags_partial,
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+
+from app.core.auth import (
+    login_required, require_admin, require_sysadmin,
+    record_audit, current_user,
 )
-from ...common.storage import get_db
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
 

@@ -1,18 +1,27 @@
-# app/modules/mail/tracking.py
+# app/modules/send/tracking.py  (if your package is "mail", keep the same path but this code)
 from flask import render_template, request
 from . import bp
-from .models import _conn
-from app.common.security import require_cap
+from app.core.auth import require_cap
+from .storage import jobs_db  # module-local DB, no common.storage
 
 @bp.route("/tracking")
 @require_cap("can_send")
 def tracking():
-    q = request.args.get("q","").strip()
+    q = (request.args.get("q") or "").strip()
     rows = []
     if q:
-        con = _conn()
-        rows = con.execute("""SELECT * FROM print_jobs
-                              WHERE tracking LIKE ?
-                              ORDER BY ts_utc DESC LIMIT 200""", (f"%{q}%",)).fetchall()
+        con = jobs_db()
+        like = f"%{q}%"
+        # NOTE: the column is tracking_number in the Send print_jobs table
+        rows = con.execute("""
+            SELECT id, ts_utc, checkin_date, checkin_id, package_type, package_id,
+                   recipient_name, tracking_number, status, printer, template
+            FROM print_jobs
+            WHERE tracking_number LIKE ?
+            ORDER BY ts_utc DESC
+            LIMIT 200
+        """, (like,)).fetchall()
         con.close()
-    return render_template("mail/tracking.html", active="send", rows=rows, q=q)
+
+    # If your templates live under app/modules/mail/templates/mail/, change to "mail/tracking.html"
+    return render_template("send/tracking.html", active="send", rows=rows, q=q)

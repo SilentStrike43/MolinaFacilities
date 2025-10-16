@@ -1,15 +1,25 @@
-# app/modules/send/views.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request
 import json, datetime
-from ...common.security import login_required, current_user
-from .storage import (
-    ensure_schema, PACKAGE_TYPES, PACKAGE_PREFIX,
-    peek_next_checkin_id, next_checkin_id,
-    peek_next_package_id, next_package_id,
-    cache_get, cache_set, query_print_jobs
+
+# ⬇️ replace any app.common.* with this:
+from app.core.auth import (
+    login_required, current_user,        # if used
+    require_cap, require_insights,       # if used
 )
+
+# module-local storage/printing (no common.storage)
+from app.modules.send.storage import (
+    jobs_db,
+    next_checkin_id, peek_next_checkin_id,
+    next_package_id, peek_next_package_id,
+    PACKAGE_PREFIX,
+    cache_get, cache_set,                # tracking cache
+)
+from app.modules.send.printing import drop_to_bartender
+
 from .providers import guess_carrier, normalize_scanned
-from .spooler import drop_to_bartender_send
+
+
 
 send_bp = Blueprint("send", __name__, template_folder="../../templates")
 

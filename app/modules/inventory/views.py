@@ -1,11 +1,15 @@
-# app/modules/inventory/views.py
-from __future__ import annotations
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-import datetime, sqlite3
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from ...common.security import login_required, require_asset
-from ...common.printing import drop_to_bartender
-from ...common.storage import insights_db
+from app.core.auth import (
+    login_required,
+    require_asset,        # or require_inventory, whichever you use
+    require_insights,     # if you expose insights here
+)
+
+# module-local DB — no common.storage
+from app.modules.inventory.storage import (
+    inventory_db, insights_db, ensure_schema as ensure_inventory_schema
+)
 
 inventory_bp = Blueprint("inventory", __name__, template_folder="../../templates")
 
