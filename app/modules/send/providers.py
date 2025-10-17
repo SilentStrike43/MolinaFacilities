@@ -2,8 +2,7 @@
 import re
 from typing import Optional, Tuple
 
-# Carrier detection rules
-_CARRIER_RULES = [
+_RULES = [
     ("UPS",   re.compile(r"^1Z[0-9A-Z]{16}$", re.I)),
     ("UPS",   re.compile(r"^\d{9}$")),
     ("FedEx", re.compile(r"^\d{12,15}$")),
@@ -13,9 +12,8 @@ _CARRIER_RULES = [
     ("DHL",   re.compile(r"^\d{10}$")),
 ]
 
-def normalize_scanned(tracking: str) -> Tuple[str, Optional[str]]:
-    """If a long blob (>=20 chars) ends with 12 digits, treat last 12 as FedEx."""
-    s = tracking.strip().replace(" ", "")
+def normalize_scanned(s: str) -> Tuple[str, Optional[str]]:
+    s = (s or "").strip().replace(" ", "")
     if len(s) >= 20:
         m = re.search(r"(\d{12})$", s)
         if m:
@@ -23,8 +21,8 @@ def normalize_scanned(tracking: str) -> Tuple[str, Optional[str]]:
     return s, None
 
 def guess_carrier(tracking: str) -> Optional[str]:
-    s = tracking.strip().replace(" ", "")
-    for name, rx in _CARRIER_RULES:
-        if rx.match(s):
+    t = (tracking or "").strip().replace(" ", "")
+    for name, rx in _RULES:
+        if rx.match(t):
             return name
     return None

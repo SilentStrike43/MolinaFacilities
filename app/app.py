@@ -4,10 +4,18 @@ import os
 from app.core.auth import current_user, record_audit
 from app.core.ui import inject_globals
 
+# app/app.py
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.environ.get("SECRET_KEY","facilities-key")
-    app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="None")
+    app.secret_key = os.environ.get("SECRET_KEY", "facilities-key")
+
+    # In dev (no HTTPS), do not mark the cookie Secure, or it won't stick.
+    SECURE_COOKIES = os.environ.get("SECURE_COOKIES", "0") == "1"
+    app.config.update(
+        SESSION_COOKIE_SECURE=SECURE_COOKIES,              # set to True only behind HTTPS/reverse proxy
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE=("None" if SECURE_COOKIES else "Lax"),
+    )
 
     # template globals
     app.context_processor(inject_globals)
@@ -45,6 +53,18 @@ def create_app():
     app.register_blueprint(fulfillment_bp, url_prefix="/fulfillment")
     app.register_blueprint(users_bp, url_prefix="/users")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    from app.modules.auth.models import ensure_user_schema, ensure_first_sysadmin
+    ensure_user_schema()
+    ensure_first_sysadmin()  # reads ADMIN_PASSWORD env var if set (see below)
+
+    @app.get("/debug/whoami")
+    def whoami():
+        from flask import session
+        return {
+            "uid": session.get("uid"),
+            "username": session.get("username")
+        }, 200
 
     @app.route("/")
     def home():

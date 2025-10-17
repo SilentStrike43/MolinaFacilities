@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block body %}
+  {% if title %}<h5 class="mb-3">{{ title }}</h5>{% endif %}
+  <div class="alert alert-info">
+    {{ message or "Use the navigation bar to open a module." }}
+  </div>
+{% endblock %}

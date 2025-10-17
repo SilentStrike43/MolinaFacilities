@@ -1,32 +1,39 @@
 # app/modules/inventory/ledger.py
-from flask import render_template, request, redirect, url_for, flash
-from . import bp
-from .models import _conn
-from app.common.security import require_cap
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from app.modules.auth.security import login_required, require_cap, current_user
+from .models import ensure_schema, list_assets, get_asset, record_movement, list_movements
+
+bp = Blueprint("inventory_ledger", __name__, template_folder="../templates")
 
 @bp.route("/ledger")
-@require_cap("can_asset")
+@login_required
+@require_cap("can_inventory")
 def ledger_home():
-    q = request.args.get("q","").strip()
-    con = _conn()
-    if q:
-        rows = con.execute("""SELECT * FROM asset_ledger
-                              WHERE inventory_id LIKE ?
-                              ORDER BY ts_utc DESC LIMIT 500""", (f"%{q}%",)).fetchall()
-    else:
-        rows = con.execute("""SELECT * FROM asset_ledger ORDER BY ts_utc DESC LIMIT 200""").fetchall()
-    con.close()
-    return render_template("inventory/ledger.html", active="asset", tab="ledger", rows=rows, q=q)
+    ensure_schema()
+    asset_id = request.args.get("asset_id", type=int)
+    assets = list_assets()
+    asset = get_asset(asset_id) if asset_id else None
+    rows = list_movements(asset_id) if asset_id else []
+    return render_template("inventory_ledger.html", active="inventory", assets=assets, asset=asset, rows=rows)
 
-@bp.post("/ledger/check")
-@require_cap("can_asset")
-def ledger_check():
-    f = request.form
-    con = _conn()
-    con.execute("""INSERT INTO asset_ledger(inventory_id, action, qty, actor, note)
-                   VALUES(?,?,?,?,?)""",
-                (f.get("inventory_id"), f.get("action"), int(f.get("qty") or 1),
-                 f.get("actor"), f.get("note")))
-    con.commit(); con.close()
-    flash("Ledger updated.", "success")
-    return redirect(url_for("inventory.ledger_home", q=f.get("inventory_id")))
+@bp.post("/ledger/checkin")
+@login_required
+@require_cap("can_inventory")
+def ledger_checkin():
+    asset_id = int(request.form["asset_id"])
+    qty = int(request.form["qty"])
+    note = (request.form.get("note") or "").strip()
+    record_movement(asset_id, "CHECKIN", qty, (current_user() or {}).get("username",""), note)
+    flash("Checked in.", "success")
+    return redirect(url_for("inventory_ledger.ledger_home", asset_id=asset_id))
+
+@bp.post("/ledger/checkout")
+@login_required
+@require_cap("can_inventory")
+def ledger_checkout():
+    asset_id = int(request.form["asset_id"])
+    qty = int(request.form["qty"])
+    note = (request.form.get("note") or "").strip()
+    record_movement(asset_id, "CHECKOUT", qty, (current_user() or {}).get("username",""), note)
+    flash("Checked out.", "success")
+    return redirect(url_for("inventory_ledger.ledger_home", asset_id=asset_id))

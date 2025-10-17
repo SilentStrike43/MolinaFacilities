@@ -9,6 +9,8 @@ from app.modules.inventory.assets import db as assets_db, ensure_schema as ensur
 asset_ledger_bp = Blueprint("asset_ledger", __name__, url_prefix="/inventory/ledger",
                             template_folder="../../templates")
 
+bp = asset_ledger_bp
+
 # Make sure tables exist before any request
 ensure_assets_schema()
 

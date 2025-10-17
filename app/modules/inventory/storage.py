@@ -1,4 +1,12 @@
 import os, sqlite3
+# app/modules/inventory/storage.py
+# Thin compatibility layer so older imports like "from .storage import inventory_db"
+# keep working after the module-local refactor.
+from .models import (
+    _conn, ensure_schema, inventory_db,
+    next_inventory_id, peek_next_inventory_id,
+    list_assets, get_asset, record_movement, list_movements,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
 os.makedirs(DATA_DIR, exist_ok=True)

@@ -1,9 +1,9 @@
 # app/modules/fulfillment/reports.py
-from flask import render_template, request, send_file
+from flask import Blueprint, render_template, request, send_file
 import io, csv
 from . import bp
-from .models import _conn
-from app.common.security import require_any
+from .storage import _conn
+from app.modules.auth.security import require_any  # was app.common.security
 
 @bp.route("/insights")
 @require_any("can_fulfillment_staff", "can_fulfillment_customer")
