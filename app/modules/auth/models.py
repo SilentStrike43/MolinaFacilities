@@ -25,7 +25,7 @@ def ensure_user_schema() -> None:
         CREATE TABLE IF NOT EXISTS users (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             username     TEXT NOT NULL UNIQUE,
-            pw_hash      TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
             is_admin     INTEGER NOT NULL DEFAULT 0,
             is_sysadmin  INTEGER NOT NULL DEFAULT 0,
             caps         TEXT NOT NULL DEFAULT '{}',
@@ -68,11 +68,11 @@ def create_user(username: str, plain_password: str,
                 caps_json: str | None=None) -> int:
     ensure_user_schema()
     con = _conn()
-    pw_hash = generate_password_hash(plain_password)
+    password_hash = generate_password_hash(plain_password)
     caps = caps_json if caps_json is not None else "{}"
     cur = con.execute(
-        "INSERT INTO users(username, pw_hash, is_admin, is_sysadmin, caps) VALUES (?,?,?,?,?)",
-        (username, pw_hash, int(is_admin), int(is_sysadmin), caps),
+        "INSERT INTO users(username, password_hash, is_admin, is_sysadmin, caps) VALUES (?,?,?,?,?)",
+        (username, password_hash, int(is_admin), int(is_sysadmin), caps),
     )
     con.commit()
     uid = cur.lastrowid
@@ -93,11 +93,15 @@ def get_user_by_username(username: str) -> Optional[sqlite3.Row]:
 
 def set_user_password(user_id: int, new_plain: str) -> None:
     con = _conn()
-    con.execute("UPDATE users SET pw_hash=? WHERE id=?",
+    con.execute("UPDATE users SET password_hash=? WHERE id=?",
                 (generate_password_hash(new_plain), user_id))
     con.commit()
     con.close()
 
-# (optionally handy in login view)
+# FIXED: Use correct column name "password_hash" not "pw_hash"
 def verify_password(row: sqlite3.Row, plain: str) -> bool:
-    return bool(row and check_password_hash(row["pw_hash"], plain))
+    """Verify password against the stored hash."""
+    if not row:
+        return False
+    # The column is "password_hash" not "pw_hash"
+    return check_password_hash(row["password_hash"], plain)

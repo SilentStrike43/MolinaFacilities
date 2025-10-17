@@ -2,23 +2,18 @@
 {% block body %}
 <h5 class="mb-3">Send — Insights</h5>
 
-<form class="row g-2 mb-3" method="get" action="{{ url_for('send.insights') }}">
-  <div class="col-md-3"><input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search (name, tracking)"></div>
-  <div class="col-md-2"><input class="form-control" name="date_from" value="{{ date_from or '' }}" placeholder="From (YYYY-MM-DD)"></div>
-  <div class="col-md-2"><input class="form-control" name="date_to" value="{{ date_to or '' }}" placeholder="To (YYYY-MM-DD)"></div>
-  <div class="col-md-2">
-    <select class="form-select" name="carrier">
-      <option value="">Carrier (any)</option>
-      {% for c in carriers %}<option value="{{ c }}" {{ 'selected' if carrier==c else '' }}>{{ c }}</option>{% endfor %}
-    </select>
+<!-- FIXED: Changed url_for('send.insights') to url_for('send.reports') -->
+<form class="row g-2 mb-3" method="get" action="{{ url_for('send.reports') }}">
+  <div class="col-md-4">
+    <input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search (tracking, status)">
   </div>
   <div class="col-md-2">
     <button class="btn btn-primary w-100" type="submit">Search</button>
   </div>
-  <div class="col-md-1">
-    <a class="btn btn-outline-secondary w-100"
-       href="{{ url_for('send.insights_export', q=q or '', date_from=date_from or '', date_to=date_to or '', carrier=carrier or '') }}">
-      Export
+  <div class="col-md-2 ms-auto">
+    <!-- FIXED: Changed url_for('send.insights_export') to url_for('send.export') -->
+    <a class="btn btn-outline-secondary w-100" href="{{ url_for('send.export', q=q or '') }}">
+      Export CSV
     </a>
   </div>
 </form>
@@ -26,21 +21,38 @@
 <div class="table-responsive">
   <table class="table table-sm table-hover align-middle">
     <thead>
-      <tr><th>UTC</th><th>Submitter</th><th>Type</th><th>Carrier</th><th>Tracking</th><th>To</th></tr>
+      <tr>
+        <th>UTC</th>
+        <th>Check-In ID</th>
+        <th>Package ID</th>
+        <th>Recipient</th>
+        <th>Tracking</th>
+        <th>Status</th>
+        <th>Template</th>
+      </tr>
     </thead>
     <tbody>
     {% for r in rows %}
       <tr>
         <td class="text-nowrap">{{ r.ts_utc }}</td>
-        <td>{{ r.submitter_name }}</td>
-        <td>{{ r.item_type }}</td>
-        <td>{{ r.carrier }}</td>
-        <td class="text-nowrap">{{ r.tracking_number }}</td>
-        <td>{{ r.to_name }}</td>
+        <td>{{ r.checkin_id or '—' }}</td>
+        <td>{{ r.package_id or '—' }}</td>
+        <td>{{ r.recipient_name or '—' }}</td>
+        <td class="text-nowrap">{{ r.tracking_number or '—' }}</td>
+        <td>
+          {% if r.status == 'completed' %}
+            <span class="badge bg-success">Completed</span>
+          {% elif r.status == 'queued' %}
+            <span class="badge bg-secondary">Queued</span>
+          {% else %}
+            <span class="badge bg-info">{{ r.status or 'Unknown' }}</span>
+          {% endif %}
+        </td>
+        <td class="text-truncate" style="max-width:200px;">{{ r.template or '—' }}</td>
       </tr>
     {% endfor %}
     {% if not rows %}
-      <tr><td colspan="6" class="text-center text-muted py-4">No results.</td></tr>
+      <tr><td colspan="7" class="text-center text-muted py-4">No results.</td></tr>
     {% endif %}
     </tbody>
   </table>

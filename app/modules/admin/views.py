@@ -1,12 +1,18 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+# app/modules/admin/views.py
+# Add this helper function near the top after imports
+
+import os
+import json
+import io
+import csv
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file
 
 from app.core.auth import (
     login_required, require_admin, require_sysadmin,
-    record_audit, current_user,
+    record_audit, current_user, get_user_by_id
 )
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
-
 bp = admin_bp
 
 # ----------------------------
@@ -31,10 +37,83 @@ def _save_cfg(cfg: dict) -> None:
     os.replace(tmp, CONFIG_PATH)
 
 # ----------------------------
-# Helpers
+# Database helpers
+# ----------------------------
+def get_db():
+    """Get the auth database connection."""
+    from app.core.auth import _conn
+    return _conn()
+
+def list_users(include_system=True):
+    """List all users from auth database."""
+    con = get_db()
+    if include_system:
+        rows = con.execute("SELECT * FROM users ORDER BY username").fetchall()
+    else:
+        rows = con.execute("SELECT * FROM users WHERE username != 'system' ORDER BY username").fetchall()
+    con.close()
+    return rows
+
+def set_elevated_flags_partial(uid: int, is_admin: int, is_sysadmin: int):
+    """Update only admin/sysadmin flags without touching other fields."""
+    con = get_db()
+    con.execute(
+        "UPDATE users SET is_admin=?, is_sysadmin=? WHERE id=?",
+        (is_admin, is_sysadmin, uid)
+    )
+    con.commit()
+    con.close()
+
+def query_audit(q="", username="", action="", date_from="", date_to="", limit=2000):
+    """Query audit logs with filters."""
+    con = get_db()
+    sql = "SELECT * FROM audit WHERE 1=1"
+    params = []
+    
+    if q:
+        like_q = f"%{q}%"
+        sql += " AND (username LIKE ? OR action LIKE ? OR details LIKE ?)"
+        params.extend([like_q, like_q, like_q])
+    
+    if username:
+        sql += " AND username LIKE ?"
+        params.append(f"%{username}%")
+    
+    if action:
+        sql += " AND action LIKE ?"
+        params.append(f"%{action}%")
+    
+    if date_from:
+        sql += " AND date(ts_utc) >= date(?)"
+        params.append(date_from)
+    
+    if date_to:
+        sql += " AND date(ts_utc) <= date(?)"
+        params.append(date_to)
+    
+    sql += f" ORDER BY ts_utc DESC LIMIT {limit}"
+    rows = con.execute(sql, params).fetchall()
+    con.close()
+    return rows
+
+# ----------------------------
+# Helpers - FIXED: Check is_system from caps JSON
 # ----------------------------
 def _is_system(u) -> bool:
-    return bool(u and u.get("is_system"))
+    """Check if user has the special 'is_system' flag (App Developer)."""
+    if not u:
+        return False
+    
+    # Check caps JSON for is_system flag
+    try:
+        caps = json.loads(u.get("caps", "{}") or "{}")
+        if caps.get("is_system"):
+            return True
+    except:
+        pass
+    
+    # Fallback: check if username is AppAdmin or system
+    return u.get("username") in ("AppAdmin", "system")
 
 # ----------------------------
 # Routes
@@ -43,7 +122,6 @@ def _is_system(u) -> bool:
 @login_required
 @require_admin
 def root():
-    # Keep old behavior: land on fields/settings
     return redirect(url_for("admin.modify_fields"))
 
 # --- Elevated users (Admin/Sysadmin toggles only) ---
@@ -52,12 +130,23 @@ def root():
 @require_admin
 def elevated():
     """
-    - Only System account can grant/revoke SysAdmin.
+    - Only App Developer (system) can grant/revoke SysAdmin.
     - Admins can toggle 'Administrator' flag.
-    - Uses set_elevated_flags_partial to avoid wiping user profile fields.
     """
     cu = current_user()
-    rows = list_users(include_system=False)
+    rows_raw = list_users(include_system=False)
+    
+    # Convert to dicts and add is_system flag for display
+    rows = []
+    for r in rows_raw:
+        row_dict = dict(r)
+        # Check if this user is App Developer
+        try:
+            caps = json.loads(row_dict.get("caps", "{}") or "{}")
+            row_dict["is_system"] = caps.get("is_system", False)
+        except:
+            row_dict["is_system"] = False
+        rows.append(row_dict)
 
     if request.method == "POST":
         uid = int(request.form.get("uid") or 0)
@@ -72,6 +161,7 @@ def elevated():
         # Only App Developer (system) can modify SysAdmin
         if not _is_system(cu):
             make_sys = u["is_sysadmin"]
+            flash("Only App Developer can grant System Administrator privileges.", "warning")
 
         set_elevated_flags_partial(uid, is_admin=make_admin, is_sysadmin=make_sys)
 
@@ -80,7 +170,7 @@ def elevated():
         flash("Elevated privileges updated.", "success")
         return redirect(url_for("admin.elevated"))
 
-    return render_template("admin/elevated.html", active="admin", page="elevated", rows=rows)
+    return render_template("admin/elevated.html", active="admin", page="elevated", rows=rows, cu=cu)
 
 # --- Fields / Settings (BASE_* seeds, etc.) ---
 @admin_bp.route("/fields", methods=["GET", "POST"])
@@ -127,21 +217,21 @@ def audit_csv():
     date_to   = (request.args.get("date_to") or "").strip()
     rows = query_audit(q, username, action, date_from, date_to, limit=100000)
 
-    out = io.StringIO(); w = csv.writer(out)
-    w.writerow(["ts_utc","user_id","username","action","module","details","ip"])
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["ts_utc","username","action","source","details"])
     for r in rows:
-        w.writerow([r["ts_utc"], r["user_id"], r["username"], r["action"], r["module"], r["details"], r["ip"]])
-    mem = io.BytesIO(out.getvalue().encode("utf-8")); mem.seek(0)
+        w.writerow([r["ts_utc"], r["username"], r["action"], r["source"], r["details"]])
+    mem = io.BytesIO(out.getvalue().encode("utf-8"))
+    mem.seek(0)
     return send_file(mem, mimetype="text/csv", as_attachment=True, download_name="audit_logs.csv")
 
-# --- Permissions (module flags; no profile overwrite) ---
+# --- Permissions (module flags) ---
 @admin_bp.route("/permissions", methods=["GET", "POST"])
 @login_required
 @require_admin
 def permissions():
-    """
-    Updates ONLY permission columns to prevent overwriting names/emails, etc.
-    """
+    """Updates ONLY permission columns to prevent overwriting names/emails, etc."""
     rows = list_users(include_system=False)
 
     if request.method == "POST":
@@ -151,35 +241,29 @@ def permissions():
             flash("User not found.", "warning")
             return redirect(url_for("admin.permissions"))
 
-        flags = {
-            "can_send":                 1 if request.form.get("can_send") else 0,
-            "can_asset":                1 if request.form.get("can_asset") else 0,
-            "can_insights":             1 if request.form.get("can_insights") else 0,
-            "can_users":                1 if request.form.get("can_users") else 0,
-            "is_admin":                 1 if request.form.get("is_admin") else 0,
-            "can_fulfillment_staff":    1 if request.form.get("can_fulfillment_staff") else 0,
-            "can_fulfillment_customer": 1 if request.form.get("can_fulfillment_customer") else 0,
-        }
+        # Parse caps from existing user
+        try:
+            caps = json.loads(u["caps"] or "{}")
+        except:
+            caps = {}
 
-        # Update only these columns
+        # Update capability flags
+        caps["can_send"] = bool(request.form.get("can_send"))
+        caps["inventory"] = bool(request.form.get("can_asset"))
+        caps["insights"] = bool(request.form.get("can_insights"))
+        caps["users"] = bool(request.form.get("can_users"))
+        caps["fulfillment_staff"] = bool(request.form.get("can_fulfillment_staff"))
+        caps["fulfillment_customer"] = bool(request.form.get("can_fulfillment_customer"))
+        
+        is_admin = 1 if request.form.get("is_admin") else 0
+
         db = get_db()
-        db.execute(f"""
-            UPDATE users SET
-              can_send=?,
-              can_asset=?,
-              can_insights=?,
-              can_users=?,
-              is_admin=?,
-              can_fulfillment_staff=?,
-              can_fulfillment_customer=?,
-              updated_at=(strftime('%Y-%m-%dT%H:%M:%SZ','now'))
-            WHERE id=?
-        """, (
-            flags["can_send"], flags["can_asset"], flags["can_insights"], flags["can_users"],
-            flags["is_admin"], flags["can_fulfillment_staff"], flags["can_fulfillment_customer"],
-            uid
-        ))
+        db.execute(
+            "UPDATE users SET caps=?, is_admin=? WHERE id=?",
+            (json.dumps(caps), is_admin, uid)
+        )
         db.commit()
+        db.close()
 
         record_audit(current_user(), "update_permissions", "admin", f"Updated permissions for {u['username']}")
         flash("Permissions updated.", "success")

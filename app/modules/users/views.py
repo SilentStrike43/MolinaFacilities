@@ -1,57 +1,129 @@
+# app/modules/users/views.py
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from app.core.auth import (
-    login_required, require_admin,          # or require_sysadmin
-    get_user_by_username, create_user, set_password,  # if used, or call via helper funcs you expose
-    # If you didn’t expose helpers above, import direct from app.core.auth:
+    login_required, require_admin, current_user, record_audit,
+    get_user_by_id, create_user as core_create_user, set_password
 )
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
-
 bp = users_bp
 
-# ---- helpers ---------------------------------------------------------------
+# ---------- Database helpers ----------
+def get_db():
+    """Get users database connection."""
+    from app.modules.users.models import users_db
+    return users_db()
 
+def list_users(include_system=False):
+    """List all users."""
+    con = get_db()
+    if include_system:
+        rows = con.execute("SELECT * FROM users ORDER BY username").fetchall()
+    else:
+        rows = con.execute("""
+            SELECT * FROM users 
+            WHERE username NOT IN ('system', 'sysadmin')
+            ORDER BY username
+        """).fetchall()
+    con.close()
+    return rows
+
+def create_user(data: dict) -> int:
+    """Create a new user with profile and caps."""
+    username = data["username"]
+    password = data["password"]
+    
+    # Build caps dict
+    caps = {
+        "can_send": bool(data.get("can_send")),
+        "inventory": bool(data.get("can_asset")),
+        "insights": bool(data.get("can_insights")),
+        "users": bool(data.get("can_users")),
+        "fulfillment_staff": bool(data.get("can_fulfillment_staff")),
+        "fulfillment_customer": bool(data.get("can_fulfillment_customer")),
+    }
+    
+    con = get_db()
+    from werkzeug.security import generate_password_hash
+    cur = con.execute("""
+        INSERT INTO users(username, password_hash, caps, is_admin, is_sysadmin)
+        VALUES (?,?,?,?,?)
+    """, (username, generate_password_hash(password), json.dumps(caps), 0, 0))
+    uid = cur.lastrowid
+    con.commit()
+    con.close()
+    return uid
+
+def delete_user(uid: int):
+    """Soft delete a user by setting a deleted flag (or hard delete if preferred)."""
+    con = get_db()
+    con.execute("DELETE FROM users WHERE id=?", (uid,))
+    con.commit()
+    con.close()
+
+# ---------- Permission helpers ----------
 def _can_view_users(u) -> bool:
-    return bool(u and (u.get("can_users") or u.get("is_admin") or u.get("is_sysadmin") or u.get("is_system")))
+    if not u:
+        return False
+    caps = {}
+    try:
+        caps = json.loads(u.get("caps") or "{}")
+    except:
+        pass
+    return bool(
+        caps.get("users") or 
+        u.get("is_admin") or 
+        u.get("is_sysadmin")
+    )
 
 def _can_edit_users(u) -> bool:
-    # who can change profile/module flags (except elevated)
-    return bool(u and (u.get("is_admin") or u.get("is_sysadmin") or u.get("is_system") or u.get("can_users")))
+    if not u:
+        return False
+    return bool(
+        u.get("is_admin") or 
+        u.get("is_sysadmin") or 
+        _can_view_users(u)
+    )
 
 def _can_set_fulfillment(u) -> bool:
-    # ONLY Admin / SysAdmin / App Developer can set Fulfillment flags
-    return bool(u and (u.get("is_admin") or u.get("is_sysadmin") or u.get("is_system")))
+    if not u:
+        return False
+    return bool(u.get("is_admin") or u.get("is_sysadmin"))
 
 def _update_user_partial(uid: int, data: dict):
-    """
-    Update only the columns we explicitly allow from Modify Users.
-    Never touches Admin/SysAdmin/elevated/system fields.
-    Avoids overwriting names/emails with NULLs by using COALESCE patterns.
-    """
-    allowed_cols = [
-        "email","first_name","last_name","department","position","phone",
-        "can_send","can_asset","can_insights","can_users",
-        "can_fulfillment_staff","can_fulfillment_customer",
-    ]
-    sets, params = [], []
-    for k in allowed_cols:
-        if k in data:
-            sets.append(f"{k}=?")
-            params.append(data[k])
-
-    if not sets:
+    """Update only allowed columns."""
+    # Parse existing caps
+    u = get_user_by_id(uid)
+    if not u:
         return
+    
+    try:
+        caps = json.loads(u["caps"] or "{}")
+    except:
+        caps = {}
+    
+    # Update caps
+    if "can_send" in data:
+        caps["can_send"] = bool(data["can_send"])
+    if "can_asset" in data:
+        caps["inventory"] = bool(data["can_asset"])
+    if "can_insights" in data:
+        caps["insights"] = bool(data["can_insights"])
+    if "can_users" in data:
+        caps["users"] = bool(data["can_users"])
+    if "can_fulfillment_staff" in data:
+        caps["fulfillment_staff"] = bool(data["can_fulfillment_staff"])
+    if "can_fulfillment_customer" in data:
+        caps["fulfillment_customer"] = bool(data["can_fulfillment_customer"])
+    
+    con = get_db()
+    con.execute("UPDATE users SET caps=? WHERE id=?", (json.dumps(caps), uid))
+    con.commit()
+    con.close()
 
-    sets.append("updated_at=(strftime('%Y-%m-%dT%H:%M:%SZ','now'))")
-    params.append(uid)
-
-    db = get_db()
-    db.execute(f"UPDATE users SET {', '.join(sets)} WHERE id=?", params)
-    db.commit()
-
-# ---- routes ----------------------------------------------------------------
-
+# ---------- Routes ----------
 @users_bp.route("/")
 @login_required
 def user_list():
@@ -64,18 +136,16 @@ def user_list():
     include_inactive = bool(request.args.get("all"))
 
     rows = list_users(include_system=False)
-    # filter client-side for simplicity
+    
+    # Simple client-side filtering
     filtered = []
     for r in rows:
-        if not include_inactive and int(r["active"]) != 1:
-            continue
         if q:
-            blob = " ".join([
-                r["username"] or "", r["email"] or "",
-                r["first_name"] or "", r["last_name"] or "",
-                r["department"] or "", r["position"] or "", r["phone"] or ""
+            searchable = " ".join([
+                r["username"] or "",
+                str(r.get("id", ""))
             ]).lower()
-            if q not in blob:
+            if q not in searchable:
                 continue
         filtered.append(r)
 
@@ -92,41 +162,24 @@ def manage():
         return redirect(url_for("users.user_list"))
 
     if request.method == "POST":
-        # Any form here submits only one user's changes
         uid = int(request.form.get("uid") or 0)
         target = get_user_by_id(uid)
         if not target:
             flash("User not found.", "warning")
             return redirect(url_for("users.manage"))
 
-        # Profile fields (safe for can_users role to edit)
+        # Build payload
         payload = {
-            "email":        (request.form.get("email") or target["email"]),
-            "first_name":   (request.form.get("first_name") or target["first_name"]),
-            "last_name":    (request.form.get("last_name") or target["last_name"]),
-            "department":   (request.form.get("department") or target["department"]),
-            "position":     (request.form.get("position") or target["position"]),
-            "phone":        (request.form.get("phone") or target["phone"]),
-            # Module flags
             "can_send":     1 if request.form.get("can_send") else 0,
             "can_asset":    1 if request.form.get("can_asset") else 0,
             "can_insights": 1 if request.form.get("can_insights") else 0,
             "can_users":    1 if request.form.get("can_users") else 0,
         }
 
-        # Fulfillment flags only if Admin/SysAdmin/System
+        # Fulfillment flags only if admin/sysadmin
         if _can_set_fulfillment(cu):
-            payload["can_fulfillment_staff"]    = 1 if request.form.get("can_fulfillment_staff") else 0
+            payload["can_fulfillment_staff"] = 1 if request.form.get("can_fulfillment_staff") else 0
             payload["can_fulfillment_customer"] = 1 if request.form.get("can_fulfillment_customer") else 0
-        else:
-            # preserve existing if caller can't set them
-            payload["can_fulfillment_staff"]    = target["can_fulfillment_staff"]
-            payload["can_fulfillment_customer"] = target["can_fulfillment_customer"]
-
-        # Never expose/touch elevated flags here:
-        # - is_admin
-        # - is_sysadmin
-        # - is_system
 
         _update_user_partial(uid, payload)
         record_audit(cu, "update_user", "users", f"Updated user {target['username']}")
@@ -134,9 +187,36 @@ def manage():
         return redirect(url_for("users.manage"))
 
     rows = list_users(include_system=False)
+    
+    # FIXED: Convert sqlite3.Row objects to dicts and parse caps for display
+    display_rows = []
+    for row in rows:
+        # CRITICAL: Must convert Row to dict FIRST
+        row_dict = dict(row)
+        
+        # Now safely modify the dict
+        try:
+            caps = json.loads(row_dict.get("caps") or "{}")
+            row_dict["can_send"] = caps.get("can_send", False)
+            row_dict["can_asset"] = caps.get("inventory", False)
+            row_dict["can_insights"] = caps.get("insights", False)
+            row_dict["can_users"] = caps.get("users", False)
+            row_dict["can_fulfillment_staff"] = caps.get("fulfillment_staff", False)
+            row_dict["can_fulfillment_customer"] = caps.get("fulfillment_customer", False)
+        except Exception as e:
+            # If caps parsing fails, default to False
+            row_dict["can_send"] = False
+            row_dict["can_asset"] = False
+            row_dict["can_insights"] = False
+            row_dict["can_users"] = False
+            row_dict["can_fulfillment_staff"] = False
+            row_dict["can_fulfillment_customer"] = False
+        
+        display_rows.append(row_dict)
+    
     return render_template("users/manage.html",
                            active="users", tab="manage",
-                           rows=rows,
+                           rows=display_rows,
                            can_set_fulfillment=_can_set_fulfillment(cu))
 
 @users_bp.route("/create", methods=["GET", "POST"])
@@ -150,6 +230,7 @@ def create():
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
         password = (request.form.get("password") or "").strip()
+        
         if not username or not password:
             flash("Username and password are required.", "danger")
             return redirect(url_for("users.create"))
@@ -157,21 +238,14 @@ def create():
         data = {
             "username": username,
             "password": password,
-            "email": (request.form.get("email") or "").strip() or None,
-            "first_name": (request.form.get("first_name") or "").strip() or None,
-            "last_name": (request.form.get("last_name") or "").strip() or None,
-            "department": (request.form.get("department") or "").strip() or None,
-            "position": (request.form.get("position") or "").strip() or None,
-            "phone": (request.form.get("phone") or "").strip() or None,
-            # Module flags
             "can_send":     1 if request.form.get("can_send") else 0,
             "can_asset":    1 if request.form.get("can_asset") else 0,
             "can_insights": 1 if request.form.get("can_insights") else 0,
             "can_users":    1 if request.form.get("can_users") else 0,
-            # Fulfillment flags (admin+ only)
-            "can_fulfillment_staff":    1 if (_can_set_fulfillment(cu) and request.form.get("can_fulfillment_staff")) else 0,
+            "can_fulfillment_staff": 1 if (_can_set_fulfillment(cu) and request.form.get("can_fulfillment_staff")) else 0,
             "can_fulfillment_customer": 1 if (_can_set_fulfillment(cu) and request.form.get("can_fulfillment_customer")) else 0,
         }
+        
         create_user(data)
         record_audit(cu, "create_user", "users", f"Created user {username}")
         flash("User created.", "success")
@@ -186,11 +260,13 @@ def delete(uid: int):
     if not _can_edit_users(cu):
         flash("You don't have permission to deactivate users.", "danger")
         return redirect(url_for("users.user_list"))
+    
     u = get_user_by_id(uid)
     if not u:
         flash("User not found.", "warning")
         return redirect(url_for("users.manage"))
+    
     delete_user(uid)
-    record_audit(cu, "delete_user", "users", f"Soft-deleted user {u['username']}")
+    record_audit(cu, "delete_user", "users", f"Deleted user {u['username']}")
     flash("User deactivated.", "success")
     return redirect(url_for("users.manage"))

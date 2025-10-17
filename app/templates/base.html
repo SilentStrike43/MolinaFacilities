@@ -92,6 +92,8 @@
   {% set cu = (g._cu if g and g._cu else None) %}
   {% set elevated = cu and (cu.is_admin or cu.is_sysadmin or cu.is_system) %}
 
+  <!-- In app/templates/base.html, find the badge section (around line 70-90) and replace with: -->
+
   <!-- Top bar -->
   <div class="topbar">
     <button id="toggleSidebar" class="btn btn-sm btn-outline-light" aria-label="Toggle menu">
@@ -107,24 +109,32 @@
       <!-- Dark mode -->
       <button id="themeToggle" class="btn btn-sm btn-outline-light" type="button" title="Toggle dark mode">🌓</button>
 
-      <!-- Role badges with precedence -->
-      <div class="d-flex align-items-center gap-2">
-        {% if cu %}
-          {% if cu.is_system %}
-            <span class="badge-perm badge-dev">App Developer</span>
-          {% elif cu.is_sysadmin %}
-            <span class="badge-perm badge-sysadmin">Systems Administrator</span>
-          {% elif cu.is_admin %}
-            <span class="badge-perm badge-admin">Administrator</span>
-          {% else %}
-            {% if cu.can_fulfillment_customer or cu.can_fulfillment_staff %}<span class="badge-perm badge-fulfill">Fulfillment</span>{% endif %}
-            {% if cu.can_insights %}<span class="badge-perm badge-insights">Insights</span>{% endif %}
-            {% if cu.can_send %}<span class="badge-perm badge-send">Send</span>{% endif %}
-            {% if cu.can_asset %}<span class="badge-perm badge-asset">Asset</span>{% endif %}
-            {% if cu.can_users %}<span class="badge-perm badge-users">Users</span>{% endif %}
+    <!-- Role badges with precedence -->
+    <div class="d-flex align-items-center gap-2">
+      {% if cu %}
+        {% set is_system = false %}
+        {% if cu.caps %}
+          {% set caps_dict = cu.caps if cu.caps is mapping else {} %}
+          {% if caps_dict.is_system or cu.username in ['AppAdmin', 'system'] %}
+            {% set is_system = true %}
           {% endif %}
         {% endif %}
-      </div>
+        
+        {% if is_system %}
+          <span class="badge-perm badge-dev">App Developer</span>
+        {% elif cu.is_sysadmin %}
+          <span class="badge-perm badge-sysadmin">Systems Administrator</span>
+        {% elif cu.is_admin %}
+          <span class="badge-perm badge-admin">Administrator</span>
+        {% else %}
+          {% if cu.can_fulfillment_customer or cu.can_fulfillment_staff %}<span class="badge-perm badge-fulfill">Fulfillment</span>{% endif %}
+          {% if cu.can_insights %}<span class="badge-perm badge-insights">Insights</span>{% endif %}
+          {% if cu.can_send %}<span class="badge-perm badge-send">Send</span>{% endif %}
+          {% if cu.can_asset %}<span class="badge-perm badge-asset">Asset</span>{% endif %}
+          {% if cu.can_users %}<span class="badge-perm badge-users">Users</span>{% endif %}
+        {% endif %}
+      {% endif %}
+    </div>
 
       <!-- User menu -->
       <div class="dropdown">
@@ -178,7 +188,7 @@
         <a class="nav-link {{ 'active' if active=='fulfillment' and page=='archive' else '' }}" href="{{ url_for('fulfillment.archive') }}">
           <span class="icon"><i class="bi bi-archive"></i></span><span class="label">Service Archive</span>
         </a>
-        {% if 'reports_f' in current_app.blueprints %}
+        {% if False %}  {# Fulfillment reports blueprint not yet implemented #}
         <a class="nav-link {{ 'active' if active=='insights' and tab=='fulfillment' else '' }}" href="{{ url_for('reports_f.fulfillment') }}">
           <span class="icon"><i class="bi bi-bar-chart-line"></i></span><span class="label">Insights (Fulfillment)</span>
         </a>
@@ -193,7 +203,7 @@
         <a class="nav-link {{ 'active' if active=='asset' else '' }}" href="{{ url_for('inventory.asset') }}">
           <span class="icon"><i class="bi bi-box-seam"></i></span><span class="label">Asset</span>
         </a>
-        <a class="nav-link {{ 'active' if active=='asset-ledger' else '' }}" href="{{ url_for('inventory.ledger') }}">
+       <a class="nav-link {{ 'active' if active=='asset-ledger' else '' }}" href="{{ url_for('asset_ledger.ledger_home') }}">
           <span class="icon"><i class="bi bi-clipboard-check"></i></span><span class="label">Asset Ledger</span>
         </a>
         <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">

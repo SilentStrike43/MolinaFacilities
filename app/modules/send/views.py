@@ -1,23 +1,19 @@
-# DO NOT create a Blueprint here
-from flask import render_template
-from . import bp                      # <— this was missing
+# app/modules/send/views.py
+import datetime
+from flask import render_template, request, redirect, url_for, flash
 
-from app.modules.auth.security import require_cap
+from . import bp  # Import bp from __init__.py - DO NOT redefine it
 
-@bp.get("/")
-@require_cap("can_send")
-def page():
-    return render_template("mail/index.html", active="send")
+from app.core.auth import login_required, require_cap, current_user, record_audit
 
-@bp.route("/insights")
-def insights():
-    # temporary: route exists so navbar works; send users to Tracking for now
-    return redirect(url_for("send.tracking"))
-
+from .models import (
+    ensure_schema, 
+    peek_next_checkin_id, next_checkin_id,
+    peek_next_package_id, next_package_id,
+    PACKAGE_PREFIX
+)
 from .printing import drop_to_bartender
 from .providers import guess_carrier, normalize_scanned
-
-bp = Blueprint("send", __name__, template_folder="../templates")
 
 PACKAGE_TYPES = ["Box","Envelope","Packs","Tubes","Certified","Sensitive","Critical"]
 
@@ -26,7 +22,7 @@ PACKAGE_TYPES = ["Box","Envelope","Packs","Tubes","Certified","Sensitive","Criti
 @login_required
 @require_cap("can_send")
 def page():
-    ensure_schema()  # make sure our DB exists
+    ensure_schema()
     today = datetime.date.today().isoformat()
     default_pkg_type = "Box"
     suggested_checkin = peek_next_checkin_id()
@@ -59,12 +55,14 @@ def page():
                 "Printer":  ""
             }
             job = drop_to_bartender(payload, hint="manifest")
-            flashmsg = (f"Queued: JSON={job['json_file']}", True)
+            record_audit(current_user(), "print_label", "send", 
+                        f"CheckInID={checkin_id}, PackageID={package_id}")
+            flashmsg = (f"Label queued successfully.", True)
             suggested_checkin = int(checkin_id) + 1
             suggested_package = peek_next_package_id(pkg_type)
 
     return render_template(
-        "mail/index.html",
+        "send/index.html",
         active="send",
         flashmsg=flashmsg,
         today=today,
@@ -79,7 +77,14 @@ def page():
 @login_required
 @require_cap("can_send")
 def tracking():
-    ctx = {"active": "send-tracking", "result": None, "error": None, "external_url": None, "carrier": None}
+    ctx = {
+        "active": "send-tracking", 
+        "result": None, 
+        "error": None, 
+        "external_url": None, 
+        "carrier": None
+    }
+    
     if request.method == "POST":
         raw = (request.form.get("TrackingNumber") or "").strip()
         if not raw:
@@ -91,6 +96,8 @@ def tracking():
             t = normalized.replace(" ", "")
             ctx["result"] = payload
             ctx["carrier"] = carrier
+            
+            # Generate carrier URLs
             if carrier.lower() == "ups":
                 ctx["external_url"] = f"https://www.ups.com/track?loc=en_US&tracknum={t}"
             elif carrier.lower() == "fedex":
@@ -101,4 +108,5 @@ def tracking():
                 ctx["external_url"] = f"https://www.dhl.com/global-en/home/tracking/tracking-express.html?submit=1&tracking-id={t}"
             else:
                 ctx["external_url"] = f"https://www.google.com/search?q={t}+tracking"
-    return render_template("mail/tracking.html", **ctx)
+    
+    return render_template("send/tracking.html", **ctx)
