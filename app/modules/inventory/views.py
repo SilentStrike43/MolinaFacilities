@@ -1,6 +1,4 @@
-# app/modules/inventory/views.py - DEBUGGING VERSION
-# Replace the queue_asset_label function with this version that has detailed logging
-
+# app/modules/inventory/views.py - COMPLETE WITH CATEGORY SYSTEM
 import os
 import json
 import datetime
@@ -17,40 +15,244 @@ from app.modules.inventory.assets import db as assets_db, ensure_schema as ensur
 inventory_bp = Blueprint("inventory", __name__, url_prefix="/inventory", template_folder="templates")
 bp = inventory_bp
 
-# Set up logging
 logger = logging.getLogger(__name__)
-
-ITEM_TYPES = ["Part","Equipment","Sensitive","Supplies","Accessory","Critical"]
 
 # Ensure schemas exist
 ensure_schema()
 ensure_assets_schema()
 
-# ---------- Helper functions ----------
-def _peek_next_inventory_id() -> int:
-    """Suggest the next InventoryID based on max in assets table."""
-    con = assets_db()
-    try:
-        row = con.execute("SELECT COALESCE(MAX(id), 10000000) + 1 AS nxt FROM assets").fetchone()
-        nxt = row["nxt"] if row else 10000001
-    except sqlite3.OperationalError:
-        nxt = 10000001
-    finally:
-        con.close()
-    return int(nxt)
+# ---------- CATEGORY AND SKU SYSTEM ----------
+INVENTORY_CATEGORIES = {
+    "100": {
+        "name": "Electronics",
+        "prefix": "100",
+        "subcategories": {
+            "101": "Monitors",
+            "102": "Laptops",
+            "103": "Desktops",
+            "104": "Tablets",
+            "105": "Smartphones",
+            "106": "Printers",
+            "107": "Scanners",
+            "108": "Projectors",
+            "109": "Cameras",
+            "110": "Accessories"
+        }
+    },
+    "200": {
+        "name": "Automotive Parts",
+        "prefix": "200",
+        "subcategories": {
+            "201": "Engine Components",
+            "202": "Brake Systems",
+            "203": "Electrical Parts",
+            "204": "Filters",
+            "205": "Belts and Hoses",
+            "206": "Lighting",
+            "207": "Body Parts",
+            "208": "Tools",
+            "209": "Fluids",
+            "210": "General"
+        }
+    },
+    "300": {
+        "name": "Medical Equipment",
+        "prefix": "300",
+        "subcategories": {
+            "301": "Diagnostic Equipment",
+            "302": "Patient Monitoring",
+            "303": "Surgical Instruments",
+            "304": "Lab Equipment",
+            "305": "Mobility Aids",
+            "306": "PPE",
+            "307": "First Aid Supplies",
+            "308": "Sterilization Equipment",
+            "309": "Examination Tools",
+            "310": "General Medical"
+        }
+    },
+    "400": {
+        "name": "Clothing and Apparel",
+        "prefix": "400",
+        "subcategories": {
+            "401": "Uniforms",
+            "402": "Safety Apparel",
+            "403": "Corporate Wear",
+            "404": "Outerwear",
+            "405": "Footwear",
+            "406": "Accessories",
+            "407": "Headwear",
+            "408": "Promotional Apparel",
+            "409": "Seasonal",
+            "410": "General Apparel"
+        }
+    },
+    "500": {
+        "name": "Company Memorabilia",
+        "prefix": "500",
+        "subcategories": {
+            "501": "Awards and Trophies",
+            "502": "Branded Merchandise",
+            "503": "Gifts",
+            "504": "Promotional Items",
+            "505": "Corporate Art",
+            "506": "Historical Items",
+            "507": "Event Materials",
+            "508": "Marketing Collateral",
+            "509": "Signage",
+            "510": "General Memorabilia"
+        }
+    },
+    "600": {
+        "name": "Office Supplies",
+        "prefix": "600",
+        "subcategories": {
+            "601": "Writing Instruments",
+            "602": "Paper Products",
+            "603": "Filing and Storage",
+            "604": "Desk Accessories",
+            "605": "Binding and Laminating",
+            "606": "Presentation Supplies",
+            "607": "Cleaning Supplies",
+            "608": "Breakroom Supplies",
+            "609": "Shipping Supplies",
+            "610": "General Office"
+        }
+    },
+    "700": {
+        "name": "Furniture",
+        "prefix": "700",
+        "subcategories": {
+            "701": "Desks",
+            "702": "Chairs",
+            "703": "Tables",
+            "704": "Filing Cabinets",
+            "705": "Shelving",
+            "706": "Conference Room",
+            "707": "Reception Furniture",
+            "708": "Storage Units",
+            "709": "Modular Furniture",
+            "710": "General Furniture"
+        }
+    },
+    "800": {
+        "name": "Hardware Supplies and Materials",
+        "prefix": "800",
+        "subcategories": {
+            "801": "Fasteners",
+            "802": "Tools",
+            "803": "Building Materials",
+            "804": "Electrical Supplies",
+            "805": "Plumbing Supplies",
+            "806": "HVAC Components",
+            "807": "Safety Equipment",
+            "808": "Maintenance Supplies",
+            "809": "Construction Equipment",
+            "810": "General Hardware"
+        }
+    }
+}
 
+def get_all_categories_flat():
+    """Get a flat list of all categories and subcategories for dropdowns."""
+    categories = []
+    for main_key, main_cat in INVENTORY_CATEGORIES.items():
+        # Add main category
+        categories.append({
+            "value": main_key,
+            "label": f"{main_key} - {main_cat['name']}",
+            "prefix": main_key,
+            "is_main": True
+        })
+        # Add subcategories
+        for sub_key, sub_name in main_cat["subcategories"].items():
+            categories.append({
+                "value": sub_key,
+                "label": f"  └─ {sub_key} - {sub_name}",
+                "prefix": sub_key,
+                "is_main": False
+            })
+    return categories
+
+def generate_next_sku(category_prefix: str) -> str:
+    """
+    Generate the next SKU for a given category prefix.
+    Format: {PREFIX}-{7-digit-number}
+    Example: 101-0000001, 101-0000002, etc.
+    """
+    con = assets_db()
+    
+    # Find the highest SKU number for this prefix
+    pattern = f"{category_prefix}-%"
+    row = con.execute("""
+        SELECT sku FROM assets 
+        WHERE sku LIKE ? 
+        ORDER BY sku DESC 
+        LIMIT 1
+    """, (pattern,)).fetchone()
+    
+    con.close()
+    
+    if row and row["sku"]:
+        # Extract the number part and increment
+        try:
+            parts = row["sku"].split("-")
+            if len(parts) == 2:
+                current_num = int(parts[1])
+                next_num = current_num + 1
+            else:
+                next_num = 1
+        except (ValueError, IndexError):
+            next_num = 1
+    else:
+        next_num = 1
+    
+    # Format: PREFIX-NNNNNNN (7 digits)
+    return f"{category_prefix}-{next_num:07d}"
+
+def get_category_info(sku: str) -> dict:
+    """Get category information from SKU."""
+    if not sku or "-" not in sku:
+        return {"category": "Unknown", "subcategory": "Unknown"}
+    
+    prefix = sku.split("-")[0]
+    
+    # Check if it's a subcategory
+    for main_key, main_cat in INVENTORY_CATEGORIES.items():
+        if prefix in main_cat["subcategories"]:
+            return {
+                "category": main_cat["name"],
+                "subcategory": main_cat["subcategories"][prefix],
+                "prefix": prefix
+            }
+        elif prefix == main_key:
+            return {
+                "category": main_cat["name"],
+                "subcategory": "General",
+                "prefix": prefix
+            }
+    
+    return {"category": "Unknown", "subcategory": "Unknown", "prefix": prefix}
+
+# ---------- Helper functions ----------
 def create_asset(data: dict) -> int:
     """Create a new asset in the master table."""
     con = assets_db()
     cur = con.execute("""
-        INSERT INTO assets(sku, product, uom, location, qty_on_hand)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO assets(sku, product, uom, location, qty_on_hand, manufacturer, part_number, serial_number, pii, notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         data.get("sku", ""),
         data.get("product", ""),
         data.get("uom", "EA"),
         data.get("location", ""),
-        int(data.get("qty_on_hand", 0))
+        int(data.get("qty_on_hand", 0)),
+        data.get("manufacturer") or "",
+        data.get("part_number") or "",
+        data.get("serial_number") or "",
+        data.get("pii") or "",
+        data.get("notes") or "",
+        data.get("status", "active")
     ))
     asset_id = cur.lastrowid
     con.commit()
@@ -60,22 +262,17 @@ def create_asset(data: dict) -> int:
 def record_initial_checkin(asset_id: int, qty: int, username: str, note: str = "Initial inventory"):
     """Record initial check-in to ledger and log to insights."""
     con = assets_db()
-    
-    # Record in asset_ledger
     con.execute("""
         INSERT INTO asset_ledger(asset_id, action, qty, username, note)
         VALUES (?, 'CHECKIN', ?, ?, ?)
     """, (asset_id, qty, username, note))
-    
     con.commit()
     con.close()
     
-    # Also log to insights (inventory_reports table)
     log_to_insights(asset_id, "CHECKIN", qty, username, note)
 
 def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: str = ""):
     """Log asset movements to insights for reporting."""
-    # Get asset details
     con = assets_db()
     asset = con.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
     con.close()
@@ -83,259 +280,190 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
     if not asset:
         return
     
-    # Log to inventory_reports table
+    # Convert Row to dict for easier access
+    asset_dict = dict(asset)
+    cat_info = get_category_info(asset_dict.get("sku", ""))
+    
     con = inventory_db()
     con.execute("""
         INSERT INTO inventory_reports(
-            inventory_id, item_type, manufacturer, product_name,
-            submitter_name, notes, count, location, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            checkin_date, inventory_id, item_type, manufacturer, product_name,
+            submitter_name, notes, part_number, serial_number, count, location, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
+        datetime.date.today().isoformat(),
         asset_id,
-        "Asset Movement",
-        "",
-        asset["product"] or "",
+        f"{cat_info['category']} - {cat_info['subcategory']}",
+        asset_dict.get("manufacturer") or "",
+        asset_dict.get("product") or "",
         username,
         f"{action}: {note}" if note else action,
+        asset_dict.get("part_number") or "N/A",
+        asset_dict.get("serial_number") or "N/A",
         qty,
-        asset["location"] or "",
+        asset_dict.get("location") or "",
         "completed"
     ))
     con.commit()
     con.close()
 
 def queue_asset_label(data: dict):
-    """
-    Queue an asset label for BarTender printing.
-    DEBUGGING VERSION with extensive error handling and logging.
-    """
+    """Queue an asset label for BarTender printing."""
     try:
-        # Use company's BarTender drop folder
         BARTENDER_DROP = r"C:\BTManifest\BTInvDrop"
+        os.makedirs(BARTENDER_DROP, exist_ok=True)
         
-        # CHECK 1: Can we create the directory?
-        try:
-            os.makedirs(BARTENDER_DROP, exist_ok=True)
-            logger.info(f"BarTender drop folder ready: {BARTENDER_DROP}")
-            print(f"[DEBUG] BarTender drop folder: {BARTENDER_DROP}")
-        except Exception as e:
-            logger.error(f"Failed to create BarTender folder: {e}")
-            print(f"[ERROR] Cannot create folder {BARTENDER_DROP}: {e}")
-            raise
-        
-        # CHECK 2: Is the folder writable?
-        if not os.access(BARTENDER_DROP, os.W_OK):
-            error_msg = f"BarTender folder not writable: {BARTENDER_DROP}"
-            logger.error(error_msg)
-            print(f"[ERROR] {error_msg}")
-            raise PermissionError(error_msg)
-        
-        # Generate filename
         import uuid
         ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
         filename = f"{ts}_asset_{uuid.uuid4().hex[:8]}.json"
         filepath = os.path.join(BARTENDER_DROP, filename)
         
-        print(f"[DEBUG] Will create file: {filepath}")
-        
-        # BarTender payload - MATCHES YOUR INTEGRATION BUILDER FIELDS
+        # BarTender payload
         payload = {
             "CheckInDate": data.get("CheckInDate", datetime.date.today().isoformat()),
             "InventoryID": data.get("InventoryID", ""),
-            "ItemType": data.get("ItemType", "Asset"),
+            "SKU": data.get("SKU", ""),
+            "ItemType": data.get("ItemType", ""),
             "Manufacturer": data.get("Manufacturer", ""),
             "ProductName": data.get("ProductName", ""),
-            "SubmitterName": data.get("SubmitterName", "System")
+            "SubmitterName": data.get("SubmitterName", "System"),
+            "Location": data.get("Location", ""),
+            "PartNumber": data.get("PartNumber", "N/A"),
+            "SerialNumber": data.get("SerialNumber", "N/A"),
+            "PII": data.get("PII", "")
         }
         
-        print(f"[DEBUG] Payload: {json.dumps(payload, indent=2)}")
-        logger.info(f"Creating label for Asset {payload['InventoryID']}: {payload['ProductName']}")
-        
-        # CHECK 3: Can we write the file?
         temp_path = filepath + ".tmp"
-        try:
-            with open(temp_path, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-            print(f"[DEBUG] Temp file written: {temp_path}")
-        except Exception as e:
-            logger.error(f"Failed to write temp file: {e}")
-            print(f"[ERROR] Cannot write temp file: {e}")
-            raise
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(temp_path, filepath)
         
-        # CHECK 4: Can we rename the file?
-        try:
-            os.replace(temp_path, filepath)
-            print(f"[DEBUG] File created successfully: {filepath}")
-            logger.info(f"Label file created: {filename}")
-        except Exception as e:
-            logger.error(f"Failed to rename file: {e}")
-            print(f"[ERROR] Cannot rename file: {e}")
-            raise
-        
-        # CHECK 5: Does the file exist?
-        if os.path.exists(filepath):
-            file_size = os.path.getsize(filepath)
-            print(f"[SUCCESS] File exists! Size: {file_size} bytes")
-            logger.info(f"Verified: {filename} ({file_size} bytes)")
-        else:
-            print(f"[WARNING] File doesn't exist after creation!")
-            logger.warning(f"File not found after creation: {filepath}")
-        
-        # Log to database
-        try:
-            con = inventory_db()
-            con.execute("""
-                INSERT INTO inventory_reports(
-                    checkin_date, inventory_id, item_type, manufacturer, product_name,
-                    submitter_name, notes, status, payload
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                payload["CheckInDate"],
-                payload["InventoryID"],
-                payload["ItemType"],
-                payload["Manufacturer"],
-                payload["ProductName"],
-                payload["SubmitterName"],
-                f"Asset label queued: {filename}",
-                "queued",
-                json.dumps(payload, ensure_ascii=False)
-            ))
-            con.commit()
-            con.close()
-            print(f"[DEBUG] Database log successful")
-        except Exception as e:
-            logger.error(f"Failed to log to database: {e}")
-            print(f"[ERROR] Database logging failed: {e}")
-            # Don't fail the whole operation if just logging fails
-        
+        logger.info(f"Label queued: {filename}")
         return filepath
         
     except Exception as e:
         logger.exception("queue_asset_label failed")
-        print(f"[FATAL ERROR] queue_asset_label failed: {e}")
-        import traceback
-        traceback.print_exc()
-        # Re-raise so the calling code knows it failed
         raise
 
 # ---------- Routes ----------
-
 @inventory_bp.route("/asset", methods=["GET", "POST"])
 @login_required
 @require_asset
 def asset():
-    """Asset - Add New Asset (prints label and creates in ledger)."""
+    """Asset - Add New Asset with category-based SKU system."""
     cu = current_user()
     today = datetime.date.today().isoformat()
-    next_id = _peek_next_inventory_id()
     flashmsg = None
-
+    
+    categories = get_all_categories_flat()
+    
     # Get existing assets for display
     con = assets_db()
     q = (request.args.get("q") or "").strip()
-    status = request.args.get("status", "active")
+    status_filter = request.args.get("status", "active")
     
     sql = "SELECT * FROM assets WHERE 1=1"
     params = []
     
+    if status_filter != "all":
+        sql += " AND status = ?"
+        params.append(status_filter)
+    
     if q:
-        sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ?)"
+        sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ? OR manufacturer LIKE ?)"
         like = f"%{q}%"
-        params.extend([like, like, like])
+        params.extend([like, like, like, like])
     
     sql += " ORDER BY id DESC LIMIT 100"
     rows = con.execute(sql, params).fetchall()
     con.close()
+    
+    # Get next SKU for preview (default to Electronics)
+    default_category = "101"
+    next_sku_preview = generate_next_sku(default_category)
 
     if request.method == "POST":
         mode = request.form.get("_mode")
         
         if mode == "create":
-            print("\n" + "="*80)
-            print("[DEBUG] CREATE ASSET STARTED")
-            print("="*80)
-            
-            # Create new asset
-            sku = (request.form.get("SKU") or "").strip()
+            # Get form data
+            category_code = (request.form.get("Category") or "").strip()
             product = (request.form.get("ProductName") or "").strip()
+            manufacturer = (request.form.get("Manufacturer") or "").strip()
             location = (request.form.get("Location") or "").strip()
-            qty = int(request.form.get("Quantity") or 0)
+            qty = int(request.form.get("Count") or 0)
             uom = request.form.get("UOM", "EA").strip() or "EA"
+            part_number = (request.form.get("PartNumber") or "").strip()
+            serial_number = (request.form.get("SerialNumber") or "").strip()
+            pii = (request.form.get("PII") or "").strip()
+            notes = (request.form.get("Notes") or "").strip()
             
-            print(f"[DEBUG] Product: {product}")
-            print(f"[DEBUG] Location: {location}")
-            print(f"[DEBUG] Quantity: {qty}")
-            
-            if not product or not location:
-                flashmsg = ("Product Name and Location are required.", False)
+            # Validation
+            if not category_code or not product or not location:
+                flashmsg = ("Category, Product Name, and Location are required.", False)
             elif qty <= 0:
                 flashmsg = ("Quantity must be greater than 0.", False)
             else:
+                # Generate SKU based on category
+                sku = generate_next_sku(category_code)
+                cat_info = get_category_info(sku)
+                
                 # Create asset
                 asset_data = {
-                    "sku": sku or f"SKU-{next_id}",
+                    "sku": sku,
                     "product": product,
                     "uom": uom,
                     "location": location,
-                    "qty_on_hand": qty
+                    "qty_on_hand": qty,
+                    "manufacturer": manufacturer,
+                    "part_number": part_number or "N/A",
+                    "serial_number": serial_number or "N/A",
+                    "pii": pii,
+                    "notes": notes,
+                    "status": "active"
                 }
                 asset_id = create_asset(asset_data)
-                print(f"[DEBUG] Asset created with ID: {asset_id}")
                 
                 # Record initial check-in
-                record_initial_checkin(
-                    asset_id, 
-                    qty, 
-                    cu.get("username", ""), 
-                    "Initial inventory entry"
-                )
-                print(f"[DEBUG] Initial check-in recorded")
+                record_initial_checkin(asset_id, qty, cu.get("username", ""), "Initial inventory entry")
                 
-                # MANDATORY: Queue label per company policy
+                # Queue label
                 try:
                     label_data = {
                         "CheckInDate": today,
                         "InventoryID": str(asset_id),
-                        "ItemType": request.form.get("ItemType", "Asset"),
-                        "Manufacturer": request.form.get("Manufacturer", ""),
+                        "SKU": sku,
+                        "ItemType": f"{cat_info['category']} - {cat_info['subcategory']}",
+                        "Manufacturer": manufacturer,
                         "ProductName": product,
-                        "SubmitterName": cu.get("username", "System")
+                        "SubmitterName": cu.get("username", "System"),
+                        "Location": location,
+                        "PartNumber": part_number or "N/A",
+                        "SerialNumber": serial_number or "N/A",
+                        "PII": pii
                     }
-                    
-                    print(f"[DEBUG] Calling queue_asset_label...")
                     label_file = queue_asset_label(label_data)
-                    print(f"[DEBUG] Label queued successfully: {label_file}")
-                    
-                    flashmsg = (f"✅ Asset #{asset_id} created. Label file: {os.path.basename(label_file)}", True)
-                    record_audit(cu, "create_asset", "inventory", f"Created asset #{asset_id}: {product}, label queued")
-                    
+                    flashmsg = (f"✅ Asset #{asset_id} created with SKU {sku}. Label: {os.path.basename(label_file)}", True)
+                    record_audit(cu, "create_asset", "inventory", f"Asset #{asset_id}, SKU {sku}: {product}")
                 except Exception as e:
-                    print(f"[ERROR] Label queueing failed: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    flashmsg = (f"⚠️ Asset #{asset_id} created but label printing failed: {str(e)}", False)
-                    record_audit(cu, "create_asset_error", "inventory", f"Asset #{asset_id} created but label failed: {str(e)}")
-                
-                next_id += 1
-            
-            print("="*80)
-            print("[DEBUG] CREATE ASSET FINISHED")
-            print("="*80 + "\n")
+                    flashmsg = (f"⚠️ Asset #{asset_id} created but label failed: {str(e)}", False)
+                    record_audit(cu, "create_asset_error", "inventory", f"Asset #{asset_id} label error: {str(e)}")
         
         elif mode == "update":
-            # Update existing asset
             asset_id = int(request.form.get("id") or 0)
-            sku = (request.form.get("SKU") or "").strip()
             product = (request.form.get("ProductName") or "").strip()
+            manufacturer = (request.form.get("Manufacturer") or "").strip()
             location = (request.form.get("Location") or "").strip()
             uom = request.form.get("UOM", "EA").strip() or "EA"
+            notes = (request.form.get("Notes") or "").strip()
+            status = request.form.get("Status", "active")
             
             con = assets_db()
             con.execute("""
                 UPDATE assets 
-                SET sku=?, product=?, uom=?, location=?
+                SET product=?, manufacturer=?, uom=?, location=?, notes=?, status=?
                 WHERE id=?
-            """, (sku, product, uom, location, asset_id))
+            """, (product, manufacturer, uom, location, notes, status, asset_id))
             con.commit()
             con.close()
             
@@ -355,29 +483,36 @@ def asset():
         active="asset",
         flashmsg=flashmsg,
         today=today,
-        next_inv=next_id,
-        item_types=ITEM_TYPES,
+        categories=categories,
+        next_sku_preview=next_sku_preview,
         rows=rows,
         q=q,
-        status=status,
+        status=status_filter,
         edit=edit
     )
-
-# ... rest of the routes remain the same ...
 
 @inventory_bp.route("/asset/<int:aid>/edit")
 @login_required
 @require_asset
 def asset_edit(aid: int):
-    """Redirect to asset page with edit parameter."""
     return redirect(url_for("inventory.asset", edit=aid))
 
-@inventory_bp.route("/ledger")
+@inventory_bp.route("/api/next-sku/<category>")
 @login_required
 @require_asset
-def ledger():
-    """Asset ledger - moved to asset_ledger blueprint."""
-    return redirect(url_for("asset_ledger.ledger_home"))
+def get_next_sku(category: str):
+    """API endpoint to get next SKU for a category (for AJAX)."""
+    try:
+        next_sku = generate_next_sku(category)
+        cat_info = get_category_info(next_sku)
+        return {
+            "success": True,
+            "sku": next_sku,
+            "category": cat_info["category"],
+            "subcategory": cat_info["subcategory"]
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 400
 
 @inventory_bp.route("/insights")
 @login_required

@@ -1,58 +1,77 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Inventory — Asset</h5>
+<h5 class="mb-3">Inventory — Asset Management</h5>
 
 {% if flashmsg and flashmsg[0] %}
   <div class="alert alert-{{ 'success' if flashmsg[1] else 'danger' }} py-2">{{ flashmsg[0] }}</div>
 {% endif %}
 
 <div class="row g-4">
-  <div class="col-lg-4">
+  <div class="col-lg-5">
     <div class="card">
       <div class="card-body">
-        <h6 class="fw-semibold mb-3">{{ edit and 'Edit Asset' or 'New Asset' }}</h6>
-        <form method="post">
+        <h6 class="fw-semibold mb-3">{{ edit and 'Edit Asset' or 'Add New Asset' }}</h6>
+        
+        <form method="post" id="assetForm">
           {% if edit %}
             <input type="hidden" name="_mode" value="update">
             <input type="hidden" name="id" value="{{ edit.id }}">
+            
+            <div class="alert alert-warning py-2 mb-3">
+              <i class="bi bi-lock"></i> <strong>SKU cannot be changed:</strong> {{ edit.sku }}
+            </div>
           {% else %}
             <input type="hidden" name="_mode" value="create">
+            
+            <!-- Category Selection -->
+            <div class="mb-3">
+              <label class="form-label">Category <span class="text-danger">*</span></label>
+              <select class="form-select" name="Category" id="categorySelect" required>
+                <option value="">-- Select Category --</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.value }}" data-prefix="{{ cat.prefix }}">{{ cat.label }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Select the appropriate category for this asset</div>
+            </div>
+            
+            <!-- SKU Preview -->
+            <div class="mb-3">
+              <label class="form-label">Auto-Generated SKU</label>
+              <div class="input-group">
+                <input type="text" class="form-control bg-light" id="skuPreview" value="{{ next_sku_preview }}" readonly>
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              </div>
+              <div class="form-text">SKU is automatically assigned and cannot be edited</div>
+            </div>
           {% endif %}
 
-          <div class="mb-2">
-            <label class="form-label">Asset ID</label>
-            <input class="form-control" name="AssetID" value="{{ edit and edit.id or next_inv }}" readonly>
-            <div class="form-text">Auto-generated on creation.</div>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label">SKU <span class="text-muted">(optional)</span></label>
-            <input class="form-control" name="SKU" value="{{ edit and edit.sku or '' }}" placeholder="Auto-generated if blank">
-          </div>
-
+          <!-- Product Information -->
           <div class="mb-2">
             <label class="form-label">Product Name <span class="text-danger">*</span></label>
-            <input class="form-control" name="ProductName" value="{{ edit and edit.product or '' }}" required>
+            <input class="form-control" name="ProductName" value="{{ edit and edit.product or '' }}" placeholder="e.g., Dell Monitor 24 inch" required>
           </div>
 
           <div class="mb-2">
-            <label class="form-label">Manufacturer <span class="text-muted">(optional)</span></label>
-            <input class="form-control" name="Manufacturer" value="{{ edit and edit.manufacturer or '' }}" placeholder="e.g., Dell, HP, Cisco">
+            <label class="form-label">Manufacturer</label>
+            <input class="form-control" name="Manufacturer" value="{{ edit and edit.manufacturer or '' }}" placeholder="e.g., Dell Technologies">
           </div>
 
-          <div class="mb-2">
-            <label class="form-label">Item Type</label>
-            <select class="form-select" name="ItemType">
-              {% for t in item_types %}
-                <option value="{{ t }}" {{ 'selected' if edit and edit.item_type == t else '' }}>{{ t }}</option>
-              {% endfor %}
-            </select>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label">Part Number</label>
+              <input class="form-control" name="PartNumber" value="{{ edit and edit.part_number or '' }}" placeholder="Optional">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Serial Number</label>
+              <input class="form-control" name="SerialNumber" value="{{ edit and edit.serial_number or '' }}" placeholder="Optional">
+            </div>
           </div>
 
           <div class="row g-2 mb-2">
             <div class="col-6">
               <label class="form-label">Location <span class="text-danger">*</span></label>
-              <input class="form-control" name="Location" value="{{ edit and edit.location or '' }}" placeholder="A-01, Room 3, etc." required>
+              <input class="form-control" name="Location" value="{{ edit and edit.location or '' }}" placeholder="A-01, Room 3" required>
             </div>
             <div class="col-6">
               <label class="form-label">UOM</label>
@@ -63,17 +82,40 @@
           {% if not edit %}
           <div class="mb-2">
             <label class="form-label">Initial Quantity <span class="text-danger">*</span></label>
-            <input class="form-control" type="number" name="Quantity" min="1" value="1" required>
-            <div class="form-text">Starting inventory count for this asset.</div>
+            <input class="form-control" type="number" name="Count" min="1" value="1" required>
           </div>
           {% endif %}
 
-          <div class="alert alert-info py-2 mt-3 mb-3">
-            <i class="bi bi-printer"></i> <strong>Note:</strong> A label will be automatically printed for this asset per company policy.
+          <div class="mb-2">
+            <label class="form-label">PII <span class="text-muted">(if applicable)</span></label>
+            <input class="form-control" name="PII" value="{{ edit and edit.pii or '' }}" placeholder="Protected information identifier">
+            <div class="form-text">Leave blank if no PII involved</div>
           </div>
 
+          {% if edit %}
+          <div class="mb-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="Status">
+              <option value="active" {{ 'selected' if edit.status=='active' else '' }}>Active</option>
+              <option value="inactive" {{ 'selected' if edit.status=='inactive' else '' }}>Inactive</option>
+              <option value="archived" {{ 'selected' if edit.status=='archived' else '' }}>Archived</option>
+            </select>
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" name="Notes" rows="2" placeholder="Additional information">{{ edit and edit.notes or '' }}</textarea>
+          </div>
+
+          {% if not edit %}
+          <div class="alert alert-info py-2 mb-3">
+            <i class="bi bi-printer"></i> <strong>Company Policy:</strong> A label will be automatically printed for this asset.
+          </div>
+          {% endif %}
+
           <div class="d-flex gap-2">
-            <button class="btn btn-primary">{{ edit and 'Save Changes' or 'Create Asset' }}</button>
+            <button class="btn btn-primary" type="submit">{{ edit and 'Save Changes' or 'Create Asset' }}</button>
             {% if edit %}
               <a class="btn btn-outline-secondary" href="{{ url_for('inventory.asset') }}">Cancel</a>
             {% endif %}
@@ -83,19 +125,27 @@
     </div>
   </div>
 
-  <div class="col-lg-8">
+  <div class="col-lg-7">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="mb-0">Existing Assets</h6>
+      <h6 class="mb-0">Asset Inventory</h6>
       <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home') }}">
-        <i class="bi bi-clipboard-check"></i> Go to Asset Ledger
+        <i class="bi bi-clipboard-check"></i> Asset Ledger
       </a>
     </div>
 
-    <form class="row g-2 mb-2" method="get" action="{{ url_for('inventory.asset') }}">
-      <div class="col-md-8">
-        <input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search by Product, SKU, or Location">
+    <form class="row g-2 mb-2" method="get">
+      <div class="col-md-6">
+        <input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search SKU, Product, Manufacturer, Location">
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
+        <select class="form-select" name="status">
+          <option value="active" {{ 'selected' if status=='active' else '' }}>Active</option>
+          <option value="inactive" {{ 'selected' if status=='inactive' else '' }}>Inactive</option>
+          <option value="archived" {{ 'selected' if status=='archived' else '' }}>Archived</option>
+          <option value="all" {{ 'selected' if status=='all' else '' }}>All</option>
+        </select>
+      </div>
+      <div class="col-md-3">
         <button class="btn btn-primary w-100">Search</button>
       </div>
     </form>
@@ -104,38 +154,81 @@
       <table class="table table-sm table-striped align-middle">
         <thead>
           <tr>
-            <th>Asset ID</th>
             <th>SKU</th>
             <th>Product</th>
+            <th>Manufacturer</th>
             <th>Location</th>
-            <th class="text-end">Qty On Hand</th>
+            <th class="text-end">Qty</th>
+            <th>Status</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for r in rows %}
             <tr>
-              <td class="text-nowrap">#{{ r.id }}</td>
-              <td>{{ r.sku or '—' }}</td>
-              <td>{{ r.product }}</td>
+              <td class="text-nowrap"><code>{{ r.sku }}</code></td>
+              <td class="text-truncate" style="max-width:200px;" title="{{ r.product }}">{{ r.product }}</td>
+              <td>{{ r.manufacturer or '—' }}</td>
               <td>{{ r.location }}</td>
               <td class="text-end">
                 <span class="badge {{ 'bg-success' if r.qty_on_hand > 0 else 'bg-secondary' }}">
-                  {{ r.qty_on_hand }} {{ r.uom or 'EA' }}
+                  {{ r.qty_on_hand }}
                 </span>
               </td>
+              <td>
+                {% if r.status == 'active' %}
+                  <span class="badge bg-success">Active</span>
+                {% elif r.status == 'inactive' %}
+                  <span class="badge bg-warning">Inactive</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ r.status }}</span>
+                {% endif %}
+              </td>
               <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('inventory.asset_edit', aid=r.id) }}">Edit</a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}">Ledger</a>
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('inventory.asset_edit', aid=r.id) }}" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}" title="View Ledger">
+                  <i class="bi bi-clipboard-data"></i>
+                </a>
               </td>
             </tr>
           {% endfor %}
           {% if not rows %}
-            <tr><td colspan="6" class="text-center text-muted py-4">No assets found. Create your first asset above.</td></tr>
+            <tr><td colspan="7" class="text-center text-muted py-4">No assets found. Create your first asset above.</td></tr>
           {% endif %}
         </tbody>
       </table>
     </div>
+
+    <div class="mt-3">
+      <small class="text-muted">
+        <strong>SKU Format:</strong> XXX-NNNNNNN (Category-Number)<br>
+        100=Electronics, 200=Automotive, 300=Medical, 400=Apparel, 500=Memorabilia, 600=Office, 700=Furniture, 800=Hardware
+      </small>
+    </div>
   </div>
 </div>
+
+<script>
+// Live SKU preview when category changes
+document.getElementById('categorySelect')?.addEventListener('change', function() {
+  const prefix = this.options[this.selectedIndex].dataset.prefix;
+  const skuPreview = document.getElementById('skuPreview');
+  
+  if (prefix) {
+    // Fetch next SKU from server
+    fetch(`{{ url_for('inventory.get_next_sku', category='') }}${prefix}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          skuPreview.value = data.sku;
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch SKU:', err);
+      });
+  }
+});
+</script>
 {% endblock %}
