@@ -4,9 +4,92 @@
 
 {% block body %}
 <style>
-    .dashboard-grid {
+    /* Dashboard Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Welcome Banner with Gradient Animation */
+    .welcome-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1.5rem;
+        padding: 3rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+    }
+    
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    .welcome-banner::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -5%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+        animation: pulse 5s ease-in-out infinite;
+        animation-delay: 1s;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .welcome-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        text-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.125rem;
+        opacity: 0.95;
+        font-weight: 400;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
@@ -14,12 +97,19 @@
     .stat-card {
         background: white;
         border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        padding: 1.75rem;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
     
     .stat-card::before {
         content: '';
@@ -29,133 +119,259 @@
         right: 0;
         height: 4px;
         background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
     }
     
     .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
     }
     
     .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 1.75rem;
         background: var(--icon-bg);
         color: var(--icon-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover .stat-icon {
+        transform: rotate(5deg) scale(1.1);
     }
     
     .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 2.5rem;
+        font-weight: 800;
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
     }
     
     .stat-label {
-        font-size: 0.875rem;
+        font-size: 0.9375rem;
         color: var(--text-secondary);
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
     
     .stat-trend {
         display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-top: 0.5rem;
+        gap: 0.375rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        padding: 0.25rem 0.625rem;
+        border-radius: 0.5rem;
+        margin-top: 0.75rem;
     }
     
-    .trend-up { color: #10b981; }
-    .trend-down { color: #ef4444; }
-    .trend-neutral { color: #6b7280; }
+    .trend-up {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
     
+    .trend-down {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+    
+    .trend-neutral {
+        background: rgba(107, 114, 128, 0.1);
+        color: #4b5563;
+    }
+    
+    /* Quick Actions */
     .quick-actions {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 1.25rem;
+        margin-bottom: 2.5rem;
     }
     
     .action-card {
         background: white;
         border-radius: 1rem;
-        padding: 1.5rem;
+        padding: 1.75rem;
         text-align: center;
         text-decoration: none;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+        animation: slideInRight 0.5s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .action-card:nth-child(1) { animation-delay: 0.2s; }
+    .action-card:nth-child(2) { animation-delay: 0.3s; }
+    .action-card:nth-child(3) { animation-delay: 0.4s; }
+    .action-card:nth-child(4) { animation-delay: 0.5s; }
+    
+    .action-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--action-color) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     .action-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
-        border-color: var(--primary-color);
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 12px 28px rgba(102, 126, 234, 0.25);
+        border-color: var(--action-color);
+    }
+    
+    .action-card:hover::before {
+        opacity: 0.05;
     }
     
     .action-icon {
-        width: 64px;
-        height: 64px;
+        width: 72px;
+        height: 72px;
         margin: 0 auto 1rem;
-        border-radius: 16px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 2rem;
         background: var(--action-bg);
         color: var(--action-color);
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-card:hover .action-icon {
+        transform: scale(1.15) rotate(5deg);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
     }
     
     .action-title {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text-primary);
         margin-bottom: 0.5rem;
-        font-size: 1rem;
+        font-size: 1.0625rem;
+        position: relative;
+        z-index: 1;
     }
     
     .action-description {
         font-size: 0.875rem;
         color: var(--text-secondary);
+        position: relative;
+        z-index: 1;
     }
     
-    .activity-feed, .tasks-widget {
+    /* Activity Feed & Tasks */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .widget-card {
         background: white;
         border-radius: 1rem;
-        padding: 1.5rem;
+        padding: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out 0.6s;
+        animation-fill-mode: both;
     }
     
+    .widget-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .widget-title {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .widget-title i {
+        color: var(--primary-color);
+    }
+    
+    .view-all-link {
+        font-size: 0.875rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .view-all-link:hover {
+        gap: 0.625rem;
+        opacity: 0.8;
+    }
+    
+    /* Activity Items */
     .activity-item, .task-item {
         display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        transition: background 0.2s;
-        border-bottom: 1px solid #f3f4f6;
+        gap: 1.125rem;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+        border: 1px solid transparent;
     }
     
     .activity-item:last-child, .task-item:last-child {
-        border-bottom: none;
+        margin-bottom: 0;
     }
     
     .activity-item:hover, .task-item:hover {
         background: #f9fafb;
+        border-color: #e5e7eb;
+        transform: translateX(4px);
     }
     
     .activity-icon, .task-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        font-size: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     
     .activity-content, .task-content {
@@ -164,246 +380,232 @@
     }
     
     .activity-title, .task-title {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.375rem;
+        font-size: 0.9375rem;
     }
     
     .activity-description, .task-description {
         font-size: 0.875rem;
         color: var(--text-secondary);
+        line-height: 1.5;
     }
     
     .activity-time {
         font-size: 0.75rem;
         color: var(--text-muted);
-        margin-top: 0.25rem;
+        margin-top: 0.5rem;
+        font-weight: 600;
     }
     
     .status-badge {
         display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 0.5rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 0.625rem;
         font-size: 0.75rem;
-        font-weight: 600;
-        margin-top: 0.5rem;
-    }
-    
-    .status-received { background: #dbeafe; color: #1e40af; }
-    .status-in-progress { background: #fef3c7; color: #92400e; }
-    .status-completed { background: #d1fae5; color: #065f46; }
-    .status-hold { background: #fee2e2; color: #991b1b; }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 1.25rem;
         font-weight: 700;
-        color: var(--text-primary);
+        margin-top: 0.625rem;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
     }
     
-    .view-all-link {
-        font-size: 0.875rem;
-        color: var(--primary-color);
-        text-decoration: none;
-        font-weight: 600;
-        transition: opacity 0.2s;
+    .status-received { 
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
     }
     
-    .view-all-link:hover {
-        opacity: 0.8;
+    .status-in-progress { 
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
     }
     
+    .status-completed { 
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .status-hold { 
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 2rem;
+        padding: 3rem 2rem;
         color: var(--text-secondary);
     }
     
-    .two-column {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1.25rem;
+        opacity: 0.5;
     }
     
+    .empty-state-title {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+    }
+    
+    .empty-state-description {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+    }
+    
+    /* Responsive */
     @media (max-width: 968px) {
-        .two-column {
+        .content-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        
+        .welcome-title {
+            font-size: 1.5rem;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1rem;
         }
     }
 </style>
 
 <!-- Welcome Banner -->
-<div class="card-premium" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 2rem;">
-    <div class="card-premium-body" style="padding: 2rem;">
-        <h2 style="margin-bottom: 0.5rem; font-weight: 700;">Welcome back, {{ cu.username }}! 👋</h2>
-        <p style="opacity: 0.9; margin-bottom: 1.5rem;">Here's what's happening with your facilities today.</p>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <span id="current-date" style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-calendar-check"></i> <span id="date-text">Loading...</span>
-            </span>
-            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-shield-check"></i> All systems operational
-            </span>
-        </div>
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <h1 class="welcome-title">Welcome back, {{ cu.username }}! 👋</h1>
+        <p class="welcome-subtitle">Here's what's happening with your facilities today</p>
     </div>
 </div>
 
-<!-- Statistics -->
-<div class="dashboard-grid">
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <!-- Total Assets -->
     <div class="stat-card" style="--gradient-start: #667eea; --gradient-end: #764ba2; --icon-bg: rgba(102, 126, 234, 0.1); --icon-color: #667eea;">
-        <div class="stat-icon">
-            <i class="bi bi-box-seam"></i>
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
         </div>
-        <div class="stat-value">{{ data.total_assets }}</div>
+        <div class="stat-value">{{ dashboard_data.total_assets or 0 }}</div>
         <div class="stat-label">Total Assets</div>
-        {% if data.asset_trend != 0 %}
-        <div class="stat-trend {{ 'trend-up' if data.asset_trend > 0 else 'trend-down' }}">
-            <i class="bi bi-arrow-{{ 'up' if data.asset_trend > 0 else 'down' }}"></i>
-            <span>{{ data.asset_trend|abs }}% from last month</span>
-        </div>
-        {% else %}
-        <div class="stat-trend trend-neutral">
-            <i class="bi bi-dash"></i>
-            <span>No change from last month</span>
+        {% if dashboard_data.asset_trend %}
+        <div class="stat-trend {{ 'trend-up' if dashboard_data.asset_trend > 0 else 'trend-down' }}">
+            <i class="bi bi-arrow-{{ 'up' if dashboard_data.asset_trend > 0 else 'down' }}"></i>
+            {{ dashboard_data.asset_trend }}% this month
         </div>
         {% endif %}
     </div>
     
-    <div class="stat-card" style="--gradient-start: #f093fb; --gradient-end: #f5576c; --icon-bg: rgba(240, 147, 251, 0.1); --icon-color: #f093fb;">
-        <div class="stat-icon">
-            <i class="bi bi-clock-history"></i>
+    <!-- Pending Requests -->
+    <div class="stat-card" style="--gradient-start: #f59e0b; --gradient-end: #d97706; --icon-bg: rgba(245, 158, 11, 0.1); --icon-color: #f59e0b;">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
         </div>
-        <div class="stat-value">{{ data.pending_requests }}</div>
+        <div class="stat-value">{{ dashboard_data.pending_requests or 0 }}</div>
         <div class="stat-label">Pending Requests</div>
-        {% if data.request_trend != 0 %}
-        <div class="stat-trend {{ 'trend-down' if data.request_trend < 0 else 'trend-up' }}">
-            <i class="bi bi-arrow-{{ 'down' if data.request_trend < 0 else 'up' }}"></i>
-            <span>{{ data.request_trend|abs }}% from last month</span>
-        </div>
-        {% else %}
-        <div class="stat-trend trend-neutral">
-            <i class="bi bi-dash"></i>
-            <span>No change</span>
+        {% if dashboard_data.request_trend %}
+        <div class="stat-trend {{ 'trend-up' if dashboard_data.request_trend > 0 else 'trend-down' }}">
+            <i class="bi bi-arrow-{{ 'up' if dashboard_data.request_trend > 0 else 'down' }}"></i>
+            {{ dashboard_data.request_trend }}% vs last week
         </div>
         {% endif %}
     </div>
     
-    <div class="stat-card" style="--gradient-start: #4facfe; --gradient-end: #00f2fe; --icon-bg: rgba(79, 172, 254, 0.1); --icon-color: #4facfe;">
-        <div class="stat-icon">
-            <i class="bi bi-truck"></i>
+    <!-- Shipments This Month -->
+    <div class="stat-card" style="--gradient-start: #10b981; --gradient-end: #059669; --icon-bg: rgba(16, 185, 129, 0.1); --icon-color: #10b981;">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-truck"></i>
+            </div>
         </div>
-        <div class="stat-value">{{ data.shipments_this_month }}</div>
+        <div class="stat-value">{{ dashboard_data.shipments_this_month or 0 }}</div>
         <div class="stat-label">Shipments This Month</div>
-        <div class="stat-trend trend-neutral">
-            <i class="bi bi-calendar-month"></i>
-            <span>Month to date</span>
-        </div>
     </div>
     
-    <div class="stat-card" style="--gradient-start: #43e97b; --gradient-end: #38f9d7; --icon-bg: rgba(67, 233, 123, 0.1); --icon-color: #43e97b;">
-        <div class="stat-icon">
-            <i class="bi bi-check-circle"></i>
+    <!-- Completed Tasks -->
+    <div class="stat-card" style="--gradient-start: #3b82f6; --gradient-end: #2563eb; --icon-bg: rgba(59, 130, 246, 0.1); --icon-color: #3b82f6;">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
         </div>
-        <div class="stat-value">{{ data.completed_tasks }}</div>
-        <div class="stat-label">Completed This Month</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-trophy"></i>
-            <span>Keep up the great work!</span>
-        </div>
+        <div class="stat-value">{{ dashboard_data.completed_tasks or 0 }}</div>
+        <div class="stat-label">Completed Tasks</div>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="section-header">
-    <h2 class="section-title">Quick Actions</h2>
-</div>
-
 <div class="quick-actions">
-    {% if cu.can_asset or elevated %}
-    <a href="{{ url_for('inventory.asset') }}" class="action-card" style="--action-bg: rgba(102, 126, 234, 0.1); --action-color: #667eea;">
-        <div class="action-icon">
-            <i class="bi bi-plus-circle"></i>
-        </div>
-        <div class="action-title">Add Asset</div>
-        <div class="action-description">Register new equipment</div>
-    </a>
-    {% endif %}
-    
     {% if cu.can_send or elevated %}
-    <a href="{{ url_for('send.index') }}" class="action-card" style="--action-bg: rgba(240, 147, 251, 0.1); --action-color: #f093fb;">
+    <a href="{{ url_for('send.index') }}" class="action-card" style="--action-bg: rgba(102, 126, 234, 0.1); --action-color: #667eea;">
         <div class="action-icon">
             <i class="bi bi-box-seam"></i>
         </div>
-        <div class="action-title">Ship Package</div>
-        <div class="action-description">Create new shipment</div>
+        <div class="action-title">Send Package</div>
+        <div class="action-description">Ship items to locations</div>
     </a>
     {% endif %}
     
     {% if cu.can_fulfillment_customer or elevated %}
-    <a href="{{ url_for('fulfillment.request_form') }}" class="action-card" style="--action-bg: rgba(79, 172, 254, 0.1); --action-color: #4facfe;">
+    <a href="{{ url_for('fulfillment.request_form') }}" class="action-card" style="--action-bg: rgba(245, 158, 11, 0.1); --action-color: #f59e0b;">
         <div class="action-icon">
             <i class="bi bi-file-earmark-text"></i>
         </div>
-        <div class="action-title">Service Request</div>
-        <div class="action-description">Submit new ticket</div>
+        <div class="action-title">New Request</div>
+        <div class="action-description">Submit service request</div>
     </a>
     {% endif %}
     
     {% if cu.can_asset or elevated %}
-    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="action-card" style="--action-bg: rgba(67, 233, 123, 0.1); --action-color: #43e97b;">
+    <a href="{{ url_for('inventory.asset') }}" class="action-card" style="--action-bg: rgba(16, 185, 129, 0.1); --action-color: #10b981;">
         <div class="action-icon">
-            <i class="bi bi-arrow-left-right"></i>
+            <i class="bi bi-clipboard-check"></i>
         </div>
-        <div class="action-title">Asset Movement</div>
-        <div class="action-description">Check in/out items</div>
+        <div class="action-title">Manage Assets</div>
+        <div class="action-description">Track inventory</div>
+    </a>
+    {% endif %}
+    
+    {% if cu.can_send or elevated %}
+    <a href="{{ url_for('send.tracking') }}" class="action-card" style="--action-bg: rgba(59, 130, 246, 0.1); --action-color: #3b82f6;">
+        <div class="action-icon">
+            <i class="bi bi-geo-alt"></i>
+        </div>
+        <div class="action-title">Track Package</div>
+        <div class="action-description">Monitor shipments</div>
     </a>
     {% endif %}
 </div>
 
-<!-- Two Column Layout -->
-<div class="two-column">
-    <!-- My Tasks (for fulfillment staff) -->
-    {% if data.my_tasks and (cu.can_fulfillment_staff or elevated) %}
-    <div>
-        <div class="section-header">
-            <h2 class="section-title">My Tasks</h2>
-            <a href="{{ url_for('fulfillment.queue') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
-        </div>
-        
-        <div class="tasks-widget">
-            {% for task in data.my_tasks %}
-            <div class="task-item">
-                <div class="task-icon" style="background: rgba(240, 147, 251, 0.1); color: #f093fb;">
-                    <i class="bi bi-clipboard-check"></i>
-                </div>
-                <div class="task-content">
-                    <div class="task-title">Request #{{ task.id }}</div>
-                    <div class="task-description">{{ task.description[:60] }}{{ '...' if task.description|length > 60 else '' }}</div>
-                    <span class="status-badge status-{{ task.status.lower().replace(' ', '-').replace('_', '-') }}">
-                        {{ task.status }}
-                    </span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-    
+<!-- Activity & Tasks Grid -->
+<div class="content-grid">
     <!-- Recent Activity -->
-    <div>
-        <div class="section-header">
-            <h2 class="section-title">Recent Activity</h2>
+    <div class="widget-card">
+        <div class="widget-header">
+            <h3 class="widget-title">
+                <i class="bi bi-activity"></i>
+                Recent Activity
+            </h3>
+            {% if cu.can_asset or elevated %}
+            <a href="{{ url_for('inventory.insights') }}" class="view-all-link">
+                View All
+                <i class="bi bi-arrow-right"></i>
+            </a>
+            {% endif %}
         </div>
         
         <div class="activity-feed">
-            {% if data.recent_activities %}
-                {% for activity in data.recent_activities %}
+            {% if dashboard_data.recent_activities %}
+                {% for activity in dashboard_data.recent_activities[:5] %}
                 <div class="activity-item">
                     <div class="activity-icon" style="background: {{ activity.icon_bg }}; color: {{ activity.icon_color }};">
                         <i class="bi bi-{{ activity.icon }}"></i>
@@ -416,24 +618,59 @@
                 </div>
                 {% endfor %}
             {% else %}
-            <div class="empty-state">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
-                <p style="margin-top: 1rem;">No recent activity yet. Start using the system to see updates here!</p>
-            </div>
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <div class="empty-state-title">No Recent Activity</div>
+                    <div class="empty-state-description">Activity will appear here as you use the system</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- My Tasks -->
+    <div class="widget-card">
+        <div class="widget-header">
+            <h3 class="widget-title">
+                <i class="bi bi-list-check"></i>
+                My Tasks
+            </h3>
+            {% if cu.can_fulfillment_staff or elevated %}
+            <a href="{{ url_for('fulfillment.queue') }}" class="view-all-link">
+                View All
+                <i class="bi bi-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="tasks-list">
+            {% if dashboard_data.my_tasks %}
+                {% for task in dashboard_data.my_tasks[:5] %}
+                <div class="task-item">
+                    <div class="task-icon" style="background: {{ task.icon_bg }}; color: {{ task.icon_color }};">
+                        <i class="bi bi-{{ task.icon }}"></i>
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div class="task-description">{{ task.description }}</div>
+                        {% if task.status %}
+                        <span class="status-badge status-{{ task.status|lower }}">{{ task.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="empty-state-title">All Caught Up!</div>
+                    <div class="empty-state-description">You have no pending tasks at the moment</div>
+                </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<script>
-    // Format and display current date
-    document.addEventListener('DOMContentLoaded', function() {
-        const dateText = document.getElementById('date-text');
-        if (dateText) {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            dateText.textContent = now.toLocaleDateString('en-US', options);
-        }
-    });
-</script>
 {% endblock %}

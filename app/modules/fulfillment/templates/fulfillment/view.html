@@ -1,87 +1,614 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Fulfillment — Request #{{ row.id }}</h5>
 
-<div class="row">
-  <div class="col-md-7">
-    <div class="card mb-3">
-      <div class="card-body">
-        <div><strong>Description:</strong> {{ row.description or '—' }}</div>
-        <div><strong>Requester:</strong> {{ row.requester_name or '—' }}</div>
-        <div><strong>Date Submitted:</strong> {{ row.date_submitted or row.ts_utc }}</div>
-        <div><strong>Date Due:</strong> {{ row.date_due or '—' }}</div>
-        <div><strong>Total Pages:</strong> {{ row.total_pages or '—' }}</div>
-        <div class="mt-2">
-          {% set s = row.status or 'Received' %}
-          <span class="badge bg-secondary">{{ s }}</span>
-          {% if s == 'Suspended' %}
-            <span class="badge bg-warning text-dark">Suspended</span>
-          {% elif s == 'Completed' %}
-            <span class="badge bg-success">Completed</span>
-          {% endif %}
-          {% if row.is_archived %}<span class="badge bg-dark">Archived</span>{% endif %}
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-header {
+        padding: 0.875rem 1.75rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 0.9375rem;
+    }
+    
+    .btn-header-primary {
+        background: white;
+        color: #3b82f6;
+    }
+    
+    .btn-header-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+        color: #3b82f6;
+    }
+    
+    .btn-header-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-header-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+    
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 450px;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Card */
+    .card-modern {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .card-modern:nth-child(1) { animation-delay: 0.1s; }
+    .card-modern:nth-child(2) { animation-delay: 0.2s; }
+    .card-modern:nth-child(3) { animation-delay: 0.3s; }
+    
+    .card-header-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .card-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.375rem;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .card-title {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    /* Info Row */
+    .info-row {
+        display: flex;
+        padding: 1.125rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .info-label {
+        flex: 0 0 160px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .info-value {
+        flex: 1;
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9375rem;
+    }
+    
+    /* Status Badges */
+    .status-badge-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+    }
+    
+    .status-received {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+    
+    .status-in-progress {
+        background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+        color: #5b21b6;
+    }
+    
+    .status-completed {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .status-suspended {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    .status-hold {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .badge-archived {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        color: white;
+        margin-left: 0.5rem;
+    }
+    
+    /* Files Table */
+    .files-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .files-table thead th {
+        text-align: left;
+        padding: 0.875rem 1rem;
+        font-size: 0.8125rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        background: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .files-table thead th:first-child {
+        border-radius: 0.75rem 0 0 0;
+    }
+    
+    .files-table thead th:last-child {
+        border-radius: 0 0.75rem 0 0;
+    }
+    
+    .files-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .files-table tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .files-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .files-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .file-name {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .file-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .file-text {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .file-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.9375rem;
+    }
+    
+    .file-size {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+    
+    .btn-download {
+        padding: 0.625rem 1.25rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 0.625rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        color: white;
+    }
+    
+    /* Empty State */
+    .empty-state-small {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state-small i {
+        font-size: 2.5rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state-small p {
+        margin: 0;
+        font-size: 0.9375rem;
+    }
+    
+    /* Options Grid */
+    .options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .header-actions {
+            width: 100%;
+        }
+        
+        .btn-header {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-label {
+            flex: none;
+        }
+        
+        .options-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-left">
+            <div class="page-header-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="page-header-text">
+                <h2>Request #{{ row.id }}</h2>
+                <p>Submitted on {{ row.date_submitted or row.ts_utc }}</p>
+            </div>
         </div>
-      </div>
+        
+        <div class="header-actions">
+            <a href="{{ url_for('fulfillment.queue') }}" class="btn-header btn-header-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Queue
+            </a>
+        </div>
     </div>
-
-    <div class="card mb-3">
-      <div class="card-header py-2">Files</div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-          <thead><tr><th>Name</th><th>Size</th><th></th></tr></thead>
-          <tbody>
-            {% for f in files %}
-            <tr>
-              <td class="text-truncate" style="max-width:420px">{{ f.orig_name }}</td>
-              <td class="text-nowrap">{{ f.bytes or 0 }} bytes</td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fulfillment.download_file', fid=f.id) }}">Download</a>
-              </td>
-            </tr>
-            {% endfor %}
-            {% if not files %}
-            <tr><td colspan="3" class="text-center text-muted py-3">No files attached.</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="col-md-5">
-    <div class="card mb-3">
-      <div class="card-header py-2">Options</div>
-      <div class="card-body small">
-        <div><strong>Print Type:</strong> {{ opts.print_type or '—' }}</div>
-        <div><strong>Paper Size:</strong> {{ opts.paper_size or '—' }}</div>
-        <div><strong>Paper Stock:</strong> {{ opts.paper_stock or '—' }}</div>
-        <div><strong>Paper Color:</strong> {{ opts.paper_color or '—' }}</div>
-        <div><strong>Paper Sides:</strong> {{ opts.paper_sides or '—' }}</div>
-        <div><strong>Binding:</strong> {{ opts.binding or '—' }}</div>
-        <div><strong>Covers:</strong> {{ opts.covers or '—' }}</div>
-        <div><strong>Tabs:</strong> {{ opts.tabs or '—' }}</div>
-        <div><strong>Finishing:</strong> {{ opts.finishing or '—' }}</div>
-        <div class="mt-2"><strong>Additional Details:</strong><br>{{ row.notes or '—' }}</div>
-      </div>
-    </div>
-
-    {% if cu and (cu.is_admin or cu.is_sysadmin or cu.is_system or cu.can_fulfillment_staff) %}
-    <div class="card">
-      <div class="card-header py-2">Update Status</div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('fulfillment.queue') }}" class="d-flex gap-2">
-          <input type="hidden" name="rid" value="{{ row.id }}">
-          <select class="form-select" name="status">
-            {% for s in ['Received','Hold','In-Progress','Suspended','Cancelled','Completed','Archive'] %}
-              <option value="{{ s }}" {{ 'selected' if s==row.status else '' }}>{{ s }}</option>
-            {% endfor %}
-          </select>
-          <button class="btn btn-outline-primary">Save</button>
-        </form>
-      </div>
-    </div>
-    {% endif %}
-  </div>
 </div>
+
+<!-- Content Grid -->
+<div class="content-grid">
+    <!-- Left Column -->
+    <div>
+        <!-- Request Details -->
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="card-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <h3 class="card-title">Request Details</h3>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Description</div>
+                <div class="info-value">{{ row.description or '—' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Requester</div>
+                <div class="info-value">
+                    <i class="bi bi-person"></i>
+                    {{ row.requester_name or '—' }}
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Date Due</div>
+                <div class="info-value">
+                    {% if row.date_due %}
+                        <i class="bi bi-calendar-event"></i>
+                        {{ row.date_due }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Total Pages</div>
+                <div class="info-value">
+                    {% if row.total_pages %}
+                        <i class="bi bi-file-earmark"></i>
+                        {{ row.total_pages }} pages
+                    {% else %}
+                        —
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                    {% set s = row.status or 'Received' %}
+                    <span class="status-badge-large status-{{ s|lower|replace(' ', '-')|replace('in-progress', 'in-progress') }}">
+                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                        {{ s }}
+                    </span>
+                    {% if row.is_archived %}
+                        <span class="status-badge-large badge-archived">
+                            <i class="bi bi-archive"></i>
+                            Archived
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Files -->
+        <div class="card-modern" style="margin-top: 2rem;">
+            <div class="card-header-modern">
+                <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-paperclip"></i>
+                </div>
+                <h3 class="card-title">Attached Files</h3>
+            </div>
+            
+            {% if files %}
+            <table class="files-table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in files %}
+                    <tr>
+                        <td>
+                            <div class="file-name">
+                                <div class="file-icon">
+                                    <i class="bi bi-file-earmark"></i>
+                                </div>
+                                <div class="file-text">
+                                    <div class="file-title" title="{{ f.orig_name }}">{{ f.orig_name }}</div>
+                                    <div class="file-size">{{ f.bytes or 0 }} bytes</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{{ url_for('fulfillment.download_file', fid=f.id) }}" class="btn-download">
+                                <i class="bi bi-download"></i>
+                                Download
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state-small">
+                <i class="bi bi-inbox"></i>
+                <p>No files attached to this request</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div>
+        <!-- Print Options -->
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="card-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    <i class="bi bi-printer"></i>
+                </div>
+                <h3 class="card-title">Print Options</h3>
+            </div>
+            
+            <div class="options-grid">
+                <div class="info-row">
+                    <div class="info-label">Print Type</div>
+                    <div class="info-value">{{ opts.print_type or '—' }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Paper Size</div>
+                    <div class="info-value">{{ opts.paper_size or '—' }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Paper Stock</div>
+                    <div class="info-value">{{ opts.paper_stock or '—' }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Paper Color</div>
+                    <div class="info-value">{{ opts.paper_color or '—' }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Paper Sides</div>
+                    <div class="info-value">{{ opts.paper_sides or '—' }}</div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Binding</div>
+                    <div class="info-value">{{ opts.binding or '—' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Notes -->
+        {% if row.notes %}
+        <div class="card-modern" style="margin-top: 2rem;">
+            <div class="card-header-modern">
+                <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                    <i class="bi bi-chat-left-text"></i>
+                </div>
+                <h3 class="card-title">Additional Notes</h3>
+            </div>
+            
+            <div style="color: var(--text-primary); line-height: 1.7; font-size: 0.9375rem;">
+                {{ row.notes }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}

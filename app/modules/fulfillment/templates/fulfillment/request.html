@@ -1,126 +1,595 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Fulfillment — Request</h5>
 
-<form method="post" enctype="multipart/form-data" class="border rounded p-3">
-  <div class="row g-3">
-    <div class="col-12">
-      <label class="form-label">Description</label>
-      <input class="form-control" name="description" placeholder="Short summary of what you need printed/copied" required>
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(245, 158, 11, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    /* Form Container */
+    .form-container {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .form-section {
+        margin-bottom: 3rem;
+    }
+    
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-section-title {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-section-title i {
+        color: #f59e0b;
+        font-size: 1.5rem;
+    }
+    
+    /* Modern Form Controls */
+    .form-group {
+        margin-bottom: 1.75rem;
+    }
+    
+    .form-label-modern {
+        display: block;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+        letter-spacing: 0.01em;
+    }
+    
+    .form-label-modern .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control-modern {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--text-primary);
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        background: #fffbeb;
+    }
+    
+    .form-control-modern::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .form-select-modern {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--text-primary);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-position: right 1rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25rem;
+        padding-right: 3rem;
+    }
+    
+    .form-select-modern:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        background-color: #fffbeb;
+    }
+    
+    .form-text {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .form-text i {
+        font-size: 1rem;
+    }
+    
+    /* File Upload */
+    .file-upload-wrapper {
+        position: relative;
+    }
+    
+    .file-upload-modern {
+        width: 100%;
+        padding: 2rem;
+        border: 2px dashed #d1d5db;
+        border-radius: 0.875rem;
+        background: #f9fafb;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .file-upload-modern:hover {
+        border-color: #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .file-upload-modern.dragover {
+        border-color: #f59e0b;
+        background: #fffbeb;
+        border-style: solid;
+    }
+    
+    .file-upload-icon {
+        font-size: 3rem;
+        color: #f59e0b;
+        margin-bottom: 1rem;
+    }
+    
+    .file-upload-text {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .file-upload-hint {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    
+    .file-input-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    /* Buttons */
+    .btn-submit-modern {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 1.125rem 3rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-submit-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-submit-modern:active {
+        transform: translateY(0);
+    }
+    
+    .btn-cancel-modern {
+        background: #f3f4f6;
+        color: var(--text-primary);
+        padding: 1.125rem 2.5rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-cancel-modern:hover {
+        background: #e5e7eb;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .info-box-icon {
+        font-size: 1.5rem;
+        color: #1e40af;
+        flex-shrink: 0;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-title {
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.375rem;
+    }
+    
+    .info-box-text {
+        font-size: 0.9375rem;
+        color: #1e3a8a;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 2rem 1.5rem;
+        }
+        
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-submit-modern,
+        .btn-cancel-modern {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>New Service Request</h2>
+            <p>Submit a request for printing, copying, or other facility services</p>
+        </div>
     </div>
+</div>
 
-    <div class="col-md-4">
-      <label class="form-label">Date Due (optional)</label>
-      <input type="date" class="form-control" name="date_due">
+<!-- Info Box -->
+<div class="info-box">
+    <div class="info-box-icon">
+        <i class="bi bi-info-circle-fill"></i>
     </div>
-
-    <div class="col-md-4">
-      <label class="form-label">Number of Total Pages (optional)</label>
-      <input class="form-control" type="number" min="0" name="total_pages" placeholder="If known">
+    <div class="info-box-content">
+        <div class="info-box-title">Quick Tip</div>
+        <div class="info-box-text">Please provide as much detail as possible to help us process your request quickly. You can attach multiple files and specify your preferred options below.</div>
     </div>
+</div>
 
-    <div class="col-12">
-      <label class="form-label">Upload Files</label>
-      <input class="form-control" type="file" name="files" multiple>
-      <div class="form-text">You can attach multiple files. Large uploads depend on server limits.</div>
-    </div>
+<!-- Request Form -->
+<div class="form-container">
+    <form method="post" enctype="multipart/form-data">
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-info-circle"></i>
+                Basic Information
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Description
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="description" 
+                    placeholder="Brief summary of what you need (e.g., Print 50 copies of training manual)" 
+                    required
+                >
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label-modern">Date Due (Optional)</label>
+                    <input 
+                        type="date" 
+                        class="form-control-modern" 
+                        name="date_due"
+                    >
+                    <div class="form-text">
+                        <i class="bi bi-calendar-event"></i>
+                        When do you need this completed?
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Total Pages (Optional)</label>
+                    <input 
+                        type="number" 
+                        class="form-control-modern" 
+                        name="total_pages" 
+                        min="0" 
+                        placeholder="If known"
+                    >
+                    <div class="form-text">
+                        <i class="bi bi-file-earmark"></i>
+                        Approximate page count
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Files Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-cloud-upload"></i>
+                Upload Files
+            </h3>
+            
+            <div class="form-group">
+                <div class="file-upload-wrapper">
+                    <label for="fileInput" class="file-upload-modern">
+                        <div class="file-upload-icon">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                        </div>
+                        <div class="file-upload-text">Click to upload or drag and drop</div>
+                        <div class="file-upload-hint">PDF, DOC, DOCX, XLS, XLSX, or images (Max size depends on server)</div>
+                    </label>
+                    <input 
+                        type="file" 
+                        id="fileInput"
+                        class="file-input-hidden" 
+                        name="files" 
+                        multiple
+                    >
+                </div>
+                <div class="form-text">
+                    <i class="bi bi-paperclip"></i>
+                    You can attach multiple files at once
+                </div>
+            </div>
+        </div>
+        
+        <!-- Print Options Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-printer"></i>
+                Print Options
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label-modern">Print Type</label>
+                    <select class="form-select-modern" name="print_type">
+                        <option>Black and White</option>
+                        <option>Color</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Paper Size</label>
+                    <select class="form-select-modern" name="paper_size">
+                        <option>8.5x11</option>
+                        <option>8.5x14</option>
+                        <option>11x17</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Paper Stock</label>
+                    <select class="form-select-modern" name="paper_stock">
+                        <option>#20 White Paper</option>
+                        <option>#24 White Paper</option>
+                        <option>Color Paper</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Paper Color</label>
+                    <select class="form-select-modern" name="paper_color">
+                        <option>White</option>
+                        <option>Blue</option>
+                        <option>Yellow</option>
+                        <option>Green</option>
+                        <option>Pink</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Paper Sides</label>
+                    <select class="form-select-modern" name="paper_sides">
+                        <option>Single-Sided</option>
+                        <option>Double-Sided</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Binding</label>
+                    <select class="form-select-modern" name="binding">
+                        <option>None</option>
+                        <option>Stapled</option>
+                        <option>3-Hole Punch</option>
+                        <option>Comb Binding</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Notes Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-chat-left-text"></i>
+                Additional Notes (Optional)
+            </h3>
+            
+            <div class="form-group">
+                <textarea 
+                    class="form-control-modern" 
+                    name="notes" 
+                    rows="4" 
+                    placeholder="Any special instructions or additional details..."
+                    style="resize: vertical; min-height: 120px;"
+                ></textarea>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{{ url_for('home') }}" class="btn-cancel-modern">
+                <i class="bi bi-x-circle"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-submit-modern">
+                <i class="bi bi-check-circle"></i>
+                Submit Request
+            </button>
+        </div>
+    </form>
+</div>
 
-    <div class="col-md-3">
-      <label class="form-label">Print Type</label>
-      <select class="form-select" name="print_type">
-        <option>Black and White</option>
-        <option>Color</option>
-      </select>
-    </div>
+<script>
+// File upload drag and drop functionality
+const fileUpload = document.querySelector('.file-upload-modern');
+const fileInput = document.getElementById('fileInput');
 
-    <div class="col-md-3">
-      <label class="form-label">Paper Size</label>
-      <select class="form-select" name="paper_size">
-        <option>8.5x11</option>
-        <option>8.5x14</option>
-        <option>11x17</option>
-      </select>
-    </div>
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    fileUpload.addEventListener(eventName, preventDefaults, false);
+});
 
-    <div class="col-md-3">
-      <label class="form-label">Paper Stock</label>
-      <select class="form-select" name="paper_stock">
-        <option>#20 White Paper</option>
-        <option>#24 White Paper</option>
-        <option>Color Paper</option>
-      </select>
-    </div>
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 
-    <div class="col-md-3">
-      <label class="form-label">Paper Color</label>
-      <select class="form-select" name="paper_color">
-        <option>White</option>
-        <option>Blue</option>
-        <option>Yellow</option>
-        <option>Other</option>
-      </select>
-    </div>
+['dragenter', 'dragover'].forEach(eventName => {
+    fileUpload.addEventListener(eventName, () => {
+        fileUpload.classList.add('dragover');
+    }, false);
+});
 
-    <div class="col-md-3">
-      <label class="form-label">Paper Sides</label>
-      <select class="form-select" name="paper_sides">
-        <option>Single Sided</option>
-        <option>Double Sided</option>
-        <option>Exactly as Original</option>
-      </select>
-    </div>
+['dragleave', 'drop'].forEach(eventName => {
+    fileUpload.addEventListener(eventName, () => {
+        fileUpload.classList.remove('dragover');
+    }, false);
+});
 
-    <div class="col-md-3">
-      <label class="form-label">Binding</label>
-      <select class="form-select" name="binding">
-        <option>None</option>
-        <option>Spiral</option>
-        <option>Booklet Staple</option>
-        <option>Staple</option>
-        <option>Binder Clip</option>
-        <option>Paper Clip</option>
-        <option>Rebind Original</option>
-      </select>
-    </div>
+fileUpload.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+}, false);
+</script>
 
-    <div class="col-md-3">
-      <label class="form-label">Covers</label>
-      <select class="form-select" name="covers">
-        <option>None</option>
-        <option>Frosted Cover/Black Back</option>
-        <option>Other</option>
-      </select>
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">Tabs</label>
-      <select class="form-select" name="tabs">
-        <option>None</option>
-        <option>Custom Tabs</option>
-        <option>Same as Original</option>
-      </select>
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">Finishing</label>
-      <select class="form-select" name="finishing">
-        <option>None</option>
-        <option>3-Hole Punch</option>
-        <option>Fold</option>
-        <option>Collate</option>
-        <option>Uncollate</option>
-      </select>
-    </div>
-
-    <div class="col-12">
-      <label class="form-label">Additional Details</label>
-      <textarea class="form-control" name="additional" rows="3"
-                placeholder="Anything else we should know (e.g., special instructions, paper color if 'Other')"></textarea>
-    </div>
-  </div>
-
-  <div class="mt-3">
-    <button class="btn btn-primary">Submit Request</button>
-  </div>
-</form>
 {% endblock %}

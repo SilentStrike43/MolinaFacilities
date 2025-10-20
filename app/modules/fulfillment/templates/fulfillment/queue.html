@@ -1,59 +1,488 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Fulfillment — Service Queue</h5>
 
-<div class="table-responsive">
-  <table class="table table-sm table-striped align-middle">
-    <thead>
-      <tr>
-        <th>Service ID</th>
-        <th>Description</th>
-        <th>Requester</th>
-        <th>Date Submitted</th>
-        <th>Date Due</th>
-        <th>Status</th>
-        <th class="text-end">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td class="text-truncate" style="max-width:260px">{{ r.description or '—' }}</td>
-        <td>{{ r.requester_name or '—' }}</td>
-        <td class="text-nowrap">{{ r.date_submitted or r.ts_utc }}</td>
-        <td class="text-nowrap">{{ r.date_due or '—' }}</td>
-        <td>
-          {% set s = r.status or 'Received' %}
-          {% if s == 'Suspended' %}
-            <span class="badge bg-warning text-dark">Suspended</span>
-          {% elif s == 'Completed' %}
-            <span class="badge bg-success">Completed</span>
-          {% elif s == 'Cancelled' %}
-            <span class="badge bg-secondary">Cancelled</span>
-          {% else %}
-            <span class="badge bg-secondary">{{ s }}</span>
-          {% endif %}
-        </td>
-        <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fulfillment.view_request', rid=r.id) }}">View</a>
-          <form method="post" class="d-inline">
-            <input type="hidden" name="rid" value="{{ r.id }}">
-            <select class="form-select form-select-sm d-inline-block w-auto" name="status">
-              {% for s in statuses %}
-                <option value="{{ s }}" {{ 'selected' if s==r.status else '' }}>{{ s }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-sm btn-outline-secondary">Update</button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-      {% if not rows %}
-      <tr><td colspan="7" class="text-center text-muted py-4">No requests in queue.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    .queue-stats {
+        display: flex;
+        gap: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.375rem;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        font-weight: 600;
+    }
+    
+    /* Table Container */
+    .table-container {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .table-header {
+        padding: 2rem 2rem 1.5rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .table-header h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .table-header p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9375rem;
+    }
+    
+    /* Modern Table */
+    .table-modern {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-modern thead {
+        background: #f9fafb;
+    }
+    
+    .table-modern thead th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-size: 0.8125rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .table-modern tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+        animation: slideIn 0.4s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .table-modern tbody tr:nth-child(1) { animation-delay: 0.05s; }
+    .table-modern tbody tr:nth-child(2) { animation-delay: 0.1s; }
+    .table-modern tbody tr:nth-child(3) { animation-delay: 0.15s; }
+    .table-modern tbody tr:nth-child(4) { animation-delay: 0.2s; }
+    .table-modern tbody tr:nth-child(5) { animation-delay: 0.25s; }
+    
+    .table-modern tbody tr:hover {
+        background: #f9fafb;
+        transform: scale(1.005);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-modern tbody td {
+        padding: 1.5rem 1.5rem;
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+    }
+    
+    .table-modern tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    /* Request ID Badge */
+    .request-id {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+    }
+    
+    .status-received {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+    
+    .status-hold {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .status-in-progress {
+        background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+        color: #5b21b6;
+    }
+    
+    .status-suspended {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .btn-view {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-status {
+        background: #f3f4f6;
+        color: var(--text-primary);
+    }
+    
+    .btn-status:hover {
+        background: #e5e7eb;
+    }
+    
+    /* Status Update Form */
+    .status-update-form {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .status-select {
+        padding: 0.625rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: white;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 150px;
+    }
+    
+    .status-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .empty-state-icon {
+        font-size: 5rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-state-text {
+        font-size: 1.0625rem;
+        color: var(--text-secondary);
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    /* Truncate Text */
+    .text-truncate {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .table-modern {
+            font-size: 0.875rem;
+        }
+        
+        .text-truncate {
+            max-width: 200px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .page-header-left {
+            flex-direction: column;
+        }
+        
+        .queue-stats {
+            width: 100%;
+            justify-content: space-around;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .table-modern {
+            min-width: 800px;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-left">
+            <div class="page-header-icon">
+                <i class="bi bi-list-task"></i>
+            </div>
+            <div class="page-header-text">
+                <h2>Service Queue</h2>
+                <p>Manage and process active service requests</p>
+            </div>
+        </div>
+        
+        <div class="queue-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ rows|length }}</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ rows|selectattr('status', 'equalto', 'Received')|list|length }}</div>
+                <div class="stat-label">New</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ rows|selectattr('status', 'equalto', 'In-Progress')|list|length }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock %}
 
+<!-- Queue Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Active Requests</h3>
+        <p>Review and update the status of incoming service requests</p>
+    </div>
+    
+    {% if rows %}
+    <table class="table-modern">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Requester</th>
+                <th>Date Due</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>
+                    <span class="request-id">#{{ r.id }}</span>
+                </td>
+                <td>
+                    <div class="text-truncate" title="{{ r.description or '—' }}">
+                        {{ r.description or '—' }}
+                    </div>
+                </td>
+                <td>
+                    <strong>{{ r.requester_name or '—' }}</strong>
+                </td>
+                <td>
+                    {% if r.date_due %}
+                        <span style="color: var(--text-secondary);">
+                            <i class="bi bi-calendar-event"></i>
+                            {{ r.date_due }}
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="status-badge status-{{ (r.status or 'Received')|lower|replace(' ', '-')|replace('in-progress', 'in-progress') }}">
+                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                        {{ r.status or 'Received' }}
+                    </span>
+                </td>
+                <td>
+                    {% if r.assigned_staff_name %}
+                        <span style="color: var(--text-secondary);">
+                            <i class="bi bi-person-check"></i>
+                            {{ r.assigned_staff_name }}
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-muted);">Unassigned</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                        <form method="post" class="status-update-form">
+                            <input type="hidden" name="rid" value="{{ r.id }}">
+                            <select name="status" class="status-select" onchange="this.form.submit()">
+                                {% for s in statuses %}
+                                <option value="{{ s }}" {% if s == (r.status or 'Received') %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        <a href="{{ url_for('fulfillment.view_request', rid=r.id) }}" class="btn-action btn-view">
+                            <i class="bi bi-eye"></i>
+                            View
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-inbox"></i>
+        </div>
+        <div class="empty-state-title">No Active Requests</div>
+        <div class="empty-state-text">There are currently no service requests in the queue. New requests will appear here when submitted.</div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

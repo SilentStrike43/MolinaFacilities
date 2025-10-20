@@ -1,386 +1,512 @@
 {% extends "base.html" %}
 
-{% block page_title %}Dashboard{% endblock %}
+{% block page_title %}{{ title or "Facilities Portal" }}{% endblock %}
 
 {% block body %}
 <style>
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+    /* Animated Background */
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(5deg); }
     }
     
-    .stat-card {
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(0.98); }
+    }
+    
+    /* Hero Section */
+    .hero-section {
+        position: relative;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 4rem 2rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        border-radius: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 25px 60px rgba(102, 126, 234, 0.3);
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .hero-background {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+    }
+    
+    .hero-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    .hero-circle:nth-child(1) {
+        width: 400px;
+        height: 400px;
+        top: -10%;
+        left: -5%;
+        animation-delay: 0s;
+    }
+    
+    .hero-circle:nth-child(2) {
+        width: 300px;
+        height: 300px;
+        bottom: -10%;
+        right: -5%;
+        animation-delay: 2s;
+    }
+    
+    .hero-circle:nth-child(3) {
+        width: 200px;
+        height: 200px;
+        top: 40%;
+        right: 10%;
+        animation-delay: 4s;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        color: white;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .hero-icon {
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        margin: 0 auto 2rem;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        animation: pulse 3s ease-in-out infinite;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }
+    
+    .hero-message {
+        font-size: 1.5rem;
+        font-weight: 400;
+        opacity: 0.95;
+        margin-bottom: 2.5rem;
+        line-height: 1.6;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-actions {
+        display: flex;
+        gap: 1.25rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-hero-primary {
+        padding: 1rem 2.5rem;
+        font-size: 1.125rem;
+        font-weight: 700;
         background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
+        color: #667eea;
+        border: none;
+        border-radius: 0.875rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-hero-primary:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        color: #667eea;
+    }
+    
+    .btn-hero-secondary {
+        padding: 1rem 2.5rem;
+        font-size: 1.125rem;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 0.875rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-hero-secondary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.8);
+        transform: translateY(-4px) scale(1.05);
+        color: white;
+    }
+    
+    /* Feature Grid */
+    .features-section {
+        margin-bottom: 3rem;
+    }
+    
+    .section-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeIn 0.8s ease-out 0.2s;
+        animation-fill-mode: both;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .section-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
-        transition: all 0.3s;
+        animation: fadeIn 0.8s ease-out;
+        animation-fill-mode: both;
     }
     
-    .stat-card::before {
+    .feature-card:nth-child(1) { animation-delay: 0.3s; }
+    .feature-card:nth-child(2) { animation-delay: 0.4s; }
+    .feature-card:nth-child(3) { animation-delay: 0.5s; }
+    .feature-card:nth-child(4) { animation-delay: 0.6s; }
+    
+    .feature-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        background: linear-gradient(90deg, var(--feature-color), var(--feature-color-dark));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
     }
     
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
     }
     
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+    .feature-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--feature-bg);
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-        background: var(--icon-bg);
-        color: var(--icon-color);
-    }
-    
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-    
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    
-    .stat-trend {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-top: 0.5rem;
-    }
-    
-    .trend-up {
-        color: #10b981;
-    }
-    
-    .trend-down {
-        color: #ef4444;
-    }
-    
-    /* Quick Actions */
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .action-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        text-align: center;
-        text-decoration: none;
-        transition: all 0.3s;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        border: 2px solid transparent;
-    }
-    
-    .action-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
-        border-color: var(--primary-color);
-    }
-    
-    .action-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 1rem;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        background: var(--action-bg);
-        color: var(--action-color);
-    }
-    
-    .action-title {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-        font-size: 1rem;
-    }
-    
-    .action-description {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-    
-    /* Recent Activity */
-    .activity-feed {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    .activity-item {
-        display: flex;
-        gap: 1rem;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        transition: background 0.2s;
-    }
-    
-    .activity-item:hover {
-        background: #f9fafb;
-    }
-    
-    .activity-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    
-    .activity-content {
-        flex: 1;
-    }
-    
-    .activity-title {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-    }
-    
-    .activity-description {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-    
-    .activity-time {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-top: 0.25rem;
-    }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        font-size: 2.5rem;
+        color: var(--feature-color);
         margin-bottom: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
     }
     
-    .section-title {
-        font-size: 1.25rem;
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-title {
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--text-primary);
+        margin-bottom: 1rem;
     }
     
-    .view-all-link {
-        font-size: 0.875rem;
-        color: var(--primary-color);
-        text-decoration: none;
-        font-weight: 600;
-        transition: opacity 0.2s;
+    .feature-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
     }
     
-    .view-all-link:hover {
-        opacity: 0.8;
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2rem;
+        padding: 4rem 2rem;
+        text-align: center;
+        color: white;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        animation: fadeIn 0.8s ease-out 0.7s;
+        animation-fill-mode: both;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 8s ease-in-out infinite;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 1;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1.25rem;
+        text-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cta-message {
+        font-size: 1.25rem;
+        opacity: 0.95;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-message {
+            font-size: 1.125rem;
+        }
+        
+        .hero-icon {
+            width: 90px;
+            height: 90px;
+            font-size: 3rem;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .cta-title {
+            font-size: 2rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .hero-actions {
+            flex-direction: column;
+        }
+        
+        .btn-hero-primary,
+        .btn-hero-secondary {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
-<!-- Welcome Banner -->
-<div class="card-premium" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 2rem;">
-    <div class="card-premium-body" style="padding: 2rem;">
-        <h2 style="margin-bottom: 0.5rem; font-weight: 700;">Welcome back, {{ cu.username }}! 👋</h2>
-        <p style="opacity: 0.9; margin-bottom: 1.5rem;">Here's what's happening with your facilities today.</p>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <span id="current-date" style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-calendar-check"></i> <span id="date-text">Loading...</span>
-            </span>
-            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-shield-check"></i> All systems operational
-            </span>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-background">
+        <div class="hero-circle"></div>
+        <div class="hero-circle"></div>
+        <div class="hero-circle"></div>
+    </div>
+    
+    <div class="hero-content">
+        <div class="hero-icon">
+            <i class="bi bi-building"></i>
+        </div>
+        <h1 class="hero-title">{{ title or "Facilities Portal" }}</h1>
+        <p class="hero-message">{{ message or "Your centralized hub for managing facilities, assets, and services efficiently" }}</p>
+        
+        <div class="hero-actions">
+            {% if cu %}
+                {% if cu.can_send or elevated %}
+                <a href="{{ url_for('send.index') }}" class="btn-hero-primary">
+                    <i class="bi bi-box-seam"></i>
+                    Get Started
+                </a>
+                {% elif cu.can_fulfillment_customer or elevated %}
+                <a href="{{ url_for('fulfillment.request_form') }}" class="btn-hero-primary">
+                    <i class="bi bi-file-earmark-text"></i>
+                    Get Started
+                </a>
+                {% elif cu.can_asset or elevated %}
+                <a href="{{ url_for('inventory.asset') }}" class="btn-hero-primary">
+                    <i class="bi bi-box-seam"></i>
+                    Get Started
+                </a>
+                {% else %}
+                <a href="/" class="btn-hero-primary">
+                    <i class="bi bi-house-door"></i>
+                    Go to Dashboard
+                </a>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn-hero-primary">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Sign In
+                </a>
+            {% endif %}
+            
+            <a href="#features" class="btn-hero-secondary">
+                <i class="bi bi-info-circle"></i>
+                Learn More
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Statistics -->
-<div class="dashboard-grid">
-    <div class="stat-card" style="--gradient-start: #667eea; --gradient-end: #764ba2; --icon-bg: rgba(102, 126, 234, 0.1); --icon-color: #667eea;">
-        <div class="stat-icon">
-            <i class="bi bi-box-seam"></i>
-        </div>
-        <div class="stat-value">247</div>
-        <div class="stat-label">Total Assets</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>12% from last month</span>
-        </div>
+<!-- Features Section -->
+<div id="features" class="features-section">
+    <div class="section-header">
+        <h2 class="section-title">Everything You Need</h2>
+        <p class="section-subtitle">Powerful tools to manage your facilities operations seamlessly</p>
     </div>
     
-    <div class="stat-card" style="--gradient-start: #f093fb; --gradient-end: #f5576c; --icon-bg: rgba(240, 147, 251, 0.1); --icon-color: #f093fb;">
-        <div class="stat-icon">
-            <i class="bi bi-clock-history"></i>
-        </div>
-        <div class="stat-value">18</div>
-        <div class="stat-label">Pending Requests</div>
-        <div class="stat-trend trend-down">
-            <i class="bi bi-arrow-down"></i>
-            <span>5% from last week</span>
-        </div>
-    </div>
-    
-    <div class="stat-card" style="--gradient-start: #4facfe; --gradient-end: #00f2fe; --icon-bg: rgba(79, 172, 254, 0.1); --icon-color: #4facfe;">
-        <div class="stat-icon">
-            <i class="bi bi-truck"></i>
-        </div>
-        <div class="stat-value">34</div>
-        <div class="stat-label">Shipments This Month</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>8% from last month</span>
-        </div>
-    </div>
-    
-    <div class="stat-card" style="--gradient-start: #43e97b; --gradient-end: #38f9d7; --icon-bg: rgba(67, 233, 123, 0.1); --icon-color: #43e97b;">
-        <div class="stat-icon">
-            <i class="bi bi-check-circle"></i>
-        </div>
-        <div class="stat-value">156</div>
-        <div class="stat-label">Completed Tasks</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>23% from last month</span>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="section-header">
-    <h2 class="section-title">Quick Actions</h2>
-</div>
-
-<div class="quick-actions">
-    {% if cu.can_asset or elevated %}
-    <a href="{{ url_for('inventory.asset') }}" class="action-card" style="--action-bg: rgba(102, 126, 234, 0.1); --action-color: #667eea;">
-        <div class="action-icon">
-            <i class="bi bi-plus-circle"></i>
-        </div>
-        <div class="action-title">Add Asset</div>
-        <div class="action-description">Register new equipment</div>
-    </a>
-    {% endif %}
-    
-    {% if cu.can_send or elevated %}
-    <a href="{{ url_for('send.index') }}" class="action-card" style="--action-bg: rgba(240, 147, 251, 0.1); --action-color: #f093fb;">
-        <div class="action-icon">
-            <i class="bi bi-box-seam"></i>
-        </div>
-        <div class="action-title">Ship Package</div>
-        <div class="action-description">Create new shipment</div>
-    </a>
-    {% endif %}
-    
-    {% if cu.can_fulfillment_customer or elevated %}
-    <a href="{{ url_for('fulfillment.request_form') }}" class="action-card" style="--action-bg: rgba(79, 172, 254, 0.1); --action-color: #4facfe;">
-        <div class="action-icon">
-            <i class="bi bi-file-earmark-text"></i>
-        </div>
-        <div class="action-title">Service Request</div>
-        <div class="action-description">Submit new ticket</div>
-    </a>
-    {% endif %}
-    
-    {% if cu.can_asset or elevated %}
-    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="action-card" style="--action-bg: rgba(67, 233, 123, 0.1); --action-color: #43e97b;">
-        <div class="action-icon">
-            <i class="bi bi-arrow-left-right"></i>
-        </div>
-        <div class="action-title">Asset Movement</div>
-        <div class="action-description">Check in/out items</div>
-    </a>
-    {% endif %}
-</div>
-
-<!-- Recent Activity -->
-<div class="section-header">
-    <h2 class="section-title">Recent Activity</h2>
-    <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
-</div>
-
-<div class="activity-feed">
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
-            <i class="bi bi-box-seam"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">New Asset Added</div>
-            <div class="activity-description">Dell Display P2423D has been added to inventory</div>
-            <div class="activity-time">2 hours ago</div>
-        </div>
-    </div>
-    
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(240, 147, 251, 0.1); color: #f093fb;">
-            <i class="bi bi-truck"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">Shipment Delivered</div>
-            <div class="activity-description">Package #PKG-20251020-001 delivered successfully</div>
-            <div class="activity-time">5 hours ago</div>
-        </div>
-    </div>
-    
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(79, 172, 254, 0.1); color: #4facfe;">
-            <i class="bi bi-check-circle"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">Request Completed</div>
-            <div class="activity-description">Service request #SR-428 has been completed</div>
-            <div class="activity-time">1 day ago</div>
-        </div>
-    </div>
-    
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(67, 233, 123, 0.1); color: #43e97b;">
-            <i class="bi bi-arrow-repeat"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">Asset Movement</div>
-            <div class="activity-description">5 units checked out from Building A</div>
-            <div class="activity-time">2 days ago</div>
-        </div>
+    <div class="features-grid">
+        {% if cu %}
+            {% if cu.can_send or elevated %}
+            <div class="feature-card" style="--feature-color: #667eea; --feature-color-dark: #764ba2; --feature-bg: rgba(102, 126, 234, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <h3 class="feature-title">Package Shipping</h3>
+                <p class="feature-description">Send and track packages to any location with real-time updates and delivery confirmation</p>
+            </div>
+            {% endif %}
+            
+            {% if cu.can_fulfillment_customer or cu.can_fulfillment_staff or elevated %}
+            <div class="feature-card" style="--feature-color: #f59e0b; --feature-color-dark: #d97706; --feature-bg: rgba(245, 158, 11, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <h3 class="feature-title">Service Requests</h3>
+                <p class="feature-description">Submit and manage printing, copying, and other facility service requests efficiently</p>
+            </div>
+            {% endif %}
+            
+            {% if cu.can_asset or elevated %}
+            <div class="feature-card" style="--feature-color: #10b981; --feature-color-dark: #059669; --feature-bg: rgba(16, 185, 129, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <h3 class="feature-title">Asset Management</h3>
+                <p class="feature-description">Track inventory, manage assets, and maintain accurate records of all facility resources</p>
+            </div>
+            {% endif %}
+            
+            {% if elevated or cu.can_users %}
+            <div class="feature-card" style="--feature-color: #3b82f6; --feature-color-dark: #2563eb; --feature-bg: rgba(59, 130, 246, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3 class="feature-title">User Management</h3>
+                <p class="feature-description">Control access, manage permissions, and oversee all system users from one place</p>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="feature-card" style="--feature-color: #667eea; --feature-color-dark: #764ba2; --feature-bg: rgba(102, 126, 234, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning"></i>
+                </div>
+                <h3 class="feature-title">Fast & Efficient</h3>
+                <p class="feature-description">Streamlined workflows designed for maximum productivity and minimal friction</p>
+            </div>
+            
+            <div class="feature-card" style="--feature-color: #10b981; --feature-color-dark: #059669; --feature-bg: rgba(16, 185, 129, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h3 class="feature-title">Secure & Reliable</h3>
+                <p class="feature-description">Enterprise-grade security with role-based access control and audit logging</p>
+            </div>
+            
+            <div class="feature-card" style="--feature-color: #f59e0b; --feature-color-dark: #d97706; --feature-bg: rgba(245, 158, 11, 0.1);">
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h3 class="feature-title">Data Insights</h3>
+                <p class="feature-description">Comprehensive analytics and reporting to make informed decisions</p>
+            </div>
+        {% endif %}
     </div>
 </div>
 
-<script>
-    // Format and display current date
-    document.addEventListener('DOMContentLoaded', function() {
-        const dateText = document.getElementById('date-text');
-        if (dateText) {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            dateText.textContent = now.toLocaleDateString('en-US', options);
-        }
-    });
-</script>
+<!-- CTA Section -->
+{% if cu %}
+<div class="cta-section">
+    <div class="cta-content">
+        <h2 class="cta-title">Ready to Get Started?</h2>
+        <p class="cta-message">Explore all the powerful features available to streamline your facility operations</p>
+        <a href="/" class="btn-hero-primary" style="background: white; color: #667eea;">
+            <i class="bi bi-arrow-right-circle"></i>
+            Go to Dashboard
+        </a>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
