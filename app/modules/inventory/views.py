@@ -247,11 +247,11 @@ def create_asset(data: dict) -> int:
         data.get("uom", "EA"),
         data.get("location", ""),
         int(data.get("qty_on_hand", 0)),
-        data.get("manufacturer") or "",
-        data.get("part_number") or "",
-        data.get("serial_number") or "",
-        data.get("pii") or "",
-        data.get("notes") or "",
+        data.get("manufacturer", ""),
+        data.get("part_number", ""),
+        data.get("serial_number", ""),
+        data.get("pii", ""),
+        data.get("notes", ""),
         data.get("status", "active")
     ))
     asset_id = cur.lastrowid
@@ -280,9 +280,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
     if not asset:
         return
     
-    # Convert Row to dict for easier access
-    asset_dict = dict(asset)
-    cat_info = get_category_info(asset_dict.get("sku", ""))
+    cat_info = get_category_info(asset["sku"])
     
     con = inventory_db()
     con.execute("""
@@ -294,14 +292,14 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
         datetime.date.today().isoformat(),
         asset_id,
         f"{cat_info['category']} - {cat_info['subcategory']}",
-        asset_dict.get("manufacturer") or "",
-        asset_dict.get("product") or "",
+        asset.get("manufacturer", ""),
+        asset["product"] or "",
         username,
         f"{action}: {note}" if note else action,
-        asset_dict.get("part_number") or "N/A",
-        asset_dict.get("serial_number") or "N/A",
+        asset.get("part_number", "N/A"),
+        asset.get("serial_number", "N/A"),
         qty,
-        asset_dict.get("location") or "",
+        asset["location"] or "",
         "completed"
     ))
     con.commit()

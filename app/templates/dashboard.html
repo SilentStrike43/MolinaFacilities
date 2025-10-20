@@ -71,15 +71,10 @@
         margin-top: 0.5rem;
     }
     
-    .trend-up {
-        color: #10b981;
-    }
+    .trend-up { color: #10b981; }
+    .trend-down { color: #ef4444; }
+    .trend-neutral { color: #6b7280; }
     
-    .trend-down {
-        color: #ef4444;
-    }
-    
-    /* Quick Actions */
     .quick-actions {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -129,27 +124,31 @@
         color: var(--text-secondary);
     }
     
-    /* Recent Activity */
-    .activity-feed {
+    .activity-feed, .tasks-widget {
         background: white;
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     
-    .activity-item {
+    .activity-item, .task-item {
         display: flex;
         gap: 1rem;
         padding: 1rem;
         border-radius: 0.5rem;
         transition: background 0.2s;
+        border-bottom: 1px solid #f3f4f6;
     }
     
-    .activity-item:hover {
+    .activity-item:last-child, .task-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-item:hover, .task-item:hover {
         background: #f9fafb;
     }
     
-    .activity-icon {
+    .activity-icon, .task-icon {
         width: 40px;
         height: 40px;
         border-radius: 10px;
@@ -159,17 +158,18 @@
         flex-shrink: 0;
     }
     
-    .activity-content {
+    .activity-content, .task-content {
         flex: 1;
+        min-width: 0;
     }
     
-    .activity-title {
+    .activity-title, .task-title {
         font-weight: 600;
         color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
     
-    .activity-description {
+    .activity-description, .task-description {
         font-size: 0.875rem;
         color: var(--text-secondary);
     }
@@ -179,6 +179,20 @@
         color: var(--text-muted);
         margin-top: 0.25rem;
     }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .status-received { background: #dbeafe; color: #1e40af; }
+    .status-in-progress { background: #fef3c7; color: #92400e; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-hold { background: #fee2e2; color: #991b1b; }
     
     .section-header {
         display: flex;
@@ -204,6 +218,24 @@
     .view-all-link:hover {
         opacity: 0.8;
     }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+    
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    
+    @media (max-width: 968px) {
+        .two-column {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <!-- Welcome Banner -->
@@ -228,35 +260,49 @@
         <div class="stat-icon">
             <i class="bi bi-box-seam"></i>
         </div>
-        <div class="stat-value">247</div>
+        <div class="stat-value">{{ data.total_assets }}</div>
         <div class="stat-label">Total Assets</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>12% from last month</span>
+        {% if data.asset_trend != 0 %}
+        <div class="stat-trend {{ 'trend-up' if data.asset_trend > 0 else 'trend-down' }}">
+            <i class="bi bi-arrow-{{ 'up' if data.asset_trend > 0 else 'down' }}"></i>
+            <span>{{ data.asset_trend|abs }}% from last month</span>
         </div>
+        {% else %}
+        <div class="stat-trend trend-neutral">
+            <i class="bi bi-dash"></i>
+            <span>No change from last month</span>
+        </div>
+        {% endif %}
     </div>
     
     <div class="stat-card" style="--gradient-start: #f093fb; --gradient-end: #f5576c; --icon-bg: rgba(240, 147, 251, 0.1); --icon-color: #f093fb;">
         <div class="stat-icon">
             <i class="bi bi-clock-history"></i>
         </div>
-        <div class="stat-value">18</div>
+        <div class="stat-value">{{ data.pending_requests }}</div>
         <div class="stat-label">Pending Requests</div>
-        <div class="stat-trend trend-down">
-            <i class="bi bi-arrow-down"></i>
-            <span>5% from last week</span>
+        {% if data.request_trend != 0 %}
+        <div class="stat-trend {{ 'trend-down' if data.request_trend < 0 else 'trend-up' }}">
+            <i class="bi bi-arrow-{{ 'down' if data.request_trend < 0 else 'up' }}"></i>
+            <span>{{ data.request_trend|abs }}% from last month</span>
         </div>
+        {% else %}
+        <div class="stat-trend trend-neutral">
+            <i class="bi bi-dash"></i>
+            <span>No change</span>
+        </div>
+        {% endif %}
     </div>
     
     <div class="stat-card" style="--gradient-start: #4facfe; --gradient-end: #00f2fe; --icon-bg: rgba(79, 172, 254, 0.1); --icon-color: #4facfe;">
         <div class="stat-icon">
             <i class="bi bi-truck"></i>
         </div>
-        <div class="stat-value">34</div>
+        <div class="stat-value">{{ data.shipments_this_month }}</div>
         <div class="stat-label">Shipments This Month</div>
-        <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>8% from last month</span>
+        <div class="stat-trend trend-neutral">
+            <i class="bi bi-calendar-month"></i>
+            <span>Month to date</span>
         </div>
     </div>
     
@@ -264,11 +310,11 @@
         <div class="stat-icon">
             <i class="bi bi-check-circle"></i>
         </div>
-        <div class="stat-value">156</div>
-        <div class="stat-label">Completed Tasks</div>
+        <div class="stat-value">{{ data.completed_tasks }}</div>
+        <div class="stat-label">Completed This Month</div>
         <div class="stat-trend trend-up">
-            <i class="bi bi-arrow-up"></i>
-            <span>23% from last month</span>
+            <i class="bi bi-trophy"></i>
+            <span>Keep up the great work!</span>
         </div>
     </div>
 </div>
@@ -320,54 +366,61 @@
     {% endif %}
 </div>
 
-<!-- Recent Activity -->
-<div class="section-header">
-    <h2 class="section-title">Recent Activity</h2>
-    <a href="#" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
-</div>
-
-<div class="activity-feed">
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
-            <i class="bi bi-box-seam"></i>
+<!-- Two Column Layout -->
+<div class="two-column">
+    <!-- My Tasks (for fulfillment staff) -->
+    {% if data.my_tasks and (cu.can_fulfillment_staff or elevated) %}
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">My Tasks</h2>
+            <a href="{{ url_for('fulfillment.queue') }}" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a>
         </div>
-        <div class="activity-content">
-            <div class="activity-title">New Asset Added</div>
-            <div class="activity-description">Dell Display P2423D has been added to inventory</div>
-            <div class="activity-time">2 hours ago</div>
-        </div>
-    </div>
-    
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(240, 147, 251, 0.1); color: #f093fb;">
-            <i class="bi bi-truck"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">Shipment Delivered</div>
-            <div class="activity-description">Package #PKG-20251020-001 delivered successfully</div>
-            <div class="activity-time">5 hours ago</div>
-        </div>
-    </div>
-    
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(79, 172, 254, 0.1); color: #4facfe;">
-            <i class="bi bi-check-circle"></i>
-        </div>
-        <div class="activity-content">
-            <div class="activity-title">Request Completed</div>
-            <div class="activity-description">Service request #SR-428 has been completed</div>
-            <div class="activity-time">1 day ago</div>
+        
+        <div class="tasks-widget">
+            {% for task in data.my_tasks %}
+            <div class="task-item">
+                <div class="task-icon" style="background: rgba(240, 147, 251, 0.1); color: #f093fb;">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="task-content">
+                    <div class="task-title">Request #{{ task.id }}</div>
+                    <div class="task-description">{{ task.description[:60] }}{{ '...' if task.description|length > 60 else '' }}</div>
+                    <span class="status-badge status-{{ task.status.lower().replace(' ', '-').replace('_', '-') }}">
+                        {{ task.status }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
     
-    <div class="activity-item">
-        <div class="activity-icon" style="background: rgba(67, 233, 123, 0.1); color: #43e97b;">
-            <i class="bi bi-arrow-repeat"></i>
+    <!-- Recent Activity -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">Recent Activity</h2>
         </div>
-        <div class="activity-content">
-            <div class="activity-title">Asset Movement</div>
-            <div class="activity-description">5 units checked out from Building A</div>
-            <div class="activity-time">2 days ago</div>
+        
+        <div class="activity-feed">
+            {% if data.recent_activities %}
+                {% for activity in data.recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: {{ activity.icon_bg }}; color: {{ activity.icon_color }};">
+                        <i class="bi bi-{{ activity.icon }}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.title }}</div>
+                        <div class="activity-description">{{ activity.description }}</div>
+                        <div class="activity-time">{{ activity.time }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-muted);"></i>
+                <p style="margin-top: 1rem;">No recent activity yet. Start using the system to see updates here!</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

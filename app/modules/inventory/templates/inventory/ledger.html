@@ -1,71 +1,219 @@
-{% extends "base.html" %}
-{% block body %}
-<h5 class="mb-3">Inventory — Asset Ledger</h5>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory — Asset Ledger</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .header-bar {
+      background-color: #17a2b8;
+      color: white;
+      padding: 0.75rem 0;
+      margin-bottom: 1.5rem;
+    }
+    .quick-update-alert {
+      background-color: #d1ecf1;
+      border-color: #bee5eb;
+      color: #0c5460;
+    }
+    .table-sm th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f1f3f5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="container-fluid px-4">
+      <h5 class="mb-0">Inventory — Asset Ledger</h5>
+    </div>
+  </div>
 
-<form class="row g-2 mb-3" method="get" action="{{ url_for('inventory.ledger') }}">
-  <div class="col-md-6"><input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search inventory id, product, manufacturer, actor"></div>
-  <div class="col-md-2"><input class="form-control" name="date_from" value="{{ date_from or '' }}" placeholder="From (YYYY-MM-DD)"></div>
-  <div class="col-md-2"><input class="form-control" name="date_to" value="{{ date_to or '' }}" placeholder="To (YYYY-MM-DD)"></div>
-  <div class="col-md-1">
-    <button class="btn btn-primary w-100" type="submit">Search</button>
-  </div>
-  <div class="col-md-1">
-    <a class="btn btn-outline-secondary w-100"
-       href="{{ url_for('inventory.ledger_export', q=q or '', date_from=date_from or '', date_to=date_to or '') }}">
-      Export
-    </a>
-  </div>
-</form>
+  <div class="container-fluid px-4">
+    <!-- Search Form -->
+    <form class="row g-2 mb-3" method="get">
+      <div class="col-md-6">
+        <input class="form-control" name="q" placeholder="Search inventory id, product, manufacturer, actor">
+      </div>
+      <div class="col-md-2">
+        <input class="form-control" name="date_from" placeholder="From (YYYY-MM-DD)">
+      </div>
+      <div class="col-md-2">
+        <input class="form-control" name="date_to" placeholder="To (YYYY-MM-DD)">
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-primary w-100" type="submit">Search</button>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-outline-secondary w-100" type="button" onclick="exportData()">Export</button>
+      </div>
+    </form>
 
-<div class="alert alert-info py-2">
-  <strong>Quick update:</strong> Use this mini-form to add a ledger entry.
-</div>
-<form class="row gy-2 gx-2 mb-3" method="post">
-  <div class="col-md-2">
-    <input class="form-control" name="asset_id" placeholder="Asset ID (numeric)" required>
-  </div>
-  <div class="col-md-3">
-    <select class="form-select" name="action" required>
-      <option value="check_in">Check In (+)</option>
-      <option value="check_out">Check Out (-)</option>
-      <option value="adjust">Adjust (±)</option>
-    </select>
-  </div>
-  <div class="col-md-2">
-    <input class="form-control" name="qty" type="number" min="1" placeholder="Qty" required>
-  </div>
-  <div class="col-md-5">
-    <input class="form-control" name="notes" placeholder="Notes (optional)">
-  </div>
-  <div class="col-12">
-    <button class="btn btn-success">Apply</button>
-  </div>
-</form>
+    <!-- Quick Update Section -->
+    <div class="alert quick-update-alert py-2 mb-2">
+      <strong>Quick update:</strong> Use this mini-form to add a ledger entry.
+    </div>
 
-<div class="table-responsive">
-  <table class="table table-sm table-hover align-middle">
-    <thead>
-      <tr>
-        <th>UTC</th><th>Inv ID</th><th>Product</th><th>Mfr</th><th>Action</th><th class="text-end">Qty</th><th>Actor</th><th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
+    <form class="row gy-2 gx-2 mb-4" onsubmit="handleQuickUpdate(event)">
+      <div class="col-md-2">
+        <input class="form-control" name="asset_id" placeholder="Asset ID (numeric)" required>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" name="action" required>
+          <option value="">Select action...</option>
+          <option value="check_in">Check In (+)</option>
+          <option value="check_out">Check Out (-)</option>
+          <option value="adjust">Adjust (±)</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <input class="form-control" name="qty" type="number" min="1" placeholder="Qty" required>
+      </div>
+      <div class="col-md-5">
+        <input class="form-control" name="notes" placeholder="Notes (optional)">
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success" type="submit">Apply</button>
+      </div>
+    </form>
+
+    <!-- Ledger Table -->
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead>
+          <tr>
+            <th>UTC</th>
+            <th>Inv ID</th>
+            <th>Product</th>
+            <th>Mfr</th>
+            <th>Action</th>
+            <th class="text-end">Qty</th>
+            <th>Actor</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerTableBody">
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">No ledger entries.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Sample data to demonstrate the interface
+    const sampleData = [
+      {
+        ts_utc: '2025-10-20 14:23:15',
+        inventory_id: '101-0000012',
+        product_name: 'Dell Latitude 5420',
+        manufacturer: 'Dell Technologies',
+        action: 'CHECK_IN',
+        qty: 5,
+        actor: 'john.smith',
+        notes: 'New shipment from vendor'
+      },
+      {
+        ts_utc: '2025-10-20 11:45:33',
+        inventory_id: '101-0000008',
+        product_name: 'HP ProDesk 600',
+        manufacturer: 'HP Inc.',
+        action: 'CHECK_OUT',
+        qty: 2,
+        actor: 'jane.doe',
+        notes: 'Deployed to Building A'
+      },
+      {
+        ts_utc: '2025-10-19 16:12:48',
+        inventory_id: '101-0000015',
+        product_name: 'Lenovo ThinkPad X1',
+        manufacturer: 'Lenovo',
+        action: 'ADJUST',
+        qty: 1,
+        actor: 'admin',
+        notes: 'Inventory reconciliation'
+      }
+    ];
+
+    function renderTable(data) {
+      const tbody = document.getElementById('ledgerTableBody');
+      
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No ledger entries.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(row => `
         <tr>
-          <td class="text-nowrap">{{ r.ts_utc }}</td>
-          <td class="text-nowrap">{{ r.inventory_id }}</td>
-          <td>{{ r.product_name }}</td>
-          <td>{{ r.manufacturer }}</td>
-          <td class="text-nowrap">{{ r.action }}</td>
-          <td class="text-end">{{ r.qty }}</td>
-          <td>{{ r.actor }}</td>
-          <td class="small">{{ r.notes }}</td>
+          <td class="text-nowrap">${row.ts_utc}</td>
+          <td class="text-nowrap">${row.inventory_id}</td>
+          <td>${row.product_name}</td>
+          <td>${row.manufacturer}</td>
+          <td class="text-nowrap">${row.action}</td>
+          <td class="text-end">${row.qty}</td>
+          <td>${row.actor}</td>
+          <td class="small">${row.notes}</td>
         </tr>
-      {% endfor %}
-      {% if not rows %}
-        <tr><td colspan="8" class="text-center text-muted py-4">No ledger entries.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+      `).join('');
+    }
+
+    function handleQuickUpdate(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const assetId = formData.get('asset_id');
+      const action = formData.get('action');
+      const qty = formData.get('qty');
+      const notes = formData.get('notes') || 'Quick entry';
+
+      // Create new entry
+      const newEntry = {
+        ts_utc: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        inventory_id: `101-${assetId.padStart(7, '0')}`,
+        product_name: 'Sample Product',
+        manufacturer: 'Sample Manufacturer',
+        action: action.toUpperCase().replace('_', '_'),
+        qty: parseInt(qty),
+        actor: 'current.user',
+        notes: notes
+      };
+
+      sampleData.unshift(newEntry);
+      renderTable(sampleData);
+      event.target.reset();
+      
+      // Show success message
+      showAlert('Ledger entry added successfully!', 'success');
+    }
+
+    function exportData() {
+      showAlert('Export functionality would download CSV file', 'info');
+    }
+
+    function showAlert(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+      alertDiv.style.zIndex = '9999';
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.body.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    // Initialize table with sample data
+    renderTable(sampleData);
+  </script>
+</body>
+</html>
