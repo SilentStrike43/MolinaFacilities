@@ -435,10 +435,6 @@
                     <span>Send Package</span>
                 </a>
                 <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send-tracking' else '' }}">
-                <a href="{{ url_for('send.reports') }}" class="nav-link-custom {{ 'active' if active=='send-insights' else '' }}">
-                    <i class="bi bi-bar-chart-line nav-link-icon"></i>
-                    <span>Insights</span>
-                </a>
                     <i class="bi bi-geo-alt nav-link-icon"></i>
                     <span>Track Package</span>
                 </a>

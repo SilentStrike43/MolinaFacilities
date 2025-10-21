@@ -364,7 +364,7 @@
 
 <!-- Filter Card -->
 <div class="filter-card">
-    <form method="get" action="{{ url_for('send.reports') }}" class="filter-form">
+    <form method="get" action="{{ url_for('send.reports') if 'send.reports' in url_for else '#' }}" class="filter-form">
         <div class="filter-group">
             <label class="filter-label">Search</label>
             <input 
@@ -382,7 +382,7 @@
         </button>
         
         <a 
-            href="{{ url_for('send.export') }}?q={{ q or '' }}" 
+            href="{{ url_for('send.export', q=q or '') if 'send.export' in url_for else '#' }}" 
             class="btn-export"
         >
             <i class="bi bi-download"></i>

@@ -14,7 +14,7 @@ def ledger_home():
     assets = list_assets()
     asset = get_asset(asset_id) if asset_id else None
     rows = list_movements(asset_id) if asset_id else []
-    return render_template("inventory/inventory_ledger.html", active="asset-ledger", assets=assets, asset=asset, rows=rows)
+    return render_template("inventory_ledger.html", active="inventory", assets=assets, asset=asset, rows=rows)
 
 @bp.post("/ledger/checkin")
 @login_required
@@ -25,7 +25,7 @@ def ledger_checkin():
     note = (request.form.get("note") or "").strip()
     record_movement(asset_id, "CHECKIN", qty, (current_user() or {}).get("username",""), note)
     flash("Checked in.", "success")
-    return redirect(url_for("asset_ledger.ledger_home", asset_id=asset_id))
+    return redirect(url_for("inventory_ledger.ledger_home", asset_id=asset_id))
 
 @bp.post("/ledger/checkout")
 @login_required
@@ -36,4 +36,4 @@ def ledger_checkout():
     note = (request.form.get("note") or "").strip()
     record_movement(asset_id, "CHECKOUT", qty, (current_user() or {}).get("username",""), note)
     flash("Checked out.", "success")
-    return redirect(url_for("asset_ledger.ledger_home", asset_id=asset_id))
+    return redirect(url_for("inventory_ledger.ledger_home", asset_id=asset_id))

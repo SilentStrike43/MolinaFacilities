@@ -249,12 +249,11 @@ def permissions():
 
         # Update capability flags
         caps["can_send"] = bool(request.form.get("can_send"))
-        caps["can_asset"] = bool(request.form.get("can_asset"))
-        caps["can_insights"] = bool(request.form.get("can_insights"))
-        caps["can_users"] = bool(request.form.get("can_users"))
-        caps["can_fulfillment_staff"] = bool(request.form.get("can_fulfillment_staff"))
-        caps["can_fulfillment_customer"] = bool(request.form.get("can_fulfillment_customer"))
-        caps["can_inventory"] = bool(request.form.get("can_inventory"))
+        caps["inventory"] = bool(request.form.get("can_asset"))
+        caps["insights"] = bool(request.form.get("can_insights"))
+        caps["users"] = bool(request.form.get("can_users"))
+        caps["fulfillment_staff"] = bool(request.form.get("can_fulfillment_staff"))
+        caps["fulfillment_customer"] = bool(request.form.get("can_fulfillment_customer"))
         
         is_admin = 1 if request.form.get("is_admin") else 0
 

@@ -102,23 +102,17 @@ def _parse_caps(u: dict) -> dict:
 
 # synonyms / compound capabilities used around the app
 _CAP_SYNONYMS = {
-    "asset": "can_asset",
-    "inventory": "can_inventory",
-    "can_asset": "can_asset",
-    "can_inventory": "can_inventory",
+    "asset": "inventory",
+    "inventory": "inventory",
     "send": "can_send",
     "can_send": "can_send",
-    "insights": "can_insights",
-    "can_insights": "can_insights",
-    "users": "can_users",
-    "can_users": "can_users",
+    "insights": "insights",
+    "users": "users",
     "admin": "is_admin",
     "sysadmin": "is_sysadmin",
-    "fulfillment_staff": "can_fulfillment_staff",
-    "can_fulfillment_staff": "can_fulfillment_staff",
-    "fulfillment_customer": "can_fulfillment_customer",
-    "can_fulfillment_customer": "can_fulfillment_customer",
-    "fulfillment_any": "fulfillment_any",
+    "fulfillment_staff": "fulfillment_staff",
+    "fulfillment_customer": "fulfillment_customer",
+    "fulfillment_any": "fulfillment_any",  # resolves below
 }
 
 def has_cap(user_row: Optional[dict], cap: str) -> bool:

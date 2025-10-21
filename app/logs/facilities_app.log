@@ -321,3 +321,336 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'asset_
 2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
 2025-10-21 10:12:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
 2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:12:49 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:12:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:12:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:12:49 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:12:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:12:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:12:49 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:12:49 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:13:15 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\users\views.py", line 152, in user_list
+    return render_template("users/list.html",
+                           active="users", tab="list",
+                           rows=filtered, q=q, show_all=include_inactive)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 558, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 445, in block 'body'
+    <a href="{{ url_for('users.create_user') if 'create_user' else '#' }}" class="btn-header-action">
+    ^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+2025-10-21 10:13:24 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 561, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 558, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 10:15:27 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 561, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 558, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 10:25:29 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:25:29 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:25:29 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:25:29 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:25:29 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:25:29 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:25:29 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:25:29 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:25:35 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:25:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:25:35 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:25:35 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:25:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:25:35 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:26:55 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:26:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:26:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:26:55 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:26:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:26:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:26:55 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:26:55 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:27:57 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:27:57 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:27:57 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:27:57 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:27:57 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:27:57 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:28:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:28:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:28:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:28:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:28:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:28:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:28:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:28:06 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:28:55 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\users\views.py", line 152, in user_list
+    return render_template("users/list.html",
+                           active="users", tab="list",
+                           rows=filtered, q=q, show_all=include_inactive)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 562, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 445, in block 'body'
+    <a href="{{ url_for('users.create_user') if 'create_user' else '#' }}" class="btn-header-action">
+    ^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+2025-10-21 10:28:59 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 561, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 562, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 10:37:14 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 561, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 562, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 10:37:19 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\users\views.py", line 152, in user_list
+    return render_template("users/list.html",
+                           active="users", tab="list",
+                           rows=filtered, q=q, show_all=include_inactive)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 562, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\users\templates\users\list.html", line 445, in block 'body'
+    <a href="{{ url_for('users.create_user') if 'create_user' else '#' }}" class="btn-header-action">
+    ^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 11:40:06 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 11:40:06 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
