@@ -654,3 +654,18 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'users.
 2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
 2025-10-21 11:40:06 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
 2025-10-21 11:40:06 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 12:00:46 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 12:00:46 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 12:00:46 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 12:00:46 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 12:00:46 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 12:00:46 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 12:00:46 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 12:00:46 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
