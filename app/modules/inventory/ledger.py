@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.modules.auth.security import login_required, require_cap, current_user
 from .models import ensure_schema, list_assets, get_asset, record_movement, list_movements
 
-bp = Blueprint("inventory_ledger", __name__, template_folder="../templates")
+bp = Blueprint("asset_ledger", __name__, template_folder="../templates")
 
 @bp.route("/ledger")
 @login_required

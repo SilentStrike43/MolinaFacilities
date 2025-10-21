@@ -516,7 +516,10 @@
                 <div class="user-details">
                     <div class="user-name">{{ cu.username }}</div>
                     <div class="user-role">
-                        {% if elevated %}Administrator{% else %}User{% endif %}
+                        {% if cu.is_system %}App Developer
+                        {% elif cu.is_sysadmin %}System Administrator
+                        {% elif cu.is_admin %}Administrator
+                        {% else %}User{% endif %}
                     </div>
                 </div>
             </div>

@@ -1,105 +1,127 @@
-2025-10-20 13:17:10 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 13:17:10 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 13:17:10 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 13:17:10 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 13:17:10 | [32mINFO[0m | app.core.database | safe_execute_script:205 | Successfully executed script on C:\BTManifest\app\data\auth.sqlite
-2025-10-20 13:17:10 | [32mINFO[0m | app.modules.auth.models | ensure_user_schema:71 | User schema initialized successfully
-2025-10-20 13:17:10 | [35mCRITICAL[0m | app | create_app:155 | Failed to register blueprints: cannot import name 'force_admin_from_env_if_present' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
+2025-10-21 10:01:24 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:01:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:01:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:01:24 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:01:24 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:01:24 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:01:24 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:01:24 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:01:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:01:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:01:25 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:01:25 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:01:25 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:01:25 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:01:25 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:01:56 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:01:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:01:56 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:01:56 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:01:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:01:56 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:02:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:02:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:02:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:02:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:02:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:02:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:02:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:02:06 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:04:33 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:04:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:04:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:04:33 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:04:33 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:04:33 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:04:33 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:04:33 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:05:51 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:05:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:05:51 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:05:51 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:05:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:05:51 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:05:54 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:05:54 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:05:54 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:05:54 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:05:54 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:05:54 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:05:54 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:05:54 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:06:01 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
 Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 136, in create_app
-    from app.modules.auth.views import bp as auth_bp
-  File "C:\BTManifest\app\modules\auth\views.py", line 5, in <module>
-    from .models import (
-    ...<7 lines>...
-    )
-ImportError: cannot import name 'force_admin_from_env_if_present' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
-2025-10-20 13:21:09 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 13:21:09 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 13:21:09 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 13:21:09 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 13:21:09 | [32mINFO[0m | app.core.database | safe_execute_script:205 | Successfully executed script on C:\BTManifest\app\data\auth.sqlite
-2025-10-20 13:21:09 | [32mINFO[0m | app.modules.auth.models | ensure_user_schema:71 | User schema initialized successfully
-2025-10-20 13:21:09 | [35mCRITICAL[0m | app | create_app:155 | Failed to register blueprints: cannot import name 'set_user_password' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
-Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 136, in create_app
-    from app.modules.auth.views import bp as auth_bp
-  File "C:\BTManifest\app\modules\auth\views.py", line 5, in <module>
-    from .models import (
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 64, in page
+    return render_template(
+        "send/index.html",
     ...<6 lines>...
+        package_prefix=PACKAGE_PREFIX,
     )
-ImportError: cannot import name 'set_user_password' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
-2025-10-20 13:41:08 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 13:41:08 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 13:41:08 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 13:41:08 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 13:41:08 | [32mINFO[0m | app.core.database | safe_execute_script:205 | Successfully executed script on C:\BTManifest\app\data\auth.sqlite
-2025-10-20 13:41:08 | [32mINFO[0m | app.modules.auth.models | ensure_user_schema:71 | User schema initialized successfully
-2025-10-20 13:41:08 | [35mCRITICAL[0m | app | create_app:155 | Failed to register blueprints: cannot import name 'set_user_password' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 433, in top-level template code
+    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' else '' }}">
+    ^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
+2025-10-21 10:06:08 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
 Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 136, in create_app
-    from app.modules.auth.views import bp as auth_bp
-  File "C:\BTManifest\app\modules\auth\views.py", line 5, in <module>
-    from .models import (
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 64, in page
+    return render_template(
+        "send/index.html",
     ...<6 lines>...
-    )
-ImportError: cannot import name 'set_user_password' from 'app.modules.auth.models' (C:\BTManifest\app\modules\auth\models.py)
-2025-10-20 15:03:48 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:03:48 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:03:48 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:03:48 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 15:03:48 | [32mINFO[0m | app | create_app:152 | All blueprints registered successfully
-2025-10-20 15:03:48 | [32mINFO[0m | app | create_app:166 | Database schemas initialized
-2025-10-20 15:03:48 | [32mINFO[0m | app | create_app:329 | Application initialization complete
-2025-10-20 15:03:48 | [32mINFO[0m | app | <module>:344 | Starting development server on 127.0.0.1:5000
-2025-10-20 15:04:04 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
-2025-10-20 15:08:55 | [32mINFO[0m | app | shutdown_handler:240 | Application shutting down...
-2025-10-20 15:08:55 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-20 15:08:55 | [32mINFO[0m | app | shutdown_handler:242 | Cleanup complete
-2025-10-20 15:08:56 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:08:56 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:08:56 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:08:56 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 15:08:56 | [35mCRITICAL[0m | app | create_app:155 | Failed to register blueprints: name 'inventory_bp' is not defined
-Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 138, in create_app
-    from app.modules.inventory.views import bp as inventory_bp
-  File "C:\BTManifest\app\modules\inventory\views.py", line 4, in <module>
-    @inventory_bp.route("/insights")
-     ^^^^^^^^^^^^
-NameError: name 'inventory_bp' is not defined
-2025-10-20 15:09:27 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:09:27 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:09:27 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:09:27 | [32mINFO[0m | app | create_app:74 | Application starting up...
-2025-10-20 15:09:27 | [35mCRITICAL[0m | app | create_app:155 | Failed to register blueprints: name 'inventory_bp' is not defined
-Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 138, in create_app
-    from app.modules.inventory.views import bp as inventory_bp
-  File "C:\BTManifest\app\modules\inventory\views.py", line 4, in <module>
-    @inventory_bp.route("/insights")
-     ^^^^^^^^^^^^
-NameError: name 'inventory_bp' is not defined
-2025-10-20 15:17:29 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:17:29 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:17:29 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:17:29 | [32mINFO[0m | app | create_app:81 | Application starting up...
-2025-10-20 15:17:29 | [32mINFO[0m | app | create_app:166 | All blueprints registered successfully
-2025-10-20 15:17:29 | [32mINFO[0m | app | create_app:180 | Database schemas initialized
-2025-10-20 15:17:29 | [32mINFO[0m | app | create_app:343 | Application initialization complete
-2025-10-20 15:17:29 | [32mINFO[0m | app | <module>:358 | Starting development server on 127.0.0.1:5000
-2025-10-20 15:17:34 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /inventory/insights
-2025-10-20 15:17:36 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
+        package_prefix=PACKAGE_PREFIX,
     )
   File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
     return _render(app, template, context)
@@ -110,446 +132,192 @@ Traceback (most recent call last):
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
   File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
     raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
     {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:17:37 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
-    return _render(app, template, context)
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
-    rv = template.render(context)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
-    self.environment.handle_exception()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
-    {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:17:37 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
-    return _render(app, template, context)
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
-    rv = template.render(context)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
-    self.environment.handle_exception()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
-    {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:17:38 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
-    return _render(app, template, context)
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
-    rv = template.render(context)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
-    self.environment.handle_exception()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
-    {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:19:35 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
-    return _render(app, template, context)
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
-    rv = template.render(context)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
-    self.environment.handle_exception()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
-    {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:19:37 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
-    return _render(app, template, context)
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
-    rv = template.render(context)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
-    self.environment.handle_exception()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 1, in top-level template code
-    {% extends "base.html" %}
-  File "C:\BTManifest\app\templates\base.html", line 209, in top-level template code
-    <a class="nav-link {{ 'active' if active=='insights' and tab=='inventory' else '' }}" href="{{ url_for('inventory.insights') }}">
-    ^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
-    return self.handle_url_build_error(error, endpoint, values)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
-    rv = url_adapter.build(  # type: ignore[union-attr]
-        endpoint,
-    ...<3 lines>...
-        force_external=_external,
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
-    raise BuildError(endpoint, values, method, self)
-werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'inventory.insights'. Did you mean 'inventory.insights_export' instead?
-2025-10-20 15:19:41 | [32mINFO[0m | app | shutdown_handler:254 | Application shutting down...
-2025-10-20 15:19:41 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-20 15:19:41 | [32mINFO[0m | app | shutdown_handler:256 | Cleanup complete
-2025-10-20 15:19:44 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:19:44 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:19:44 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:19:44 | [32mINFO[0m | app | create_app:81 | Application starting up...
-2025-10-20 15:19:44 | [35mCRITICAL[0m | app | create_app:169 | Failed to register blueprints: name 'inventory_bp' is not defined
-Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 148, in create_app
-    from app.modules.inventory import bp as inventory_bp
-  File "C:\BTManifest\app\modules\inventory\__init__.py", line 10, in <module>
-    from . import views
-  File "C:\BTManifest\app\modules\inventory\views.py", line 4, in <module>
-    @inventory_bp.route("/insights")
-     ^^^^^^^^^^^^
-NameError: name 'inventory_bp' is not defined
-2025-10-20 15:25:49 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:25:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:25:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:25:49 | [32mINFO[0m | app | create_app:81 | Application starting up...
-2025-10-20 15:25:50 | [32mINFO[0m | app | create_app:166 | All blueprints registered successfully
-2025-10-20 15:25:50 | [32mINFO[0m | app | create_app:180 | Database schemas initialized
-2025-10-20 15:25:50 | [32mINFO[0m | app | create_app:343 | Application initialization complete
-2025-10-20 15:25:50 | [32mINFO[0m | app | <module>:358 | Starting development server on 127.0.0.1:5000
-2025-10-20 15:53:22 | [32mINFO[0m | app | shutdown_handler:254 | Application shutting down...
-2025-10-20 15:53:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-20 15:53:22 | [32mINFO[0m | app | shutdown_handler:256 | Cleanup complete
-2025-10-20 15:53:25 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:53:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:53:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:53:25 | [32mINFO[0m | app | create_app:81 | Application starting up...
-2025-10-20 15:53:25 | [32mINFO[0m | app | create_app:166 | All blueprints registered successfully
-2025-10-20 15:53:25 | [32mINFO[0m | app | create_app:180 | Database schemas initialized
-2025-10-20 15:53:25 | [32mINFO[0m | app | create_app:343 | Application initialization complete
-2025-10-20 15:53:25 | [32mINFO[0m | app | <module>:358 | Starting development server on 127.0.0.1:5000
-2025-10-20 15:53:43 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateAssertionError: No filter named 'format_datetime'.
-Traceback (most recent call last):
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
-    return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
-    )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 149, in render_template
-    template = app.jinja_env.get_or_select_template(template_name_or_list)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
-    return self.get_template(template_name_or_list, parent, globals)
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
-    return self._load_template(name, globals)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
-    template = self.loader.load(self, name, self.make_globals(globals))
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
-    code = environment.compile(source, name, filename)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
-    self.handle_exception(source=source_hint)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 216, in template
-    <i class="bi bi-calendar-check"></i> {{ "now"|format_datetime("%B %d, %Y") }}
+  File "C:\BTManifest\app\templates\base.html", line 433, in top-level template code
+    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' else '' }}">
     ^^^^^^^^^
-jinja2.exceptions.TemplateAssertionError: No filter named 'format_datetime'.
-2025-10-20 15:53:45 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateAssertionError: No filter named 'format_datetime'.
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
+2025-10-21 10:06:11 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
 Traceback (most recent call last):
   File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
     rv = self.dispatch_request()
   File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
     return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\BTManifest\app\app.py", line 194, in home
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 64, in page
     return render_template(
-        "blank.html",
-        title="Facilities Portal",
-        message="Welcome! Select a module from the navigation bar to get started."
+        "send/index.html",
+    ...<6 lines>...
+        package_prefix=PACKAGE_PREFIX,
     )
-  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 149, in render_template
-    template = app.jinja_env.get_or_select_template(template_name_or_list)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
-    return self.get_template(template_name_or_list, parent, globals)
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
-    return self._load_template(name, globals)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
-    template = self.loader.load(self, name, self.make_globals(globals))
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
-    code = environment.compile(source, name, filename)
-  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
-    self.handle_exception(source=source_hint)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
   File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
     raise rewrite_traceback_stack(source=source)
-  File "C:\BTManifest\app\templates\blank.html", line 216, in template
-    <i class="bi bi-calendar-check"></i> {{ "now"|format_datetime("%B %d, %Y") }}
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 433, in top-level template code
+    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' else '' }}">
     ^^^^^^^^^
-jinja2.exceptions.TemplateAssertionError: No filter named 'format_datetime'.
-2025-10-20 15:57:04 | [32mINFO[0m | app | shutdown_handler:254 | Application shutting down...
-2025-10-20 15:57:04 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-20 15:57:04 | [32mINFO[0m | app | shutdown_handler:256 | Cleanup complete
-2025-10-20 15:57:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-20 15:57:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-20 15:57:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-20 15:57:06 | [32mINFO[0m | app | create_app:81 | Application starting up...
-2025-10-20 15:57:06 | [32mINFO[0m | app | create_app:166 | All blueprints registered successfully
-2025-10-20 15:57:06 | [32mINFO[0m | app | create_app:180 | Database schemas initialized
-2025-10-20 15:57:06 | [32mINFO[0m | app | create_app:343 | Application initialization complete
-2025-10-20 15:57:06 | [32mINFO[0m | app | <module>:358 | Starting development server on 127.0.0.1:5000
-2025-10-20 16:08:23 | [32mINFO[0m | app | shutdown_handler:254 | Application shutting down...
-2025-10-20 16:08:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-20 16:08:23 | [32mINFO[0m | app | shutdown_handler:256 | Cleanup complete
-2025-10-21 09:33:34 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:33:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:33:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:34:36 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:34:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:34:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:34:36 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: cannot import name 'bp' from 'app.modules.inventory' (C:\BTManifest\app\modules\inventory\__init__.py)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.index'. Did you mean 'send.export' instead?
+2025-10-21 10:07:49 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:07:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:07:49 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:07:49 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:07:49 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:07:49 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:07:49 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:07:49 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:08:02 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:08:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:08:02 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:08:02 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:08:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:08:02 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:08:03 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:08:03 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:08:03 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:08:03 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:08:03 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:08:03 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:08:03 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:08:03 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:08:12 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'asset_ledger.ledger_home'. Did you mean 'inventory_ledger.ledger_home' instead?
 Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 105, in create_app
-    from app.modules.inventory import bp as inventory_bp
-ImportError: cannot import name 'bp' from 'app.modules.inventory' (C:\BTManifest\app\modules\inventory\__init__.py)
-2025-10-21 09:36:24 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:36:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:36:24 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:36:24 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: inventory.asset
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 64, in page
+    return render_template(
+        "send/index.html",
+    ...<6 lines>...
+        package_prefix=PACKAGE_PREFIX,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 473, in top-level template code
+    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='asset-ledger' else '' }}">
+    ^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'asset_ledger.ledger_home'. Did you mean 'inventory_ledger.ledger_home' instead?
+2025-10-21 10:08:24 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'asset_ledger.ledger_home'. Did you mean 'inventory_ledger.ledger_home' instead?
 Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 106, in create_app
-    app.register_blueprint(inventory_bp)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
-    return f(self, *args, **kwargs)
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
-    blueprint.register(self, options)
-    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
-    deferred(state)
-    ~~~~~~~~^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
-    lambda s: s.add_url_rule(
-              ~~~~~~~~~~~~~~^
-        rule,
-        ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 64, in page
+    return render_template(
+        "send/index.html",
+    ...<6 lines>...
+        package_prefix=PACKAGE_PREFIX,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 473, in top-level template code
+    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='asset-ledger' else '' }}">
+    ^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
     ...<3 lines>...
-        **options,
-        ^^^^^^^^^^
+        force_external=_external,
     )
-    ^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
-    self.app.add_url_rule(
-    ~~~~~~~~~~~~~~~~~~~~~^
-        rule,
-        ^^^^^
-    ...<3 lines>...
-        **options,
-        ^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
-    return f(self, *args, **kwargs)
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
-    raise AssertionError(
-    ...<2 lines>...
-    )
-AssertionError: View function mapping is overwriting an existing endpoint function: inventory.asset
-2025-10-21 09:37:55 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:37:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:37:55 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:37:55 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: inventory.asset
-Traceback (most recent call last):
-  File "C:\BTManifest\app\app.py", line 106, in create_app
-    app.register_blueprint(inventory_bp)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
-    return f(self, *args, **kwargs)
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
-    blueprint.register(self, options)
-    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
-    deferred(state)
-    ~~~~~~~~^^^^^^^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
-    lambda s: s.add_url_rule(
-              ~~~~~~~~~~~~~~^
-        rule,
-        ^^^^^
-    ...<3 lines>...
-        **options,
-        ^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
-    self.app.add_url_rule(
-    ~~~~~~~~~~~~~~~~~~~~~^
-        rule,
-        ^^^^^
-    ...<3 lines>...
-        **options,
-        ^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
-    return f(self, *args, **kwargs)
-  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
-    raise AssertionError(
-    ...<2 lines>...
-    )
-AssertionError: View function mapping is overwriting an existing endpoint function: inventory.asset
-2025-10-21 09:40:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:40:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:40:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
-2025-10-21 09:40:06 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-21 09:40:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-21 09:40:06 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
-2025-10-21 09:40:06 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
-2025-10-21 09:40:06 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
-2025-10-21 09:41:18 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'asset_ledger.ledger_home'. Did you mean 'inventory_ledger.ledger_home' instead?
+2025-10-21 10:12:39 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 10:12:39 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 10:12:39 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 10:12:39 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 10:12:39 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 10:12:39 | [32mINFO[0m | __main__ | create_app:292 | Application initialization complete
+2025-10-21 10:12:39 | [32mINFO[0m | __main__ | <module>:318 | Starting development server on 127.0.0.1:5000
+2025-10-21 10:12:39 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:12:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete
+2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:304 | Application shutting down...
+2025-10-21 10:12:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 10:12:47 | [32mINFO[0m | __main__ | shutdown_handler:309 | Cleanup complete

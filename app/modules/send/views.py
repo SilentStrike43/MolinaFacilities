@@ -18,7 +18,7 @@ from .providers import guess_carrier, normalize_scanned
 PACKAGE_TYPES = ["Box","Envelope","Packs","Tubes","Certified","Sensitive","Critical"]
 
 # ---------- Send (print label) ----------
-@bp.route("/", methods=["GET","POST"])
+@bp.route("/", methods=["GET","POST"], endpoint="index")
 @login_required
 @require_cap("can_send")
 def page():
