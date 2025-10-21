@@ -1,89 +1,610 @@
 {% extends "base.html" %}
 {% block body %}
-<h5 class="mb-3">Users — Modify Users</h5>
-<div class="alert alert-info py-2">
-  <div>Admin/SysAdmin can set <strong>Fulfillment</strong> permissions here. Elevated roles (Administrator / Systems Administrator) are managed in <em>Admin → Elevated User Actions</em>.</div>
+
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .info-box-icon {
+        font-size: 1.5rem;
+        color: #1e40af;
+        flex-shrink: 0;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-text {
+        font-size: 0.9375rem;
+        color: #1e3a8a;
+        font-weight: 600;
+    }
+    
+    /* User Cards Grid */
+    .users-grid {
+        display: grid;
+        gap: 2rem;
+        animation: fadeInUp 0.6s ease-out 0.2s;
+        animation-fill-mode: both;
+    }
+    
+    .user-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        animation: slideIn 0.5s ease-out;
+        animation-fill-mode: both;
+        border-top: 4px solid #00A3AD;
+    }
+    
+    .user-card:nth-child(1) { animation-delay: 0.1s; }
+    .user-card:nth-child(2) { animation-delay: 0.2s; }
+    .user-card:nth-child(3) { animation-delay: 0.3s; }
+    
+    .user-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .user-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 2rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+    }
+    
+    .user-header-info {
+        flex: 1;
+    }
+    
+    .user-header-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .badge-user {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+    }
+    
+    .badge-system {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .badge-sysadmin {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    .badge-admin {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        color: white;
+    }
+    
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section-title {
+        grid-column: 1 / -1;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 1.5rem 0 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .form-section-title i {
+        color: #00A3AD;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label-modern {
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-input-modern {
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-input-modern:focus {
+        outline: none;
+        border-color: #00A3AD;
+        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
+    }
+    
+    .form-input-modern::placeholder {
+        color: var(--text-muted);
+    }
+    
+    /* Permission Checkboxes */
+    .permissions-grid {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .permission-item:has(input:checked) {
+        background: linear-gradient(135deg, rgba(0, 163, 173, 0.1), rgba(0, 138, 147, 0.1));
+        border-color: #00A3AD;
+    }
+    
+    .checkbox-modern {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        appearance: none;
+        position: relative;
+        flex-shrink: 0;
+    }
+    
+    .checkbox-modern:checked {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        border-color: #00A3AD;
+    }
+    
+    .checkbox-modern:checked::before {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    
+    .permission-label {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    /* Form Actions */
+    .form-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f3f4f6;
+    }
+    
+    .btn-save {
+        padding: 1rem 2.5rem;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(0, 163, 173, 0.4);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .user-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .permissions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-person-gear"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Modify Users</h2>
+            <p>Update user profiles and permission settings</p>
+        </div>
+    </div>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-sm align-middle">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th style="min-width:200px;">Profile</th>
-        <th class="text-center">Send</th>
-        <th class="text-center">Asset</th>
-        <th class="text-center">Insights</th>
-        <th class="text-center">Users</th>
-        <th class="text-center">Fulfillment (Staff)</th>
-        <th class="text-center">Fulfillment (Customer)</th>
-        <th class="text-end">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td class="text-nowrap">
-          <div class="fw-semibold">{{ r.username }}</div>
-          <div class="text-muted small">
-            {% if r.is_system %}<span class="badge bg-warning text-dark">System</span> {% endif %}
-            {% if r.is_sysadmin %}<span class="badge bg-secondary">SysAdmin</span> {% endif %}
-            {% if r.is_admin %}<span class="badge bg-dark">Admin</span> {% endif %}
-          </div>
-        </td>
+<!-- Info Box -->
+<div class="info-box">
+    <div class="info-box-icon">
+        <i class="bi bi-info-circle-fill"></i>
+    </div>
+    <div class="info-box-content">
+        <div class="info-box-text">
+            Admin/SysAdmin can set <strong>Fulfillment</strong> permissions here. Elevated roles (Administrator / Systems Administrator) are managed in <em>Admin → Permissions</em>.
+        </div>
+    </div>
+</div>
 
-        <td>
-          <form method="post" class="row g-2">
+<!-- Users Grid -->
+<div class="users-grid">
+    {% for r in rows %}
+    <div class="user-card">
+        <form method="post">
             <input type="hidden" name="uid" value="{{ r.id }}">
-            <div class="col-md-6"><input class="form-control form-control-sm" name="first_name" value="{{ r.first_name or '' }}" placeholder="First name"></div>
-            <div class="col-md-6"><input class="form-control form-control-sm" name="last_name"  value="{{ r.last_name or '' }}"  placeholder="Last name"></div>
-            <div class="col-md-6"><input class="form-control form-control-sm" name="email"      value="{{ r.email or '' }}"      placeholder="Email"></div>
-            <div class="col-md-6"><input class="form-control form-control-sm" name="phone"      value="{{ r.phone or '' }}"      placeholder="Phone"></div>
-            <div class="col-md-6"><input class="form-control form-control-sm" name="department" value="{{ r.department or '' }}" placeholder="Department"></div>
-            <div class="col-md-6"><input class="form-control form-control-sm" name="position"   value="{{ r.position or '' }}"   placeholder="Position"></div>
-        </td>
-
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_send" {{ 'checked' if r.can_send else '' }}>
-        </td>
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_asset" {{ 'checked' if r.can_asset else '' }}>
-        </td>
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_insights" {{ 'checked' if r.can_insights else '' }}>
-        </td>
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_users" {{ 'checked' if r.can_users else '' }}>
-        </td>
-
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_fulfillment_staff"
-                 {{ 'checked' if r.can_fulfillment_staff else '' }}
-                 {{ '' if can_set_fulfillment else 'disabled' }}>
-        </td>
-        <td class="text-center align-middle">
-          <input class="form-check-input" type="checkbox" name="can_fulfillment_customer"
-                 {{ 'checked' if r.can_fulfillment_customer else '' }}
-                 {{ '' if can_set_fulfillment else 'disabled' }}>
-        </td>
-
-        <td class="text-end align-middle">
-            <button class="btn btn-sm btn-primary">Save</button>
-            {% if not r.is_system %}
-            <form class="d-inline" method="post" action="{{ url_for('users.delete', uid=r.id) }}"
-                  onsubmit="return confirm('Deactivate this user?');">
-              <button class="btn btn-sm btn-outline-danger">Deactivate</button>
-            </form>
-            {% endif %}
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-      {% if not rows %}
-      <tr><td colspan="9" class="text-center text-muted py-4">No users.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
+            
+            <!-- User Header -->
+            <div class="user-card-header">
+                <div class="user-avatar-large">
+                    {{ r.username[0]|upper }}
+                </div>
+                <div class="user-header-info">
+                    <div class="user-header-name">{{ r.username }}</div>
+                    <div class="user-badges">
+                        {% if r.is_system %}
+                        <span class="badge-user badge-system">
+                            <i class="bi bi-gear"></i>
+                            System
+                        </span>
+                        {% endif %}
+                        {% if r.is_sysadmin %}
+                        <span class="badge-user badge-sysadmin">
+                            <i class="bi bi-shield-exclamation"></i>
+                            SysAdmin
+                        </span>
+                        {% endif %}
+                        {% if r.is_admin %}
+                        <span class="badge-user badge-admin">
+                            <i class="bi bi-shield"></i>
+                            Admin
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Information -->
+            <div class="form-grid">
+                <div class="form-section-title">
+                    <i class="bi bi-person"></i>
+                    Profile Information
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">First Name</label>
+                    <input 
+                        type="text" 
+                        name="first_name" 
+                        class="form-input-modern"
+                        value="{{ r.first_name or '' }}" 
+                        placeholder="First name"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Last Name</label>
+                    <input 
+                        type="text" 
+                        name="last_name" 
+                        class="form-input-modern"
+                        value="{{ r.last_name or '' }}" 
+                        placeholder="Last name"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Email</label>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        class="form-input-modern"
+                        value="{{ r.email or '' }}" 
+                        placeholder="user@example.com"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Phone</label>
+                    <input 
+                        type="tel" 
+                        name="phone" 
+                        class="form-input-modern"
+                        value="{{ r.phone or '' }}" 
+                        placeholder="(123) 456-7890"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Department</label>
+                    <input 
+                        type="text" 
+                        name="department" 
+                        class="form-input-modern"
+                        value="{{ r.department or '' }}" 
+                        placeholder="Department"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Position</label>
+                    <input 
+                        type="text" 
+                        name="position" 
+                        class="form-input-modern"
+                        value="{{ r.position or '' }}" 
+                        placeholder="Job title"
+                    >
+                </div>
+                
+                <!-- Permissions Section -->
+                <div class="form-section-title">
+                    <i class="bi bi-shield-check"></i>
+                    Module Permissions
+                </div>
+                
+                <div class="permissions-grid">
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_send" 
+                            id="can_send_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_send else '' }}
+                        >
+                        <label for="can_send_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-box-seam"></i>
+                            Send Packages
+                        </label>
+                    </div>
+                    
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_asset" 
+                            id="can_asset_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_asset else '' }}
+                        >
+                        <label for="can_asset_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-clipboard-check"></i>
+                            Manage Assets
+                        </label>
+                    </div>
+                    
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_insights" 
+                            id="can_insights_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_insights else '' }}
+                        >
+                        <label for="can_insights_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-bar-chart-line"></i>
+                            View Insights
+                        </label>
+                    </div>
+                    
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_users" 
+                            id="can_users_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_users else '' }}
+                        >
+                        <label for="can_users_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-people"></i>
+                            Manage Users
+                        </label>
+                    </div>
+                    
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_fulfillment_staff" 
+                            id="can_fulfillment_staff_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_fulfillment_staff else '' }}
+                        >
+                        <label for="can_fulfillment_staff_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-person-badge"></i>
+                            Fulfillment (Staff)
+                        </label>
+                    </div>
+                    
+                    <div class="permission-item">
+                        <input 
+                            type="checkbox" 
+                            name="can_fulfillment_customer" 
+                            id="can_fulfillment_customer_{{ r.id }}"
+                            class="checkbox-modern"
+                            {{ 'checked' if r.can_fulfillment_customer else '' }}
+                        >
+                        <label for="can_fulfillment_customer_{{ r.id }}" class="permission-label">
+                            <i class="bi bi-person-check"></i>
+                            Fulfillment (Customer)
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Save Button -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">
+                        <i class="bi bi-check-circle"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
 </div>
-{% endblock %}
 
+{% endblock %}

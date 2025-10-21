@@ -1,13 +1,16 @@
 # app/modules/inventory/__init__.py
 """
 Inventory module initialization.
-Import the blueprint from views.py (where it's already created).
+Create the blueprint HERE before importing views.
 """
 
-# Import the blueprint that's already created in views.py
-from .views import inventory_bp as bp
+from flask import Blueprint
 
-# Also export as inventory_bp for compatibility
+# Create the blueprint FIRST
+bp = Blueprint("inventory", __name__, url_prefix="/inventory", template_folder="templates")
+
+# Now import views (which will use the blueprint)
+from . import views  # noqa: F401
+
+# Export for compatibility
 inventory_bp = bp
-
-# That's it! No need to create the blueprint here since views.py already does it

@@ -1,229 +1,418 @@
 {% extends "base.html" %}
-
-{% block page_title %}Send Package{% endblock %}
-
 {% block body %}
+
 <style>
-    .send-grid {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    @media (max-width: 1200px) {
-        .send-grid {
-            grid-template-columns: 1fr;
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
     
-    .form-card {
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    /* Alert Messages */
+    .alert-modern {
+        padding: 1.125rem 1.5rem;
+        border-radius: 0.875rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9375rem;
+        animation: fadeInUp 0.4s ease-out;
+        font-weight: 600;
+    }
+    
+    .alert-modern i {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .alert-modern-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+    
+    .alert-modern-danger {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .alert-modern-warning {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .alert-modern-info {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    /* Form Container */
+    .form-container {
         background: white;
-        border-radius: 1rem;
-        padding: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
     }
     
     .form-section {
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
-        border-bottom: 1px solid #f3f4f6;
+        margin-bottom: 3rem;
     }
     
     .form-section:last-child {
-        border-bottom: none;
         margin-bottom: 0;
     }
     
-    .section-title {
-        font-size: 1.125rem;
+    .form-section-title {
+        font-size: 1.375rem;
         font-weight: 700;
         color: var(--text-primary);
         margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
         display: flex;
         align-items: center;
         gap: 0.75rem;
     }
     
-    .section-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .form-section-title i {
+        color: #667eea;
+        font-size: 1.5rem;
     }
     
+    /* Form Groups */
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
     }
     
-    .form-label {
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
+    .form-label-modern {
         display: block;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+        letter-spacing: 0.01em;
     }
     
-    .form-label .required {
+    .form-label-modern .required {
         color: #ef4444;
         margin-left: 0.25rem;
     }
     
-    .form-control-premium {
+    .form-control-modern {
         width: 100%;
-        padding: 0.75rem 1rem;
+        padding: 1rem 1.25rem;
         border: 2px solid #e5e7eb;
-        border-radius: 0.5rem;
+        border-radius: 0.875rem;
         font-size: 0.9375rem;
-        transition: all 0.2s;
-        font-family: inherit;
-    }
-    
-    .form-control-premium:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .form-select-premium {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 0.5rem;
-        font-size: 0.9375rem;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         background: white;
-        cursor: pointer;
+        color: var(--text-primary);
     }
     
-    .form-select-premium:focus {
+    .form-control-modern:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #00A3AD;
+        box-shadow: 0 0 0 4px rgba(0, 163, 173, 0.1);
+        background: #E6F7F8;
     }
     
-    .form-hint {
+    .form-control-modern::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .form-text {
         font-size: 0.8125rem;
-        color: var(--text-secondary);
+        color: var(--text-muted);
         margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
     }
     
-    .btn-submit {
-        width: 100%;
-        padding: 1rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 0.75rem;
-        font-weight: 600;
+    .form-text i {
         font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Package Type Radio Buttons */
+    .package-types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 0.75rem;
+    }
+    
+    .package-type-option {
+        position: relative;
+    }
+    
+    .package-type-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .package-type-label {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .btn-submit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-    }
-    
-    .info-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 100px;
-    }
-    
-    .info-item {
+        gap: 0.625rem;
         padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--text-primary);
+    }
+    
+    .package-type-label i {
+        font-size: 1.25rem;
+    }
+    
+    .package-type-option input[type="radio"]:checked + .package-type-label {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+    }
+    
+    .package-type-label:hover {
+        border-color: #00A3AD;
+        background: #E6F7F8;
+    }
+    
+    .package-type-option input[type="radio"]:checked + .package-type-label:hover {
+        background: linear-gradient(135deg, #008A93 0%, #007A82 100%);
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .info-box-icon {
+        font-size: 1.5rem;
+        color: #1e40af;
+        flex-shrink: 0;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-title {
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.375rem;
+    }
+    
+    .info-box-text {
+        font-size: 0.9375rem;
+        color: #1e3a8a;
+    }
+    
+    /* Suggested IDs Display */
+    .suggested-ids {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .suggested-id-card {
         background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-        border-radius: 0.75rem;
-        margin-bottom: 1rem;
+        border-radius: 0.875rem;
+        padding: 1.25rem;
+        border: 2px dashed #d1d5db;
     }
     
-    .info-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .info-label {
-        font-size: 0.75rem;
-        font-weight: 600;
+    .suggested-id-label {
+        font-size: 0.8125rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--text-secondary);
         margin-bottom: 0.5rem;
     }
     
-    .info-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
+    .suggested-id-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #00A3AD;
         font-family: 'Courier New', monospace;
     }
     
-    .package-types {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-    
-    .package-type {
-        padding: 0.75rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 0.5rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    .package-type:hover {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
-    }
-    
-    .package-type input[type="radio"] {
-        display: none;
-    }
-    
-    .package-type input[type="radio"]:checked + label {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Buttons */
+    .btn-submit-modern {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         color: white;
-        border-radius: 0.5rem;
+        padding: 1.125rem 3rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(0, 163, 173, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
     }
     
-    .package-type label {
+    .btn-submit-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(0, 163, 173, 0.4);
+    }
+    
+    .btn-submit-modern:active {
+        transform: translateY(0);
+    }
+    
+    .btn-cancel-modern {
+        background: #f3f4f6;
+        color: var(--text-primary);
+        padding: 1.125rem 2.5rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
         cursor: pointer;
-        font-weight: 600;
-        font-size: 0.875rem;
-        padding: 0.5rem;
-        display: block;
-        border-radius: 0.25rem;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-cancel-modern:hover {
+        background: #e5e7eb;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 2rem 1.5rem;
+        }
+        
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-submit-modern,
+        .btn-cancel-modern {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .suggested-ids {
+            grid-template-columns: 1fr;
+        }
+        
+        .package-types-grid {
+            grid-template-columns: 1fr 1fr;
+        }
     }
 </style>
 
 <!-- Page Header -->
-<div class="card-premium" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 2rem; border: none;">
-    <div class="card-premium-body" style="padding: 2rem;">
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-box-seam"></i>
-            </div>
-            <div>
-                <h2 style="margin: 0; font-weight: 700; font-size: 1.5rem;">Send Package</h2>
-                <p style="margin: 0; opacity: 0.9; font-size: 0.9375rem;">Create and track your shipments</p>
-            </div>
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Send Package</h2>
+            <p>Create and print shipping labels for your packages</p>
         </div>
     </div>
 </div>
@@ -232,184 +421,288 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-            <div class="alert-modern alert-modern-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }}" style="margin-bottom: 2rem;">
-                <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
-                <span>{{ message }}</span>
-            </div>
+        <div class="alert-modern alert-modern-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }}">
+            <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-circle-fill{% elif category == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+            <span>{{ message }}</span>
+        </div>
         {% endfor %}
     {% endif %}
 {% endwith %}
 
-<div class="send-grid">
-    <!-- Main Form -->
-    <div class="form-card">
-        <form method="post">
-            <!-- Package Type Section -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <span class="section-icon"><i class="bi bi-box"></i></span>
+<!-- Info Box -->
+<div class="info-box">
+    <div class="info-box-icon">
+        <i class="bi bi-info-circle-fill"></i>
+    </div>
+    <div class="info-box-content">
+        <div class="info-box-title">Shipping Information</div>
+        <div class="info-box-text">Fill out the form below to create a shipping label. Make sure all information is accurate before submitting.</div>
+    </div>
+</div>
+
+<!-- Suggested IDs -->
+{% if suggested_checkin or suggested_package %}
+<div class="suggested-ids">
+    {% if suggested_checkin %}
+    <div class="suggested-id-card">
+        <div class="suggested-id-label">Suggested Check-In ID</div>
+        <div class="suggested-id-value">{{ suggested_checkin }}</div>
+    </div>
+    {% endif %}
+    
+    {% if suggested_package %}
+    <div class="suggested-id-card">
+        <div class="suggested-id-label">Suggested Package ID</div>
+        <div class="suggested-id-value">{{ suggested_package }}</div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Main Form -->
+<div class="form-container">
+    <form method="post">
+        <!-- Package Information -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-box"></i>
+                Package Information
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
                     Package Type
-                </h3>
-                
-                <div class="package-types">
-                    {% for type_code, type_name in package_types.items() %}
-                    <div class="package-type">
-                        <input type="radio" id="type_{{ type_code }}" name="PackageType" value="{{ type_code }}" {% if loop.first %}checked{% endif %}>
-                        <label for="type_{{ type_code }}">{{ type_name }}</label>
+                    <span class="required">*</span>
+                </label>
+                <div class="package-types-grid">
+                    {% for pkg_type in package_types %}
+                    <div class="package-type-option">
+                        <input 
+                            type="radio" 
+                            name="PackageType" 
+                            id="pkg_{{ pkg_type }}" 
+                            value="{{ pkg_type }}"
+                            {% if loop.first %}checked{% endif %}
+                            required
+                        >
+                        <label for="pkg_{{ pkg_type }}" class="package-type-label">
+                            <i class="bi bi-{% if pkg_type == 'Envelope' %}envelope{% elif pkg_type == 'Tubes' %}file-earmark-ruled{% else %}box{% endif %}"></i>
+                            {{ pkg_type }}
+                        </label>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             
-            <!-- Package Details Section -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <span class="section-icon"><i class="bi bi-info-circle"></i></span>
-                    Package Details
-                </h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label-modern">
+                        Check-In Date
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="date" 
+                        class="form-control-modern" 
+                        name="CheckInDate" 
+                        value="{{ today }}"
+                        required
+                    >
+                    <div class="form-text">
+                        <i class="bi bi-calendar-event"></i>
+                        Date package was checked in
+                    </div>
+                </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="checkin_id">
-                        Check-In ID <span class="required">*</span>
+                    <label class="form-label-modern">
+                        Check-In ID
+                        <span class="required">*</span>
                     </label>
                     <input 
                         type="text" 
-                        id="checkin_id" 
+                        class="form-control-modern" 
                         name="CheckInID" 
-                        class="form-control-premium"
-                        placeholder="e.g., {{ suggested_checkin }}"
-                        value="{{ suggested_checkin }}"
+                        value="{{ suggested_checkin or '' }}"
+                        placeholder="e.g., 12345"
                         required
                     >
-                    <div class="form-hint">Unique identifier for this shipment</div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="package_id">
-                        Package ID <span class="required">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        id="package_id" 
-                        name="PackageID" 
-                        class="form-control-premium"
-                        placeholder="e.g., {{ package_prefix }}{{ suggested_package }}"
-                        value="{{ package_prefix }}{{ suggested_package }}"
-                        required
-                    >
-                    <div class="form-hint">Format: {{ package_prefix }}XXXXXXXX</div>
-                </div>
-            </div>
-            
-            <!-- Recipient Information -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <span class="section-icon"><i class="bi bi-person"></i></span>
-                    Recipient Information
-                </h3>
-                
-                <div class="form-group">
-                    <label class="form-label" for="recipient">
-                        Recipient Name <span class="required">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        id="recipient" 
-                        name="Recipient" 
-                        class="form-control-premium"
-                        placeholder="Enter recipient name"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="destination">
-                        Destination <span class="required">*</span>
-                    </label>
-                    <input 
-                        type="text" 
-                        id="destination" 
-                        name="Destination" 
-                        class="form-control-premium"
-                        placeholder="City, State or Address"
-                        required
-                    >
-                </div>
-            </div>
-            
-            <!-- Additional Information -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <span class="section-icon"><i class="bi bi-file-text"></i></span>
-                    Additional Notes
-                </h3>
-                
-                <div class="form-group">
-                    <label class="form-label" for="notes">
-                        Special Instructions
-                    </label>
-                    <textarea 
-                        id="notes" 
-                        name="Notes" 
-                        class="form-control-premium"
-                        rows="4"
-                        placeholder="Any special handling instructions or notes..."
-                    ></textarea>
-                </div>
-            </div>
-            
-            <!-- Submit Button -->
-            <button type="submit" class="btn-submit">
-                <i class="bi bi-send"></i>
-                Create Shipment
-            </button>
-        </form>
-    </div>
-    
-    <!-- Info Sidebar -->
-    <div>
-        <div class="info-card">
-            <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-primary);">
-                Quick Reference
-            </h3>
-            
-            <div class="info-item">
-                <div class="info-label">Suggested Check-In ID</div>
-                <div class="info-value">{{ suggested_checkin }}</div>
-            </div>
-            
-            <div class="info-item">
-                <div class="info-label">Next Package ID</div>
-                <div class="info-value">{{ package_prefix }}{{ suggested_package }}</div>
-            </div>
-            
-            <div class="info-item" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
-                <div class="info-label" style="color: #1e40af;">Today's Date</div>
-                <div class="info-value" style="color: #1e3a8a;" id="current-date-display">Loading...</div>
-            </div>
-            
-            <div style="margin-top: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 0.75rem; border-left: 4px solid #667eea;">
-                <div style="display: flex; align-items: start; gap: 0.75rem;">
-                    <i class="bi bi-info-circle" style="color: #667eea; font-size: 1.25rem; flex-shrink: 0;"></i>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
-                        <strong style="color: var(--text-primary); display: block; margin-bottom: 0.25rem;">Pro Tip</strong>
-                        Double-check package IDs before submitting. Once created, they cannot be edited.
+                    <div class="form-text">
+                        <i class="bi bi-hash"></i>
+                        Unique check-in identifier
                     </div>
                 </div>
             </div>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Package ID
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="PackageID" 
+                    value="{{ suggested_package or '' }}"
+                    placeholder="e.g., PACK00000001"
+                    required
+                >
+                <div class="form-text">
+                    <i class="bi bi-upc"></i>
+                    Unique package tracking identifier
+                </div>
+            </div>
         </div>
-    </div>
+        
+        <!-- Recipient Information -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-person"></i>
+                Recipient Information
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Recipient Name
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="RecipientName" 
+                    placeholder="Full name of the recipient"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Address Line 1
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="AddressLine1" 
+                    placeholder="Street address"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label-modern">Address Line 2</label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="AddressLine2" 
+                    placeholder="Apartment, suite, unit, etc. (optional)"
+                >
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label-modern">
+                        City
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control-modern" 
+                        name="City" 
+                        placeholder="City"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">
+                        State
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control-modern" 
+                        name="State" 
+                        placeholder="State"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">
+                        ZIP Code
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control-modern" 
+                        name="ZipCode" 
+                        placeholder="ZIP"
+                        required
+                    >
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shipping Details -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-truck"></i>
+                Shipping Details
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Tracking Number
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control-modern" 
+                    name="TrackingNumber" 
+                    placeholder="Enter carrier tracking number"
+                    required
+                >
+                <div class="form-text">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Tracking number from shipping carrier (UPS, FedEx, USPS, etc.)
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label-modern">Printer</label>
+                    <input 
+                        type="text" 
+                        class="form-control-modern" 
+                        name="Printer" 
+                        placeholder="Printer name (optional)"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label-modern">Template</label>
+                    <input 
+                        type="text" 
+                        class="form-control-modern" 
+                        name="Template" 
+                        placeholder="Label template (optional)"
+                    >
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{{ url_for('home') }}" class="btn-cancel-modern">
+                <i class="bi bi-x-circle"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-submit-modern">
+                <i class="bi bi-printer"></i>
+                Create Label
+            </button>
+        </div>
+    </form>
 </div>
 
-<script>
-    // Display current date
-    document.addEventListener('DOMContentLoaded', function() {
-        const dateDisplay = document.getElementById('current-date-display');
-        if (dateDisplay) {
-            const now = new Date();
-            const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-            dateDisplay.textContent = now.toLocaleDateString('en-US', options);
-        }
-    });
-</script>
 {% endblock %}

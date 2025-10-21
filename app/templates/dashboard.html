@@ -34,7 +34,7 @@
     
     /* Welcome Banner with Gradient Animation */
     .welcome-banner {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1.5rem;
         padding: 3rem 2rem;
         color: white;
@@ -42,7 +42,7 @@
         position: relative;
         overflow: hidden;
         animation: fadeInUp 0.6s ease-out;
-        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.4);
     }
     
     .welcome-banner::before {
@@ -487,7 +487,7 @@
 <!-- Stats Grid -->
 <div class="stats-grid">
     <!-- Total Assets -->
-    <div class="stat-card" style="--gradient-start: #667eea; --gradient-end: #764ba2; --icon-bg: rgba(102, 126, 234, 0.1); --icon-color: #667eea;">
+    <div class="stat-card" style="--gradient-start: #00A3AD; --gradient-end: #008A93; --icon-bg: rgba(0, 163, 173, 0.1); --icon-color: #00A3AD;">
         <div class="stat-header">
             <div class="stat-icon">
                 <i class="bi bi-box-seam"></i>
@@ -546,7 +546,7 @@
 <!-- Quick Actions -->
 <div class="quick-actions">
     {% if cu.can_send or elevated %}
-    <a href="{{ url_for('send.index') }}" class="action-card" style="--action-bg: rgba(102, 126, 234, 0.1); --action-color: #667eea;">
+    <a href="{{ url_for('send.index') }}" class="action-card" style="--action-bg: rgba(0, 163, 173, 0.1); --action-color: #00A3AD;">
         <div class="action-icon">
             <i class="bi bi-box-seam"></i>
         </div>

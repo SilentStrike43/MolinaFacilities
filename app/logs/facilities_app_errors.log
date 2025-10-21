@@ -353,3 +353,88 @@ Traceback (most recent call last):
     <i class="bi bi-calendar-check"></i> {{ "now"|format_datetime("%B %d, %Y") }}
     ^^^^^^^^^
 jinja2.exceptions.TemplateAssertionError: No filter named 'format_datetime'.
+2025-10-21 09:34:36 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: cannot import name 'bp' from 'app.modules.inventory' (C:\BTManifest\app\modules\inventory\__init__.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 105, in create_app
+    from app.modules.inventory import bp as inventory_bp
+ImportError: cannot import name 'bp' from 'app.modules.inventory' (C:\BTManifest\app\modules\inventory\__init__.py)
+2025-10-21 09:36:24 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: inventory.asset
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 106, in create_app
+    app.register_blueprint(inventory_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: inventory.asset
+2025-10-21 09:37:55 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: inventory.asset
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 106, in create_app
+    app.register_blueprint(inventory_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: inventory.asset

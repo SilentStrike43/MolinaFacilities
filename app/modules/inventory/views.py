@@ -1,19 +1,22 @@
-# app/modules/inventory/views.py - COMPLETE WITH CATEGORY SYSTEM
+# app/modules/inventory/views.py
 import os
 import json
 import datetime
 import sqlite3
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g
+from flask import render_template, request, redirect, url_for, flash, g
 
 from app.core.auth import login_required, require_asset, current_user, record_audit
+
+# Import the blueprint from __init__.py (DON'T create it here!)
+from . import bp
+
+# Create alias for compatibility with existing code
+inventory_bp = bp
 
 # module-local DB
 from app.modules.inventory.storage import inventory_db, ensure_schema
 from app.modules.inventory.assets import db as assets_db, ensure_schema as ensure_assets_schema
-
-inventory_bp = Blueprint("inventory", __name__, url_prefix="/inventory", template_folder="templates")
-bp = inventory_bp
 
 logger = logging.getLogger(__name__)
 
