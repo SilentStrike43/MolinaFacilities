@@ -4,7 +4,7 @@ import json
 import datetime
 import sqlite3
 import logging
-from flask import render_template, request, redirect, url_for, flash, g
+from flask import render_template, request, redirect, url_for, flash, jsonify
 
 from app.core.auth import login_required, require_asset, current_user, record_audit
 
@@ -65,181 +65,109 @@ INVENTORY_CATEGORIES = {
             "301": "Diagnostic Equipment",
             "302": "Patient Monitoring",
             "303": "Surgical Instruments",
-            "304": "Lab Equipment",
-            "305": "Mobility Aids",
-            "306": "PPE",
-            "307": "First Aid Supplies",
+            "304": "Laboratory Equipment",
+            "305": "Imaging Equipment",
+            "306": "Therapy Equipment",
+            "307": "Emergency Equipment",
             "308": "Sterilization Equipment",
-            "309": "Examination Tools",
+            "309": "Dental Equipment",
             "310": "General Medical"
         }
     },
     "400": {
-        "name": "Clothing and Apparel",
+        "name": "Office Supplies",
         "prefix": "400",
         "subcategories": {
-            "401": "Uniforms",
-            "402": "Safety Apparel",
-            "403": "Corporate Wear",
-            "404": "Outerwear",
-            "405": "Footwear",
-            "406": "Accessories",
-            "407": "Headwear",
-            "408": "Promotional Apparel",
-            "409": "Seasonal",
-            "410": "General Apparel"
+            "401": "Paper Products",
+            "402": "Writing Instruments",
+            "403": "Filing & Organization",
+            "404": "Office Equipment",
+            "405": "Desk Accessories",
+            "406": "Mailing Supplies",
+            "407": "Cleaning Supplies",
+            "408": "Break Room Supplies",
+            "409": "Technology Accessories",
+            "410": "General Office"
         }
     },
     "500": {
-        "name": "Company Memorabilia",
+        "name": "Furniture",
         "prefix": "500",
         "subcategories": {
-            "501": "Awards and Trophies",
-            "502": "Branded Merchandise",
-            "503": "Gifts",
-            "504": "Promotional Items",
-            "505": "Corporate Art",
-            "506": "Historical Items",
-            "507": "Event Materials",
-            "508": "Marketing Collateral",
-            "509": "Signage",
-            "510": "General Memorabilia"
-        }
-    },
-    "600": {
-        "name": "Office Supplies",
-        "prefix": "600",
-        "subcategories": {
-            "601": "Writing Instruments",
-            "602": "Paper Products",
-            "603": "Filing and Storage",
-            "604": "Desk Accessories",
-            "605": "Binding and Laminating",
-            "606": "Presentation Supplies",
-            "607": "Cleaning Supplies",
-            "608": "Breakroom Supplies",
-            "609": "Shipping Supplies",
-            "610": "General Office"
-        }
-    },
-    "700": {
-        "name": "Furniture",
-        "prefix": "700",
-        "subcategories": {
-            "701": "Desks",
-            "702": "Chairs",
-            "703": "Tables",
-            "704": "Filing Cabinets",
-            "705": "Shelving",
-            "706": "Conference Room",
-            "707": "Reception Furniture",
-            "708": "Storage Units",
-            "709": "Modular Furniture",
-            "710": "General Furniture"
-        }
-    },
-    "800": {
-        "name": "Hardware Supplies and Materials",
-        "prefix": "800",
-        "subcategories": {
-            "801": "Fasteners",
-            "802": "Tools",
-            "803": "Building Materials",
-            "804": "Electrical Supplies",
-            "805": "Plumbing Supplies",
-            "806": "HVAC Components",
-            "807": "Safety Equipment",
-            "808": "Maintenance Supplies",
-            "809": "Construction Equipment",
-            "810": "General Hardware"
+            "501": "Desks",
+            "502": "Chairs",
+            "503": "Tables",
+            "504": "Storage Cabinets",
+            "505": "Shelving Units",
+            "506": "Conference Room",
+            "507": "Reception Area",
+            "508": "Accessories",
+            "509": "Ergonomic Equipment",
+            "510": "General Furniture"
         }
     }
 }
 
 def get_all_categories_flat():
-    """Get a flat list of all categories and subcategories for dropdowns."""
+    """Return flat list of all categories for dropdown."""
     categories = []
-    for main_key, main_cat in INVENTORY_CATEGORIES.items():
-        # Add main category
-        categories.append({
-            "value": main_key,
-            "label": f"{main_key} - {main_cat['name']}",
-            "prefix": main_key,
-            "is_main": True
-        })
-        # Add subcategories
-        for sub_key, sub_name in main_cat["subcategories"].items():
+    for cat_key, cat_data in INVENTORY_CATEGORIES.items():
+        for sub_key, sub_name in cat_data["subcategories"].items():
             categories.append({
-                "value": sub_key,
-                "label": f"  └─ {sub_key} - {sub_name}",
-                "prefix": sub_key,
-                "is_main": False
+                "code": sub_key,
+                "name": f"{cat_data['name']} - {sub_name}",
+                "category": cat_data["name"],
+                "subcategory": sub_name
             })
     return categories
 
-def generate_next_sku(category_prefix: str) -> str:
-    """
-    Generate the next SKU for a given category prefix.
-    Format: {PREFIX}-{7-digit-number}
-    Example: 101-0000001, 101-0000002, etc.
-    """
+def get_category_info(sku: str) -> dict:
+    """Extract category information from SKU."""
+    if not sku or len(sku) < 3:
+        return {"category": "Unknown", "subcategory": "Unknown"}
+    
+    # SKU format: XXX-NNNNNN (e.g., 101-000001)
+    category_code = sku[:3]
+    
+    for cat_key, cat_data in INVENTORY_CATEGORIES.items():
+        if category_code in cat_data["subcategories"]:
+            return {
+                "category": cat_data["name"],
+                "subcategory": cat_data["subcategories"][category_code],
+                "code": category_code
+            }
+    
+    return {"category": "Unknown", "subcategory": "Unknown", "code": category_code}
+
+def generate_next_sku(category_code: str) -> str:
+    """Generate next SKU for given category code."""
     con = assets_db()
     
-    # Find the highest SKU number for this prefix
-    pattern = f"{category_prefix}-%"
-    row = con.execute("""
+    # Find highest SKU for this category
+    prefix = category_code
+    result = con.execute("""
         SELECT sku FROM assets 
         WHERE sku LIKE ? 
         ORDER BY sku DESC 
         LIMIT 1
-    """, (pattern,)).fetchone()
+    """, (f"{prefix}-%",)).fetchone()
     
-    con.close()
-    
-    if row and row["sku"]:
-        # Extract the number part and increment
+    if result:
+        # Extract number and increment
+        last_sku = result["sku"]
         try:
-            parts = row["sku"].split("-")
-            if len(parts) == 2:
-                current_num = int(parts[1])
-                next_num = current_num + 1
-            else:
-                next_num = 1
-        except (ValueError, IndexError):
+            last_num = int(last_sku.split("-")[1])
+            next_num = last_num + 1
+        except:
             next_num = 1
     else:
         next_num = 1
     
-    # Format: PREFIX-NNNNNNN (7 digits)
-    return f"{category_prefix}-{next_num:07d}"
+    con.close()
+    return f"{prefix}-{next_num:06d}"
 
-def get_category_info(sku: str) -> dict:
-    """Get category information from SKU."""
-    if not sku or "-" not in sku:
-        return {"category": "Unknown", "subcategory": "Unknown"}
-    
-    prefix = sku.split("-")[0]
-    
-    # Check if it's a subcategory
-    for main_key, main_cat in INVENTORY_CATEGORIES.items():
-        if prefix in main_cat["subcategories"]:
-            return {
-                "category": main_cat["name"],
-                "subcategory": main_cat["subcategories"][prefix],
-                "prefix": prefix
-            }
-        elif prefix == main_key:
-            return {
-                "category": main_cat["name"],
-                "subcategory": "General",
-                "prefix": prefix
-            }
-    
-    return {"category": "Unknown", "subcategory": "Unknown", "prefix": prefix}
-
-# ---------- Helper functions ----------
 def create_asset(data: dict) -> int:
-    """Create a new asset in the master table."""
+    """Create new asset in database."""
     con = assets_db()
     cur = con.execute("""
         INSERT INTO assets(sku, product, uom, location, qty_on_hand, manufacturer, part_number, serial_number, pii, notes, status)
@@ -347,16 +275,21 @@ def queue_asset_label(data: dict):
         raise
 
 # ---------- Routes ----------
-@bp.route("/insights", methods=["GET", "POST"])
+
+@bp.route("/asset", methods=["GET", "POST"])
 @login_required
 @require_asset
-def insights():
-    """Asset - Add New Asset with category-based SKU system."""
+def asset():
+    """Asset Management - Add/Edit Assets with category-based SKU system."""
     cu = current_user()
     today = datetime.date.today().isoformat()
     flashmsg = None
     
     categories = get_all_categories_flat()
+    
+    # Preview next SKU for default category
+    default_category = "101"  # Monitors
+    next_sku_preview = generate_next_sku(default_category)
     
     # Get existing assets for display
     con = assets_db()
@@ -372,64 +305,51 @@ def insights():
     
     if q:
         sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ? OR manufacturer LIKE ?)"
-        like = f"%{q}%"
-        params.extend([like, like, like, like])
+        params.extend([f"%{q}%"] * 4)
     
     sql += " ORDER BY id DESC LIMIT 100"
     rows = con.execute(sql, params).fetchall()
     con.close()
     
-    # Get next SKU for preview (default to Electronics)
-    default_category = "101"
-    next_sku_preview = generate_next_sku(default_category)
-
+    # Handle POST
     if request.method == "POST":
-        mode = request.form.get("_mode")
+        mode = request.form.get("mode", "create")
         
         if mode == "create":
-            # Get form data
-            category_code = (request.form.get("Category") or "").strip()
+            category = request.form.get("Category", "101")
+            sku = generate_next_sku(category)
             product = (request.form.get("ProductName") or "").strip()
             manufacturer = (request.form.get("Manufacturer") or "").strip()
             location = (request.form.get("Location") or "").strip()
-            qty = int(request.form.get("Count") or 0)
-            uom = request.form.get("UOM", "EA").strip() or "EA"
+            qty = int(request.form.get("QtyOnHand", 0))
             part_number = (request.form.get("PartNumber") or "").strip()
             serial_number = (request.form.get("SerialNumber") or "").strip()
             pii = (request.form.get("PII") or "").strip()
             notes = (request.form.get("Notes") or "").strip()
+            username = cu.get("username", "System")
             
-            # Validation
-            if not category_code or not product or not location:
-                flashmsg = ("Category, Product Name, and Location are required.", False)
-            elif qty <= 0:
-                flashmsg = ("Quantity must be greater than 0.", False)
+            if not product:
+                flashmsg = ("Product name is required.", False)
             else:
-                # Generate SKU based on category
-                sku = generate_next_sku(category_code)
-                cat_info = get_category_info(sku)
-                
-                # Create asset
-                asset_data = {
-                    "sku": sku,
-                    "product": product,
-                    "uom": uom,
-                    "location": location,
-                    "qty_on_hand": qty,
-                    "manufacturer": manufacturer,
-                    "part_number": part_number or "N/A",
-                    "serial_number": serial_number or "N/A",
-                    "pii": pii,
-                    "notes": notes,
-                    "status": "active"
-                }
-                asset_id = create_asset(asset_data)
-                
-                # Record initial check-in
-                record_initial_checkin(asset_id, qty, cu.get("username", ""), "Initial inventory entry")
-                
-                # Queue label
                 try:
+                    cat_info = get_category_info(sku)
+                    asset_data = {
+                        "sku": sku,
+                        "product": product,
+                        "manufacturer": manufacturer,
+                        "location": location,
+                        "qty_on_hand": qty,
+                        "part_number": part_number,
+                        "serial_number": serial_number,
+                        "pii": pii,
+                        "notes": notes,
+                        "status": "active"
+                    }
+                    
+                    asset_id = create_asset(asset_data)
+                    record_initial_checkin(asset_id, qty, username, "Initial inventory")
+                    
+                    # Queue label for printing
                     label_data = {
                         "CheckInDate": today,
                         "InventoryID": str(asset_id),
@@ -437,14 +357,15 @@ def insights():
                         "ItemType": f"{cat_info['category']} - {cat_info['subcategory']}",
                         "Manufacturer": manufacturer,
                         "ProductName": product,
-                        "SubmitterName": cu.get("username", "System"),
+                        "SubmitterName": username,
                         "Location": location,
                         "PartNumber": part_number or "N/A",
                         "SerialNumber": serial_number or "N/A",
                         "PII": pii
                     }
                     label_file = queue_asset_label(label_data)
-                    flashmsg = (f"✅ Asset #{asset_id} created with SKU {sku}. Label: {os.path.basename(label_file)}", True)
+                    
+                    flashmsg = (f"Asset #{asset_id} created successfully! Label: {os.path.basename(label_file)}", True)
                     record_audit(cu, "create_asset", "inventory", f"Asset #{asset_id}, SKU {sku}: {product}")
                 except Exception as e:
                     flashmsg = (f"⚠️ Asset #{asset_id} created but label failed: {str(e)}", False)
@@ -506,20 +427,20 @@ def get_next_sku(category: str):
     try:
         next_sku = generate_next_sku(category)
         cat_info = get_category_info(next_sku)
-        return {
+        return jsonify({
             "success": True,
             "sku": next_sku,
             "category": cat_info["category"],
             "subcategory": cat_info["subcategory"]
-        }
+        })
     except Exception as e:
-        return {"success": False, "error": str(e)}, 400
+        return jsonify({"success": False, "error": str(e)}), 400
 
 @inventory_bp.route("/insights")
 @login_required
 @require_asset
 def insights():
-    """Inventory insights/reports page."""
+    """Inventory Insights - Movement history and reports."""
     f = {k:(request.args.get(k) or "").strip() for k in
          ["q","inventory_id","product_name","manufacturer","item_type",
           "submitter_name","date_from","date_to"]}

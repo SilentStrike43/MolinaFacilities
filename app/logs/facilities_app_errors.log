@@ -515,3 +515,136 @@ Traceback (most recent call last):
     ...<2 lines>...
     )
 AssertionError: View function mapping is overwriting an existing endpoint function: inventory.insights
+2025-10-21 15:37:10 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'sqlite3.Row' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 68, in login
+    first_name = user.get("first_name", "").strip()
+                 ^^^^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'
+2025-10-21 15:41:01 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'sqlite3.Row' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 68, in login
+    first_name = user.get("first_name", "").strip()
+                 ^^^^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'
+2025-10-21 15:41:08 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'admin.audit_log'. Did you mean 'admin.audit' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\send\views.py", line 72, in page
+    return render_template(
+        "send/index.html",
+    ...<6 lines>...
+        package_prefix=PACKAGE_PREFIX,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\send\templates\send\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 545, in top-level template code
+    <a href="{{ url_for('admin.audit_log') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='audit' else '' }}">
+    ^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin.audit_log'. Did you mean 'admin.audit' instead?
+2025-10-21 15:43:59 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 482, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 601, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 15:46:55 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\core\auth.py", line 141, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\core\auth.py", line 132, in wrapped
+    return view(*a, **kw)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 482, in insights
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 601, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\insights.html", line 345, in block 'body'
+    <td>{{ r.manufacturer or r.get('manufacturer', '—') }}</td>
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'

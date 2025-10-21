@@ -443,20 +443,21 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar-brand">
-        <a href="/" class="brand-logo">
-            <div class="brand-icon">
-                <img src="/static/images/molina-logo.png" alt="Molina" 
-                    class="brand-logo-image" 
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <i class="bi bi-building" style="display:none;"></i>
-            </div>
-            <div class="brand-text">
-                <div class="brand-name">Molina</div>
-                <div class="brand-subtitle">Facilities</div>
-            </div>
-        </a>
-    </div>
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <a href="/" class="brand-logo">
+                <div class="brand-icon">
+                    <img src="/static/images/molina-logo.png" alt="Molina" 
+                         class="brand-logo-image" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <i class="bi bi-building" style="display:none;"></i>
+                </div>
+                <div class="brand-text">
+                    <div class="brand-name">Molina</div>
+                    <div class="brand-subtitle">Facilities</div>
+                </div>
+            </a>
+        </div>
         
         <nav class="sidebar-nav">
             {% if cu %}
@@ -472,14 +473,37 @@
             <!-- Shipping Section -->
             {% if cu.can_send or elevated %}
             <div class="nav-section">
-                <div class="nav-section-title">Shipping</div>
+                <div class="nav-section-title">Send</div>
                 <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' else '' }}">
                     <i class="bi bi-box-seam nav-link-icon"></i>
-                    <span>Send Package</span>
+                    <span>Check In Package</span>
                 </a>
                 <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send-tracking' else '' }}">
                     <i class="bi bi-geo-alt nav-link-icon"></i>
                     <span>Track Package</span>
+                </a>
+                <a href="{{ url_for('send.reports') }}" class="nav-link-custom {{ 'active' if active=='send-insights' else '' }}">
+                    <i class="bi bi-bar-chart-line nav-link-icon"></i>
+                    <span>Send Insights</span>
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- Inventory Section -->
+            {% if cu.can_asset or elevated %}
+            <div class="nav-section">
+                <div class="nav-section-title">Inventory</div>
+                <a href="{{ url_for('inventory.asset') }}" class="nav-link-custom {{ 'active' if active=='asset' else '' }}">
+                    <i class="bi bi-archive nav-link-icon"></i>
+                    <span>Assets</span>
+                </a>
+                <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='asset-ledger' else '' }}">
+                    <i class="bi bi-journal-text nav-link-icon"></i>
+                    <span>Asset Ledger</span>
+                </a>
+                <a href="{{ url_for('inventory.insights') }}" class="nav-link-custom {{ 'active' if active=='insights' else '' }}">
+                    <i class="bi bi-graph-up nav-link-icon"></i>
+                    <span>Inventory Insights</span>
                 </a>
             </div>
             {% endif %}
@@ -505,38 +529,21 @@
             </div>
             {% endif %}
             
-            <!-- Inventory Section -->
-            {% if cu.can_asset or elevated %}
-            <div class="nav-section">
-                <div class="nav-section-title">Inventory</div>
-                <a href="{{ url_for('inventory.asset') }}" class="nav-link-custom {{ 'active' if active=='asset' else '' }}">
-                    <i class="bi bi-box-seam nav-link-icon"></i>
-                    <span>Assets</span>
-                </a>
-                <a href="{{ url_for('inventory.ledger_home') }}" class="nav-link-custom">
-                    <i class="bi bi-clipboard-check nav-link-icon"></i>
-                    <span>Asset Ledger</span>
-                </a>
-                <a href="{{ url_for('inventory.insights') }}" class="nav-link-custom {{ 'active' if active=='insights' and tab=='inventory' else '' }}">
-                    <i class="bi bi-bar-chart-line nav-link-icon"></i>
-                    <span>Insights</span>
-                </a>
-            </div>
-            {% endif %}
-            
-            <!-- Administration -->
-            {% if elevated or cu.can_users %}
+            <!-- Administration Section -->
+            {% if cu.can_users or elevated %}
             <div class="nav-section">
                 <div class="nav-section-title">Administration</div>
-                {% if cu.can_users or elevated %}
-                <a href="{{ url_for('users.user_list') }}" class="nav-link-custom {{ 'active' if active=='users' else '' }}">
+                <a href="{{ url_for('users.user_list') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='list' else '' }}">
                     <i class="bi bi-people nav-link-icon"></i>
                     <span>Users</span>
                 </a>
-                {% endif %}
+                <a href="{{ url_for('users.manage') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='manage' else '' }}">
+                    <i class="bi bi-person-gear nav-link-icon"></i>
+                    <span>Modify Users</span>
+                </a>
                 {% if elevated %}
-                <a href="{{ url_for('admin.permissions') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='permissions' else '' }}">
-                    <i class="bi bi-shield-lock nav-link-icon"></i>
+                <a href="{{ url_for('admin.elevated') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='elevated' else '' }}">
+                    <i class="bi bi-shield-check nav-link-icon"></i>
                     <span>Permissions</span>
                 </a>
                 <a href="{{ url_for('admin.audit') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='audit' else '' }}">

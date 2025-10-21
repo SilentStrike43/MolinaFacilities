@@ -62,7 +62,21 @@ def login():
         # Successful login
         session["uid"] = user["id"]
         session["username"] = user["username"]
-        session.permanent = True  # Use permanent session
+        session.permanent = True
+        
+        # Get display name for greeting
+        first_name = user.get("first_name", "").strip()
+        last_name = user.get("last_name", "").strip()
+        
+        if first_name and last_name:
+            display_name = f"{first_name} {last_name}"
+        elif first_name:
+            display_name = first_name
+        else:
+            display_name = username
+        
+        # CRITICAL: Only ONE flash call
+        flash(f"Welcome back, {display_name}!", "success")
         
         record_audit(
             {'id': user['id'], 'username': user['username']},
@@ -71,20 +85,8 @@ def login():
             f"User logged in: {username}"
         )
         
-        # Get display name
-        display_name = user.get('first_name') or user.get('username')
-        if user.get('last_name'):
-            display_name = f"{user.get('first_name')} {user.get('last_name')}"
-
-        flash(f"Welcome back, {display_name}!", "success")
-        
-        # Redirect to next page or home
-        next_page = request.args.get("next")
-        if next_page and next_page.startswith("/"):
-            return redirect(next_page)
         return redirect(url_for("home"))
     
-    # GET request - show login form
     return render_template("auth/login.html")
 
 @bp.route("/logout")

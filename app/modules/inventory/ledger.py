@@ -7,7 +7,7 @@ bp = Blueprint("asset_ledger", __name__, template_folder="../templates")
 
 @bp.route("/ledger")
 @login_required
-@require_cap("can_inventory")
+@require_cap("can_asset")
 def ledger_home():
     ensure_schema()
     asset_id = request.args.get("asset_id", type=int)
@@ -18,7 +18,7 @@ def ledger_home():
 
 @bp.post("/ledger/checkin")
 @login_required
-@require_cap("can_inventory")
+@require_cap("can_asset")
 def ledger_checkin():
     asset_id = int(request.form["asset_id"])
     qty = int(request.form["qty"])
@@ -29,7 +29,7 @@ def ledger_checkin():
 
 @bp.post("/ledger/checkout")
 @login_required
-@require_cap("can_inventory")
+@require_cap("can_asset")
 def ledger_checkout():
     asset_id = int(request.form["asset_id"])
     qty = int(request.form["qty"])

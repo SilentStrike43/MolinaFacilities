@@ -1,46 +1,178 @@
 {% extends "base.html" %}
-{% block body %}
-<h5 class="mb-3">Fulfillment — Service Archive</h5>
 
-<div class="table-responsive">
-  <table class="table table-sm table-striped align-middle">
-    <thead>
-      <tr>
-        <th>Service ID</th>
-        <th>Description</th>
-        <th>Requester</th>
-        <th>Status</th>
-        <th>Completed</th>
-        <th>Assigned</th>
-        <th class="text-end">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td class="text-truncate" style="max-width:260px">{{ r.description or '—' }}</td>
-        <td>{{ r.requester_name or '—' }}</td>
-        <td>
-          {% if r.status == 'Completed' %}
-            <span class="badge bg-success">Completed</span>
-          {% elif r.status == 'Cancelled' %}
-            <span class="badge bg-secondary">Cancelled</span>
-          {% else %}
-            <span class="badge bg-secondary">{{ r.status or '—' }}</span>
-          {% endif %}
-        </td>
-        <td class="text-nowrap">{{ r.completed_at or '—' }}</td>
-        <td class="text-nowrap">{{ r.assigned_staff_name or '—' }}</td>
-        <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fulfillment.view_request', rid=r.id) }}">View</a>
-        </td>
-      </tr>
-      {% endfor %}
-      {% if not rows %}
-      <tr><td colspan="7" class="text-center text-muted py-4">No archived requests.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
+{% block extra_head %}
+<style>
+    /* Page Header */
+    .page-header-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .page-header-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    }
+    
+    .page-header-text h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .page-header-text p {
+        margin: 0.5rem 0 0;
+        color: var(--text-secondary);
+    }
+    
+    /* Table Styles */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table-modern thead th {
+        background: #f9fafb;
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #f3f4f6;
+        font-size: 0.9375rem;
+    }
+    
+    .table-modern tbody tr {
+        transition: background 0.15s;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #fafbfc;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .status-archive {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        color: white;
+    }
+    
+    .btn-view {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.2s;
+    }
+    
+    .btn-view:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-archive"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Service Archive</h2>
+            <p>View completed and archived service requests</p>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Table -->
+<div class="table-card">
+    <table class="table-modern">
+        <thead>
+            <tr>
+                <th>Service ID</th>
+                <th>Description</th>
+                <th>Requester</th>
+                <th>Status</th>
+                <th>Completed</th>
+                <th>Assigned</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td><strong>{{ r.id }}</strong></td>
+                <td>{{ r.item_type or r.details }}</td>
+                <td>{{ r.submitter or '—' }}</td>
+                <td>
+                    <span class="status-badge status-archive">
+                        Archive
+                    </span>
+                </td>
+                <td>{{ r.completed_utc or r.submitted_utc }}</td>
+                <td>{{ r.assigned_to or '—' }}</td>
+                <td>
+                    <a href="{{ url_for('fulfillment.view_request', req_id=r.id) }}" class="btn-view">
+                        View
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not rows %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p style="margin-top: 1rem;">No archived requests</p>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
