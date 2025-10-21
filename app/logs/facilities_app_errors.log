@@ -648,3 +648,14 @@ Traceback (most recent call last):
     if hasattr(obj, "jinja_pass_arg"):
        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
 jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
+2025-10-21 16:33:28 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'sqlite3.Row' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 71, in login
+    first_name = user.get("first_name", "").strip()
+                 ^^^^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'

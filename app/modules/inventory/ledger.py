@@ -1,13 +1,13 @@
 # app/modules/inventory/ledger.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.modules.auth.security import login_required, require_cap, current_user
+from app.modules.auth.security import login_required, require_asset, current_user
 from .models import ensure_schema, list_assets, get_asset, record_movement, list_movements
 
 bp = Blueprint("asset_ledger", __name__, template_folder="../templates")
 
 @bp.route("/ledger")
 @login_required
-@require_cap("can_asset")
+@require_asset  # ← Using the pre-defined decorator
 def ledger_home():
     ensure_schema()
     asset_id = request.args.get("asset_id", type=int)
@@ -18,7 +18,7 @@ def ledger_home():
 
 @bp.post("/ledger/checkin")
 @login_required
-@require_cap("can_asset")
+@require_asset  # ← Fixed
 def ledger_checkin():
     asset_id = int(request.form["asset_id"])
     qty = int(request.form["qty"])
@@ -29,7 +29,7 @@ def ledger_checkin():
 
 @bp.post("/ledger/checkout")
 @login_required
-@require_cap("can_asset")
+@require_asset  # ← Fixed
 def ledger_checkout():
     asset_id = int(request.form["asset_id"])
     qty = int(request.form["qty"])

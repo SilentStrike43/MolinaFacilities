@@ -997,3 +997,114 @@ jinja2.exceptions.UndefinedError: 'sqlite3.Row object' has no attribute 'get'
 2025-10-21 16:06:09 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
 2025-10-21 16:06:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
 2025-10-21 16:06:09 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:11:09 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:11:09 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:11:09 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:11:09 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:11:09 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:11:09 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:11:09 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:11:10 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:11:10 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:11:10 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:11:10 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:11:10 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:11:10 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:11:10 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:11:10 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:11:13 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /static/images/molina-logo.png
+2025-10-21 16:11:16 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /static/images/molina-logo.png
+2025-10-21 16:11:18 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /static/images/molina-logo.png
+2025-10-21 16:12:47 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:12:47 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:12:47 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:12:47 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:12:47 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:12:47 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:12:47 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:12:47 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:14:41 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:14:41 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:14:41 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:14:41 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:14:41 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:14:41 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:14:41 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:14:41 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:15:11 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:15:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:15:11 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:15:11 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:15:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:15:11 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:30:33 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:30:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:30:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:30:33 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:30:33 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:30:33 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:30:33 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:30:34 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:30:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:30:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:30:34 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:30:34 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:30:34 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:30:34 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:30:34 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:30:37 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /static/images/molina-logo.png
+2025-10-21 16:30:40 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /static/images/molina-logo.png
+2025-10-21 16:32:34 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:32:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:32:34 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:32:34 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:32:34 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:32:34 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:32:34 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:32:34 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:32:48 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:32:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:32:48 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:32:48 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:32:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:32:48 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:33:14 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:33:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:33:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:33:14 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:33:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:33:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:33:14 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:33:14 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:33:28 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'sqlite3.Row' object has no attribute 'get'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 71, in login
+    first_name = user.get("first_name", "").strip()
+                 ^^^^^^^^
+AttributeError: 'sqlite3.Row' object has no attribute 'get'
+2025-10-21 16:34:37 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-21 16:34:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-21 16:34:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-21 16:34:37 | [32mINFO[0m | __main__ | create_app:112 | All blueprints registered successfully
+2025-10-21 16:34:37 | [32mINFO[0m | __main__ | create_app:130 | Database schemas initialized
+2025-10-21 16:34:37 | [32mINFO[0m | __main__ | create_app:204 | Application initialization complete
+2025-10-21 16:34:37 | [32mINFO[0m | __main__ | <module>:230 | Starting development server on 127.0.0.1:5000
+2025-10-21 16:34:37 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-21 16:34:44 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:34:44 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:34:44 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
+2025-10-21 16:34:44 | [32mINFO[0m | __main__ | shutdown_handler:216 | Application shutting down...
+2025-10-21 16:34:44 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-21 16:34:44 | [32mINFO[0m | __main__ | shutdown_handler:221 | Cleanup complete
