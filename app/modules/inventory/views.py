@@ -347,10 +347,10 @@ def queue_asset_label(data: dict):
         raise
 
 # ---------- Routes ----------
-@inventory_bp.route("/asset", methods=["GET", "POST"])
+@bp.route("/insights", methods=["GET", "POST"])
 @login_required
 @require_asset
-def asset():
+def insights():
     """Asset - Add New Asset with category-based SKU system."""
     cu = current_user()
     today = datetime.date.today().isoformat()

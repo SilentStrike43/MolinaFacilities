@@ -442,7 +442,7 @@
         </div>
         
         {% if elevated %}
-        <a href="{{ url_for('users.create_user') if 'create_user' else '#' }}" class="btn-header-action">
+        <a href="{{ url_for('users.create') if 'create_user' else '#' }}" class="btn-header-action">
             <i class="bi bi-person-plus"></i>
             Add New User
         </a>
@@ -612,7 +612,7 @@
         There are no users in the system yet. Create your first user to get started.
     </div>
     {% if elevated %}
-    <a href="{{ url_for('users.create_user') if 'create_user' else '#' }}" class="btn-header-action">
+    <a href="{{ url_for('users.create') if 'create_user' else '#' }}" class="btn-header-action">
         <i class="bi bi-person-plus"></i>
         Add First User
     </a>

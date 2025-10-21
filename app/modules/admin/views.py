@@ -57,10 +57,16 @@ def list_users(include_system=True):
 def set_elevated_flags_partial(uid: int, is_admin: int, is_sysadmin: int):
     """Update only admin/sysadmin flags without touching other fields."""
     con = get_db()
-    con.execute(
-        "UPDATE users SET is_admin=?, is_sysadmin=? WHERE id=?",
-        (is_admin, is_sysadmin, uid)
-    )
+def set_elevated_flags_partial(uid: int, is_admin: int, is_sysadmin: int):
+    """Update ONLY admin flags, preserve all other user data"""
+    con = get_db()
+    con.execute("""
+        UPDATE users 
+        SET is_admin = ?, is_sysadmin = ?
+        WHERE id = ?
+    """, (is_admin, is_sysadmin, uid))
+    con.commit()
+    con.close()
     con.commit()
     con.close()
 

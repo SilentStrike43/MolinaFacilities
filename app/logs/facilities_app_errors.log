@@ -475,3 +475,43 @@ Traceback (most recent call last):
   File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
     raise BuildError(endpoint, values, method, self)
 werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'users.create_user'. Did you mean 'users.create' instead?
+2025-10-21 15:26:54 | [35mCRITICAL[0m | __main__ | create_app:114 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: inventory.insights
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 106, in create_app
+    app.register_blueprint(inventory_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: inventory.insights

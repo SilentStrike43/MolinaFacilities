@@ -18,6 +18,14 @@ from .providers import guess_carrier, normalize_scanned
 PACKAGE_TYPES = ["Box","Envelope","Packs","Tubes","Certified","Sensitive","Critical"]
 
 # ---------- Send (print label) ----------
+
+@bp.route("/next-id")
+@login_required
+def get_next_id():
+    pkg_type = request.args.get('type', 'Box')
+    next_id = peek_next_package_id(pkg_type)
+    return jsonify({'next_id': next_id})
+
 @bp.route("/", methods=["GET","POST"], endpoint="index")
 @login_required
 @require_cap("can_send")

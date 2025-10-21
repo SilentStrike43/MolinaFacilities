@@ -404,6 +404,34 @@
     }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const packageTypeSelect = document.querySelector('select[name="PackageType"]');
+    const packageIdInput = document.querySelector('input[name="PackageID"]');
+    
+    const prefixes = {
+        'Box': 'PACK',
+        'Envelope': 'ENV',
+        'Packs': 'PACK',
+        'Tubes': 'TUBE',
+        'Certified': 'CERT',
+        'Sensitive': 'SENS',
+        'Critical': 'CRIT'
+    };
+    
+    packageTypeSelect.addEventListener('change', function() {
+        const type = this.value;
+        const prefix = prefixes[type] || 'PACK';
+        // Fetch next ID for this type
+        fetch(`/send/next-id?type=${type}`)
+            .then(r => r.json())
+            .then(data => {
+                packageIdInput.value = data.next_id;
+            });
+    });
+});
+</script>
+
 <!-- Page Header -->
 <div class="page-header-card">
     <div class="page-header-content">

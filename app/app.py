@@ -132,13 +132,17 @@ def create_app():
         logger.error(f"Failed to initialize schemas: {e}", exc_info=True)
     
     # ==================== Home Route ====================
-    @app.route("/")
-    def home():
-        """Home page - dynamic dashboard with real data"""
-        if not current_user():
-            return redirect(url_for("auth.login"))
-        
-        user = current_user()
+        @app.route("/")
+        def home():
+            if not current_user():
+                return redirect(url_for("auth.login"))
+            
+            user = current_user()
+            # Dashboard data collection code already exists in your file
+            # Just ensure it renders 'dashboard.html' not redirecting
+            return render_template('dashboard.html', 
+                                active='home', 
+                                dashboard_data=dashboard_data)
         
         # Initialize dashboard data
         dashboard_data = {

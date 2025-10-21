@@ -228,6 +228,48 @@
             text-align: center;
             flex-shrink: 0;
         }
+
+        /* Module Badges */
+        .badge-send {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .badge-inventory {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .badge-insights {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: white;
+        }
+
+        .badge-users {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .badge-fulfillment {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        /* Admin Role Badges */
+        .badge-admin {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .badge-sysadmin {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+
+        .badge-system {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
         
         /* User Profile in Sidebar */
         .sidebar-user {
@@ -401,19 +443,20 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <a href="/" class="brand-logo">
-                <div class="brand-icon">
-                    <!-- If you have a logo, replace the icon with: <img src="/static/images/molina-logo.png" alt="Molina" class="brand-logo-image"> -->
-                    <i class="bi bi-building"></i>
-                </div>
-                <div class="brand-text">
-                    <div class="brand-name">Molina</div>
-                    <div class="brand-subtitle">Facilities Portal</div>
-                </div>
-            </a>
-        </div>
+    <div class="sidebar-brand">
+        <a href="/" class="brand-logo">
+            <div class="brand-icon">
+                <img src="/static/images/molina-logo.png" alt="Molina" 
+                    class="brand-logo-image" 
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <i class="bi bi-building" style="display:none;"></i>
+            </div>
+            <div class="brand-text">
+                <div class="brand-name">Molina</div>
+                <div class="brand-subtitle">Facilities</div>
+            </div>
+        </a>
+    </div>
         
         <nav class="sidebar-nav">
             {% if cu %}
@@ -470,7 +513,7 @@
                     <i class="bi bi-box-seam nav-link-icon"></i>
                     <span>Assets</span>
                 </a>
-                <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='asset-ledger' else '' }}">
+                <a href="{{ url_for('inventory.ledger_home') }}" class="nav-link-custom">
                     <i class="bi bi-clipboard-check nav-link-icon"></i>
                     <span>Asset Ledger</span>
                 </a>

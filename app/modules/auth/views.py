@@ -71,7 +71,12 @@ def login():
             f"User logged in: {username}"
         )
         
-        flash(f"Welcome back, {username}!", "success")
+        # Get display name
+        display_name = user.get('first_name') or user.get('username')
+        if user.get('last_name'):
+            display_name = f"{user.get('first_name')} {user.get('last_name')}"
+
+        flash(f"Welcome back, {display_name}!", "success")
         
         # Redirect to next page or home
         next_page = request.args.get("next")
