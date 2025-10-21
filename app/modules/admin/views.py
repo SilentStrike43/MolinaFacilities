@@ -7,10 +7,11 @@ import io
 import csv
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file
 
-from app.core.auth import (
-    login_required, require_admin, require_sysadmin,
-    record_audit, current_user, get_user_by_id
+from app.modules.auth.security import (
+    login_required, require_admin, 
+    current_user
 )
+from app.modules.users.models import get_user_by_id
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
 bp = admin_bp
@@ -40,9 +41,8 @@ def _save_cfg(cfg: dict) -> None:
 # Database helpers
 # ----------------------------
 def get_db():
-    """Get the auth database connection."""
-    from app.core.auth import _conn
-    return _conn()
+    from app.modules.users.models import users_db
+    return users_db()
 
 def list_users(include_system=True):
     """List all users from auth database."""
