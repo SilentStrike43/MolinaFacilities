@@ -4,7 +4,7 @@ from flask import render_template, request, redirect, url_for, flash
 
 from . import bp  # Import bp from __init__.py - DO NOT redefine it
 
-from app.core.auth import login_required, require_cap, current_user, record_audit
+from app.modules.auth.security import login_required, require_cap, current_user, record_audit
 
 from .models import (
     ensure_schema, 

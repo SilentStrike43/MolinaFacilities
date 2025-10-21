@@ -7,7 +7,7 @@ import mimetypes
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file, abort
 from werkzeug.utils import secure_filename
 
-from app.core.auth import login_required, current_user, record_audit
+from app.modules.auth.security import login_required, current_user, record_audit
 
 # module-local DB
 from app.modules.fulfillment.storage import queue_db, ensure_schema

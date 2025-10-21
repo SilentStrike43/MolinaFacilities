@@ -6,7 +6,7 @@ import sqlite3
 import logging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-from app.core.auth import login_required, require_asset, current_user, record_audit
+from app.modules.auth.security import login_required, require_asset, current_user
 
 # Import the blueprint from __init__.py (DON'T create it here!)
 from . import bp
