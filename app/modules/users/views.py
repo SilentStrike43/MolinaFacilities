@@ -1,4 +1,5 @@
 # app/modules/users/views.py
+# FIXED VERSION with proper first_name/last_name handling
 import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
@@ -127,16 +128,22 @@ def _update_user_partial(uid: int, data: dict):
     # Update caps
     if "can_send" in data:
         caps["can_send"] = bool(data["can_send"])
+        caps["send"] = bool(data["can_send"])  # Legacy compatibility
     if "can_asset" in data:
-        caps["inventory"] = bool(data["can_asset"])
+        caps["can_asset"] = bool(data["can_asset"])
+        caps["inventory"] = bool(data["can_asset"])  # Legacy compatibility
     if "can_insights" in data:
-        caps["insights"] = bool(data["can_insights"])
+        caps["can_insights"] = bool(data["can_insights"])
+        caps["insights"] = bool(data["can_insights"])  # Legacy compatibility
     if "can_users" in data:
-        caps["users"] = bool(data["can_users"])
+        caps["can_users"] = bool(data["can_users"])
+        caps["users"] = bool(data["can_users"])  # Legacy compatibility
     if "can_fulfillment_staff" in data:
-        caps["fulfillment_staff"] = bool(data["can_fulfillment_staff"])
+        caps["can_fulfillment_staff"] = bool(data["can_fulfillment_staff"])
+        caps["fulfillment_staff"] = bool(data["can_fulfillment_staff"])  # Legacy compatibility
     if "can_fulfillment_customer" in data:
-        caps["fulfillment_customer"] = bool(data["can_fulfillment_customer"])
+        caps["can_fulfillment_customer"] = bool(data["can_fulfillment_customer"])
+        caps["fulfillment_customer"] = bool(data["can_fulfillment_customer"])  # Legacy compatibility
     
     con = get_db()
     con.execute("UPDATE users SET caps=? WHERE id=?", (json.dumps(caps), uid))
@@ -188,7 +195,20 @@ def manage():
             flash("User not found.", "warning")
             return redirect(url_for("users.manage"))
 
-        # Build payload
+        # FIXED: Update profile fields (first_name, last_name)
+        first_name = (request.form.get("first_name") or "").strip()
+        last_name = (request.form.get("last_name") or "").strip()
+        
+        con = get_db()
+        con.execute("""
+            UPDATE users 
+            SET first_name = ?, last_name = ?
+            WHERE id = ?
+        """, (first_name, last_name, uid))
+        con.commit()
+        con.close()
+
+        # Build permissions payload
         payload = {
             "can_send":     1 if request.form.get("can_send") else 0,
             "can_asset":    1 if request.form.get("can_asset") else 0,
@@ -218,11 +238,14 @@ def manage():
         try:
             caps = json.loads(row_dict.get("caps") or "{}")
             row_dict["can_send"] = caps.get("can_send", False)
-            row_dict["can_asset"] = caps.get("inventory", False)
-            row_dict["can_insights"] = caps.get("insights", False)
-            row_dict["can_users"] = caps.get("users", False)
-            row_dict["can_fulfillment_staff"] = caps.get("fulfillment_staff", False)
-            row_dict["can_fulfillment_customer"] = caps.get("fulfillment_customer", False)
+            row_dict["can_asset"] = caps.get("inventory", False) or caps.get("can_asset", False)
+            row_dict["can_insights"] = caps.get("insights", False) or caps.get("can_insights", False)
+            row_dict["can_users"] = caps.get("users", False) or caps.get("can_users", False)
+            row_dict["can_fulfillment_staff"] = caps.get("fulfillment_staff", False) or caps.get("can_fulfillment_staff", False)
+            row_dict["can_fulfillment_customer"] = caps.get("fulfillment_customer", False) or caps.get("can_fulfillment_customer", False)
+            
+            # FIXED: Add is_system flag for display
+            row_dict["is_system"] = caps.get("is_system", False) or row_dict.get("username") in ("AppAdmin", "system")
         except Exception as e:
             # If caps parsing fails, default to False
             row_dict["can_send"] = False
@@ -231,6 +254,7 @@ def manage():
             row_dict["can_users"] = False
             row_dict["can_fulfillment_staff"] = False
             row_dict["can_fulfillment_customer"] = False
+            row_dict["is_system"] = False
         
         display_rows.append(row_dict)
     

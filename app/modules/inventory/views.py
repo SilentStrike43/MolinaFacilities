@@ -65,45 +65,93 @@ INVENTORY_CATEGORIES = {
             "301": "Diagnostic Equipment",
             "302": "Patient Monitoring",
             "303": "Surgical Instruments",
-            "304": "Laboratory Equipment",
-            "305": "Imaging Equipment",
-            "306": "Therapy Equipment",
-            "307": "Emergency Equipment",
+            "304": "Lab Equipment",
+            "305": "Mobility Aids",
+            "306": "PPE",
+            "307": "First Aid Supplies",
             "308": "Sterilization Equipment",
-            "309": "Dental Equipment",
+            "309": "Examination Tools",
             "310": "General Medical"
         }
     },
     "400": {
-        "name": "Office Supplies",
+        "name": "Clothing and Apparel",
         "prefix": "400",
         "subcategories": {
-            "401": "Paper Products",
-            "402": "Writing Instruments",
-            "403": "Filing & Organization",
-            "404": "Office Equipment",
-            "405": "Desk Accessories",
-            "406": "Mailing Supplies",
-            "407": "Cleaning Supplies",
-            "408": "Break Room Supplies",
-            "409": "Technology Accessories",
-            "410": "General Office"
+            "401": "Uniforms",
+            "402": "Safety Apparel",
+            "403": "Corporate Wear",
+            "404": "Outerwear",
+            "405": "Footwear",
+            "406": "Accessories",
+            "407": "Headwear",
+            "408": "Promotional Apparel",
+            "409": "Seasonal",
+            "410": "General Apparel"
         }
     },
     "500": {
-        "name": "Furniture",
+        "name": "Company Memorabilia",
         "prefix": "500",
         "subcategories": {
-            "501": "Desks",
-            "502": "Chairs",
-            "503": "Tables",
-            "504": "Storage Cabinets",
-            "505": "Shelving Units",
-            "506": "Conference Room",
-            "507": "Reception Area",
-            "508": "Accessories",
-            "509": "Ergonomic Equipment",
-            "510": "General Furniture"
+            "501": "Awards and Trophies",
+            "502": "Branded Merchandise",
+            "503": "Gifts",
+            "504": "Promotional Items",
+            "505": "Corporate Art",
+            "506": "Historical Items",
+            "507": "Event Materials",
+            "508": "Marketing Collateral",
+            "509": "Signage",
+            "510": "General Memorabilia"
+        }
+    },
+    "600": {
+        "name": "Office Supplies",
+        "prefix": "600",
+        "subcategories": {
+            "601": "Writing Instruments",
+            "602": "Paper Products",
+            "603": "Filing and Storage",
+            "604": "Desk Accessories",
+            "605": "Binding and Laminating",
+            "606": "Presentation Supplies",
+            "607": "Cleaning Supplies",
+            "608": "Breakroom Supplies",
+            "609": "Shipping Supplies",
+            "610": "General Office"
+        }
+    },
+    "700": {
+        "name": "Furniture",
+        "prefix": "700",
+        "subcategories": {
+            "701": "Desks",
+            "702": "Chairs",
+            "703": "Tables",
+            "704": "Filing Cabinets",
+            "705": "Shelving",
+            "706": "Conference Room",
+            "707": "Reception Furniture",
+            "708": "Storage Units",
+            "709": "Modular Furniture",
+            "710": "General Furniture"
+        }
+    },
+    "800": {
+        "name": "Hardware Supplies and Materials",
+        "prefix": "800",
+        "subcategories": {
+            "801": "Fasteners",
+            "802": "Tools",
+            "803": "Building Materials",
+            "804": "Electrical Supplies",
+            "805": "Plumbing Supplies",
+            "806": "HVAC Components",
+            "807": "Safety Equipment",
+            "808": "Maintenance Supplies",
+            "809": "Construction Equipment",
+            "810": "General Hardware"
         }
     }
 }

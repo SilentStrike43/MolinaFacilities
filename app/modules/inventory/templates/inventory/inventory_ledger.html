@@ -1,109 +1,540 @@
 {% extends "base.html" %}
-{% block body %}
-<h4 class="mb-3">Asset — Ledger</h4>
+{% block extra_head %}
+<style>
+    :root {
+        --molina-teal: #00A3AD;
+        --molina-teal-dark: #008A93;
+        --text-primary: #1a1d2e;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, var(--molina-teal-dark) 0%, var(--molina-teal) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0, 163, 173, 0.3);
+    }
+    
+    .page-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .page-header-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .page-header-text h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.125rem;
+    }
+    
+    /* Modern Card */
+    .card-modern {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .card-title i {
+        color: var(--molina-teal);
+    }
+    
+    /* Asset Selector */
+    .asset-selector {
+        position: relative;
+    }
+    
+    .form-select-modern {
+        width: 100%;
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select-modern:focus {
+        outline: none;
+        border-color: var(--molina-teal);
+        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
+    }
+    
+    /* Asset Info Card */
+    .asset-info-card {
+        background: linear-gradient(135deg, var(--molina-teal) 0%, var(--molina-teal-dark) 100%);
+        border-radius: 1.25rem;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+        margin-bottom: 1.5rem;
+    }
+    
+    .asset-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .asset-product-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .asset-meta {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .asset-qty {
+        font-size: 3rem;
+        font-weight: 900;
+        text-align: right;
+        line-height: 1;
+    }
+    
+    .asset-qty-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.8;
+        text-align: right;
+        margin-top: 0.25rem;
+    }
+    
+    /* Action Cards */
+    .action-card {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .action-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    
+    .action-icon.checkin {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .action-icon.checkout {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .action-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    /* Form Row */
+    .form-row-inline {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-control-modern {
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: var(--molina-teal);
+        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
+    }
+    
+    /* Buttons */
+    .btn-modern {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .btn-checkin {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-checkin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-checkout {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+    
+    /* Ledger Table */
+    .table-modern {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-modern thead th {
+        background: #f8f9fc;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .table-modern tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9fc;
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: var(--text-primary);
+    }
+    
+    /* Action Badges */
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .action-badge.checkin {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .action-badge.checkout {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .action-badge.adjust {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .asset-info-header {
+            flex-direction: column;
+        }
+        
+        .asset-qty {
+            text-align: left;
+        }
+        
+        .asset-qty-label {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}
 
-<form class="row g-3 mb-3" method="get" action="{{ url_for('asset_ledger.ledger_home') }}">
-  <div class="col-md-6">
-    <label class="form-label">Asset</label>
-    <select class="form-select" name="asset_id" onchange="this.form.submit()">
-      <option value="">Select an asset…</option>
-      {% for a in assets %}
-        {% set label = (a.sku or '—') ~ ' — ' ~ (a.product or '') %}
-        <option value="{{ a.id }}" {{ 'selected' if asset and a.id==asset.id else '' }}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-</form>
+{% block body %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-clipboard-check"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Asset Ledger</h2>
+            <p>Track asset movements, check-ins, and check-outs</p>
+        </div>
+    </div>
+</div>
+
+<!-- Asset Selector -->
+<div class="card-modern">
+    <form method="get" action="{{ url_for('asset_ledger.ledger_home') }}">
+        <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.75rem; display: block;">
+            <i class="bi bi-box"></i> Select Asset
+        </label>
+        <select class="form-select-modern" name="asset_id" onchange="this.form.submit()" required>
+            <option value="">Choose an asset to view ledger...</option>
+            {% for a in assets %}
+            {% set label = (a.sku or '—') ~ ' — ' ~ (a.product or 'Unnamed Asset') %}
+            <option value="{{ a.id }}" {{ 'selected' if asset and a.id==asset.id else '' }}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
 
 {% if asset %}
+<!-- Two Column Layout -->
 <div class="row">
-  <div class="col-lg-5">
-    <div class="card mb-3">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="fw-semibold">{{ asset.product or 'Asset' }}</div>
-            <div class="text-muted small">SKU: {{ asset.sku or '—' }} | UOM: {{ asset.uom or '—' }}</div>
-            <div class="text-muted small">Location: {{ asset.location or '—' }}</div>
-          </div>
-          <div class="display-6">{{ asset.qty_on_hand }}</div>
+    <!-- Left Column: Asset Info & Actions -->
+    <div class="col-lg-5">
+        <!-- Asset Info -->
+        <div class="asset-info-card">
+            <div class="asset-info-header">
+                <div>
+                    <div class="asset-product-name">{{ asset.product or 'Asset' }}</div>
+                    <div class="asset-meta">
+                        <div>
+                            <i class="bi bi-qr-code"></i>
+                            <strong>SKU:</strong> {{ asset.sku or '—' }}
+                        </div>
+                        <div>
+                            <i class="bi bi-rulers"></i>
+                            <strong>UOM:</strong> {{ asset.uom or '—' }}
+                        </div>
+                        <div>
+                            <i class="bi bi-geo-alt"></i>
+                            <strong>Location:</strong> {{ asset.location or '—' }}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="asset-qty">{{ asset.qty_on_hand }}</div>
+                    <div class="asset-qty-label">On Hand</div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Check In Card -->
+        <div class="action-card">
+            <div class="action-card-header">
+                <div class="action-icon checkin">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <h4 class="action-title">Check In</h4>
+            </div>
+            <form method="post" action="{{ url_for('asset_ledger.ledger_checkin') }}">
+                <input type="hidden" name="asset_id" value="{{ asset.id }}">
+                <div class="form-row-inline">
+                    <input class="form-control-modern" type="number" name="qty" min="1" 
+                           placeholder="Quantity" required style="width: 120px;">
+                    <input class="form-control-modern" name="note" 
+                           placeholder="Note (optional)" style="flex: 1;">
+                </div>
+                <button type="submit" class="btn-modern btn-checkin">
+                    <i class="bi bi-check-circle"></i>
+                    Check In
+                </button>
+            </form>
+        </div>
+
+        <!-- Check Out Card -->
+        <div class="action-card">
+            <div class="action-card-header">
+                <div class="action-icon checkout">
+                    <i class="bi bi-dash-circle"></i>
+                </div>
+                <h4 class="action-title">Check Out</h4>
+            </div>
+            <form method="post" action="{{ url_for('asset_ledger.ledger_checkout') }}">
+                <input type="hidden" name="asset_id" value="{{ asset.id }}">
+                <div class="form-row-inline">
+                    <input class="form-control-modern" type="number" name="qty" min="1" 
+                           placeholder="Quantity" required style="width: 120px;">
+                    <input class="form-control-modern" name="note" 
+                           placeholder="Note (optional)" style="flex: 1;">
+                </div>
+                <button type="submit" class="btn-modern btn-checkout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Check Out
+                </button>
+            </form>
+        </div>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header py-2">Check In</div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('asset_ledger.ledger_checkin') }}" class="row g-2">
-          <input type="hidden" name="asset_id" value="{{ asset.id }}">
-          <div class="col-5">
-            <input class="form-control" type="number" name="qty" min="1" placeholder="Qty" required>
-          </div>
-          <div class="col-7">
-            <input class="form-control" name="note" placeholder="Note (optional)">
-          </div>
-          <div class="col-12">
-            <button class="btn btn-success w-100">Check In</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- Right Column: Ledger History -->
+    <div class="col-lg-7">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <div class="card-title">
+                    <i class="bi bi-clock-history"></i>
+                    Movement History
+                </div>
+            </div>
 
-    <div class="card mb-3">
-      <div class="card-header py-2">Check Out</div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('asset_ledger.ledger_checkout') }}" class="row g-2">
-          <input type="hidden" name="asset_id" value="{{ asset.id }}">
-          <div class="col-5">
-            <input class="form-control" type="number" name="qty" min="1" placeholder="Qty" required>
-          </div>
-          <div class="col-7">
-            <input class="form-control" name="note" placeholder="Note (optional)">
-          </div>
-          <div class="col-12">
-            <button class="btn btn-outline-danger w-100">Check Out</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-7">
-    <div class="card">
-      <div class="card-header py-2">Movement Ledger</div>
-      <div class="table-responsive">
-        <table class="table table-sm table-striped align-middle mb-0">
-          <thead>
-            <tr><th>UTC</th><th>Action</th><th class="text-end">Qty</th><th>User</th><th>Note</th></tr>
-          </thead>
-          <tbody>
-            {% for r in rows %}
-              <tr>
-                <td class="text-nowrap">{{ r.ts_utc }}</td>
-                <td>
-                  {% if r.action == 'CHECKIN' %}
-                    <span class="badge bg-success">Check In</span>
-                  {% elif r.action == 'CHECKOUT' %}
-                    <span class="badge bg-danger">Check Out</span>
-                  {% else %}
-                    <span class="badge bg-secondary">{{ r.action }}</span>
-                  {% endif %}
-                </td>
-                <td class="text-end">{{ r.qty }}</td>
-                <td class="text-nowrap">{{ r.username or '—' }}</td>
-                <td class="text-truncate" style="max-width:360px">{{ r.note or '—' }}</td>
-              </tr>
-            {% endfor %}
-            {% if not rows %}
-              <tr><td colspan="5" class="text-center text-muted py-4">No movements.</td></tr>
+            {% if ledger %}
+            <div class="table-responsive">
+                <table class="table-modern">
+                    <thead>
+                        <tr>
+                            <th>Date/Time</th>
+                            <th>Action</th>
+                            <th class="text-end">Qty</th>
+                            <th>User</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in ledger %}
+                        <tr>
+                            <td style="white-space: nowrap;">
+                                <i class="bi bi-calendar3 text-muted"></i>
+                                {{ entry.ts_utc[:10] }}<br>
+                                <small class="text-muted">{{ entry.ts_utc[11:19] }}</small>
+                            </td>
+                            <td>
+                                <span class="action-badge {{ entry.action|lower }}">
+                                    <i class="bi bi-{{ 'plus-circle' if entry.action=='CHECKIN' else 'dash-circle' if entry.action=='CHECKOUT' else 'arrow-repeat' }}"></i>
+                                    {{ entry.action }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <strong {% if entry.action=='CHECKIN' %}style="color: #065f46;"{% elif entry.action=='CHECKOUT' %}style="color: #991b1b;"{% endif %}>
+                                    {{ '+' if entry.action=='CHECKIN' else '-' if entry.action=='CHECKOUT' else '' }}{{ entry.qty }}
+                                </strong>
+                            </td>
+                            <td>
+                                <i class="bi bi-person text-muted"></i>
+                                {{ entry.username or '—' }}
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ entry.note or '—' }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h4>No movement history</h4>
+                <p>No transactions recorded for this asset yet</p>
+            </div>
             {% endif %}
-          </tbody>
-        </table>
-      </div>
+        </div>
     </div>
-  </div>
 </div>
 {% else %}
-  <div class="alert alert-info">Choose an asset to view and record movements.</div>
+<!-- Empty State: No Asset Selected -->
+<div class="card-modern">
+    <div class="empty-state">
+        <i class="bi bi-box"></i>
+        <h4>Select an asset to view ledger</h4>
+        <p>Choose an asset from the dropdown above to see its movement history</p>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

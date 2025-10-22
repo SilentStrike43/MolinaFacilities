@@ -1,63 +1,413 @@
 {% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+    /* Modern Card Design */
+    .elevated-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .elevated-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .elevated-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.75rem;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+    }
+
+    .elevated-header-text h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .elevated-header-text p {
+        color: #6b7280;
+        margin: 0.25rem 0 0 0;
+        font-size: 0.95rem;
+    }
+
+    /* Alert Box */
+    .info-alert {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left: 4px solid #00A3AD;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .info-alert-icon {
+        width: 32px;
+        height: 32px;
+        background: #00A3AD;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .info-alert-text {
+        flex: 1;
+        color: #1e40af;
+        line-height: 1.6;
+    }
+
+    /* Modern Table */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .modern-table thead th {
+        padding: 1rem 1.5rem;
+        color: white;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: none;
+    }
+
+    .modern-table thead th:first-child {
+        border-radius: 0.875rem 0 0 0;
+    }
+
+    .modern-table thead th:last-child {
+        border-radius: 0 0.875rem 0 0;
+    }
+
+    .modern-table tbody tr {
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f9fafb;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .modern-table tbody td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+
+    .modern-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* User Avatar */
+    .user-avatar-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+
+    .user-avatar-mini {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 163, 173, 0.3);
+        flex-shrink: 0;
+    }
+
+    .user-info-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name-cell {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.95rem;
+    }
+
+    .user-username-cell {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    /* Toggle Form */
+    .toggle-form {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Modern Checkbox Toggle */
+    .toggle-container {
+        position: relative;
+        display: inline-block;
+        width: 56px;
+        height: 28px;
+    }
+
+    .toggle-checkbox {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: 0.3s;
+        border-radius: 28px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-checkbox:checked + .toggle-slider {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+    }
+
+    .toggle-checkbox:checked + .toggle-slider:before {
+        transform: translateX(28px);
+    }
+
+    .toggle-checkbox:disabled + .toggle-slider {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* Save Button */
+    .btn-save-toggle {
+        padding: 0.5rem 1.25rem;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        border: none;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
+    }
+
+    .btn-save-toggle:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.4);
+    }
+
+    .btn-save-toggle:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Badge */
+    .badge-system-user {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 1.125rem;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
-<h5 class="mb-3">Admin — Elevated User Actions</h5>
+<div class="elevated-card">
+    <div class="elevated-header">
+        <div class="elevated-icon">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+        <div class="elevated-header-text">
+            <h2>Elevated User Actions</h2>
+            <p>Manage Administrator and Systems Administrator privileges</p>
+        </div>
+    </div>
 
-<div class="alert alert-info py-2">
-  Only the <strong>App Developer</strong> account can grant/revoke <strong>Systems Administrator</strong>.
-  Administrators may toggle <strong>Administrator</strong>.
+    <div class="info-alert">
+        <div class="info-alert-icon">
+            <i class="bi bi-info-circle-fill"></i>
+        </div>
+        <div class="info-alert-text">
+            <strong>Permission Levels:</strong> Only the <strong>App Developer</strong> account can grant/revoke <strong>Systems Administrator</strong> privileges. 
+            Administrators may toggle <strong>Administrator</strong> status. <strong>Only one elevated role can be active at a time.</strong>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto; border-radius: 0.875rem; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th style="text-align: center;">Administrator</th>
+                    <th style="text-align: center;">Systems Administrator</th>
+                    <th style="text-align: right;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>
+                        <div class="user-avatar-cell">
+                            <div class="user-avatar-mini">
+                                {{ r.username[0]|upper }}
+                            </div>
+                            <div class="user-info-cell">
+                                <div class="user-name-cell">
+                                    {{ r.first_name or '' }} {{ r.last_name or '' }}
+                                </div>
+                                <div class="user-username-cell">@{{ r.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Administrator Toggle -->
+                    <td style="text-align: center;">
+                        <form method="post" class="toggle-form" onsubmit="return confirmToggle(event, 'Administrator', {{ r.is_admin }})">
+                            <input type="hidden" name="uid" value="{{ r.id }}">
+                            <input type="hidden" name="role" value="admin">
+                            <input type="hidden" name="current_is_admin" value="{{ r.is_admin }}">
+                            <input type="hidden" name="current_is_sysadmin" value="{{ r.is_sysadmin }}">
+                            
+                            <label class="toggle-container">
+                                <input type="checkbox" 
+                                       name="is_admin" 
+                                       class="toggle-checkbox"
+                                       {{ 'checked' if r.is_admin else '' }}
+                                       {{ 'disabled' if r.is_sysadmin else '' }}
+                                       onchange="this.form.submit()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </form>
+                    </td>
+                    
+                    <!-- Systems Administrator Toggle -->
+                    <td style="text-align: center;">
+                        <form method="post" class="toggle-form" onsubmit="return confirmToggle(event, 'Systems Administrator', {{ r.is_sysadmin }})">
+                            <input type="hidden" name="uid" value="{{ r.id }}">
+                            <input type="hidden" name="role" value="sysadmin">
+                            <input type="hidden" name="current_is_admin" value="{{ r.is_admin }}">
+                            <input type="hidden" name="current_is_sysadmin" value="{{ r.is_sysadmin }}">
+                            
+                            <label class="toggle-container">
+                                <input type="checkbox" 
+                                       name="is_sysadmin" 
+                                       class="toggle-checkbox"
+                                       {{ 'checked' if r.is_sysadmin else '' }}
+                                       {{ 'disabled' if (not cu.is_system) or r.is_admin else '' }}
+                                       onchange="this.form.submit()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </form>
+                    </td>
+                    
+                    <td style="text-align: right;">
+                        {% if r.is_system %}
+                        <span class="badge-system-user">
+                            <i class="bi bi-gear-fill"></i>
+                            App Developer
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not rows %}
+                <tr>
+                    <td colspan="4" style="border: none;">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No users found.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-sm align-middle">
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Name</th>
-        <th class="text-center">Administrator</th>
-        <th class="text-center">Systems Administrator</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td class="text-nowrap">{{ r.username }}</td>
-        <td class="text-truncate" style="max-width:240px;">
-          {{ r.first_name or '' }} {{ r.last_name or '' }}
-        </td>
-        <td class="text-center">
-          <form method="post" class="d-inline">
-            <input type="hidden" name="uid" value="{{ r.id }}">
-            <input type="hidden" name="is_sysadmin" value="{{ r.is_sysadmin }}">
-            <div class="form-check d-inline-block">
-              <input class="form-check-input" type="checkbox" name="is_admin" {{ 'checked' if r.is_admin else '' }}>
-            </div>
-            <button class="btn btn-sm btn-outline-primary ms-1">Save</button>
-          </form>
-        </td>
-        <td class="text-center">
-          <form method="post" class="d-inline">
-            <input type="hidden" name="uid" value="{{ r.id }}">
-            <input type="hidden" name="is_admin" value="{{ r.is_admin }}">
-            <div class="form-check d-inline-block">
-              <input class="form-check-input" type="checkbox" name="is_sysadmin"
-                     {{ 'checked' if r.is_sysadmin else '' }}
-                     {{ 'disabled' if not cu.is_system else '' }}>
-            </div>
-            <button class="btn btn-sm btn-outline-primary ms-1" {{ 'disabled' if not cu.is_system else '' }}>Save</button>
-          </form>
-        </td>
-        <td class="text-end">
-          {% if r.is_system %}
-            <span class="badge bg-warning text-dark">System</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-      {% if not rows %}
-      <tr><td colspan="5" class="text-center text-muted py-4">No users.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
-</div>
+<script>
+function confirmToggle(event, roleName, currentStatus) {
+    const action = currentStatus ? 'remove' : 'grant';
+    const message = `Are you sure you want to ${action} ${roleName} privileges for this user?`;
+    
+    if (!confirm(message)) {
+        event.preventDefault();
+        return false;
+    }
+    
+    return true;
+}
+</script>
 {% endblock %}

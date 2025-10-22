@@ -1,213 +1,645 @@
 {% extends "base.html" %}
-{% block body %}
-<h5 class="mb-3">Inventory — Asset Management</h5>
+{% block extra_head %}
+<style>
+    :root {
+        --molina-teal: #00A3AD;
+        --molina-teal-dark: #008A93;
+        --text-primary: #1a1d2e;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, var(--molina-teal) 0%, var(--molina-teal-dark) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0, 163, 173, 0.3);
+        animation: slideDown 0.6s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .page-header-content {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+    
+    .page-header-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .page-header-text h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.125rem;
+    }
+    
+    /* Modern Card */
+    .card-modern {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .card-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .card-title i {
+        color: var(--molina-teal);
+    }
+    
+    /* Form Styling */
+    .form-row-modern {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group-modern {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label-modern {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .form-control-modern {
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: var(--molina-teal);
+        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
+    }
+    
+    .form-select-modern {
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select-modern:focus {
+        outline: none;
+        border-color: var(--molina-teal);
+        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
+    }
+    
+    /* Button Styling */
+    .btn-primary-modern {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, var(--molina-teal) 0%, var(--molina-teal-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(0, 163, 173, 0.4);
+    }
+    
+    .btn-secondary-modern {
+        padding: 0.75rem 1.5rem;
+        background: #f3f4f6;
+        color: var(--text-primary);
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-secondary-modern:hover {
+        background: #e5e7eb;
+    }
+    
+    /* Search Bar */
+    .search-bar-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+    
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.875rem 1.125rem 0.875rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    /* Table Styling */
+    .table-modern {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-modern thead th {
+        background: #f8f9fc;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .table-modern tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9fc;
+    }
+    
+    .table-modern tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: var(--text-primary);
+    }
+    
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* SKU Badge */
+    .sku-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, var(--molina-teal) 0%, var(--molina-teal-dark) 100%);
+        color: white;
+        border-radius: 0.5rem;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-badge.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-badge.inactive {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    /* Quantity Badge */
+    .qty-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.5rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    
+    .qty-badge.in-stock {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .qty-badge.out-of-stock {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.5rem;
+        border: none;
+        background: #f3f4f6;
+        color: var(--text-secondary);
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .btn-action:hover {
+        background: var(--molina-teal);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-radius: 0.875rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: #1e40af;
+    }
+    
+    .info-box i {
+        font-size: 1.5rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h4 {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
 
-{% if flashmsg and flashmsg[0] %}
-  <div class="alert alert-{{ 'success' if flashmsg[1] else 'danger' }} py-2">{{ flashmsg[0] }}</div>
+{% block body %}
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-archive"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Asset Management</h2>
+            <p>Manage inventory assets, track quantities, and maintain records</p>
+        </div>
+    </div>
+</div>
+
+<!-- Flash Message -->
+{% if flashmsg %}
+  <div class="alert alert-{{ 'success' if flashmsg[1] else 'danger' }} alert-dismissible fade show" role="alert">
+    {{ flashmsg[0] }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
 {% endif %}
 
-<div class="row g-4">
-  <div class="col-lg-5">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="fw-semibold mb-3">{{ edit and 'Edit Asset' or 'Add New Asset' }}</h6>
+<!-- Create/Edit Asset Form -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="card-title">
+            <i class="bi bi-{{ 'pencil-square' if edit else 'plus-circle' }}"></i>
+            {{ 'Edit Asset' if edit else 'Create New Asset' }}
+        </div>
+        {% if edit %}
+        <a href="{{ url_for('inventory.asset') }}" class="btn-secondary-modern">
+            <i class="bi bi-x-circle"></i>
+            Cancel
+        </a>
+        {% endif %}
+    </div>
+    
+    <form method="post">
+        <input type="hidden" name="mode" value="{{ 'update' if edit else 'create' }}">
+        {% if edit %}
+        <input type="hidden" name="id" value="{{ edit.id }}">
+        {% endif %}
         
-        <form method="post" id="assetForm">
-          {% if edit %}
-            <input type="hidden" name="_mode" value="update">
-            <input type="hidden" name="id" value="{{ edit.id }}">
-            
-            <div class="alert alert-warning py-2 mb-3">
-              <i class="bi bi-lock"></i> <strong>SKU cannot be changed:</strong> {{ edit.sku }}
-            </div>
-          {% else %}
-            <input type="hidden" name="_mode" value="create">
-            
-            <!-- Category Selection -->
-            <div class="mb-3">
-              <label class="form-label">Category <span class="text-danger">*</span></label>
-              <select class="form-select" name="Category" id="categorySelect" required>
-                <option value="">-- Select Category --</option>
-                {% for cat in categories %}
-                  <option value="{{ cat.value }}" data-prefix="{{ cat.prefix }}">{{ cat.label }}</option>
-                {% endfor %}
-              </select>
-              <div class="form-text">Select the appropriate category for this asset</div>
+        <!-- SKU and Category Selection -->
+        <div class="form-row-modern">
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-tag"></i> Category
+                </label>
+                <select class="form-select-modern" name="category" id="categorySelect" 
+                        {% if edit %}disabled{% endif %} required>
+                    <option value="">Select Category...</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.code }}" data-prefix="{{ cat.code }}"
+                            {% if edit and edit.sku.startswith(cat.code) %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
             
-            <!-- SKU Preview -->
-            <div class="mb-3">
-              <label class="form-label">Auto-Generated SKU</label>
-              <div class="input-group">
-                <input type="text" class="form-control bg-light" id="skuPreview" value="{{ next_sku_preview }}" readonly>
-                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              </div>
-              <div class="form-text">SKU is automatically assigned and cannot be edited</div>
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-qr-code"></i> SKU
+                </label>
+                <input type="text" class="form-control-modern" name="sku" id="skuPreview"
+                       value="{{ edit.sku if edit else next_sku_preview }}"
+                       {% if edit %}readonly{% endif %}
+                       placeholder="SKU will be generated..." required>
+                <small class="text-muted">Format: XXX-NNNNNNN</small>
             </div>
-          {% endif %}
-
-          <!-- Product Information -->
-          <div class="mb-2">
-            <label class="form-label">Product Name <span class="text-danger">*</span></label>
-            <input class="form-control" name="ProductName" value="{{ edit and edit.product or '' }}" placeholder="e.g., Dell Monitor 24 inch" required>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label">Manufacturer</label>
-            <input class="form-control" name="Manufacturer" value="{{ edit and edit.manufacturer or '' }}" placeholder="e.g., Dell Technologies">
-          </div>
-
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label">Part Number</label>
-              <input class="form-control" name="PartNumber" value="{{ edit and edit.part_number or '' }}" placeholder="Optional">
+        </div>
+        
+        <!-- Product Details -->
+        <div class="form-row-modern">
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-box"></i> Product Name
+                </label>
+                <input type="text" class="form-control-modern" name="ProductName"
+                       value="{{ edit.product if edit else '' }}"
+                       placeholder="Enter product name" required>
             </div>
-            <div class="col-6">
-              <label class="form-label">Serial Number</label>
-              <input class="form-control" name="SerialNumber" value="{{ edit and edit.serial_number or '' }}" placeholder="Optional">
+            
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-building"></i> Manufacturer
+                </label>
+                <input type="text" class="form-control-modern" name="Manufacturer"
+                       value="{{ edit.manufacturer if edit else '' }}"
+                       placeholder="Enter manufacturer">
             </div>
-          </div>
-
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <label class="form-label">Location <span class="text-danger">*</span></label>
-              <input class="form-control" name="Location" value="{{ edit and edit.location or '' }}" placeholder="A-01, Room 3" required>
+        </div>
+        
+        <!-- Location and UOM -->
+        <div class="form-row-modern">
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-geo-alt"></i> Location
+                </label>
+                <input type="text" class="form-control-modern" name="Location"
+                       value="{{ edit.location if edit else '' }}"
+                       placeholder="Storage location" required>
             </div>
-            <div class="col-6">
-              <label class="form-label">UOM</label>
-              <input class="form-control" name="UOM" value="{{ edit and edit.uom or 'EA' }}" placeholder="EA, Box, etc.">
+            
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-rulers"></i> Unit of Measure
+                </label>
+                <select class="form-select-modern" name="UOM">
+                    <option value="EA" {% if edit and edit.uom=='EA' %}selected{% endif %}>EA - Each</option>
+                    <option value="BX" {% if edit and edit.uom=='BX' %}selected{% endif %}>BX - Box</option>
+                    <option value="CS" {% if edit and edit.uom=='CS' %}selected{% endif %}>CS - Case</option>
+                    <option value="PK" {% if edit and edit.uom=='PK' %}selected{% endif %}>PK - Pack</option>
+                </select>
             </div>
-          </div>
-
-          {% if not edit %}
-          <div class="mb-2">
-            <label class="form-label">Initial Quantity <span class="text-danger">*</span></label>
-            <input class="form-control" type="number" name="Count" min="1" value="1" required>
-          </div>
-          {% endif %}
-
-          <div class="mb-2">
-            <label class="form-label">PII <span class="text-muted">(if applicable)</span></label>
-            <input class="form-control" name="PII" value="{{ edit and edit.pii or '' }}" placeholder="Protected information identifier">
-            <div class="form-text">Leave blank if no PII involved</div>
-          </div>
-
-          {% if edit %}
-          <div class="mb-2">
-            <label class="form-label">Status</label>
-            <select class="form-select" name="Status">
-              <option value="active" {{ 'selected' if edit.status=='active' else '' }}>Active</option>
-              <option value="inactive" {{ 'selected' if edit.status=='inactive' else '' }}>Inactive</option>
-              <option value="archived" {{ 'selected' if edit.status=='archived' else '' }}>Archived</option>
+        </div>
+        
+        {% if not edit %}
+        <!-- Initial Quantity (only for new assets) -->
+        <div class="form-row-modern">
+            <div class="form-group-modern">
+                <label class="form-label-modern">
+                    <i class="bi bi-123"></i> Initial Quantity
+                </label>
+                <input type="number" class="form-control-modern" name="InitialQty"
+                       value="0" min="0" placeholder="Initial quantity">
+                <small class="text-muted">Quantity to add on creation</small>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Notes -->
+        <div class="form-group-modern">
+            <label class="form-label-modern">
+                <i class="bi bi-sticky"></i> Notes
+            </label>
+            <textarea class="form-control-modern" name="Notes" rows="3"
+                      placeholder="Additional notes or comments">{{ edit.notes if edit else '' }}</textarea>
+        </div>
+        
+        {% if edit %}
+        <!-- Status (only for edit) -->
+        <div class="form-group-modern">
+            <label class="form-label-modern">
+                <i class="bi bi-toggle-on"></i> Status
+            </label>
+            <select class="form-select-modern" name="Status">
+                <option value="active" {% if edit.status=='active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if edit.status=='inactive' %}selected{% endif %}>Inactive</option>
+                <option value="archived" {% if edit.status=='archived' %}selected{% endif %}>Archived</option>
             </select>
-          </div>
-          {% endif %}
-
-          <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <textarea class="form-control" name="Notes" rows="2" placeholder="Additional information">{{ edit and edit.notes or '' }}</textarea>
-          </div>
-
-          {% if not edit %}
-          <div class="alert alert-info py-2 mb-3">
-            <i class="bi bi-printer"></i> <strong>Company Policy:</strong> A label will be automatically printed for this asset.
-          </div>
-          {% endif %}
-
-          <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">{{ edit and 'Save Changes' or 'Create Asset' }}</button>
-            {% if edit %}
-              <a class="btn btn-outline-secondary" href="{{ url_for('inventory.asset') }}">Cancel</a>
-            {% endif %}
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-7">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="mb-0">Asset Inventory</h6>
-      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home') }}">
-        <i class="bi bi-clipboard-check"></i> Asset Ledger
-      </a>
-    </div>
-
-    <form class="row g-2 mb-2" method="get">
-      <div class="col-md-6">
-        <input class="form-control" name="q" value="{{ q or '' }}" placeholder="Search SKU, Product, Manufacturer, Location">
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" name="status">
-          <option value="active" {{ 'selected' if status=='active' else '' }}>Active</option>
-          <option value="inactive" {{ 'selected' if status=='inactive' else '' }}>Inactive</option>
-          <option value="archived" {{ 'selected' if status=='archived' else '' }}>Archived</option>
-          <option value="all" {{ 'selected' if status=='all' else '' }}>All</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary w-100">Search</button>
-      </div>
+        </div>
+        {% endif %}
+        
+        <!-- Submit Button -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="submit" class="btn-primary-modern">
+                <i class="bi bi-{{ 'check-circle' if edit else 'plus-circle' }}"></i>
+                {{ 'Save Changes' if edit else 'Create Asset' }}
+            </button>
+        </div>
     </form>
+</div>
 
+<!-- Asset List -->
+<div class="card-modern">
+    <div class="card-header-modern">
+        <div class="card-title">
+            <i class="bi bi-list-ul"></i>
+            Asset Inventory
+        </div>
+        <a href="{{ url_for('asset_ledger.ledger_home') }}" class="btn-secondary-modern">
+            <i class="bi bi-clipboard-check"></i>
+            Asset Ledger
+        </a>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="search-bar-container">
+        <form method="get" style="display: flex; gap: 1rem; flex: 1;">
+            <div class="search-input-wrapper" style="flex: 1;">
+                <i class="bi bi-search"></i>
+                <input type="text" class="search-input" name="q" value="{{ q or '' }}"
+                       placeholder="Search SKU, Product, Manufacturer, Location...">
+            </div>
+            <select class="form-select-modern" name="status" style="width: 200px;">
+                <option value="active" {% if status=='active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+                <option value="archived" {% if status=='archived' %}selected{% endif %}>Archived</option>
+                <option value="all" {% if status=='all' %}selected{% endif %}>All</option>
+            </select>
+            <button type="submit" class="btn-primary-modern">
+                <i class="bi bi-search"></i>
+                Search
+            </button>
+        </form>
+    </div>
+    
+    <!-- Info Box -->
+    <div class="info-box">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            <strong>SKU Format:</strong> XXX-NNNNNNN (Category-Number) |
+            100=Electronics, 200=Automotive, 300=Medical, 400=Apparel, 500=Memorabilia, 600=Office, 700=Furniture, 800=Hardware
+        </div>
+    </div>
+    
+    <!-- Table -->
+    {% if rows %}
     <div class="table-responsive">
-      <table class="table table-sm table-striped align-middle">
-        <thead>
-          <tr>
-            <th>SKU</th>
-            <th>Product</th>
-            <th>Manufacturer</th>
-            <th>Location</th>
-            <th class="text-end">Qty</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in rows %}
-            <tr>
-              <td class="text-nowrap"><code>{{ r.sku }}</code></td>
-              <td class="text-truncate" style="max-width:200px;" title="{{ r.product }}">{{ r.product }}</td>
-              <td>{{ r.manufacturer or '—' }}</td>
-              <td>{{ r.location }}</td>
-              <td class="text-end">
-                <span class="badge {{ 'bg-success' if r.qty_on_hand > 0 else 'bg-secondary' }}">
-                  {{ r.qty_on_hand }}
-                </span>
-              </td>
-              <td>
-                {% if r.status == 'active' %}
-                  <span class="badge bg-success">Active</span>
-                {% elif r.status == 'inactive' %}
-                  <span class="badge bg-warning">Inactive</span>
-                {% else %}
-                  <span class="badge bg-secondary">{{ r.status }}</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('inventory.asset_edit', aid=r.id) }}" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}" title="View Ledger">
-                  <i class="bi bi-clipboard-data"></i>
-                </a>
-              </td>
-            </tr>
-          {% endfor %}
-          {% if not rows %}
-            <tr><td colspan="7" class="text-center text-muted py-4">No assets found. Create your first asset above.</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
+        <table class="table-modern">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Manufacturer</th>
+                    <th>Location</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td>
+                        <span class="sku-badge">{{ r.sku }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ r.product }}</strong>
+                    </td>
+                    <td>{{ r.manufacturer or '—' }}</td>
+                    <td>
+                        <i class="bi bi-geo-alt text-muted"></i>
+                        {{ r.location }}
+                    </td>
+                    <td class="text-center">
+                        <span class="qty-badge {{ 'in-stock' if r.qty_on_hand > 0 else 'out-of-stock' }}">
+                            {{ r.qty_on_hand }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="status-badge {{ r.status }}">
+                            <i class="bi bi-{{ 'check-circle' if r.status=='active' else 'x-circle' }}"></i>
+                            {{ r.status }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <a href="{{ url_for('inventory.asset_edit', aid=r.id) }}" class="btn-action" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}" class="btn-action" title="View Ledger">
+                                <i class="bi bi-clipboard-data"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
-    <div class="mt-3">
-      <small class="text-muted">
-        <strong>SKU Format:</strong> XXX-NNNNNNN (Category-Number)<br>
-        100=Electronics, 200=Automotive, 300=Medical, 400=Apparel, 500=Memorabilia, 600=Office, 700=Furniture, 800=Hardware
-      </small>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-archive"></i>
+        <h4>No assets found</h4>
+        <p>Create your first asset using the form above</p>
     </div>
-  </div>
+    {% endif %}
 </div>
 
 <script>
