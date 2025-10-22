@@ -6,7 +6,7 @@ import sqlite3
 import logging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
-from app.modules.auth.security import login_required, require_asset, current_user
+from app.modules.auth.security import login_required, require_asset, current_user, record_audit
 
 # Import the blueprint from __init__.py (DON'T create it here!)
 from . import bp
@@ -296,7 +296,7 @@ def asset():
     q = (request.args.get("q") or "").strip()
     status_filter = request.args.get("status", "active")
     
-    sql = "SELECT * FROM assets a WHERE ..."
+    sql = "SELECT * FROM assets WHERE 1=1"
     params = []
     
     if status_filter != "all":
@@ -435,91 +435,51 @@ def get_next_sku(category: str):
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
-    
-@inventory_bp.route("/asset/<int:aid>/delete", methods=["POST"])
-@login_required
-def asset_delete(aid: int):
-    """Delete an asset (SysAdmin+ only) - Soft delete by marking as deleted"""
-    cu = current_user()
-    
-    # Check if user is sysadmin
-    if not (cu.get("is_sysadmin") or cu.get("is_admin")):
-        flash("Only System Administrators can delete assets", "danger")
-        return redirect(url_for("inventory.asset"))
-    
-    con = assets_db()
-    asset = con.execute("SELECT * FROM assets WHERE id=?", (aid,)).fetchone()
-    
-    if not asset:
-        con.close()
-        flash("Asset not found", "warning")
-        return redirect(url_for("inventory.asset"))
-    
-    # Soft delete - mark as deleted but keep in database
-    con.execute("""
-        UPDATE assets 
-        SET status = 'deleted', 
-            notes = COALESCE(notes, '') || ' [DELETED by ' || ? || ' on ' || datetime('now') || ']'
-        WHERE id = ?
-    """, (cu.get("username"), aid))
-    
-    con.commit()
-    con.close()
-    
-    record_audit(cu, "delete_asset", "inventory", f"Deleted asset #{aid}: {asset['sku']} - {asset['product']}")
-    flash(f"Asset {asset['sku']} deleted successfully. SKU sequence will continue.", "success")
-    
-    return redirect(url_for("inventory.asset"))
 
 @inventory_bp.route("/insights")
 @login_required
 @require_asset
 def insights():
     """Inventory Insights - Movement history and reports."""
-    q = (request.args.get("q") or "").strip()
+    f = {k:(request.args.get(k) or "").strip() for k in
+         ["q","inventory_id","product_name","manufacturer","item_type",
+          "submitter_name","date_from","date_to"]}
     
-    # Query from ASSETS database, not inventory_reports
-    con = assets_db()
-    sql = """
-        SELECT 
-            a.id,
-            a.sku,
-            a.product,
-            a.manufacturer,
-            a.part_number,
-            a.serial_number,
-            a.location,
-            a.uom,
-            a.qty_on_hand,
-            a.pii,
-            a.notes,
-            a.status,
-            a.created_utc,
-            (SELECT SUM(qty) FROM asset_ledger WHERE asset_id = a.id AND action = 'CHECKIN') as total_checkins,
-            (SELECT SUM(qty) FROM asset_ledger WHERE asset_id = a.id AND action = 'CHECKOUT') as total_checkouts,
-            (SELECT COUNT(*) FROM asset_ledger WHERE asset_id = a.id) as movement_count
-        FROM assets a
-        WHERE a.status != 'deleted'
-    """
-    
+    con = inventory_db()
+    sql = "SELECT * FROM inventory_reports WHERE 1=1"
     params = []
-    if q:
-        sql += """ AND (
-            a.sku LIKE ? OR 
-            a.product LIKE ? OR 
-            a.manufacturer LIKE ? OR 
-            a.location LIKE ? OR
-            a.part_number LIKE ? OR
-            a.serial_number LIKE ?
-        )"""
-        params.extend([f"%{q}%"] * 6)
     
-    sql += " ORDER BY a.created_utc DESC LIMIT 500"
+    def add_like(field, val):
+        nonlocal sql, params
+        if val:
+            sql += f" AND {field} LIKE ?"
+            params.append(f"%{val}%")
     
+    add_like("submitter_name", f["submitter_name"])
+    add_like("product_name", f["product_name"])
+    add_like("manufacturer", f["manufacturer"])
+    add_like("item_type", f["item_type"])
+    
+    if f["inventory_id"]:
+        sql += " AND inventory_id = ?"
+        params.append(f["inventory_id"])
+    
+    if f["q"]:
+        add_like("(notes || ' ' || product_name || ' ' || manufacturer)", f["q"])
+    
+    if f["date_from"]:
+        sql += " AND date(ts_utc) >= date(?)"
+        params.append(f["date_from"])
+    
+    if f["date_to"]:
+        sql += " AND date(ts_utc) <= date(?)"
+        params.append(f["date_to"])
+    
+    sql += " ORDER BY ts_utc DESC LIMIT 2000"
     rows = con.execute(sql, params).fetchall()
     con.close()
     
-    return render_template("inventory/insights.html", active="insights", rows=rows, q=q)
+    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
 
 @inventory_bp.route("/insights/export")
 @login_required

@@ -329,81 +329,93 @@
 </div>
 
 <!-- Results Table -->
-<div style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-        <thead>
-            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <th style="padding: 1rem; text-align: left; font-weight: 700; white-space: nowrap;">SKU</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Product</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Manufacturer</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Part #</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Serial #</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Location</th>
-                <th style="padding: 1rem; text-align: center; font-weight: 700;">UOM</th>
-                <th style="padding: 1rem; text-align: center; font-weight: 700;">Qty</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">PII</th>
-                <th style="padding: 1rem; text-align: center; font-weight: 700;">Movements</th>
-                <th style="padding: 1rem; text-align: left; font-weight: 700;">Notes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if not rows %}
-            <tr>
-                <td colspan="11" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
-                    <div style="font-size: 2rem; opacity: 0.3; margin-bottom: 1rem;">📦</div>
-                    <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">No assets found</div>
-                    <div style="font-size: 0.875rem;">Try a different search or create a new asset</div>
-                </td>
-            </tr>
-            {% else %}
-            {% for r in rows %}
-            <tr style="border-top: 1px solid var(--border-color); transition: background 0.2s;">
-                <td style="padding: 0.875rem 1rem; font-family: 'Courier New', monospace; font-weight: 600; color: var(--primary-color);">
-                    {{ r.sku }}
-                </td>
-                <td style="padding: 0.875rem 1rem; font-weight: 600; color: var(--text-primary);">
-                    {{ r.product }}
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary);">
-                    {{ r.manufacturer or '—' }}
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary); font-family: 'Courier New', monospace; font-size: 0.8125rem;">
-                    {{ r.part_number or '—' }}
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary); font-family: 'Courier New', monospace; font-size: 0.8125rem;">
-                    {{ r.serial_number or '—' }}
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary);">
-                    {{ r.location or '—' }}
-                </td>
-                <td style="padding: 0.875rem 1rem; text-align: center; color: var(--text-secondary);">
-                    {{ r.uom or 'EA' }}
-                </td>
-                <td style="padding: 0.875rem 1rem; text-align: center;">
-                    <span style="display: inline-block; padding: 0.375rem 0.875rem; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; border-radius: 0.5rem; font-weight: 700;">
-                        {{ r.qty_on_hand }}
-                    </span>
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary); font-size: 0.8125rem;">
-                    {% if r.pii %}
-                        <span style="display: inline-block; padding: 0.25rem 0.625rem; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; border-radius: 0.375rem; font-weight: 600; font-size: 0.75rem;">
-                            PII
-                        </span>
-                    {% else %}
-                        —
-                    {% endif %}
-                </td>
-                <td style="padding: 0.875rem 1rem; text-align: center; color: var(--text-secondary);">
-                    {{ r.movement_count or 0 }}
-                </td>
-                <td style="padding: 0.875rem 1rem; color: var(--text-secondary); font-size: 0.875rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ r.notes or '' }}">
-                    {{ r.notes or '—' }}
-                </td>
-            </tr>
-            {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
+<div class="table-card">
+    <div class="table-header">
+        <h3 class="table-title">Movement History</h3>
+        {% if rows %}
+        <span class="table-badge">{{ rows|length }} result(s)</span>
+        {% endif %}
+    </div>
+    
+    <div class="table-container">
+        <table class="insights-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>SKU / ID</th>
+                    <th>Product</th>
+                    <th>Manufacturer</th>
+                    <th>Action</th>
+                    <th>Submitter</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if not rows %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <div class="empty-state-title">No Results Found</div>
+                            <div class="empty-state-description">
+                                Try adjusting your filters or search terms to find what you're looking for.
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                {% for r in rows %}
+                <tr>
+                    <td style="font-size: 0.8125rem; color: var(--text-secondary); white-space: nowrap;">
+                        {{ r['ts_utc'] or r.ts_utc or 'N/A' }}
+                    </td>
+                    <td>
+                        <span class="sku-badge">{{ r['inventory_id'] or r.inv_id or r.inventory_id or 'N/A' }}</span>
+                    </td>
+                    <td style="font-weight: 500;">{{ r['product_name'] or r.product or r.product_name or '—' }}</td>
+                    <td>{{ r['manufacturer'] or r.manufacturer or '—' }}</td>
+                    <td>
+                        {% set action_type = (r['item_type'] or r.type or r.item_type or '').upper() %}
+                        {% if 'CHECKIN' in action_type or 'CHECK IN' in action_type %}
+                            <span class="action-badge badge-checkin">
+                                <i class="bi bi-arrow-down-circle"></i>
+                                Check In
+                            </span>
+                        {% elif 'CHECKOUT' in action_type or 'CHECK OUT' in action_type %}
+                            <span class="action-badge badge-checkout">
+                                <i class="bi bi-arrow-up-circle"></i>
+                                Check Out
+                            </span>
+                        {% elif 'ADJUST' in action_type %}
+                            <span class="action-badge badge-adjust">
+                                <i class="bi bi-pencil-square"></i>
+                                Adjust
+                            </span>
+                        {% else %}
+                            <span class="action-badge badge-legacy">
+                                {{ r['item_type'] or r.type or r.item_type or '—' }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem;">
+                                {{ (r['submitter_name'] or r.submitter or r.submitter_name or 'U')[0].upper() }}
+                            </div>
+                            <span>{{ r['submitter_name'] or r.submitter or r.submitter_name or '—' }}</span>
+                        </div>
+                    </td>
+                    <td style="color: var(--text-secondary); font-size: 0.875rem;">
+                        {{ r['notes'] or r.notes or '—' }}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% if rows %}

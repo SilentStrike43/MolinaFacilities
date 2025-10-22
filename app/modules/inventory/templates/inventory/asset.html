@@ -120,23 +120,6 @@
               <a class="btn btn-outline-secondary" href="{{ url_for('inventory.asset') }}">Cancel</a>
             {% endif %}
           </div>
-          <td class="text-end">
-            <div class="btn-group btn-group-sm">
-              <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a class="btn btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}" title="View Ledger">
-                <i class="bi bi-journal-text"></i>
-              </a>
-              {% if elevated %}
-              <form method="post" action="{{ url_for('inventory.asset_delete', aid=r.id) }}" style="display:inline;" onsubmit="return confirm('⚠️ Delete asset {{ r.sku }}?\n\nThis cannot be undone, but the SKU sequence will continue.');">
-                <button type="submit" class="btn btn-outline-danger" title="Delete (SysAdmin Only)">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-              {% endif %}
-            </div>
-          </td>
         </form>
       </div>
     </div>

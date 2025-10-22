@@ -209,3 +209,171 @@ Traceback (most recent call last):
     rows = con.execute(sql, params).fetchall()
            ~~~~~~~~~~~^^^^^^^^^^^^^
 sqlite3.OperationalError: near ".": syntax error
+2025-10-22 09:53:39 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'asset' is undefined
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 403, in asset
+    return render_template(
+        "inventory/asset.html",
+    ...<8 lines>...
+        edit=edit
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 125, in block 'body'
+    <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
+    ^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+jinja2.exceptions.UndefinedError: 'asset' is undefined
+2025-10-22 09:57:02 | [35mCRITICAL[0m | __main__ | create_app:116 | Failed to register blueprints: No module named 'app.core.auth'
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 107, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 9, in <module>
+    from app.core.auth import login_required, require_asset, current_user, record_audit
+ModuleNotFoundError: No module named 'app.core.auth'
+2025-10-22 10:00:50 | [35mCRITICAL[0m | __main__ | create_app:116 | Failed to register blueprints: No module named 'app.core.auth'
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 107, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 9, in <module>
+    from app.core.auth import login_required, require_asset, current_user, record_audit
+ModuleNotFoundError: No module named 'app.core.auth'
+2025-10-22 10:02:15 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'asset' is undefined
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 403, in asset
+    return render_template(
+        "inventory/asset.html",
+    ...<8 lines>...
+        edit=edit
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 125, in block 'body'
+    <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
+    ^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+jinja2.exceptions.UndefinedError: 'asset' is undefined
+2025-10-22 10:02:23 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'asset' is undefined
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 403, in asset
+    return render_template(
+        "inventory/asset.html",
+    ...<8 lines>...
+        edit=edit
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 125, in block 'body'
+    <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
+    ^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+jinja2.exceptions.UndefinedError: 'asset' is undefined
+2025-10-22 10:05:53 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'asset' is undefined
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 403, in asset
+    return render_template(
+        "inventory/asset.html",
+    ...<8 lines>...
+        edit=edit
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 125, in block 'body'
+    <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
+    ^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+jinja2.exceptions.UndefinedError: 'asset' is undefined
