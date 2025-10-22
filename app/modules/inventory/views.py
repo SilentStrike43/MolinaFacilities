@@ -296,7 +296,7 @@ def asset():
     q = (request.args.get("q") or "").strip()
     status_filter = request.args.get("status", "active")
     
-    sql = "SELECT * FROM assets WHERE 1=1"
+    sql = "SELECT * FROM assets a WHERE ..."
     params = []
     
     if status_filter != "all":

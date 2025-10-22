@@ -122,7 +122,7 @@
           </div>
           <td class="text-end">
             <div class="btn-group btn-group-sm">
-              <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=r.id) }}" title="Edit">
+              <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=asset.id) }}" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
               <a class="btn btn-outline-secondary" href="{{ url_for('asset_ledger.ledger_home', asset_id=r.id) }}" title="View Ledger">

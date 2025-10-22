@@ -158,7 +158,7 @@
                 <td>{{ r.completed_utc or r.submitted_utc }}</td>
                 <td>{{ r.assigned_to or '—' }}</td>
                 <td>
-                    <a href="{{ url_for('fulfillment.view_request', req_id=r.id) }}" class="btn-view">
+                    <a href="{{ url_for('fulfillment.view_request', rid=r.id) }}" class="btn-view">
                         View
                     </a>
                 </td>

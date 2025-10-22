@@ -16,3 +16,196 @@ Traceback (most recent call last):
     ...<2 lines>...
     )
 ImportError: cannot import name 'record_audit' from 'app.modules.auth.security' (C:\BTManifest\app\modules\auth\security.py)
+2025-10-22 09:29:56 | [35mCRITICAL[0m | __main__ | create_app:116 | Failed to register blueprints: No module named 'app.core.auth'
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 99, in create_app
+    from app.modules.send import bp as send_bp
+  File "C:\BTManifest\app\modules\send\__init__.py", line 6, in <module>
+    from . import views, reports
+  File "C:\BTManifest\app\modules\send\reports.py", line 6, in <module>
+    from app.core.auth import require_cap
+ModuleNotFoundError: No module named 'app.core.auth'
+2025-10-22 09:32:51 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'r' is undefined
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 403, in asset
+    return render_template(
+        "inventory/asset.html",
+    ...<8 lines>...
+        edit=edit
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\templates\inventory\asset.html", line 125, in block 'body'
+    <a class="btn btn-outline-primary" href="{{ url_for('inventory.asset', edit=r.id) }}" title="Edit">
+    ^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+jinja2.exceptions.UndefinedError: 'r' is undefined
+2025-10-22 09:34:42 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: no such column: a.created_utc
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 519, in insights
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: a.created_utc
+2025-10-22 09:36:40 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.view_request' with values ['req_id']. Did you forget to specify values ['rid']?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 311, in archive
+    return render_template("fulfillment/archive.html", active="fulfillment", page="archive", rows=rows)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\archive.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 605, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\archive.html", line 161, in block 'body'
+    <a href="{{ url_for('fulfillment.view_request', req_id=r.id) }}" class="btn-view">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.view_request' with values ['req_id']. Did you forget to specify values ['rid']?
+2025-10-22 09:38:14 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: no such table: audit
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 210, in audit
+    rows = query_audit(q, username, action, date_from, date_to, limit=2000)
+  File "C:\BTManifest\app\modules\admin\views.py", line 101, in query_audit
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: audit
+2025-10-22 09:42:03 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: near ".": syntax error
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 311, in asset
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: near ".": syntax error
+2025-10-22 09:42:13 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: near ".": syntax error
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 311, in asset
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: near ".": syntax error
+2025-10-22 09:42:16 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: no such column: a.created_utc
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 519, in insights
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: a.created_utc
+2025-10-22 09:42:40 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: no such column: a.created_utc
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 519, in insights
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: no such column: a.created_utc
+2025-10-22 09:42:41 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: OperationalError: near ".": syntax error
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 176, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 191, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 311, in asset
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+sqlite3.OperationalError: near ".": syntax error

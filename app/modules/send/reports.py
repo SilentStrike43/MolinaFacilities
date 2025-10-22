@@ -3,7 +3,7 @@ from flask import render_template, request, send_file
 import csv, io
 from . import bp
 from .models import _conn
-from app.core.auth import require_cap
+from app.modules.auth.security import require_cap
 
 @bp.route("/insights", endpoint="reports")   # endpoint = send.reports
 @require_cap("can_send")

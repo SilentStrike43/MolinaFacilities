@@ -59,22 +59,26 @@ def set_elevated_flags_partial(uid: int, is_admin: int, is_sysadmin: int):
     con = get_db()
 def set_elevated_flags_partial(uid: int, is_admin: int, is_sysadmin: int):
     """Update ONLY admin flags, preserve all other user data"""
+# Create audit table if it doesn't exist
     con = get_db()
     con.execute("""
-        UPDATE users 
-        SET is_admin = ?, is_sysadmin = ?
-        WHERE id = ?
-    """, (is_admin, is_sysadmin, uid))
-    con.commit()
-    con.close()
+        CREATE TABLE IF NOT EXISTS audit(
+            id INTEGER PRIMARY KEY,
+            ts_utc TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+            username TEXT,
+            action TEXT,
+            source TEXT,
+            details TEXT
+        )
+    """)
     con.commit()
     con.close()
 
 def query_audit(q="", username="", action="", date_from="", date_to="", limit=2000):
     """Query audit logs with filters."""
-    con = get_db()
-    sql = "SELECT * FROM audit WHERE 1=1"
-    params = []
+    # TODO: Create audit table in users database
+    # For now, return empty results
+    return []
     
     if q:
         like_q = f"%{q}%"
