@@ -52,6 +52,11 @@ def _fetch_user_by_username(username: str) -> Optional[dict]:
     con.close()
     return _row_to_dict(row) if row else None
 
+def record_audit(user, action, source, details=""):
+    """Audit logging function"""
+    import logging
+    logger = logging.getLogger('app.security')
+    logger.info(f"AUDIT: {action} by {user} | {source} | {details}")
 
 # ------------------------------ session API ----------------------------
 
