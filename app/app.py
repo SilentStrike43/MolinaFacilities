@@ -13,12 +13,15 @@ from flask import Flask, render_template, redirect, url_for, g
 # Import core modules
 from app.core.logging_config import setup_flask_logging
 from app.core.errors import register_error_handlers
+
 from app.modules.users.models import ensure_user_schema, ensure_first_sysadmin
 from app.modules.auth.security import current_user
+
 from app.core.ui import inject_globals
 
 
 logger = logging.getLogger(__name__)
+
 
 
 def create_app():

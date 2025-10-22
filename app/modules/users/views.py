@@ -2,7 +2,7 @@
 import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from app.core.auth import (
+from app.modules.auth.security import (
     login_required, require_admin, current_user, record_audit,
     get_user_by_id, create_user as core_create_user, set_password
 )
@@ -35,9 +35,20 @@ def create_user(data: dict) -> int:
     username = data["username"]
     password = data["password"]
     
-    # Build caps dict
+    # Build caps dict with BOTH new and legacy names for compatibility
     caps = {
+        # New standard names (can_*)
         "can_send": bool(data.get("can_send")),
+        "can_asset": bool(data.get("can_asset")),
+        "can_inventory": bool(data.get("can_asset")),  # Inventory = assets
+        "can_insights": bool(data.get("can_insights")),
+        "can_users": bool(data.get("can_users")),
+        "can_fulfillment_staff": bool(data.get("can_fulfillment_staff")),
+        "can_fulfillment_customer": bool(data.get("can_fulfillment_customer")),
+        
+        # Legacy names for backward compatibility
+        "send": bool(data.get("can_send")),
+        "asset": bool(data.get("can_asset")),
         "inventory": bool(data.get("can_asset")),
         "insights": bool(data.get("can_insights")),
         "users": bool(data.get("can_users")),
