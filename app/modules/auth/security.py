@@ -7,6 +7,27 @@ from typing import Any, Iterable, Optional
 
 from flask import session, redirect, url_for, request, flash
 
+import logging
+
+def record_audit(user, action, source, details=""):
+    """
+    Record security/audit events.
+    
+    Args:
+        user: User dict or None
+        action: Action being audited (e.g., 'login', 'create_user')
+        source: Source module (e.g., 'auth', 'users', 'admin')
+        details: Additional details about the action
+    """
+    logger = logging.getLogger('app.security.audit')
+    
+    username = user.get('username', 'anonymous') if user else 'anonymous'
+    user_id = user.get('id', 'N/A') if user else 'N/A'
+    
+    logger.info(
+        f"AUDIT: {action} | User: {username} (ID:{user_id}) | Source: {source} | Details: {details}"
+    )
+
 # Use the module-local users store (no cross-module/legacy imports).
 # These names are intentionally tolerant: if your users.models exposes slightly
 # different helpers, we fall back to simple SQL on the same DB.
@@ -51,12 +72,6 @@ def _fetch_user_by_username(username: str) -> Optional[dict]:
     row = con.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
     con.close()
     return _row_to_dict(row) if row else None
-
-def record_audit(user, action, source, details=""):
-    """Audit logging function"""
-    import logging
-    logger = logging.getLogger('app.security')
-    logger.info(f"AUDIT: {action} by {user} | {source} | {details}")
 
 # ------------------------------ session API ----------------------------
 

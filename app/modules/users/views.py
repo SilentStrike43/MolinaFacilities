@@ -3,8 +3,17 @@ import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from app.modules.auth.security import (
-    login_required, require_admin, current_user, record_audit,
-    get_user_by_id, create_user as core_create_user, set_password
+    login_required, 
+    require_admin, 
+    current_user, 
+    record_audit,
+)
+
+from app.modules.users.models import (
+    get_user_by_id,
+    create_user as core_create_user,
+    set_password,
+    users_db
 )
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
