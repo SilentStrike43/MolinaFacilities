@@ -20,3 +20,19 @@
 2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:218 | Application shutting down...
 2025-10-23 08:57:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
 2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:223 | Cleanup complete
+2025-10-23 08:57:36 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-23 08:57:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-23 08:57:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
+2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
+2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
+2025-10-23 08:57:36 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
+2025-10-23 08:57:37 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-23 08:57:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
+2025-10-23 08:57:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
+2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
+2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
+2025-10-23 08:57:37 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
+2025-10-23 08:57:37 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-23 09:47:49 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
