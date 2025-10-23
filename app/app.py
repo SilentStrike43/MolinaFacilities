@@ -241,3 +241,4 @@ if __name__ == '__main__':
         debug=debug,
         use_reloader=debug
     )
+    application = create_app()
