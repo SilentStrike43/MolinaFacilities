@@ -34,12 +34,12 @@ def create_app():
     # ==================== Configuration ====================
     app.config.update(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production'),
-        SESSION_COOKIE_SECURE=False,  # Set to True in production with HTTPS
+        SESSION_COOKIE_SECURE=True,  # Azure uses HTTPS by default
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=3600 * 24 * 7,  # 7 days
-        MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB max upload
-        UPLOAD_FOLDER=os.path.join(os.path.dirname(__file__), 'data', 'uploads'),
+        PERMANENT_SESSION_LIFETIME=3600 * 24 * 7,
+        MAX_CONTENT_LENGTH=50 * 1024 * 1024,
+        UPLOAD_FOLDER=os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'data', 'uploads')),
         ENV=os.environ.get('FLASK_ENV', 'production'),
         LOG_LEVEL=os.environ.get('LOG_LEVEL', 'INFO')
     )
@@ -229,10 +229,15 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, shutdown_handler)
     
     # Run the application
-    logger.info("Starting development server on 127.0.0.1:5000")
+    # Azure provides PORT environment variable, default to 5000 for local dev
+    port = int(os.environ.get('PORT', 5000))
+    host = os.environ.get('HOST', '127.0.0.1')
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
+    logger.info(f"Starting server on {host}:{port}")
     application.run(
-        host='127.0.0.1',
-        port=5000,
-        debug=True,
-        use_reloader=True
+        host=host,
+        port=port,
+        debug=debug,
+        use_reloader=debug
     )
