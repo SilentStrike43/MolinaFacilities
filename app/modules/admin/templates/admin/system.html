@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4">
+        <i class="bi bi-gear"></i>
+        System Management
+        <span class="badge bg-danger">L3+ Only</span>
+    </h1>
+    
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>Azure Integration Placeholder</strong><br>
+        This page will integrate with Azure VM management, SSH access, certificate management, and subscription services.
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-hdd"></i> Azure VM Management</h5>
+                </div>
+                <div class="card-body">
+                    <p>Access Azure Virtual Machine controls and monitoring.</p>
+                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-terminal"></i> SSH Access</h5>
+                </div>
+                <div class="card-body">
+                    <p>Direct SSH terminal access to application server.</p>
+                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-shield-lock"></i> Certificate Management</h5>
+                </div>
+                <div class="card-body">
+                    <p>Upload and manage SSL/TLS certificates.</p>
+                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-cloud"></i> Azure Subscriptions</h5>
+                </div>
+                <div class="card-body">
+                    <p>Manage Azure subscriptions and resource groups.</p>
+                    <button class="btn btn-primary" disabled>Coming Soon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

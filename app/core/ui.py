@@ -1,48 +1,82 @@
-# app/core/ui.py - FIXED VERSION
+# app/core/ui.py - UPDATED FOR NEW PERMISSION SYSTEM
+"""
+UI context processor - injects global variables and user permissions into templates
+"""
+
 import os
 import json
 from flask import g
 
-# FIX: Import from NEW auth system, not old one
 from app.modules.auth.security import current_user
+from app.modules.users.permissions import PermissionManager
 
 APP_VERSION = os.environ.get("APP_VERSION", "0.4.0")
-BRAND_TEAL   = os.environ.get("BRAND_TEAL", "#00A3AD")
+BRAND_TEAL = os.environ.get("BRAND_TEAL", "#00A3AD")
+
+def get_user_permission_level(user_data):
+    """Get the effective permission level for a user - matches backend logic"""
+    if not user_data:
+        return None
+    
+    # Check for system flag first
+    try:
+        caps = json.loads(user_data.get("caps", "{}") or "{}")
+        if caps.get("is_system"):
+            return "S1"
+    except:
+        pass
+    
+    # Check explicit permission_level field
+    if user_data.get("permission_level"):
+        return user_data["permission_level"]
+    
+    # Legacy compatibility - map old flags to new levels
+    if user_data.get("is_sysadmin"):
+        return "L2"
+    elif user_data.get("is_admin"):
+        return "L1"
+    
+    return None
 
 def inject_globals():
-    """Available to templates - includes properly parsed user with ALL capabilities exposed."""
+    """
+    Inject global variables into all templates.
+    Includes NEW permission system with effective_permissions calculation.
+    """
     cu = current_user()
     elevated = False
     
     if cu:
-        # Parse caps JSON and expose ALL capabilities directly on the user object
-        try:
-            caps = json.loads(cu.get("caps", "{}") or "{}")
-            # Convert to mutable dict
-            cu = dict(cu)
-            
-            # Add is_system flag
-            cu["is_system"] = caps.get("is_system", False) or cu.get("username") in ("AppAdmin", "system")
-            
-            # Expose ALL capabilities directly (so templates can check cu.can_send, etc.)
-            cu["can_send"] = caps.get("can_send", False)
-            cu["can_asset"] = caps.get("can_asset", False) or caps.get("inventory", False)  # Support both names
-            cu["can_insights"] = caps.get("can_insights", False) or caps.get("insights", False)  # Support both names
-            cu["can_users"] = caps.get("can_users", False) or caps.get("users", False)  # Support both names
-            cu["can_fulfillment_staff"] = caps.get("can_fulfillment_staff", False) or caps.get("fulfillment_staff", False)
-            cu["can_fulfillment_customer"] = caps.get("can_fulfillment_customer", False) or caps.get("fulfillment_customer", False)
-            cu["can_inventory"] = caps.get("can_inventory", False) or caps.get("inventory", False)
-            
-        except:
-            if isinstance(cu, dict):
-                cu["is_system"] = cu.get("username") in ("AppAdmin", "system")
+        # Convert to mutable dict
+        cu = dict(cu)
         
-        # Set elevated flag for template
-        elevated = cu.get("is_admin", False) or cu.get("is_sysadmin", False)
+        # Get user's permission level
+        cu["permission_level"] = get_user_permission_level(cu) or ""
+        
+        # Get NEW permission system effective permissions
+        effective_perms = PermissionManager.get_effective_permissions(cu)
+        
+        # Merge effective permissions into cu object for template access
+        cu.update(effective_perms)
+        
+        # Add permission level description
+        cu["permission_level_desc"] = PermissionManager.get_permission_description(
+            cu.get("permission_level", "")
+        )
+        
+        # Set elevated flag (anyone with L1+ admin level)
+        elevated = cu.get("permission_level", "") in ["L1", "L2", "L3", "S1"]
+        
+        # Legacy compatibility - keep old flags for existing templates
+        if not elevated:
+            elevated = cu.get("is_admin", False) or cu.get("is_sysadmin", False)
+        
+        # Add system flag
+        cu["is_system"] = cu.get("is_system", False) or cu.get("username") in ("AppAdmin", "system")
     
     return {
         "cu": cu,
-        "elevated": elevated,  # Add this for the badge!
+        "elevated": elevated,
         "APP_VERSION": APP_VERSION,
         "BRAND_TEAL": BRAND_TEAL,
     }

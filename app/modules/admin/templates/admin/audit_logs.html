@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Audit Logs</h1>
+    
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" name="username" value="{{ filters.username or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Action</label>
+                    <select class="form-select" name="action">
+                        <option value="">All Actions</option>
+                        {% for action in actions %}
+                        <option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Module</label>
+                    <select class="form-select" name="module">
+                        <option value="">All Modules</option>
+                        {% for module in modules %}
+                        <option value="{{ module }}" {% if filters.module == module %}selected{% endif %}>{{ module }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Logs Table -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Level</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.ts_utc }}</td>
+                        <td>{{ log.username }}</td>
+                        <td><span class="badge bg-info">{{ log.permission_level or 'N/A' }}</span></td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.module }}</td>
+                        <td>{{ log.details[:100] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

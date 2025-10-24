@@ -6,13 +6,14 @@ Implements M1-M3C, L1-L3, S1 permission levels
 
 import json
 from datetime import datetime
+from typing import List  # ← CRITICAL: Add this for List[str] type hints
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash
 
 from app.modules.auth.security import (
     login_required, 
-    current_user, 
-    record_audit,
+    current_user,
+    # NOTE: record_audit removed - using admin module's version
 )
 
 from app.modules.users.models import (
@@ -23,6 +24,13 @@ from app.modules.users.models import (
 from app.modules.users.permissions import PermissionManager, PermissionLevel
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
+bp = users_bp
+
+# Audit logging wrapper - avoids circular import
+def record_audit(user_data, action, module, details, target_user_id=None, target_username=None):
+    """Wrapper for admin module's database audit logging"""
+    from app.modules.admin.views import record_audit_log
+    record_audit_log(user_data, action, module, details, target_user_id, target_username)
 
 # ---------- Database helpers ----------
 def get_db():
@@ -253,6 +261,11 @@ def can_elevate_users(user_data, to_level=None) -> bool:
     
     # General check - can they elevate at all?
     return actor_level in ["L1", "L2", "L3", "S1"]
+
+def record_audit(user_data, action, module, details, target_user_id=None, target_username=None):
+    """Wrapper for admin module's audit logging - avoids circular import"""
+    from app.modules.admin.views import record_audit_log
+    record_audit_log(user_data, action, module, details, target_user_id, target_username)
 
 # ---------- Routes ----------
 

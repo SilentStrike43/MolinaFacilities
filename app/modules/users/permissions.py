@@ -70,26 +70,32 @@ class PermissionManager:
     
     @staticmethod
     def get_included_permissions(level: str) -> List[str]:
-        """Get all permissions included in a given level"""
-        level_enum = PermissionLevel.from_string(level)
-        if not level_enum:
-            return []
-        
-        # Admin levels include all lower levels
-        if level == "S1":
-            return ["S1", "L3", "L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
-        elif level == "L3":
-            return ["L3", "L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
-        elif level == "L2":
-            return ["L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
-        elif level == "L1":
-            return ["L1", "M1", "M2", "M3A", "M3B", "M3C"]
-        elif level == "M3C":
-            return ["M3C", "M3B", "M3A"]  # Manager includes service and customer
-        elif level == "M3B":
-            return ["M3B"]  # Service level only
-        else:
-            return [level]  # Module permissions are standalone
+            """Get all permissions included in a given level"""
+            level_enum = PermissionLevel.from_string(level)
+            if not level_enum:
+                return []
+            
+            # Admin levels include all lower levels
+            if level == "S1":
+                return ["S1", "L3", "L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
+            elif level == "L3":
+                return ["L3", "L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
+            elif level == "L2":
+                return ["L2", "L1", "M1", "M2", "M3A", "M3B", "M3C"]
+            elif level == "L1":
+                return ["L1", "M1", "M2", "M3A", "M3B", "M3C"]
+            elif level == "M3C":
+                return ["M3C", "M3B", "M3A"]  # Manager includes service and customer
+            elif level == "M3B":
+                return ["M3B"]  # Service level only
+            elif level == "M3A":
+                return ["M3A"]  # Customer access only
+            elif level == "M1":
+                return ["M1"]  # Send module only
+            elif level == "M2":
+                return ["M2"]  # Inventory module only
+            else:
+                return []  # Unknown level
     
     @staticmethod
     def can_elevate_to(actor_level: str, target_level: str) -> bool:
@@ -118,16 +124,24 @@ class PermissionManager:
     @staticmethod
     def can_modify_user(actor_level: str, target_level: str) -> bool:
         """Check if an actor can modify a target user"""
-        if not actor_level or not target_level:
-            return False
+        if not actor_level:
+            return False  # Actor must have an admin level
+        
+        # If target has no admin level, any admin can modify them
+        if not target_level:
+            return True
         
         actor = PermissionLevel.from_string(actor_level)
         target = PermissionLevel.from_string(target_level)
         
-        if not actor or not target:
+        if not actor:
             return False
         
-        # Can only modify users at lower levels
+        # If target level is invalid, treat as regular user
+        if not target:
+            return True
+        
+        # Can only modify users at lower hierarchy levels
         return actor.get_hierarchy_level() > target.get_hierarchy_level()
     
     @staticmethod

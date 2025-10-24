@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block body %}
+<style>
+    .elevation-container {
+        padding: 2rem;
+    }
+    
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 1rem;
+    }
+    
+    .warning-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .warning-title {
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 0.5rem;
+    }
+    
+    .warning-text {
+        color: #78350f;
+    }
+    
+    .users-table {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .btn-elevate {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .btn-demote {
+        padding: 0.5rem 1rem;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .level-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .level-badge.l1 {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .level-badge.l2 {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .level-badge.l3 {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+    
+    .level-badge.s1 {
+        background: #fce7f3;
+        color: #9f1239;
+    }
+    
+    .level-badge.none {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+</style>
+
+<div class="elevation-container">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="bi bi-shield-check"></i>
+            Elevation Management
+            <span class="level-badge {{ current_user_level.lower() if current_user_level else 'none' }}">
+                Your Level: {{ current_user_level or 'None' }}
+            </span>
+        </h1>
+        <p class="page-subtitle">Manage administrative access levels for users</p>
+    </div>
+    
+    <div class="warning-box">
+        <div class="warning-title">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Important Responsibility Notice
+        </div>
+        <div class="warning-text">
+            Elevating users to administrative levels grants them significant system access. All actions performed by elevated users are logged and tracked. By elevating a user, you accept responsibility for their subsequent actions.
+        </div>
+    </div>
+    
+    <div class="users-table">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Current Level</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.username }}</strong>
+                        {% if user.first_name or user.last_name %}
+                        <br><small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="level-badge {{ user.current_level.lower() if user.current_level != 'None' else 'none' }}">
+                            {{ user.current_level }}
+                        </span>
+                    </td>
+                    <td>
+                        <small>{{ user.level_description }}</small>
+                    </td>
+                    <td>
+                        {% if user.available_elevations %}
+                        <select class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="elevateUser({{ user.id }}, this.value, '{{ user.username }}')">
+                            <option value="">Elevate to...</option>
+                            {% for elev in user.available_elevations %}
+                            <option value="{{ elev.level }}">{{ elev.level }} - {{ elev.description[:30] }}...</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                        
+                        {% if user.can_demote and user.current_level != 'None' %}
+                        <button class="btn-demote" onclick="demoteUser({{ user.id }}, '{{ user.username }}')">
+                            <i class="bi bi-arrow-down-circle"></i> Demote
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function elevateUser(userId, level, username) {
+    if (!level) return;
+    
+    if (confirm(`⚠️ WARNING: You are about to elevate ${username} to ${level}.\n\nThis action will be logged and you accept responsibility for their subsequent actions.\n\nContinue?`)) {
+        fetch(`/users/elevate/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ level: level, reason: 'Admin elevation via management interface' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User elevated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+}
+
+function demoteUser(userId, username) {
+    if (confirm(`⚠️ WARNING: You are about to demote ${username} to module access only.\n\nThis action will be logged. If the user is L2 or higher, Azure AAD permissions will need to be removed manually.\n\nContinue?`)) {
+        fetch(`/users/demote/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User demoted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+}
+</script>
+
+{% endblock %}

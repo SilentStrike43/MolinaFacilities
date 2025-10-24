@@ -20,6 +20,8 @@ from app.modules.users.permissions import PermissionManager, PermissionLevel
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
 
+bp = admin_bp
+
 # ---------- Permission Checking ----------
 def get_user_permission_level(user_data):
     """Get the effective permission level for a user."""
