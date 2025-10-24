@@ -1,310 +1,234 @@
 {% extends "base.html" %}
-{% block body %}
+{% block title %}Users List{% endblock %}
+{% block content %}
 
 <style>
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+    /* Enhanced Users List Styles */
+    .users-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
     }
     
     /* Page Header */
-    .page-header-card {
+    .page-header {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        border-radius: 1.5rem;
-        padding: 2.5rem 2rem;
-        color: white;
+        border-radius: 1rem;
+        padding: 2.5rem;
         margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.3);
-        animation: fadeInUp 0.5s ease-out;
-    }
-    
-    .page-header-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        box-shadow: 0 10px 30px rgba(0, 163, 173, 0.2);
     }
     
     .page-header-content {
-        position: relative;
-        z-index: 1;
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-    }
-    
-    .page-header-left {
-        display: flex;
         align-items: center;
-        gap: 1.5rem;
     }
     
-    .page-header-icon {
-        width: 64px;
-        height: 64px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    }
-    
-    .page-header-text h2 {
-        margin: 0 0 0.5rem 0;
+    .page-title {
+        color: white;
         font-size: 2rem;
         font-weight: 800;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    .page-header-text p {
         margin: 0;
-        opacity: 0.95;
-        font-size: 1.0625rem;
     }
     
-    .btn-header-action {
-        padding: 1rem 2rem;
+    .page-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 0.5rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-header {
+        padding: 0.75rem 1.5rem;
         background: white;
-        color: #8b5cf6;
+        color: #00A3AD;
         border: none;
-        border-radius: 0.875rem;
-        font-weight: 700;
-        font-size: 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.625rem;
-        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
-    }
-    
-    .btn-header-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 30px rgba(255, 255, 255, 0.3);
-        color: #8b5cf6;
-    }
-    
-    /* Stats Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 1.25rem;
-        padding: 1.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
-        animation: fadeInUp 0.6s ease-out;
-        animation-fill-mode: both;
-    }
-    
-    .stat-card:nth-child(1) { animation-delay: 0.1s; }
-    .stat-card:nth-child(2) { animation-delay: 0.2s; }
-    .stat-card:nth-child(3) { animation-delay: 0.3s; }
-    .stat-card:nth-child(4) { animation-delay: 0.4s; }
-    
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.15);
-    }
-    
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-        background: var(--icon-bg);
-        color: var(--icon-color);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        gap: 0.5rem;
     }
     
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: 0.375rem;
-        line-height: 1;
+    .btn-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
     
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
+    /* Search and Filters */
+    .filters-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #00A3AD;
+    }
+    
+    .btn-search {
+        padding: 0.75rem 2rem;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
     
-    /* User Cards Grid */
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 163, 173, 0.3);
+    }
+    
+    .filter-toggle {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Users Grid */
     .users-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
     
+    /* User Card */
     .user-card {
         background: white;
-        border-radius: 1.25rem;
-        padding: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
-        animation: slideIn 0.5s ease-out;
-        animation-fill-mode: both;
         position: relative;
         overflow: hidden;
     }
     
-    .user-card:nth-child(1) { animation-delay: 0.1s; }
-    .user-card:nth-child(2) { animation-delay: 0.15s; }
-    .user-card:nth-child(3) { animation-delay: 0.2s; }
-    .user-card:nth-child(4) { animation-delay: 0.25s; }
-    .user-card:nth-child(5) { animation-delay: 0.3s; }
-    .user-card:nth-child(6) { animation-delay: 0.35s; }
-    
-    .user-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--user-color), var(--user-color-dark));
-    }
-    
     .user-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
     
-    .user-header {
+    .user-card-header {
         display: flex;
         align-items: center;
-        gap: 1.25rem;
-        margin-bottom: 1.5rem;
+        gap: 1rem;
+        margin-bottom: 1rem;
     }
     
     .user-avatar {
-        width: 64px;
-        height: 64px;
-        border-radius: 16px;
-        background: var(--user-bg);
-        color: var(--user-color);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.75rem;
+        color: white;
+        font-size: 1.5rem;
         font-weight: 800;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         flex-shrink: 0;
     }
     
     .user-info {
         flex: 1;
-        min-width: 0;
     }
     
     .user-name {
         font-size: 1.25rem;
-        font-weight: 800;
-        color: var(--text-primary);
+        font-weight: 700;
+        color: #1f2937;
         margin-bottom: 0.25rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
     
-    .user-id {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        font-weight: 600;
+    .user-details {
+        font-size: 0.875rem;
+        color: #6b7280;
     }
     
-    .user-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.25rem;
+    .user-email {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
     }
     
-    .badge-user {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.875rem;
-        border-radius: 0.5rem;
+    /* Permission Level Badge */
+    .permission-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.25rem;
         font-size: 0.75rem;
         font-weight: 700;
-        letter-spacing: 0.025em;
         text-transform: uppercase;
     }
     
-    .badge-admin {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
+    .permission-badge.s1 {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
     }
     
-    .badge-sysadmin {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
+    .permission-badge.l3 {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
     }
     
-    .badge-active {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
+    .permission-badge.l2 {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
     }
     
-    .badge-inactive {
-        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-        color: #374151;
+    .permission-badge.l1 {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: white;
     }
     
+    .permission-badge.module {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    /* Permissions Section */
     .user-permissions {
-        margin-bottom: 1.25rem;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1rem;
+        margin-top: 1rem;
     }
     
     .permissions-title {
-        font-size: 0.8125rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-secondary);
-        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
     }
     
     .permissions-list {
@@ -313,64 +237,88 @@
         gap: 0.5rem;
     }
     
-    .permission-badge {
-        padding: 0.375rem 0.75rem;
+    .perm-tag {
+        padding: 0.25rem 0.5rem;
         background: #f3f4f6;
-        color: var(--text-primary);
-        border-radius: 0.5rem;
+        border-radius: 0.25rem;
         font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
     }
     
-    .permission-badge i {
-        font-size: 0.875rem;
-        color: var(--user-color);
+    .perm-tag.admin {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fcd34d;
     }
     
+    /* User Actions */
     .user-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
     }
     
     .btn-user-action {
-        padding: 0.75rem 1rem;
-        border: none;
-        border-radius: 0.625rem;
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid #e5e7eb;
+        background: white;
+        border-radius: 0.375rem;
         font-size: 0.875rem;
-        font-weight: 700;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-        text-decoration: none;
-        text-align: center;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        text-decoration: none;
+        color: #4b5563;
     }
     
-    .btn-edit {
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
+    .btn-user-action:hover {
+        background: #f9fafb;
+        border-color: #00A3AD;
+        color: #00A3AD;
     }
     
-    .btn-edit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.4);
-        color: white;
+    .btn-user-action.delete {
+        color: #dc2626;
+        border-color: #fca5a5;
     }
     
-    .btn-view {
-        background: #f3f4f6;
-        color: var(--text-primary);
+    .btn-user-action.delete:hover {
+        background: #fef2f2;
+        border-color: #dc2626;
     }
     
-    .btn-view:hover {
-        background: #e5e7eb;
+    /* Status Indicators */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-indicator.active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-indicator.inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-indicator.pending-deletion {
+        background: #fef3c7;
+        color: #92400e;
     }
     
     /* Empty State */
@@ -378,246 +326,214 @@
         text-align: center;
         padding: 4rem 2rem;
         background: white;
-        border-radius: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
     
     .empty-state-icon {
-        font-size: 5rem;
-        color: var(--text-muted);
-        margin-bottom: 1.5rem;
-        opacity: 0.5;
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
     }
     
     .empty-state-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.75rem;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
     }
     
     .empty-state-text {
-        font-size: 1.0625rem;
-        color: var(--text-secondary);
+        color: #6b7280;
         margin-bottom: 2rem;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .page-header-content {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .page-header-left {
-            flex-direction: column;
-        }
-        
-        .btn-header-action {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .users-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .user-actions {
-            grid-template-columns: 1fr;
-        }
     }
 </style>
 
-<!-- Page Header -->
-<div class="page-header-card">
-    <div class="page-header-content">
-        <div class="page-header-left">
-            <div class="page-header-icon">
-                <i class="bi bi-people"></i>
+<div class="users-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div>
+                <h1 class="page-title">Users Management</h1>
+                <p class="page-subtitle">Manage user accounts and permissions</p>
             </div>
-            <div class="page-header-text">
-                <h2>User Management</h2>
-                <p>Manage system users and their permissions</p>
-            </div>
-        </div>
-        
-        {% if elevated %}
-        <a href="{{ url_for('users.create') if 'create_user' else '#' }}" class="btn-header-action">
-            <i class="bi bi-person-plus"></i>
-            Add New User
-        </a>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Stats Grid -->
-<div class="stats-grid">
-    <div class="stat-card" style="--icon-bg: rgba(139, 92, 246, 0.1); --icon-color: #8b5cf6;">
-        <div class="stat-icon">
-            <i class="bi bi-people"></i>
-        </div>
-        <div class="stat-value">{{ users|length if users else 0 }}</div>
-        <div class="stat-label">Total Users</div>
-    </div>
-    
-    <div class="stat-card" style="--icon-bg: rgba(16, 185, 129, 0.1); --icon-color: #10b981;">
-        <div class="stat-icon">
-            <i class="bi bi-check-circle"></i>
-        </div>
-        <div class="stat-value">{{ users|selectattr('is_active', 'equalto', True)|list|length if users else 0 }}</div>
-        <div class="stat-label">Active Users</div>
-    </div>
-    
-    <div class="stat-card" style="--icon-bg: rgba(245, 158, 11, 0.1); --icon-color: #f59e0b;">
-        <div class="stat-icon">
-            <i class="bi bi-shield"></i>
-        </div>
-        <div class="stat-value">{{ users|selectattr('is_admin', 'equalto', True)|list|length if users else 0 }}</div>
-        <div class="stat-label">Administrators</div>
-    </div>
-    
-    <div class="stat-card" style="--icon-bg: rgba(239, 68, 68, 0.1); --icon-color: #ef4444;">
-        <div class="stat-icon">
-            <i class="bi bi-shield-exclamation"></i>
-        </div>
-        <div class="stat-value">{{ users|selectattr('is_sysadmin', 'equalto', True)|list|length if users else 0 }}</div>
-        <div class="stat-label">System Admins</div>
-    </div>
-</div>
-
-<!-- Users Grid -->
-{% if users %}
-<div class="users-grid">
-    {% for user in users %}
-    {% set color_index = loop.index % 6 %}
-    {% if color_index == 1 %}
-        {% set user_color = "#8b5cf6" %}
-        {% set user_color_dark = "#7c3aed" %}
-        {% set user_bg = "rgba(139, 92, 246, 0.1)" %}
-    {% elif color_index == 2 %}
-        {% set user_color = "#3b82f6" %}
-        {% set user_color_dark = "#2563eb" %}
-        {% set user_bg = "rgba(59, 130, 246, 0.1)" %}
-    {% elif color_index == 3 %}
-        {% set user_color = "#10b981" %}
-        {% set user_color_dark = "#059669" %}
-        {% set user_bg = "rgba(16, 185, 129, 0.1)" %}
-    {% elif color_index == 4 %}
-        {% set user_color = "#f59e0b" %}
-        {% set user_color_dark = "#d97706" %}
-        {% set user_bg = "rgba(245, 158, 11, 0.1)" %}
-    {% elif color_index == 5 %}
-        {% set user_color = "#ef4444" %}
-        {% set user_color_dark = "#dc2626" %}
-        {% set user_bg = "rgba(239, 68, 68, 0.1)" %}
-    {% else %}
-        {% set user_color = "#6b7280" %}
-        {% set user_color_dark = "#4b5563" %}
-        {% set user_bg = "rgba(107, 114, 128, 0.1)" %}
-    {% endif %}
-    
-    <div class="user-card" style="--user-color: {{ user_color }}; --user-color-dark: {{ user_color_dark }}; --user-bg: {{ user_bg }};">
-        <div class="user-header">
-            <div class="user-avatar">
-                {{ user.username[0]|upper if user.username else 'U' }}
-            </div>
-            <div class="user-info">
-                <div class="user-name" title="{{ user.username }}">{{ user.username }}</div>
-                <div class="user-id">ID: {{ user.id }}</div>
+            <div class="header-actions">
+                {% if can_create %}
+                <a href="{{ url_for('users.create') }}" class="btn-header">
+                    <i class="bi bi-person-plus"></i>
+                    Add User
+                </a>
+                {% endif %}
+                {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
+                <a href="{{ url_for('users.elevation_management') }}" class="btn-header">
+                    <i class="bi bi-shield-check"></i>
+                    Elevation Management
+                </a>
+                {% endif %}
             </div>
         </div>
-        
-        <div class="user-badges">
-            {% if user.is_sysadmin %}
-                <span class="badge-user badge-sysadmin">
-                    <i class="bi bi-shield-exclamation"></i>
-                    Sysadmin
-                </span>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="filters-section">
+        <form method="get" class="search-bar">
+            <input type="text" 
+                   name="q" 
+                   class="search-input" 
+                   placeholder="Search by username, name, email, or department..." 
+                   value="{{ q }}">
+            <button type="submit" class="btn-search">
+                <i class="bi bi-search"></i>
+                Search
+            </button>
+            <div class="filter-toggle">
+                <input type="checkbox" 
+                       id="show-all" 
+                       name="all" 
+                       value="1" 
+                       {% if show_all %}checked{% endif %}>
+                <label for="show-all">Show inactive users</label>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Users Grid -->
+    {% if rows %}
+    <div class="users-grid">
+        {% for user in rows %}
+        <div class="user-card">
+            <!-- Permission Level Badge -->
+            {% if user.permission_level %}
+                {% if user.permission_level == 'S1' %}
+                <span class="permission-badge s1">System</span>
+                {% elif user.permission_level == 'L3' %}
+                <span class="permission-badge l3">App Dev</span>
+                {% elif user.permission_level == 'L2' %}
+                <span class="permission-badge l2">Sys Admin</span>
+                {% elif user.permission_level == 'L1' %}
+                <span class="permission-badge l1">Module Admin</span>
+                {% endif %}
+            {% else %}
+                <span class="permission-badge module">Module User</span>
             {% endif %}
-            {% if user.is_admin %}
-                <span class="badge-user badge-admin">
-                    <i class="bi bi-shield"></i>
-                    Admin
+            
+            <div class="user-card-header">
+                <div class="user-avatar">
+                    {{ user.username[0]|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">{{ user.username }}</div>
+                    <div class="user-details">
+                        {% if user.first_name or user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% else %}
+                            No name set
+                        {% endif %}
+                    </div>
+                    {% if user.email %}
+                    <div class="user-email">{{ user.email }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Status -->
+            <div style="margin-bottom: 1rem;">
+                {% if user.deleted_at %}
+                <span class="status-indicator inactive">
+                    <i class="bi bi-x-circle"></i>
+                    Deleted
                 </span>
-            {% endif %}
-            {% if user.is_active %}
-                <span class="badge-user badge-active">
+                {% elif user.deletion_requested_at %}
+                <span class="status-indicator pending-deletion">
+                    <i class="bi bi-clock-history"></i>
+                    Deletion Pending
+                </span>
+                {% else %}
+                <span class="status-indicator active">
                     <i class="bi bi-check-circle"></i>
                     Active
                 </span>
-            {% else %}
-                <span class="badge-user badge-inactive">
-                    <i class="bi bi-x-circle"></i>
-                    Inactive
+                {% endif %}
+                
+                {% if user.department %}
+                <span style="margin-left: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                    {{ user.department }}
                 </span>
-            {% endif %}
-        </div>
-        
-        <div class="user-permissions">
-            <div class="permissions-title">Permissions</div>
-            <div class="permissions-list">
-                {% if user.can_send %}
-                    <span class="permission-badge">
-                        <i class="bi bi-box-seam"></i>
-                        Shipping
-                    </span>
                 {% endif %}
-                {% if user.can_asset %}
-                    <span class="permission-badge">
-                        <i class="bi bi-clipboard-check"></i>
-                        Assets
-                    </span>
-                {% endif %}
-                {% if user.can_fulfillment_customer or user.can_fulfillment_staff %}
-                    <span class="permission-badge">
-                        <i class="bi bi-file-earmark-text"></i>
-                        Fulfillment
-                    </span>
-                {% endif %}
-                {% if user.can_users %}
-                    <span class="permission-badge">
-                        <i class="bi bi-people"></i>
-                        Users
-                    </span>
-                {% endif %}
-                {% if not (user.can_send or user.can_asset or user.can_fulfillment_customer or user.can_fulfillment_staff or user.can_users) %}
-                    <span class="permission-badge" style="opacity: 0.5;">
-                        <i class="bi bi-dash-circle"></i>
-                        No permissions
-                    </span>
+            </div>
+            
+            <!-- Permissions -->
+            <div class="user-permissions">
+                <div class="permissions-title">
+                    {% if user.permission_level %}
+                    Administrative Access
+                    {% else %}
+                    Module Permissions
+                    {% endif %}
+                </div>
+                <div class="permissions-list">
+                    {% if user.permission_level %}
+                        <span class="perm-tag admin">{{ user.permission_level_desc }}</span>
+                    {% else %}
+                        {% if user.effective_permissions.can_send %}
+                        <span class="perm-tag">M1 - Send</span>
+                        {% endif %}
+                        {% if user.effective_permissions.can_inventory %}
+                        <span class="perm-tag">M2 - Inventory</span>
+                        {% endif %}
+                        {% if user.effective_permissions.can_fulfillment_manager %}
+                        <span class="perm-tag">M3C - Fulfillment Manager</span>
+                        {% elif user.effective_permissions.can_fulfillment_service %}
+                        <span class="perm-tag">M3B - Fulfillment Service</span>
+                        {% elif user.effective_permissions.can_fulfillment_customer %}
+                        <span class="perm-tag">M3A - Fulfillment Customer</span>
+                        {% endif %}
+                        
+                        {% if not (user.effective_permissions.can_send or user.effective_permissions.can_inventory or user.effective_permissions.can_fulfillment_customer or user.effective_permissions.can_fulfillment_service or user.effective_permissions.can_fulfillment_manager) %}
+                        <span class="perm-tag">No permissions assigned</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="user-actions">
+                <a href="{{ url_for('users.edit_user', uid=user.id) }}" class="btn-user-action">
+                    <i class="bi bi-pencil"></i>
+                    Edit
+                </a>
+                {% if user.deletion_requested_at and cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
+                <a href="{{ url_for('users.deletion_requests') }}" class="btn-user-action">
+                    <i class="bi bi-shield-exclamation"></i>
+                    Review
+                </a>
                 {% endif %}
             </div>
         </div>
-        
-        <div class="user-actions">
-            <a href="{{ url_for('users.edit_user', uid=user.id) if 'edit_user' else '#' }}" class="btn-user-action btn-edit">
-                <i class="bi bi-pencil"></i>
-                Edit
-            </a>
-            <a href="{{ url_for('users.view_user', uid=user.id) if 'view_user' else '#' }}" class="btn-user-action btn-view">
-                <i class="bi bi-eye"></i>
-                View
-            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-people"></i>
         </div>
+        <div class="empty-state-title">No Users Found</div>
+        <div class="empty-state-text">
+            {% if q %}
+            No users match your search criteria. Try adjusting your filters.
+            {% else %}
+            There are no users in the system yet. Create your first user to get started.
+            {% endif %}
+        </div>
+        {% if can_create %}
+        <a href="{{ url_for('users.create') }}" class="btn-header">
+            <i class="bi bi-person-plus"></i>
+            Add First User
+        </a>
+        {% endif %}
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="empty-state">
-    <div class="empty-state-icon">
-        <i class="bi bi-people"></i>
-    </div>
-    <div class="empty-state-title">No Users Found</div>
-    <div class="empty-state-text">
-        There are no users in the system yet. Create your first user to get started.
-    </div>
-    {% if elevated %}
-    <a href="{{ url_for('users.create') if 'create_user' else '#' }}" class="btn-header-action">
-        <i class="bi bi-person-plus"></i>
-        Add First User
-    </a>
     {% endif %}
 </div>
-{% endif %}
 
 {% endblock %}

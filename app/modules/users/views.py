@@ -1,316 +1,726 @@
 # app/modules/users/views.py
-# FIXED VERSION with proper first_name/last_name handling
+"""
+Updated Users module with new permission system
+Implements M1-M3C, L1-L3, S1 permission levels
+"""
+
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from werkzeug.security import generate_password_hash
 
 from app.modules.auth.security import (
     login_required, 
-    require_admin, 
     current_user, 
     record_audit,
 )
 
 from app.modules.users.models import (
     get_user_by_id,
-    create_user as core_create_user,
-    set_password,
     users_db
 )
 
+from app.modules.users.permissions import PermissionManager, PermissionLevel
+
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
-bp = users_bp
 
 # ---------- Database helpers ----------
 def get_db():
     """Get users database connection."""
-    from app.modules.users.models import users_db
     return users_db()
 
-def list_users(include_system=False):
-    """List all users."""
+def list_users(include_system=False, include_deleted=False):
+    """List all users with enhanced filtering."""
     con = get_db()
-    if include_system:
-        rows = con.execute("SELECT * FROM users ORDER BY username").fetchall()
-    else:
-        rows = con.execute("""
-            SELECT * FROM users 
-            WHERE username NOT IN ('system', 'sysadmin')
-            ORDER BY username
-        """).fetchall()
+    query = "SELECT * FROM users"
+    conditions = []
+    
+    if not include_system:
+        conditions.append("username NOT IN ('system', 'sysadmin', 'AppAdmin')")
+    
+    if not include_deleted:
+        conditions.append("(deleted_at IS NULL OR deleted_at = '')")
+    
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    
+    query += " ORDER BY username"
+    rows = con.execute(query).fetchall()
     con.close()
     return rows
 
+def get_user_permission_level(user_data):
+    """Get the effective permission level for a user."""
+    if not user_data:
+        return None
+    
+    # Check for system flag first
+    try:
+        caps = json.loads(user_data.get("caps", "{}") or "{}")
+        if caps.get("is_system"):
+            return "S1"
+    except:
+        pass
+    
+    # Check explicit permission_level field
+    if user_data.get("permission_level"):
+        return user_data["permission_level"]
+    
+    # Legacy compatibility - map old flags to new levels
+    if user_data.get("is_sysadmin"):
+        return "L2"
+    elif user_data.get("is_admin"):
+        return "L1"
+    
+    return None
+
 def create_user(data: dict) -> int:
-    """Create a new user with profile and caps."""
+    """Create a new user with new permission system."""
     username = data["username"]
     password = data["password"]
+    permission_level = data.get("permission_level", "")
+    module_permissions = data.get("module_permissions", [])
     
-    # Build caps dict with BOTH new and legacy names for compatibility
-    caps = {
-        # New standard names (can_*)
-        "can_send": bool(data.get("can_send")),
-        "can_asset": bool(data.get("can_asset")),
-        "can_inventory": bool(data.get("can_asset")),  # Inventory = assets
-        "can_insights": bool(data.get("can_insights")),
-        "can_users": bool(data.get("can_users")),
-        "can_fulfillment_staff": bool(data.get("can_fulfillment_staff")),
-        "can_fulfillment_customer": bool(data.get("can_fulfillment_customer")),
-        
-        # Legacy names for backward compatibility
-        "send": bool(data.get("can_send")),
-        "asset": bool(data.get("can_asset")),
-        "inventory": bool(data.get("can_asset")),
-        "insights": bool(data.get("can_insights")),
-        "users": bool(data.get("can_users")),
-        "fulfillment_staff": bool(data.get("can_fulfillment_staff")),
-        "fulfillment_customer": bool(data.get("can_fulfillment_customer")),
-    }
+    # Validate permission level if provided
+    if permission_level and not PermissionLevel.from_string(permission_level):
+        raise ValueError(f"Invalid permission level: {permission_level}")
     
     con = get_db()
-    from werkzeug.security import generate_password_hash
     cur = con.execute("""
-        INSERT INTO users(username, password_hash, caps, is_admin, is_sysadmin)
-        VALUES (?,?,?,?,?)
-    """, (username, generate_password_hash(password), json.dumps(caps), 0, 0))
+        INSERT INTO users(
+            username, password_hash, first_name, last_name, 
+            email, phone, department, position,
+            permission_level, module_permissions,
+            created_utc
+        )
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        username,
+        generate_password_hash(password),
+        data.get("first_name", ""),
+        data.get("last_name", ""),
+        data.get("email", ""),
+        data.get("phone", ""),
+        data.get("department", ""),
+        data.get("position", ""),
+        permission_level,
+        json.dumps(module_permissions),
+        datetime.utcnow().isoformat() + "Z"
+    ))
+    
     uid = cur.lastrowid
     con.commit()
     con.close()
     return uid
 
-def delete_user(uid: int):
-    """Soft delete a user by setting a deleted flag (or hard delete if preferred)."""
+def update_user_permissions(uid: int, permission_level: str, module_permissions: List[str], 
+                           elevated_by: int = None, reason: str = None):
+    """Update user permissions with history tracking."""
+    user = get_user_by_id(uid)
+    if not user:
+        return False
+    
     con = get_db()
-    con.execute("DELETE FROM users WHERE id=?", (uid,))
+    
+    # Get old permissions for history
+    old_level = user.get("permission_level", "")
+    old_modules = user.get("module_permissions", "[]")
+    
+    # Update user
+    con.execute("""
+        UPDATE users 
+        SET permission_level = ?,
+            module_permissions = ?,
+            elevated_by = ?,
+            elevated_at = ?,
+            last_modified_at = ?
+        WHERE id = ?
+    """, (
+        permission_level,
+        json.dumps(module_permissions),
+        elevated_by,
+        datetime.utcnow().isoformat() + "Z" if elevated_by else None,
+        datetime.utcnow().isoformat() + "Z",
+        uid
+    ))
+    
+    # Record elevation history if this is an elevation
+    if elevated_by and (permission_level != old_level or module_permissions != old_modules):
+        con.execute("""
+            INSERT INTO user_elevation_history(
+                user_id, elevated_by, old_level, new_level,
+                old_permissions, new_permissions, reason
+            )
+            VALUES (?,?,?,?,?,?,?)
+        """, (
+            uid, elevated_by, old_level, permission_level,
+            old_modules, json.dumps(module_permissions), reason
+        ))
+    
+    con.commit()
+    con.close()
+    return True
+
+def request_user_deletion(uid: int, reason: str = None):
+    """Request user account deletion (requires admin approval)."""
+    con = get_db()
+    con.execute("""
+        INSERT INTO deletion_requests(user_id, reason, status)
+        VALUES (?,?,?)
+    """, (uid, reason, "pending"))
+    
+    # Mark user as deletion requested
+    con.execute("""
+        UPDATE users 
+        SET deletion_requested_at = ?
+        WHERE id = ?
+    """, (datetime.utcnow().isoformat() + "Z", uid))
+    
     con.commit()
     con.close()
 
-# ---------- Permission helpers ----------
-def _can_view_users(u) -> bool:
-    if not u:
-        return False
-    caps = {}
-    try:
-        caps = json.loads(u.get("caps") or "{}")
-    except:
-        pass
-    return bool(
-        caps.get("users") or 
-        u.get("is_admin") or 
-        u.get("is_sysadmin")
-    )
-
-def _can_edit_users(u) -> bool:
-    if not u:
-        return False
-    return bool(
-        u.get("is_admin") or 
-        u.get("is_sysadmin") or 
-        _can_view_users(u)
-    )
-
-def _can_set_fulfillment(u) -> bool:
-    if not u:
-        return False
-    return bool(u.get("is_admin") or u.get("is_sysadmin"))
-
-def _update_user_partial(uid: int, data: dict):
-    """Update only allowed columns."""
-    # Parse existing caps
-    u = get_user_by_id(uid)
-    if not u:
-        return
-    
-    try:
-        caps = json.loads(u["caps"] or "{}")
-    except:
-        caps = {}
-    
-    # Update caps
-    if "can_send" in data:
-        caps["can_send"] = bool(data["can_send"])
-        caps["send"] = bool(data["can_send"])  # Legacy compatibility
-    if "can_asset" in data:
-        caps["can_asset"] = bool(data["can_asset"])
-        caps["inventory"] = bool(data["can_asset"])  # Legacy compatibility
-    if "can_insights" in data:
-        caps["can_insights"] = bool(data["can_insights"])
-        caps["insights"] = bool(data["can_insights"])  # Legacy compatibility
-    if "can_users" in data:
-        caps["can_users"] = bool(data["can_users"])
-        caps["users"] = bool(data["can_users"])  # Legacy compatibility
-    if "can_fulfillment_staff" in data:
-        caps["can_fulfillment_staff"] = bool(data["can_fulfillment_staff"])
-        caps["fulfillment_staff"] = bool(data["can_fulfillment_staff"])  # Legacy compatibility
-    if "can_fulfillment_customer" in data:
-        caps["can_fulfillment_customer"] = bool(data["can_fulfillment_customer"])
-        caps["fulfillment_customer"] = bool(data["can_fulfillment_customer"])  # Legacy compatibility
-    
+def approve_user_deletion(uid: int, approved_by: int, notes: str = None):
+    """Approve and execute user deletion."""
     con = get_db()
-    con.execute("UPDATE users SET caps=? WHERE id=?", (json.dumps(caps), uid))
+    
+    # Update deletion request
+    con.execute("""
+        UPDATE deletion_requests
+        SET status = 'approved',
+            approved_by = ?,
+            approved_at = ?
+        WHERE user_id = ? AND status = 'pending'
+    """, (approved_by, datetime.utcnow().isoformat() + "Z", uid))
+    
+    # Soft delete the user
+    con.execute("""
+        UPDATE users 
+        SET deleted_at = ?,
+            deletion_approved_by = ?,
+            deletion_notes = ?
+        WHERE id = ?
+    """, (
+        datetime.utcnow().isoformat() + "Z",
+        approved_by,
+        notes,
+        uid
+    ))
+    
     con.commit()
     con.close()
+
+# ---------- Permission Checking ----------
+def can_view_users(user_data) -> bool:
+    """Check if user can view user list."""
+    if not user_data:
+        return False
+    
+    level = get_user_permission_level(user_data)
+    if level in ["L1", "L2", "L3", "S1"]:
+        return True
+    
+    # Legacy compatibility
+    return bool(user_data.get("is_admin") or user_data.get("is_sysadmin"))
+
+def can_create_users(user_data) -> bool:
+    """Check if user can create new users (L1+)."""
+    if not user_data:
+        return False
+    
+    level = get_user_permission_level(user_data)
+    return level in ["L1", "L2", "L3", "S1"]
+
+def can_modify_user(actor_data, target_data) -> bool:
+    """Check if actor can modify target user."""
+    if not actor_data:
+        return False
+    
+    actor_level = get_user_permission_level(actor_data)
+    target_level = get_user_permission_level(target_data) if target_data else None
+    
+    # Use PermissionManager to check
+    return PermissionManager.can_modify_user(actor_level, target_level or "")
+
+def can_elevate_users(user_data, to_level=None) -> bool:
+    """Check if user can elevate others."""
+    if not user_data:
+        return False
+    
+    actor_level = get_user_permission_level(user_data)
+    
+    if to_level:
+        return PermissionManager.can_elevate_to(actor_level, to_level)
+    
+    # General check - can they elevate at all?
+    return actor_level in ["L1", "L2", "L3", "S1"]
 
 # ---------- Routes ----------
+
 @users_bp.route("/")
 @login_required
 def user_list():
-    u = current_user()
-    if not _can_view_users(u):
+    """Display user list with search and filtering."""
+    cu = current_user()
+    if not can_view_users(cu):
         flash("You don't have access to Users.", "danger")
         return redirect(url_for("home"))
-
+    
+    # Get query parameters
     q = (request.args.get("q") or "").strip().lower()
     include_inactive = bool(request.args.get("all"))
-
-    rows = list_users(include_system=False)
     
-    # Simple client-side filtering
+    rows = list_users(include_system=False, include_deleted=include_inactive)
+    
+    # Filter and enhance user data
     filtered = []
-    for r in rows:
+    for row in rows:
+        row_dict = dict(row)
+        
+        # Add effective permissions
+        row_dict["effective_permissions"] = PermissionManager.get_effective_permissions(row_dict)
+        row_dict["permission_level_desc"] = PermissionManager.get_permission_description(
+            row_dict.get("permission_level", "")
+        )
+        
+        # Search filter
         if q:
             searchable = " ".join([
-                r["username"] or "",
-                str(r.get("id", ""))
+                row_dict.get("username", ""),
+                row_dict.get("first_name", ""),
+                row_dict.get("last_name", ""),
+                row_dict.get("email", ""),
+                row_dict.get("department", ""),
+                str(row_dict.get("id", ""))
             ]).lower()
             if q not in searchable:
                 continue
-        filtered.append(r)
-
-    return render_template("users/list.html",
-                           active="users", tab="list",
-                           rows=filtered, q=q, show_all=include_inactive)
-
-@users_bp.route("/manage", methods=["GET", "POST"])
-@login_required
-def manage():
-    cu = current_user()
-    if not _can_edit_users(cu):
-        flash("You don't have permission to modify users.", "danger")
-        return redirect(url_for("users.user_list"))
-
-    if request.method == "POST":
-        uid = int(request.form.get("uid") or 0)
-        target = get_user_by_id(uid)
-        if not target:
-            flash("User not found.", "warning")
-            return redirect(url_for("users.manage"))
-
-        # FIXED: Update profile fields (first_name, last_name)
-        first_name = (request.form.get("first_name") or "").strip()
-        last_name = (request.form.get("last_name") or "").strip()
         
+        filtered.append(row_dict)
+    
+    return render_template("users/list.html",
+                         active="users", 
+                         page="list",
+                         rows=filtered, 
+                         q=q, 
+                         show_all=include_inactive,
+                         can_create=can_create_users(cu))
+
+@users_bp.route("/profile")
+@login_required
+def profile():
+    """User's own profile page."""
+    cu = current_user()
+    user_data = dict(cu)
+    
+    # Add effective permissions
+    user_data["effective_permissions"] = PermissionManager.get_effective_permissions(user_data)
+    user_data["permission_level_desc"] = PermissionManager.get_permission_description(
+        user_data.get("permission_level", "")
+    )
+    
+    # Get deletion request status if any
+    con = get_db()
+    deletion_request = con.execute("""
+        SELECT * FROM deletion_requests 
+        WHERE user_id = ? AND status = 'pending'
+        ORDER BY requested_at DESC LIMIT 1
+    """, (cu["id"],)).fetchone()
+    con.close()
+    
+    return render_template("users/profile.html",
+                         active="users",
+                         page="profile",
+                         user=user_data,
+                         deletion_request=deletion_request)
+
+@users_bp.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    """Edit own profile."""
+    cu = current_user()
+    
+    if request.method == "POST":
+        # Update profile fields
         con = get_db()
         con.execute("""
             UPDATE users 
-            SET first_name = ?, last_name = ?
+            SET first_name = ?, last_name = ?, 
+                email = ?, phone = ?,
+                department = ?, position = ?,
+                last_modified_at = ?
             WHERE id = ?
-        """, (first_name, last_name, uid))
+        """, (
+            request.form.get("first_name", ""),
+            request.form.get("last_name", ""),
+            request.form.get("email", ""),
+            request.form.get("phone", ""),
+            request.form.get("department", ""),
+            request.form.get("position", ""),
+            datetime.utcnow().isoformat() + "Z",
+            cu["id"]
+        ))
         con.commit()
         con.close()
-
-        # Build permissions payload
-        payload = {
-            "can_send":     1 if request.form.get("can_send") else 0,
-            "can_asset":    1 if request.form.get("can_asset") else 0,
-            "can_insights": 1 if request.form.get("can_insights") else 0,
-            "can_users":    1 if request.form.get("can_users") else 0,
-        }
-
-        # Fulfillment flags only if admin/sysadmin
-        if _can_set_fulfillment(cu):
-            payload["can_fulfillment_staff"] = 1 if request.form.get("can_fulfillment_staff") else 0
-            payload["can_fulfillment_customer"] = 1 if request.form.get("can_fulfillment_customer") else 0
-
-        _update_user_partial(uid, payload)
-        record_audit(cu, "update_user", "users", f"Updated user {target['username']}")
-        flash("User saved.", "success")
-        return redirect(url_for("users.manage"))
-
-    rows = list_users(include_system=False)
-    
-    # FIXED: Convert sqlite3.Row objects to dicts and parse caps for display
-    display_rows = []
-    for row in rows:
-        # CRITICAL: Must convert Row to dict FIRST
-        row_dict = dict(row)
         
-        # Now safely modify the dict
-        try:
-            caps = json.loads(row_dict.get("caps") or "{}")
-            row_dict["can_send"] = caps.get("can_send", False)
-            row_dict["can_asset"] = caps.get("inventory", False) or caps.get("can_asset", False)
-            row_dict["can_insights"] = caps.get("insights", False) or caps.get("can_insights", False)
-            row_dict["can_users"] = caps.get("users", False) or caps.get("can_users", False)
-            row_dict["can_fulfillment_staff"] = caps.get("fulfillment_staff", False) or caps.get("can_fulfillment_staff", False)
-            row_dict["can_fulfillment_customer"] = caps.get("fulfillment_customer", False) or caps.get("can_fulfillment_customer", False)
-            
-            # FIXED: Add is_system flag for display
-            row_dict["is_system"] = caps.get("is_system", False) or row_dict.get("username") in ("AppAdmin", "system")
-        except Exception as e:
-            # If caps parsing fails, default to False
-            row_dict["can_send"] = False
-            row_dict["can_asset"] = False
-            row_dict["can_insights"] = False
-            row_dict["can_users"] = False
-            row_dict["can_fulfillment_staff"] = False
-            row_dict["can_fulfillment_customer"] = False
-            row_dict["is_system"] = False
-        
-        display_rows.append(row_dict)
+        record_audit(cu, "update_profile", "users", "Updated own profile")
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for("users.profile"))
     
-    return render_template("users/manage.html",
-                           active="users", tab="manage",
-                           rows=display_rows,
-                           can_set_fulfillment=_can_set_fulfillment(cu))
+    return render_template("users/edit_profile.html",
+                         active="users",
+                         page="profile",
+                         user=cu)
+
+@users_bp.route("/profile/delete", methods=["POST"])
+@login_required
+def request_deletion():
+    """Request account deletion."""
+    cu = current_user()
+    reason = request.form.get("reason", "")
+    
+    request_user_deletion(cu["id"], reason)
+    record_audit(cu, "request_deletion", "users", f"Requested account deletion: {reason}")
+    flash("Deletion request submitted. An administrator will review your request.", "info")
+    
+    return redirect(url_for("users.profile"))
 
 @users_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create():
+    """Create new user (L1+ only)."""
     cu = current_user()
-    if not _can_edit_users(cu):
-        flash("You don't have permission to create users.", "danger")
+    if not can_create_users(cu):
+        flash("You need L1 (Module Administrator) permissions or higher to create users.", "danger")
         return redirect(url_for("users.user_list"))
-
+    
     if request.method == "POST":
-        username = (request.form.get("username") or "").strip()
-        password = (request.form.get("password") or "").strip()
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
         
         if not username or not password:
             flash("Username and password are required.", "danger")
             return redirect(url_for("users.create"))
-
+        
+        # Check if username exists
+        con = get_db()
+        existing = con.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+        con.close()
+        
+        if existing:
+            flash("Username already exists.", "danger")
+            return redirect(url_for("users.create"))
+        
+        # Collect module permissions
+        module_perms = []
+        if request.form.get("perm_m1"):
+            module_perms.append("M1")
+        if request.form.get("perm_m2"):
+            module_perms.append("M2")
+        if request.form.get("perm_m3a"):
+            module_perms.append("M3A")
+        if request.form.get("perm_m3b"):
+            module_perms.append("M3B")
+        if request.form.get("perm_m3c"):
+            module_perms.append("M3C")
+        
         data = {
             "username": username,
             "password": password,
-            "can_send":     1 if request.form.get("can_send") else 0,
-            "can_asset":    1 if request.form.get("can_asset") else 0,
-            "can_insights": 1 if request.form.get("can_insights") else 0,
-            "can_users":    1 if request.form.get("can_users") else 0,
-            "can_fulfillment_staff": 1 if (_can_set_fulfillment(cu) and request.form.get("can_fulfillment_staff")) else 0,
-            "can_fulfillment_customer": 1 if (_can_set_fulfillment(cu) and request.form.get("can_fulfillment_customer")) else 0,
+            "first_name": request.form.get("first_name", ""),
+            "last_name": request.form.get("last_name", ""),
+            "email": request.form.get("email", ""),
+            "phone": request.form.get("phone", ""),
+            "department": request.form.get("department", ""),
+            "position": request.form.get("position", ""),
+            "permission_level": "",  # Regular users start without admin level
+            "module_permissions": module_perms
         }
         
-        create_user(data)
-        record_audit(cu, "create_user", "users", f"Created user {username}")
-        flash("User created.", "success")
-        return redirect(url_for("users.manage"))
-
-    return render_template("users/create.html", active="users", tab="manage")
-
-@users_bp.route("/<int:uid>/delete", methods=["POST"])
-@login_required
-def delete(uid: int):
-    cu = current_user()
-    if not _can_edit_users(cu):
-        flash("You don't have permission to deactivate users.", "danger")
+        uid = create_user(data)
+        record_audit(cu, "create_user", "users", 
+                    f"Created user {username} with permissions: {', '.join(module_perms)}")
+        flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("users.user_list"))
     
-    u = get_user_by_id(uid)
-    if not u:
-        flash("User not found.", "warning")
-        return redirect(url_for("users.manage"))
+    return render_template("users/create.html",
+                         active="users",
+                         page="create")
+
+@users_bp.route("/<int:uid>/edit", methods=["GET", "POST"])
+@login_required
+def edit_user(uid: int):
+    """Edit user (admin only, cannot edit users at same or higher level)."""
+    cu = current_user()
+    target = get_user_by_id(uid)
     
-    delete_user(uid)
-    record_audit(cu, "delete_user", "users", f"Deleted user {u['username']}")
-    flash("User deactivated.", "success")
-    return redirect(url_for("users.manage"))
+    if not target:
+        flash("User not found.", "warning")
+        return redirect(url_for("users.user_list"))
+    
+    if not can_modify_user(cu, target):
+        flash("You cannot modify users at your level or higher.", "danger")
+        return redirect(url_for("users.user_list"))
+    
+    if request.method == "POST":
+        # Update profile fields
+        con = get_db()
+        con.execute("""
+            UPDATE users 
+            SET first_name = ?, last_name = ?, 
+                email = ?, phone = ?,
+                department = ?, position = ?,
+                last_modified_by = ?,
+                last_modified_at = ?
+            WHERE id = ?
+        """, (
+            request.form.get("first_name", ""),
+            request.form.get("last_name", ""),
+            request.form.get("email", ""),
+            request.form.get("phone", ""),
+            request.form.get("department", ""),
+            request.form.get("position", ""),
+            cu["id"],
+            datetime.utcnow().isoformat() + "Z",
+            uid
+        ))
+        
+        # Update module permissions
+        module_perms = []
+        if request.form.get("perm_m1"):
+            module_perms.append("M1")
+        if request.form.get("perm_m2"):
+            module_perms.append("M2")
+        if request.form.get("perm_m3a"):
+            module_perms.append("M3A")
+        if request.form.get("perm_m3b"):
+            module_perms.append("M3B")
+        if request.form.get("perm_m3c"):
+            module_perms.append("M3C")
+        
+        con.execute("""
+            UPDATE users 
+            SET module_permissions = ?
+            WHERE id = ?
+        """, (json.dumps(module_perms), uid))
+        
+        con.commit()
+        con.close()
+        
+        record_audit(cu, "update_user", "users", 
+                    f"Updated user {target['username']} - permissions: {', '.join(module_perms)}")
+        flash("User updated successfully.", "success")
+        return redirect(url_for("users.user_list"))
+    
+    # Parse existing permissions for display
+    target_dict = dict(target)
+    target_dict["module_permissions_list"] = PermissionManager.parse_module_permissions(
+        target_dict.get("module_permissions", "[]")
+    )
+    
+    return render_template("users/edit.html",
+                         active="users",
+                         page="edit",
+                         user=target_dict)
+
+@users_bp.route("/elevation")
+@login_required
+def elevation_management():
+    """Elevation management page (L1+ only)."""
+    cu = current_user()
+    cu_level = get_user_permission_level(cu)
+    
+    if not can_elevate_users(cu):
+        flash("You need administrative permissions to access elevation management.", "danger")
+        return redirect(url_for("users.user_list"))
+    
+    # Get all users
+    rows = list_users(include_system=False, include_deleted=False)
+    
+    # Filter to show only users this admin can manage
+    users = []
+    for row in rows:
+        row_dict = dict(row)
+        row_dict["current_level"] = get_user_permission_level(row_dict) or "None"
+        row_dict["level_description"] = PermissionManager.get_permission_description(row_dict["current_level"])
+        
+        # Determine what levels this admin can elevate this user to
+        available_elevations = []
+        for level in ["L1", "L2", "L3", "S1"]:
+            if PermissionManager.can_elevate_to(cu_level, level):
+                available_elevations.append({
+                    "level": level,
+                    "description": PermissionManager.get_permission_description(level)
+                })
+        
+        row_dict["available_elevations"] = available_elevations
+        row_dict["can_demote"] = can_modify_user(cu, row_dict)
+        
+        users.append(row_dict)
+    
+    return render_template("users/elevation.html",
+                         active="users",
+                         page="elevation",
+                         users=users,
+                         current_user_level=cu_level)
+
+@users_bp.route("/elevate/<int:uid>", methods=["POST"])
+@login_required
+def elevate_user(uid: int):
+    """Elevate a user to admin level."""
+    cu = current_user()
+    cu_level = get_user_permission_level(cu)
+    
+    target = get_user_by_id(uid)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    
+    new_level = request.json.get("level")
+    if not new_level:
+        return jsonify({"error": "No level specified"}), 400
+    
+    # Check if current user can perform this elevation
+    if not PermissionManager.can_elevate_to(cu_level, new_level):
+        return jsonify({"error": f"You cannot elevate users to {new_level}"}), 403
+    
+    # Remove all module permissions when elevating
+    update_user_permissions(
+        uid, 
+        new_level, 
+        [],  # Clear module permissions
+        elevated_by=cu["id"],
+        reason=request.json.get("reason", "")
+    )
+    
+    record_audit(
+        cu, 
+        "elevate_user", 
+        "users",
+        f"Elevated {target['username']} to {new_level}",
+        target_user_id=uid,
+        target_username=target["username"]
+    )
+    
+    return jsonify({"success": True, "message": f"User elevated to {new_level}"})
+
+@users_bp.route("/demote/<int:uid>", methods=["POST"])
+@login_required
+def demote_user(uid: int):
+    """Demote a user from admin level."""
+    cu = current_user()
+    
+    target = get_user_by_id(uid)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    
+    if not can_modify_user(cu, target):
+        return jsonify({"error": "You cannot demote this user"}), 403
+    
+    # Clear admin level but preserve module permissions
+    con = get_db()
+    con.execute("""
+        UPDATE users 
+        SET permission_level = '',
+            elevated_by = NULL,
+            elevated_at = NULL,
+            last_modified_by = ?,
+            last_modified_at = ?
+        WHERE id = ?
+    """, (cu["id"], datetime.utcnow().isoformat() + "Z", uid))
+    con.commit()
+    con.close()
+    
+    record_audit(
+        cu, 
+        "demote_user", 
+        "users",
+        f"Demoted {target['username']} from admin level",
+        target_user_id=uid,
+        target_username=target["username"]
+    )
+    
+    return jsonify({"success": True, "message": "User demoted to module access only"})
+
+@users_bp.route("/deletion-requests")
+@login_required
+def deletion_requests():
+    """View pending deletion requests (L1+ only)."""
+    cu = current_user()
+    if not can_view_users(cu):
+        flash("You need administrative permissions to view deletion requests.", "danger")
+        return redirect(url_for("home"))
+    
+    con = get_db()
+    requests = con.execute("""
+        SELECT dr.*, u.username, u.first_name, u.last_name
+        FROM deletion_requests dr
+        JOIN users u ON dr.user_id = u.id
+        WHERE dr.status = 'pending'
+        ORDER BY dr.requested_at DESC
+    """).fetchall()
+    con.close()
+    
+    return render_template("users/deletion_requests.html",
+                         active="users",
+                         page="deletions",
+                         requests=requests)
+
+@users_bp.route("/approve-deletion/<int:request_id>", methods=["POST"])
+@login_required
+def approve_deletion(request_id: int):
+    """Approve a deletion request."""
+    cu = current_user()
+    if not can_view_users(cu):
+        return jsonify({"error": "Insufficient permissions"}), 403
+    
+    con = get_db()
+    req = con.execute("SELECT * FROM deletion_requests WHERE id = ?", (request_id,)).fetchone()
+    con.close()
+    
+    if not req:
+        return jsonify({"error": "Request not found"}), 404
+    
+    if req["status"] != "pending":
+        return jsonify({"error": "Request already processed"}), 400
+    
+    notes = request.json.get("notes", "")
+    approve_user_deletion(req["user_id"], cu["id"], notes)
+    
+    record_audit(
+        cu, 
+        "approve_deletion", 
+        "users",
+        f"Approved deletion of user ID {req['user_id']}"
+    )
+    
+    return jsonify({"success": True, "message": "Deletion approved"})
+
+@users_bp.route("/reject-deletion/<int:request_id>", methods=["POST"])
+@login_required
+def reject_deletion(request_id: int):
+    """Reject a deletion request."""
+    cu = current_user()
+    if not can_view_users(cu):
+        return jsonify({"error": "Insufficient permissions"}), 403
+    
+    reason = request.json.get("reason", "")
+    
+    con = get_db()
+    con.execute("""
+        UPDATE deletion_requests
+        SET status = 'rejected',
+            rejection_reason = ?,
+            approved_by = ?,
+            approved_at = ?
+        WHERE id = ?
+    """, (reason, cu["id"], datetime.utcnow().isoformat() + "Z", request_id))
+    con.commit()
+    con.close()
+    
+    record_audit(
+        cu, 
+        "reject_deletion", 
+        "users",
+        f"Rejected deletion request ID {request_id}: {reason}"
+    )
+    
+    return jsonify({"success": True, "message": "Deletion request rejected"})

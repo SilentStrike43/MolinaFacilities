@@ -1,413 +1,741 @@
 {% extends "base.html" %}
+{% block title %}Elevation Management{% endblock %}
+{% block content %}
 
-{% block extra_head %}
 <style>
-    /* Modern Card Design */
-    .elevated-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 1rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    /* Elevation Management Styles */
+    .elevation-container {
+        max-width: 1400px;
+        margin: 0 auto;
         padding: 2rem;
-        margin-bottom: 2rem;
     }
-
-    .elevated-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+    
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        border-radius: 1rem;
+        padding: 2.5rem;
         margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid #e5e7eb;
+        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
     }
-
-    .elevated-icon {
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        border-radius: 14px;
+    
+    .page-header-content {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        justify-content: center;
+    }
+    
+    .page-title {
         color: white;
-        font-size: 1.75rem;
-        box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3);
-    }
-
-    .elevated-header-text h2 {
-        font-size: 1.75rem;
+        font-size: 2rem;
         font-weight: 800;
-        color: #1f2937;
         margin: 0;
-    }
-
-    .elevated-header-text p {
-        color: #6b7280;
-        margin: 0.25rem 0 0 0;
-        font-size: 0.95rem;
-    }
-
-    /* Alert Box */
-    .info-alert {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-left: 4px solid #00A3AD;
-        border-radius: 0.875rem;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: start;
-        gap: 1rem;
-    }
-
-    .info-alert-icon {
-        width: 32px;
-        height: 32px;
-        background: #00A3AD;
-        border-radius: 8px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        color: white;
+        gap: 1rem;
+    }
+    
+    .page-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 0.5rem;
+    }
+    
+    .current-level-badge {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    /* Warning Box */
+    .warning-box {
+        background: linear-gradient(135deg, #fef3c7, #fed7aa);
+        border: 2px solid #f59e0b;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: start;
+    }
+    
+    .warning-icon {
+        color: #f59e0b;
+        font-size: 1.5rem;
         flex-shrink: 0;
     }
-
-    .info-alert-text {
+    
+    .warning-content {
         flex: 1;
-        color: #1e40af;
-        line-height: 1.6;
     }
-
-    /* Modern Table */
-    .modern-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .modern-table thead {
-        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    }
-
-    .modern-table thead th {
-        padding: 1rem 1.5rem;
-        color: white;
+    
+    .warning-title {
         font-weight: 700;
+        color: #92400e;
+        margin-bottom: 0.5rem;
+    }
+    
+    .warning-text {
+        color: #78350f;
+        line-height: 1.5;
+    }
+    
+    /* Search Bar */
+    .search-section {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #7c3aed;
+    }
+    
+    /* Users Table */
+    .elevation-table {
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table-header {
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .table-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        text-align: left;
+        padding: 1rem 1.5rem;
         font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        border: none;
     }
-
-    .modern-table thead th:first-child {
-        border-radius: 0.875rem 0 0 0;
-    }
-
-    .modern-table thead th:last-child {
-        border-radius: 0 0.875rem 0 0;
-    }
-
-    .modern-table tbody tr {
-        background: white;
-        transition: all 0.2s ease;
-    }
-
-    .modern-table tbody tr:hover {
-        background: #f9fafb;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .modern-table tbody td {
-        padding: 1.25rem 1.5rem;
+    
+    tbody tr {
         border-bottom: 1px solid #e5e7eb;
-        vertical-align: middle;
+        transition: background 0.2s ease;
     }
-
-    .modern-table tbody tr:last-child td {
-        border-bottom: none;
+    
+    tbody tr:hover {
+        background: #f9fafb;
     }
-
-    /* User Avatar */
-    .user-avatar-cell {
+    
+    td {
+        padding: 1.25rem 1.5rem;
+        font-size: 0.9375rem;
+        color: #1f2937;
+    }
+    
+    /* User Cell */
+    .user-cell {
         display: flex;
         align-items: center;
-        gap: 0.875rem;
+        gap: 1rem;
     }
-
-    .user-avatar-mini {
+    
+    .user-avatar {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-weight: 700;
-        font-size: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 163, 173, 0.3);
-        flex-shrink: 0;
     }
-
-    .user-info-cell {
-        display: flex;
-        flex-direction: column;
+    
+    .user-info {
+        flex: 1;
     }
-
-    .user-name-cell {
+    
+    .user-name {
         font-weight: 600;
         color: #1f2937;
-        font-size: 0.95rem;
     }
-
-    .user-username-cell {
-        color: #6b7280;
-        font-size: 0.85rem;
-    }
-
-    /* Toggle Form */
-    .toggle-form {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    /* Modern Checkbox Toggle */
-    .toggle-container {
-        position: relative;
-        display: inline-block;
-        width: 56px;
-        height: 28px;
-    }
-
-    .toggle-checkbox {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #cbd5e1;
-        transition: 0.3s;
-        border-radius: 28px;
-    }
-
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: 0.3s;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .toggle-checkbox:checked + .toggle-slider {
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-    }
-
-    .toggle-checkbox:checked + .toggle-slider:before {
-        transform: translateX(28px);
-    }
-
-    .toggle-checkbox:disabled + .toggle-slider {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    /* Save Button */
-    .btn-save-toggle {
-        padding: 0.5rem 1.25rem;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        border: none;
-        border-radius: 0.625rem;
+    
+    .user-username {
         font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    /* Level Badges */
+    .level-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.8125rem;
         font-weight: 600;
+        display: inline-block;
+    }
+    
+    .level-badge.none {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    .level-badge.l1 {
+        background: linear-gradient(135deg, #0891b2, #0e7490);
+        color: white;
+    }
+    
+    .level-badge.l2 {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
+    }
+    
+    .level-badge.l3 {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
+    }
+    
+    .level-badge.s1 {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-elevate, .btn-demote {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
     }
-
-    .btn-save-toggle:hover:not(:disabled) {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.4);
+    
+    .btn-elevate {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
     }
-
-    .btn-save-toggle:disabled {
-        opacity: 0.4;
+    
+    .btn-elevate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-elevate:disabled {
+        background: #d1d5db;
         cursor: not-allowed;
         transform: none;
     }
-
-    /* Badge */
-    .badge-system-user {
-        display: inline-flex;
+    
+    .btn-demote {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+    
+    .btn-demote:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+    }
+    
+    .btn-demote:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    /* Modal Dialog */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
         align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.875rem;
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
+        justify-content: center;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .modal-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
         font-weight: 700;
-        letter-spacing: 0.02em;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
     }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: #9ca3af;
+    
+    .modal-warning {
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: #78350f;
+        line-height: 1.5;
     }
-
-    .empty-state i {
-        font-size: 3rem;
+    
+    .modal-form {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
         margin-bottom: 1rem;
-        opacity: 0.5;
     }
-
-    .empty-state p {
-        font-size: 1.125rem;
-        margin: 0;
+    
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-select, .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 0.9375rem;
+    }
+    
+    .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #7c3aed;
+    }
+    
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+    
+    .btn-modal {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-modal.cancel {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    .btn-modal.cancel:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-modal.confirm {
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
+    }
+    
+    .btn-modal.confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(124, 58, 237, 0.3);
+    }
+    
+    .btn-modal.danger {
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+    }
+    
+    .btn-modal.danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 38, 38, 0.3);
     }
 </style>
-{% endblock %}
 
-{% block body %}
-<div class="elevated-card">
-    <div class="elevated-header">
-        <div class="elevated-icon">
-            <i class="bi bi-shield-lock"></i>
-        </div>
-        <div class="elevated-header-text">
-            <h2>Elevated User Actions</h2>
-            <p>Manage Administrator and Systems Administrator privileges</p>
+<div class="elevation-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div>
+                <div class="page-title">
+                    <i class="bi bi-shield-check"></i>
+                    Elevation Management
+                    <span class="current-level-badge">Your Level: {{ current_user_level }}</span>
+                </div>
+                <p class="page-subtitle">Manage administrative access levels for users</p>
+            </div>
         </div>
     </div>
-
-    <div class="info-alert">
-        <div class="info-alert-icon">
-            <i class="bi bi-info-circle-fill"></i>
+    
+    <!-- Warning Box -->
+    <div class="warning-box">
+        <div class="warning-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
         </div>
-        <div class="info-alert-text">
-            <strong>Permission Levels:</strong> Only the <strong>App Developer</strong> account can grant/revoke <strong>Systems Administrator</strong> privileges. 
-            Administrators may toggle <strong>Administrator</strong> status. <strong>Only one elevated role can be active at a time.</strong>
+        <div class="warning-content">
+            <div class="warning-title">Important Responsibility Notice</div>
+            <div class="warning-text">
+                Elevating users to administrative levels grants them significant system access. All actions performed by elevated users are logged and tracked. By elevating a user, you accept responsibility for their subsequent actions. Only elevate trusted individuals who require administrative access for their roles.
+            </div>
         </div>
     </div>
-
-    <div style="overflow-x: auto; border-radius: 0.875rem; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);">
-        <table class="modern-table">
+    
+    <!-- Search Section -->
+    <div class="search-section">
+        <input type="text" 
+               class="search-input" 
+               id="userSearch" 
+               placeholder="Search users by name or username...">
+    </div>
+    
+    <!-- Users Table -->
+    <div class="elevation-table">
+        <div class="table-header">
+            <h3 class="table-title">User Elevation Status</h3>
+        </div>
+        
+        <table>
             <thead>
                 <tr>
                     <th>User</th>
-                    <th style="text-align: center;">Administrator</th>
-                    <th style="text-align: center;">Systems Administrator</th>
-                    <th style="text-align: right;">Status</th>
+                    <th>Current Level</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for r in rows %}
-                <tr>
+                {% for user in users %}
+                <tr class="user-row" data-username="{{ user.username }}" data-name="{{ user.first_name }} {{ user.last_name }}">
                     <td>
-                        <div class="user-avatar-cell">
-                            <div class="user-avatar-mini">
-                                {{ r.username[0]|upper }}
+                        <div class="user-cell">
+                            <div class="user-avatar">
+                                {{ user.username[0]|upper }}
                             </div>
-                            <div class="user-info-cell">
-                                <div class="user-name-cell">
-                                    {{ r.first_name or '' }} {{ r.last_name or '' }}
+                            <div class="user-info">
+                                <div class="user-name">
+                                    {% if user.first_name or user.last_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
                                 </div>
-                                <div class="user-username-cell">@{{ r.username }}</div>
+                                <div class="user-username">@{{ user.username }}</div>
                             </div>
                         </div>
                     </td>
-                    
-                    <!-- Administrator Toggle -->
-                    <td style="text-align: center;">
-                        <form method="post" class="toggle-form" onsubmit="return confirmToggle(event, 'Administrator', {{ r.is_admin }})">
-                            <input type="hidden" name="uid" value="{{ r.id }}">
-                            <input type="hidden" name="role" value="admin">
-                            <input type="hidden" name="current_is_admin" value="{{ r.is_admin }}">
-                            <input type="hidden" name="current_is_sysadmin" value="{{ r.is_sysadmin }}">
-                            
-                            <label class="toggle-container">
-                                <input type="checkbox" 
-                                       name="is_admin" 
-                                       class="toggle-checkbox"
-                                       {{ 'checked' if r.is_admin else '' }}
-                                       {{ 'disabled' if r.is_sysadmin else '' }}
-                                       onchange="this.form.submit()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </form>
-                    </td>
-                    
-                    <!-- Systems Administrator Toggle -->
-                    <td style="text-align: center;">
-                        <form method="post" class="toggle-form" onsubmit="return confirmToggle(event, 'Systems Administrator', {{ r.is_sysadmin }})">
-                            <input type="hidden" name="uid" value="{{ r.id }}">
-                            <input type="hidden" name="role" value="sysadmin">
-                            <input type="hidden" name="current_is_admin" value="{{ r.is_admin }}">
-                            <input type="hidden" name="current_is_sysadmin" value="{{ r.is_sysadmin }}">
-                            
-                            <label class="toggle-container">
-                                <input type="checkbox" 
-                                       name="is_sysadmin" 
-                                       class="toggle-checkbox"
-                                       {{ 'checked' if r.is_sysadmin else '' }}
-                                       {{ 'disabled' if (not cu.is_system) or r.is_admin else '' }}
-                                       onchange="this.form.submit()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </form>
-                    </td>
-                    
-                    <td style="text-align: right;">
-                        {% if r.is_system %}
-                        <span class="badge-system-user">
-                            <i class="bi bi-gear-fill"></i>
-                            App Developer
-                        </span>
+                    <td>
+                        {% if user.current_level == 'S1' %}
+                        <span class="level-badge s1">S1 - System</span>
+                        {% elif user.current_level == 'L3' %}
+                        <span class="level-badge l3">L3 - App Developer</span>
+                        {% elif user.current_level == 'L2' %}
+                        <span class="level-badge l2">L2 - Systems Admin</span>
+                        {% elif user.current_level == 'L1' %}
+                        <span class="level-badge l1">L1 - Module Admin</span>
+                        {% else %}
+                        <span class="level-badge none">Module User</span>
                         {% endif %}
+                    </td>
+                    <td>
+                        {{ user.department or 'Not specified' }}
+                    </td>
+                    <td>
+                        {% if user.deleted_at %}
+                        <span style="color: #dc2626;">Deleted</span>
+                        {% elif user.deletion_requested_at %}
+                        <span style="color: #f59e0b;">Deletion Pending</span>
+                        {% else %}
+                        <span style="color: #10b981;">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if user.available_elevations %}
+                            <button class="btn-elevate" 
+                                    onclick="showElevateDialog({{ user.id }}, '{{ user.username }}', {{ user.available_elevations|tojson }})">
+                                <i class="bi bi-arrow-up-circle"></i>
+                                Elevate
+                            </button>
+                            {% endif %}
+                            
+                            {% if user.can_demote and user.current_level != 'None' %}
+                            <button class="btn-demote" 
+                                    onclick="showDemoteDialog({{ user.id }}, '{{ user.username }}', '{{ user.current_level }}')">
+                                <i class="bi bi-arrow-down-circle"></i>
+                                Demote
+                            </button>
+                            {% endif %}
+                            
+                            {% if not user.available_elevations and not user.can_demote %}
+                            <span style="color: #6b7280; font-size: 0.875rem;">No actions available</span>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
-                
-                {% if not rows %}
-                <tr>
-                    <td colspan="4" style="border: none;">
-                        <div class="empty-state">
-                            <i class="bi bi-inbox"></i>
-                            <p>No users found.</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endif %}
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- Elevation Modal -->
+<div id="elevateModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Elevate User</h2>
+        </div>
+        
+        <div class="modal-warning">
+            <strong>⚠️ Warning:</strong> Are you sure you want to elevate this user? This action will be logged and all subsequent actions performed by this user will be your responsibility.
+        </div>
+        
+        <form id="elevateForm" class="modal-form">
+            <div class="form-group">
+                <label class="form-label">Select New Level</label>
+                <select id="elevateLevel" class="form-select" required>
+                    <option value="">Choose a level...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Reason for Elevation (Optional)</label>
+                <textarea id="elevateReason" class="form-textarea" rows="3" 
+                          placeholder="Provide a reason for this elevation..."></textarea>
+            </div>
+        </form>
+        
+        <div class="modal-actions">
+            <button class="btn-modal cancel" onclick="closeElevateModal()">Cancel</button>
+            <button class="btn-modal confirm" onclick="confirmElevation()">Confirm Elevation</button>
+        </div>
+    </div>
+</div>
+
+<!-- Demotion Modal -->
+<div id="demoteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Demote User</h2>
+        </div>
+        
+        <div class="modal-warning">
+            <strong>⚠️ WARNING:</strong> You are about to demote this user to module access only. Doing so will have this action logged. 
+            <span id="demoteL2Warning" style="display:none;">
+                <br><br>
+                <strong>Important:</strong> This user is L2 or higher. Azure AAD permissions will have to be removed manually.
+            </span>
+        </div>
+        
+        <form id="demoteForm" class="modal-form">
+            <div class="form-group">
+                <label class="form-label">Reason for Demotion (Optional)</label>
+                <textarea id="demoteReason" class="form-textarea" rows="3" 
+                          placeholder="Provide a reason for this demotion..."></textarea>
+            </div>
+        </form>
+        
+        <div class="modal-actions">
+            <button class="btn-modal cancel" onclick="closeDemoteModal()">Cancel</button>
+            <button class="btn-modal danger" onclick="confirmDemotion()">Confirm Demotion</button>
+        </div>
+    </div>
+</div>
+
 <script>
-function confirmToggle(event, roleName, currentStatus) {
-    const action = currentStatus ? 'remove' : 'grant';
-    const message = `Are you sure you want to ${action} ${roleName} privileges for this user?`;
+let currentUserId = null;
+let currentUsername = null;
+
+// Search functionality
+document.getElementById('userSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.user-row');
     
-    if (!confirm(message)) {
-        event.preventDefault();
-        return false;
+    rows.forEach(row => {
+        const username = row.dataset.username.toLowerCase();
+        const name = row.dataset.name.toLowerCase();
+        
+        if (username.includes(searchTerm) || name.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Elevation dialog
+function showElevateDialog(userId, username, availableLevels) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    // Populate level options
+    const select = document.getElementById('elevateLevel');
+    select.innerHTML = '<option value="">Choose a level...</option>';
+    
+    availableLevels.forEach(level => {
+        const option = document.createElement('option');
+        option.value = level.level;
+        option.textContent = level.description;
+        select.appendChild(option);
+    });
+    
+    document.getElementById('elevateModal').classList.add('active');
+}
+
+function closeElevateModal() {
+    document.getElementById('elevateModal').classList.remove('active');
+    document.getElementById('elevateForm').reset();
+    currentUserId = null;
+    currentUsername = null;
+}
+
+function confirmElevation() {
+    const level = document.getElementById('elevateLevel').value;
+    const reason = document.getElementById('elevateReason').value;
+    
+    if (!level) {
+        alert('Please select a level');
+        return;
     }
     
-    return true;
+    // Send elevation request
+    fetch(`/users/elevate/${currentUserId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            level: level,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`User ${currentUsername} has been elevated to ${level}`);
+            window.location.reload();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred while elevating the user');
+        console.error(error);
+    });
 }
+
+// Demotion dialog
+function showDemoteDialog(userId, username, currentLevel) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    // Show additional warning for L2+ users
+    const warning = document.getElementById('demoteL2Warning');
+    if (currentLevel === 'L2' || currentLevel === 'L3' || currentLevel === 'S1') {
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+    
+    document.getElementById('demoteModal').classList.add('active');
+}
+
+function closeDemoteModal() {
+    document.getElementById('demoteModal').classList.remove('active');
+    document.getElementById('demoteForm').reset();
+    currentUserId = null;
+    currentUsername = null;
+}
+
+function confirmDemotion() {
+    const reason = document.getElementById('demoteReason').value;
+    
+    // Send demotion request
+    fetch(`/users/demote/${currentUserId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`User ${currentUsername} has been demoted to module access only`);
+            window.location.reload();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred while demoting the user');
+        console.error(error);
+    });
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('active');
+    }
+});
 </script>
+
 {% endblock %}

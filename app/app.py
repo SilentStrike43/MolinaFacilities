@@ -241,9 +241,5 @@ if __name__ == '__main__':
         debug=debug,
         use_reloader=debug
     )
-<<<<<<< HEAD
-    application = create_app()
-=======
 # Create application instance for WSGI servers (gunicorn, Azure)
 application = create_app()
->>>>>>> 92ea4b6696f0d1becaf074d7d4eb7d00ea4439c9
