@@ -1,57 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ------------------------------
-# Azure App Service Startup Script
-# ------------------------------
+echo "=== Startup script BEGIN $(date) ==="
 
-# Log file
-LOGFILE="$HOME/LogFiles/startup.log"
-mkdir -p "$(dirname "$LOGFILE")"
-echo "=== startup.sh BEGIN $(date) ===" >> "$LOGFILE"
-
-# Move to wwwroot
+# Move to application root
 cd "$HOME/site/wwwroot"
 
-# ------------------------------
-# Virtual Environment Setup
-# ------------------------------
-
-if [ -d "./antenv/bin" ]; then
-    echo "Activating existing virtualenv..." >> "$LOGFILE"
-    source "./antenv/bin/activate"
-else
-    echo "Creating virtualenv..." >> "$LOGFILE"
-    python3 -m venv ./antenv
-    source "./antenv/bin/activate"
-fi
-
-# ------------------------------
-# Install dependencies
-# ------------------------------
+# Upgrade pip and install dependencies
 if [ -f requirements.txt ]; then
-    echo "Installing Python dependencies..." >> "$LOGFILE"
-    python -m pip install --upgrade pip setuptools wheel >> "$LOGFILE" 2>&1
-    pip install --no-cache-dir -r requirements.txt >> "$LOGFILE" 2>&1
-else
-    echo "No requirements.txt found, skipping pip install" >> "$LOGFILE"
+    echo "Installing dependencies..."
+    python -m pip install --upgrade pip --quiet
+    pip install --no-cache-dir -r requirements.txt --quiet
+    echo "Dependencies installed successfully"
 fi
 
-# ------------------------------
-# Environment Variables
-# ------------------------------
+# Set environment variables
 export FLASK_ENV=production
 export PYTHONPATH="$HOME/site/wwwroot:$PYTHONPATH"
 
-# ------------------------------
-# Determine Port
-# ------------------------------
+# Get port from Azure (Azure sets this automatically)
 PORT=${PORT:-8000}
-echo "Container will listen on port $PORT" >> "$LOGFILE"
+echo "Starting application on port $PORT"
 
-# ------------------------------
-# Start Gunicorn
-# ------------------------------
-echo "Launching Gunicorn for app.app:application..." >> "$LOGFILE"
-exec gunicorn --bind=0.0.0.0:$PORT --workers=3 --timeout=600 "app.app:application" >> "$LOGFILE" 2>&1
-
+# Start Gunicorn with proper logging
+echo "Launching Gunicorn..."
+exec gunicorn \
+    --bind=0.0.0.0:$PORT \
+    --workers=3 \
+    --threads=2 \
+    --timeout=600 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    --capture-output \
+    "app.app:application"
