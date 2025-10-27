@@ -226,7 +226,7 @@ def require_cap(cap: str):
                 print(f"   User caps: {_parse_caps(u)}")
                 
                 flash("Access denied for this feature.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("home.index"))
             return view(*args, **kwargs)
         return wrapped
     return deco
@@ -242,7 +242,7 @@ def require_any(caps: Iterable[str]):
                 return redirect(url_for("auth.login", next=request.full_path or request.path))
             if not any(has_cap(u, c) for c in caps):
                 flash("Access denied for this feature.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("home.index"))
             return view(*args, **kwargs)
         return wrapped
     return deco

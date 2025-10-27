@@ -213,7 +213,7 @@ def _require_customer():
 def request_form():
     u = _require_customer()
     if not u: 
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
 
     if request.method == "POST":
         description  = (request.form.get("description") or "").strip()
@@ -281,7 +281,7 @@ def request_form():
 def queue():
     u = _require_staff()
     if not u: 
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
 
     if request.method == "POST":
         rid = int(request.form.get("rid") or 0)
@@ -306,7 +306,7 @@ def queue():
 def archive():
     u = _require_staff()
     if not u: 
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
     rows = list_archive()
     return render_template("fulfillment/archive.html", active="fulfillment", page="archive", rows=rows)
 
@@ -322,7 +322,7 @@ def view_request(rid: int):
     # Check permissions
     if not (_user_can_staff(u) or (u and (u["id"] == row["requester_id"]))):
         flash("Not authorized to view this request.", "danger")
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
     
     files = list_files(rid)
     try:

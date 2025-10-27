@@ -60,7 +60,7 @@ def require_admin_level(min_level="L1"):
             user_level = get_user_permission_level(cu)
             if not user_level:
                 flash("You need administrative permissions to access this area.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("home.index"))
             
             # Check if user has required level
             level_hierarchy = {"L1": 1, "L2": 2, "L3": 3, "S1": 4}
@@ -69,7 +69,7 @@ def require_admin_level(min_level="L1"):
             
             if actual < required:
                 flash(f"You need {min_level} permissions or higher to access this area.", "danger")
-                return redirect(url_for("home"))
+                return redirect(url_for("home.index"))
             
             return f(*args, **kwargs)
         wrapped.__name__ = f.__name__

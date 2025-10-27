@@ -259,7 +259,7 @@ def user_list():
     cu = current_user()
     if not can_view_users(cu):
         flash("You don't have access to Users.", "danger")
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
     
     # Get query parameters
     q = (request.args.get("q") or "").strip().lower()
@@ -677,7 +677,7 @@ def deletion_requests():
     cu = current_user()
     if not can_view_users(cu):
         flash("You need administrative permissions to view deletion requests.", "danger")
-        return redirect(url_for("home"))
+        return redirect(url_for("home.index"))
     
     con = get_db()
     requests = con.execute("""
