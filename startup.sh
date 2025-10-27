@@ -1,36 +1,18 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# startup.sh - Azure App Service startup script
 
-echo "=== Startup script BEGIN $(date) ==="
+echo "Starting BTManifest application..."
 
-# Move to application root
-cd "$HOME/site/wwwroot"
-
-# Upgrade pip and install dependencies
-if [ -f requirements.txt ]; then
-    echo "Installing dependencies..."
-    python -m pip install --upgrade pip --quiet
-    pip install --no-cache-dir -r requirements.txt --quiet
-    echo "Dependencies installed successfully"
+# Install ODBC Driver 18 for SQL Server (if not already installed)
+if [ ! -f /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.3.so.2.1 ]; then
+    echo "Installing ODBC Driver 18 for SQL Server..."
+    curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+    curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
+    apt-get update
+    ACCEPT_EULA=Y apt-get install -y msodbcsql18
+    apt-get install -y unixodbc-dev
 fi
 
-# Set environment variables
-export FLASK_ENV=production
-export PYTHONPATH="$HOME/site/wwwroot:$PYTHONPATH"
-
-# Get port from Azure (Azure sets this automatically)
-PORT=${PORT:-8000}
-echo "Starting application on port $PORT"
-
-# Start Gunicorn with proper logging
-echo "Launching Gunicorn..."
-exec gunicorn \
-    --bind=0.0.0.0:$PORT \
-    --workers=3 \
-    --threads=2 \
-    --timeout=600 \
-    --access-logfile - \
-    --error-logfile - \
-    --log-level info \
-    --capture-output \
-    "app.app:application"
+# Start Gunicorn
+echo "Starting Gunicorn..."
+gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers=4 wsgi:app

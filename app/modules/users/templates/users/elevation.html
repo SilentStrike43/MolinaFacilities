@@ -190,14 +190,23 @@ function elevateUser(userId, level, username) {
             },
             body: JSON.stringify({ level: level, reason: 'Admin elevation via management interface' })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                alert('User elevated successfully!');
+                alert('✓ User elevated successfully!');
                 location.reload();
             } else {
-                alert('Error: ' + data.error);
+                alert('✗ Error: ' + (data.error || 'Unknown error'));
             }
+        })
+        .catch(error => {
+            console.error('Elevation error:', error);
+            alert('✗ Network error: ' + error.message);
         });
     }
 }
@@ -211,14 +220,23 @@ function demoteUser(userId, username) {
             },
             body: JSON.stringify({})
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                alert('User demoted successfully!');
+                alert('✓ User demoted successfully!');
                 location.reload();
             } else {
-                alert('Error: ' + data.error);
+                alert('✗ Error: ' + (data.error || 'Unknown error'));
             }
+        })
+        .catch(error => {
+            console.error('Demotion error:', error);
+            alert('✗ Network error: ' + error.message);
         });
     }
 }

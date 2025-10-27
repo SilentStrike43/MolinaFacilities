@@ -2,13 +2,13 @@
 {% block body %}
 
 <style>
-    .create-container {
+    .edit-container {
         max-width: 800px;
         margin: 0 auto;
         padding: 2rem;
     }
     
-    .create-card {
+    .edit-card {
         background: white;
         border-radius: 1rem;
         padding: 2rem;
@@ -101,40 +101,16 @@
         text-decoration: none;
         display: inline-block;
     }
-    
-    .required {
-        color: #dc2626;
-    }
 </style>
 
-<div class="create-container">
-    <h1 class="mb-4">Create New User</h1>
+<div class="edit-container">
+    <h1 class="mb-4">
+        <i class="bi bi-pencil"></i>
+        Edit User: {{ user.username }}
+    </h1>
     
-    <div class="create-card">
+    <div class="edit-card">
         <form method="POST">
-            <!-- Account Information -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="bi bi-person-badge"></i> Account Information
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">
-                        Username <span class="required">*</span>
-                    </label>
-                    <input type="text" name="username" class="form-control" required 
-                           placeholder="Enter username (no spaces)">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">
-                        Password <span class="required">*</span>
-                    </label>
-                    <input type="password" name="password" class="form-control" required
-                           placeholder="Enter secure password">
-                </div>
-            </div>
-            
             <!-- Profile Information -->
             <div class="form-section">
                 <div class="section-title">
@@ -143,78 +119,86 @@
                 
                 <div class="form-group">
                     <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control">
+                    <input type="text" name="first_name" class="form-control" value="{{ user.first_name or '' }}">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control">
+                    <input type="text" name="last_name" class="form-control" value="{{ user.last_name or '' }}">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control">
+                    <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Phone</label>
-                    <input type="tel" name="phone" class="form-control">
+                    <input type="tel" name="phone" class="form-control" value="{{ user.phone or '' }}">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Department</label>
-                    <input type="text" name="department" class="form-control">
+                    <input type="text" name="department" class="form-control" value="{{ user.department or '' }}">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Position</label>
-                    <input type="text" name="position" class="form-control">
+                    <input type="text" name="position" class="form-control" value="{{ user.position or '' }}">
                 </div>
             </div>
             
-            <!-- Module Permissions -->
+            <!-- Module Permissions (only if not admin) -->
+            {% if not user.permission_level %}
             <div class="form-section">
                 <div class="section-title">
                     <i class="bi bi-shield-check"></i> Module Permissions
                 </div>
                 
-                <div class="alert alert-info mb-3">
-                    <i class="bi bi-info-circle"></i>
-                    Select which modules this user can access. Administrative elevation can be done later through Elevation Management.
-                </div>
-                
                 <div class="permissions-grid">
                     <label class="permission-checkbox">
-                        <input type="checkbox" name="perm_m1" value="1">
+                        <input type="checkbox" name="perm_m1" value="1" 
+                               {% if 'M1' in user.module_permissions_list %}checked{% endif %}>
                         <span><strong>M1</strong> - Send Module</span>
                     </label>
                     
                     <label class="permission-checkbox">
-                        <input type="checkbox" name="perm_m2" value="1">
+                        <input type="checkbox" name="perm_m2" value="1"
+                               {% if 'M2' in user.module_permissions_list %}checked{% endif %}>
                         <span><strong>M2</strong> - Inventory Module</span>
                     </label>
                     
                     <label class="permission-checkbox">
-                        <input type="checkbox" name="perm_m3a" value="1">
+                        <input type="checkbox" name="perm_m3a" value="1"
+                               {% if 'M3A' in user.module_permissions_list %}checked{% endif %}>
                         <span><strong>M3A</strong> - Fulfillment (Customer)</span>
                     </label>
                     
                     <label class="permission-checkbox">
-                        <input type="checkbox" name="perm_m3b" value="1">
+                        <input type="checkbox" name="perm_m3b" value="1"
+                               {% if 'M3B' in user.module_permissions_list %}checked{% endif %}>
                         <span><strong>M3B</strong> - Fulfillment (Service)</span>
                     </label>
                     
                     <label class="permission-checkbox">
-                        <input type="checkbox" name="perm_m3c" value="1">
+                        <input type="checkbox" name="perm_m3c" value="1"
+                               {% if 'M3C' in user.module_permissions_list %}checked{% endif %}>
                         <span><strong>M3C</strong> - Fulfillment (Manager)</span>
                     </label>
                 </div>
             </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                This user has administrative permissions ({{ user.permission_level }}). 
+                Module permissions are managed through Elevation Management.
+            </div>
+            {% endif %}
             
             <!-- Actions -->
             <div style="margin-top: 2rem;">
                 <button type="submit" class="btn-save">
-                    <i class="bi bi-check-circle"></i> Create User
+                    <i class="bi bi-check-circle"></i> Save Changes
                 </button>
                 <a href="{{ url_for('users.user_list') }}" class="btn-cancel">Cancel</a>
             </div>

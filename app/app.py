@@ -8,14 +8,14 @@ import sys
 import signal
 import logging
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, g
+from flask import Flask, render_template, redirect, url_for, g, session
 
 # Import core modules
 from app.core.logging_config import setup_flask_logging
 from app.core.errors import register_error_handlers
 
 from app.modules.users.models import ensure_user_schema, ensure_first_sysadmin
-from app.modules.auth.security import current_user
+from app.modules.auth.security import current_user, login_required
 
 from app.core.ui import inject_globals
 
@@ -33,14 +33,14 @@ def create_app():
     
     # ==================== Configuration ====================
     app.config.update(
-        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production'),
-        SESSION_COOKIE_SECURE=True,  # Azure uses HTTPS by default
+        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-PLEASE-change-in-production-12345'),
+        SESSION_COOKIE_SECURE=False,  # Set to True only when using HTTPS
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=3600 * 24 * 7,
+        PERMANENT_SESSION_LIFETIME=604800,  # 7 days in seconds
         MAX_CONTENT_LENGTH=50 * 1024 * 1024,
         UPLOAD_FOLDER=os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'data', 'uploads')),
-        ENV=os.environ.get('FLASK_ENV', 'production'),
+        ENV=os.environ.get('FLASK_ENV', 'development'),  # ← Changed default to development
         LOG_LEVEL=os.environ.get('LOG_LEVEL', 'INFO')
     )
     
@@ -83,6 +83,10 @@ def create_app():
     
     # ==================== Register Blueprints ====================
     try:
+        # Home module (PRIORITY ONE - must be first)
+        from app.modules.home.views import bp as home_bp
+        app.register_blueprint(home_bp)
+        
         # Auth module
         from app.modules.auth.views import bp as auth_bp
         app.register_blueprint(auth_bp)
@@ -135,67 +139,10 @@ def create_app():
     
     # ==================== Home Route ====================
     @app.route("/")
-    def home():
-        """Home dashboard with metrics"""
-        if not current_user():
-            return redirect(url_for("auth.login"))
-        
-        user = current_user()
-        elevated = user.get('is_admin') or user.get('is_sysadmin')
-        
-        # Initialize dashboard data
-        dashboard_data = {
-            'total_assets': 0,
-            'pending_requests': 0,
-            'shipments_this_month': 0,
-            'completed_tasks': 0,
-            'recent_activities': [],
-            'my_tasks': [],
-            'asset_trend': 0,
-            'request_trend': 0,
-        }
-        
-        # Get asset count if user has permission
-        if user.get('can_asset') or elevated:
-            try:
-                from app.modules.inventory.assets import db as assets_db
-                con = assets_db()
-                result = con.execute("SELECT COUNT(*) as count FROM assets WHERE status='active'").fetchone()
-                dashboard_data['total_assets'] = result['count'] if result else 0
-                con.close()
-            except Exception as e:
-                logger.error(f"Error loading asset data: {e}")
-        
-        # Get fulfillment requests if user has permission
-        if user.get('can_fulfillment_staff') or user.get('can_fulfillment_customer') or elevated:
-            try:
-                from app.modules.fulfillment.storage import fulfillment_db
-                con = fulfillment_db()
-                result = con.execute("SELECT COUNT(*) as count FROM requests WHERE status='pending'").fetchone()
-                dashboard_data['pending_requests'] = result['count'] if result else 0
-                con.close()
-            except Exception as e:
-                logger.error(f"Error loading fulfillment data: {e}")
-        
-        # Get shipment count if user has permission
-        if user.get('can_send') or elevated:
-            try:
-                from app.modules.send.storage import jobs_db
-                con = jobs_db()
-                result = con.execute("""
-                    SELECT COUNT(*) as count FROM print_jobs
-                    WHERE date(ts_utc) >= date('now', 'start of month')
-                """).fetchone()
-                dashboard_data['shipments_this_month'] = result['count'] if result else 0
-                con.close()
-            except Exception as e:
-                logger.error(f"Error loading shipment data: {e}")
-        
-        return render_template('dashboard.html', 
-                             active='home', 
-                             dashboard_data=dashboard_data,
-                             cu=user,
-                             elevated=elevated)
+    @login_required
+    def index():
+        """Root route - redirect to home module."""
+        return redirect(url_for('home.index'))
     
     # ==================== Health Check ====================
     @app.route("/health")
@@ -204,6 +151,13 @@ def create_app():
         return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
     
     logger.info("Application initialization complete")
+    
+    # ==================== Cleanup on Shutdown ====================
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        """Cleanup database connections on app shutdown."""
+        from app.core.database import cleanup_all_pools
+        cleanup_all_pools()
     
     return app
 
@@ -241,5 +195,6 @@ if __name__ == '__main__':
         debug=debug,
         use_reloader=debug
     )
+
 # Create application instance for WSGI servers (gunicorn, Azure)
 application = create_app()

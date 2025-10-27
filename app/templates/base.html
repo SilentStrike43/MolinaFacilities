@@ -459,111 +459,103 @@
             </a>
         </div>
         
-        <nav class="sidebar-nav">
-            <!-- Dashboard -->
             <div class="nav-section">
-                <a href="{{ url_for('home') }}" class="nav-link-custom {{ 'active' if active=='dashboard' else '' }}">
+                <a href="{{ url_for('home.index') }}" class="nav-link-custom {{ 'active' if active=='home' else '' }}">
                     <i class="bi bi-house-door nav-link-icon"></i>
-                    <span>Dashboard</span>
+                    <span>Home</span>
                 </a>
             </div>
-            
-            <!-- Send Section -->
-            {% if cu.can_send or elevated %}
-            <div class="nav-section">
-                <div class="nav-section-title">Check-In</div>
-                <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' and page!='tracking' else '' }}">
-                    <i class="bi bi-box-seam nav-link-icon"></i>
-                    <span>Send</span>
-                </a>
-                <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='tracking' else '' }}">
-                    <i class="bi bi-geo-alt nav-link-icon"></i>
-                    <span>Tracking</span>
-                </a>
-            </div>
-            {% endif %}
-            
-            <!-- Inventory Section -->
-            {% if cu.can_inventory or cu.can_asset or elevated %}
-            <div class="nav-section">
-                <div class="nav-section-title">Inventory</div>
-                <a href="{{ url_for('inventory.asset') }}" class="nav-link-custom {{ 'active' if active=='inventory' and page not in ['insights', 'ledger'] else '' }}">
-                    <i class="bi bi-archive nav-link-icon"></i>
-                    <span>Inventory</span>
-                </a>
-                <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='inventory' and page=='ledger' else '' }}">
-                    <i class="bi bi-journal-text nav-link-icon"></i>
-                    <span>Ledger</span>
-                </a>
-                <a href="{{ url_for('inventory.insights') }}" class="nav-link-custom {{ 'active' if active=='insights' else '' }}">
-                    <i class="bi bi-graph-up nav-link-icon"></i>
-                    <span>Inventory Insights</span>
-                </a>
-            </div>
-            {% endif %}
-            
-            <!-- Fulfillment Section -->
-            {% if cu.can_fulfillment_customer or cu.can_fulfillment_service or cu.can_fulfillment_manager or elevated %}
-            <div class="nav-section">
-                <div class="nav-section-title">Fulfillment</div>
-                <a href="{{ url_for('fulfillment.request_form') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='request' else '' }}">
-                    <i class="bi bi-file-earmark-text nav-link-icon"></i>
-                    <span>New Request</span>
-                </a>
-                {% if cu.can_fulfillment_service or cu.can_fulfillment_manager or elevated %}
-                <a href="{{ url_for('fulfillment.queue') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='queue' else '' }}">
-                    <i class="bi bi-list-task nav-link-icon"></i>
-                    <span>Service Queue</span>
-                </a>
-                <a href="{{ url_for('fulfillment.archive') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='archive' else '' }}">
-                    <i class="bi bi-archive nav-link-icon"></i>
-                    <span>Archive</span>
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
-            
-            <!-- Administration Section -->
-            {% if cu.can_admin_users or elevated %}
-            <div class="nav-section">
-                <div class="nav-section-title">Administration</div>
-                
-                <!-- Users List -->
-                <a href="{{ url_for('users.user_list') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='list' else '' }}">
-                    <i class="bi bi-people nav-link-icon"></i>
-                    <span>Users</span>
-                </a>
-                
-                <!-- Elevation Management (L1+) -->
-                {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
-                <a href="{{ url_for('users.elevation_management') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='elevation' else '' }}">
-                    <i class="bi bi-shield-check nav-link-icon"></i>
-                    <span>Elevation Management</span>
-                </a>
+
+            <!-- Only show module sections if user has those permissions -->
+            {% if cu %}
+                <!-- Send Section -->
+                {% if can_send or elevated %}
+                <div class="nav-section">
+                    <div class="nav-section-title">CHECK-IN</div>
+                    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' and page!='tracking' else '' }}">
+                        <i class="bi bi-box-seam nav-link-icon"></i>
+                        <span>Send</span>
+                    </a>
+                    <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='tracking' else '' }}">
+                        <i class="bi bi-geo-alt nav-link-icon"></i>
+                        <span>Tracking</span>
+                    </a>
+                </div>
                 {% endif %}
                 
-                <!-- Admin Dashboard (L2+) -->
-                {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
-                <a href="{{ url_for('admin.dashboard') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='dashboard' else '' }}">
-                    <i class="bi bi-speedometer2 nav-link-icon"></i>
-                    <span>Admin Dashboard</span>
-                </a>
-                <a href="{{ url_for('admin.audit_logs') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='audit' else '' }}">
-                    <i class="bi bi-journal-text nav-link-icon"></i>
-                    <span>Audit Log</span>
-                </a>
+                <!-- Inventory Section -->
+                {% if can_inventory or can_asset or elevated %}
+                <div class="nav-section">
+                    <div class="nav-section-title">INVENTORY</div>
+                    <a href="{{ url_for('inventory.asset') }}" class="nav-link-custom {{ 'active' if active=='inventory' and page not in ['insights', 'ledger'] else '' }}">
+                        <i class="bi bi-archive nav-link-icon"></i>
+                        <span>Inventory</span>
+                    </a>
+                    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='inventory' and page=='ledger' else '' }}">
+                        <i class="bi bi-journal-text nav-link-icon"></i>
+                        <span>Ledger</span>
+                    </a>
+                    <a href="{{ url_for('inventory.insights') }}" class="nav-link-custom {{ 'active' if active=='insights' else '' }}">
+                        <i class="bi bi-graph-up nav-link-icon"></i>
+                        <span>Inventory Insights</span>
+                    </a>
+                </div>
                 {% endif %}
                 
-                <!-- System Management (L3+) -->
-                {% if cu.permission_level in ['L3', 'S1'] %}
-                <a href="{{ url_for('admin.system_management') }}" class="nav-link-custom {{ 'active' if active=='admin' and page=='system' else '' }}">
-                    <i class="bi bi-gear nav-link-icon"></i>
-                    <span>System Management</span>
-                </a>
+                <!-- Fulfillment Section -->
+                {% if can_fulfillment_customer or can_fulfillment_service or can_fulfillment_manager or elevated %}
+                <div class="nav-section">
+                    <div class="nav-section-title">FULFILLMENT</div>
+                    <a href="{{ url_for('fulfillment.request_form') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='request' else '' }}">
+                        <i class="bi bi-file-earmark-text nav-link-icon"></i>
+                        <span>New Request</span>
+                    </a>
+                    {% if can_fulfillment_service or can_fulfillment_manager or elevated %}
+                    <a href="{{ url_for('fulfillment.queue') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='queue' else '' }}">
+                        <i class="bi bi-list-check nav-link-icon"></i>
+                        <span>Service Queue</span>
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('fulfillment.archive') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='archive' else '' }}">
+                        <i class="bi bi-archive nav-link-icon"></i>
+                        <span>Archive</span>
+                    </a>
+                </div>
                 {% endif %}
-            </div>
+                
+                <!-- Admin Section (L1+ only) -->
+                {% if can_admin_users or elevated %}
+                <div class="nav-section">
+                    <div class="nav-section-title">ADMINISTRATION</div>
+                    <a href="{{ url_for('users.user_list') }}" class="nav-link-custom {{ 'active' if active=='users' and page not in ['elevation'] else '' }}">
+                        <i class="bi bi-people nav-link-icon"></i>
+                        <span>Users</span>
+                    </a>
+                    {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
+                    <a href="{{ url_for('users.elevation_management') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='elevation' else '' }}">
+                        <i class="bi bi-shield-check nav-link-icon"></i>
+                        <span>Elevation Management</span>
+                    </a>
+                    {% endif %}
+                    {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link-custom {{ 'active' if active=='admin' else '' }}">
+                        <i class="bi bi-speedometer2 nav-link-icon"></i>
+                        <span>Admin Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin.audit_logs') }}" class="nav-link-custom {{ 'active' if active=='audit' else '' }}">
+                        <i class="bi bi-journal-text nav-link-icon"></i>
+                        <span>Audit Logs</span>
+                    </a>
+                    {% endif %}
+                    {% if cu.permission_level in ['L3', 'S1'] %}
+                    <a href="{{ url_for('admin.system_management') }}" class="nav-link-custom {{ 'active' if active=='system' else '' }}">
+                        <i class="bi bi-gear nav-link-icon"></i>
+                        <span>System Management</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
             {% endif %}
-        </nav>
                 
                 <!-- User Profile -->
                 {% if cu %}

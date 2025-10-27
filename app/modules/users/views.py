@@ -6,9 +6,17 @@ Implements M1-M3C, L1-L3, S1 permission levels
 
 import json
 from datetime import datetime
-from typing import List  # ← CRITICAL: Add this for List[str] type hints
+from typing import List
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash
+
+from .models import (
+    get_db, 
+    get_user_by_id, 
+    get_user_by_username,
+    list_users,
+    create_user,
+)
 
 from app.modules.auth.security import (
     login_required, 
@@ -62,6 +70,10 @@ def get_user_permission_level(user_data):
     if not user_data:
         return None
     
+    # Convert sqlite3.Row to dict if needed
+    if not isinstance(user_data, dict):
+        user_data = dict(user_data)
+    
     # Check for system flag first
     try:
         caps = json.loads(user_data.get("caps", "{}") or "{}")
@@ -82,51 +94,16 @@ def get_user_permission_level(user_data):
     
     return None
 
-def create_user(data: dict) -> int:
-    """Create a new user with new permission system."""
-    username = data["username"]
-    password = data["password"]
-    permission_level = data.get("permission_level", "")
-    module_permissions = data.get("module_permissions", [])
-    
-    # Validate permission level if provided
-    if permission_level and not PermissionLevel.from_string(permission_level):
-        raise ValueError(f"Invalid permission level: {permission_level}")
-    
-    con = get_db()
-    cur = con.execute("""
-        INSERT INTO users(
-            username, password_hash, first_name, last_name, 
-            email, phone, department, position,
-            permission_level, module_permissions,
-            created_utc
-        )
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        username,
-        generate_password_hash(password),
-        data.get("first_name", ""),
-        data.get("last_name", ""),
-        data.get("email", ""),
-        data.get("phone", ""),
-        data.get("department", ""),
-        data.get("position", ""),
-        permission_level,
-        json.dumps(module_permissions),
-        datetime.utcnow().isoformat() + "Z"
-    ))
-    
-    uid = cur.lastrowid
-    con.commit()
-    con.close()
-    return uid
-
 def update_user_permissions(uid: int, permission_level: str, module_permissions: List[str], 
                            elevated_by: int = None, reason: str = None):
     """Update user permissions with history tracking."""
     user = get_user_by_id(uid)
     if not user:
         return False
+    
+    # Convert to dict if it's a Row object
+    if not isinstance(user, dict):
+        user = dict(user)
     
     con = get_db()
     
@@ -242,6 +219,12 @@ def can_modify_user(actor_data, target_data) -> bool:
     """Check if actor can modify target user."""
     if not actor_data:
         return False
+    
+    # Convert Row objects to dicts
+    if not isinstance(actor_data, dict):
+        actor_data = dict(actor_data)
+    if target_data and not isinstance(target_data, dict):
+        target_data = dict(target_data)
     
     actor_level = get_user_permission_level(actor_data)
     target_level = get_user_permission_level(target_data) if target_data else None
@@ -464,76 +447,100 @@ def create():
 def edit_user(uid: int):
     """Edit user (admin only, cannot edit users at same or higher level)."""
     cu = current_user()
-    target = get_user_by_id(uid)
     
-    if not target:
-        flash("User not found.", "warning")
+    try:
+        target = get_user_by_id(uid)
+        
+        if not target:
+            flash("User not found.", "warning")
+            return redirect(url_for("users.user_list"))
+        
+        # Convert to dict
+        target = dict(target) if not isinstance(target, dict) else target
+        
+        if not can_modify_user(cu, target):
+            flash("You cannot modify users at your level or higher.", "danger")
+            return redirect(url_for("users.user_list"))
+        
+        if request.method == "POST":
+            try:
+                # Update profile fields
+                con = get_db()
+                con.execute("""
+                    UPDATE users 
+                    SET first_name = ?, last_name = ?, 
+                        email = ?, phone = ?,
+                        department = ?, position = ?,
+                        last_modified_by = ?,
+                        last_modified_at = ?
+                    WHERE id = ?
+                """, (
+                    request.form.get("first_name", ""),
+                    request.form.get("last_name", ""),
+                    request.form.get("email", ""),
+                    request.form.get("phone", ""),
+                    request.form.get("department", ""),
+                    request.form.get("position", ""),
+                    cu["id"],
+                    datetime.utcnow().isoformat() + "Z",
+                    uid
+                ))
+                
+                # Update module permissions only if user is not an admin
+                if not target.get("permission_level"):
+                    module_perms = []
+                    if request.form.get("perm_m1"):
+                        module_perms.append("M1")
+                    if request.form.get("perm_m2"):
+                        module_perms.append("M2")
+                    if request.form.get("perm_m3a"):
+                        module_perms.append("M3A")
+                    if request.form.get("perm_m3b"):
+                        module_perms.append("M3B")
+                    if request.form.get("perm_m3c"):
+                        module_perms.append("M3C")
+                    
+                    con.execute("""
+                        UPDATE users 
+                        SET module_permissions = ?
+                        WHERE id = ?
+                    """, (json.dumps(module_perms), uid))
+                
+                con.commit()
+                con.close()
+                
+                # Try to record audit
+                try:
+                    record_audit(cu, "update_user", "users", 
+                                f"Updated user {target['username']}")
+                except Exception as audit_error:
+                    print(f"Audit log failed: {audit_error}")
+                
+                flash("User updated successfully.", "success")
+                return redirect(url_for("users.user_list"))
+                
+            except Exception as e:
+                print(f"ERROR updating user: {e}")
+                import traceback
+                traceback.print_exc()
+                flash(f"Error updating user: {str(e)}", "danger")
+        
+        # Parse existing permissions for display
+        target["module_permissions_list"] = PermissionManager.parse_module_permissions(
+            target.get("module_permissions", "[]")
+        )
+        
+        return render_template("users/edit.html",
+                             active="users",
+                             page="edit",
+                             user=target)
+                             
+    except Exception as e:
+        print(f"ERROR in edit_user route: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f"Error loading user: {str(e)}", "danger")
         return redirect(url_for("users.user_list"))
-    
-    if not can_modify_user(cu, target):
-        flash("You cannot modify users at your level or higher.", "danger")
-        return redirect(url_for("users.user_list"))
-    
-    if request.method == "POST":
-        # Update profile fields
-        con = get_db()
-        con.execute("""
-            UPDATE users 
-            SET first_name = ?, last_name = ?, 
-                email = ?, phone = ?,
-                department = ?, position = ?,
-                last_modified_by = ?,
-                last_modified_at = ?
-            WHERE id = ?
-        """, (
-            request.form.get("first_name", ""),
-            request.form.get("last_name", ""),
-            request.form.get("email", ""),
-            request.form.get("phone", ""),
-            request.form.get("department", ""),
-            request.form.get("position", ""),
-            cu["id"],
-            datetime.utcnow().isoformat() + "Z",
-            uid
-        ))
-        
-        # Update module permissions
-        module_perms = []
-        if request.form.get("perm_m1"):
-            module_perms.append("M1")
-        if request.form.get("perm_m2"):
-            module_perms.append("M2")
-        if request.form.get("perm_m3a"):
-            module_perms.append("M3A")
-        if request.form.get("perm_m3b"):
-            module_perms.append("M3B")
-        if request.form.get("perm_m3c"):
-            module_perms.append("M3C")
-        
-        con.execute("""
-            UPDATE users 
-            SET module_permissions = ?
-            WHERE id = ?
-        """, (json.dumps(module_perms), uid))
-        
-        con.commit()
-        con.close()
-        
-        record_audit(cu, "update_user", "users", 
-                    f"Updated user {target['username']} - permissions: {', '.join(module_perms)}")
-        flash("User updated successfully.", "success")
-        return redirect(url_for("users.user_list"))
-    
-    # Parse existing permissions for display
-    target_dict = dict(target)
-    target_dict["module_permissions_list"] = PermissionManager.parse_module_permissions(
-        target_dict.get("module_permissions", "[]")
-    )
-    
-    return render_template("users/edit.html",
-                         active="users",
-                         page="edit",
-                         user=target_dict)
 
 @users_bp.route("/elevation")
 @login_required
@@ -623,35 +630,45 @@ def demote_user(uid: int):
     
     target = get_user_by_id(uid)
     if not target:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"success": False, "error": "User not found"}), 404
+    
+    # Convert to dict
+    target = dict(target) if not isinstance(target, dict) else target
     
     if not can_modify_user(cu, target):
-        return jsonify({"error": "You cannot demote this user"}), 403
+        return jsonify({"success": False, "error": "You cannot demote this user"}), 403
     
-    # Clear admin level but preserve module permissions
-    con = get_db()
-    con.execute("""
-        UPDATE users 
-        SET permission_level = '',
-            elevated_by = NULL,
-            elevated_at = NULL,
-            last_modified_by = ?,
-            last_modified_at = ?
-        WHERE id = ?
-    """, (cu["id"], datetime.utcnow().isoformat() + "Z", uid))
-    con.commit()
-    con.close()
+    try:
+        # Clear admin level but preserve module permissions
+        con = get_db()
+        con.execute("""
+            UPDATE users 
+            SET permission_level = '',
+                elevated_by = NULL,
+                elevated_at = NULL,
+                last_modified_by = ?,
+                last_modified_at = ?
+            WHERE id = ?
+        """, (cu["id"], datetime.utcnow().isoformat() + "Z", uid))
+        con.commit()
+        con.close()
+        
+        record_audit(
+            cu, 
+            "demote_user", 
+            "users",
+            f"Demoted {target['username']} from admin level",
+            target_user_id=uid,
+            target_username=target["username"]
+        )
+        
+        return jsonify({"success": True, "message": "User demoted to module access only"}), 200
     
-    record_audit(
-        cu, 
-        "demote_user", 
-        "users",
-        f"Demoted {target['username']} from admin level",
-        target_user_id=uid,
-        target_username=target["username"]
-    )
-    
-    return jsonify({"success": True, "message": "User demoted to module access only"})
+    except Exception as e:
+        print(f"ERROR demoting user: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @users_bp.route("/deletion-requests")
 @login_required

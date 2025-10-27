@@ -1,51 +1,72 @@
-2025-10-23 08:50:25 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-23 08:50:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-23 08:50:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
-2025-10-23 08:50:25 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-23 08:50:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-23 08:50:25 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
-2025-10-23 08:50:25 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
-2025-10-23 08:50:25 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
-2025-10-23 08:50:40 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
-2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:218 | Application shutting down...
-2025-10-23 08:57:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:223 | Cleanup complete
-2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:218 | Application shutting down...
-2025-10-23 08:57:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-23 08:57:33 | [32mINFO[0m | __main__ | shutdown_handler:223 | Cleanup complete
-2025-10-23 08:57:36 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-23 08:57:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-23 08:57:36 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
-2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
-2025-10-23 08:57:36 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
-2025-10-23 08:57:36 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
-2025-10-23 08:57:37 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-23 08:57:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-23 08:57:37 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
-2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
-2025-10-23 08:57:37 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
-2025-10-23 08:57:37 | [32mINFO[0m | __main__ | <module>:232 | Starting development server on 127.0.0.1:5000
-2025-10-23 08:57:37 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
-2025-10-23 09:47:49 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
-2025-10-23 15:05:51 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
-2025-10-23 15:05:51 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: production
-2025-10-23 15:05:51 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
-2025-10-23 15:05:51 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
-2025-10-23 15:05:51 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
-2025-10-23 15:05:51 | [32mINFO[0m | __main__ | create_app:206 | Application initialization complete
-2025-10-23 15:05:51 | [32mINFO[0m | __main__ | <module>:237 | Starting server on 127.0.0.1:5000
-2025-10-23 16:06:24 | [32mINFO[0m | __main__ | shutdown_handler:218 | Application shutting down...
-2025-10-23 16:06:24 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-23 16:06:24 | [32mINFO[0m | __main__ | shutdown_handler:223 | Cleanup complete
-2025-10-23 16:06:24 | [32mINFO[0m | __main__ | shutdown_handler:218 | Application shutting down...
-2025-10-23 16:06:24 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
-2025-10-23 16:06:24 | [32mINFO[0m | __main__ | shutdown_handler:223 | Cleanup complete
+2025-10-27 11:26:35 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-27 11:26:35 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-27 11:26:35 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-27 11:26:35 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
+2025-10-27 11:26:35 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
+2025-10-27 11:26:35 | [32mINFO[0m | __main__ | create_app:172 | Application initialization complete
+2025-10-27 11:26:35 | [32mINFO[0m | __main__ | <module>:203 | Starting server on 127.0.0.1:5000
+2025-10-27 11:30:44 | [32mINFO[0m | __main__ | shutdown_handler:184 | Application shutting down...
+2025-10-27 11:30:44 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-27 11:30:44 | [32mINFO[0m | __main__ | shutdown_handler:189 | Cleanup complete
+2025-10-27 12:16:53 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-27 12:16:53 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-27 12:16:53 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-27 12:16:53 | [32mINFO[0m | __main__ | create_app:114 | All blueprints registered successfully
+2025-10-27 12:16:53 | [32mINFO[0m | __main__ | create_app:132 | Database schemas initialized
+2025-10-27 12:16:53 | [32mINFO[0m | __main__ | create_app:172 | Application initialization complete
+2025-10-27 12:16:53 | [32mINFO[0m | __main__ | <module>:203 | Starting server on 127.0.0.1:5000
+2025-10-27 13:39:47 | [32mINFO[0m | __main__ | shutdown_handler:184 | Application shutting down...
+2025-10-27 13:39:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-27 13:39:47 | [32mINFO[0m | __main__ | shutdown_handler:189 | Cleanup complete
+2025-10-27 14:16:43 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-27 14:16:43 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-27 14:16:43 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-27 14:16:43 | [32mINFO[0m | __main__ | create_app:118 | All blueprints registered successfully
+2025-10-27 14:16:43 | [32mINFO[0m | __main__ | create_app:136 | Database schemas initialized
+2025-10-27 14:16:43 | [32mINFO[0m | __main__ | create_app:153 | Application initialization complete
+2025-10-27 14:16:43 | [32mINFO[0m | __main__ | <module>:184 | Starting server on 127.0.0.1:5000
+2025-10-27 14:16:56 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'home'. Did you mean 'home.index' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 83, in login
+    return redirect(url_for("home"))
+                    ~~~~~~~^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\helpers.py", line 239, in url_for
+    return current_app.url_for(
+           ~~~~~~~~~~~~~~~~~~~^
+        endpoint,
+        ^^^^^^^^^
+    ...<4 lines>...
+        **values,
+        ^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'home'. Did you mean 'home.index' instead?
+2025-10-27 14:22:19 | [32mINFO[0m | __main__ | shutdown_handler:165 | Application shutting down...
+2025-10-27 14:22:19 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-27 14:22:19 | [32mINFO[0m | __main__ | shutdown_handler:170 | Cleanup complete
+2025-10-27 14:22:21 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\BTManifest\app\logs
+2025-10-27 14:22:21 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-27 14:22:21 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-27 14:22:21 | [32mINFO[0m | __main__ | create_app:118 | All blueprints registered successfully
+2025-10-27 14:22:21 | [32mINFO[0m | __main__ | create_app:136 | Database schemas initialized
+2025-10-27 14:22:21 | [32mINFO[0m | __main__ | create_app:153 | Application initialization complete
+2025-10-27 14:22:21 | [32mINFO[0m | __main__ | <module>:184 | Starting server on 127.0.0.1:5000
+2025-10-27 15:30:00 | [32mINFO[0m | __main__ | shutdown_handler:165 | Application shutting down...
+2025-10-27 15:30:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:234 | All database connection pools closed
+2025-10-27 15:30:00 | [32mINFO[0m | __main__ | shutdown_handler:170 | Cleanup complete

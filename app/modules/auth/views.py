@@ -44,46 +44,46 @@ def record_audit(user, action, source, details=""):
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    """Login page and handler"""
+    """User login."""
+    
+    if session.get("user_id"):
+        return redirect(url_for("home.index"))
+    
     if request.method == "POST":
-        username = (request.form.get("username") or "").strip()
-        password = request.form.get("password") or ""
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
         
         if not username or not password:
-            flash("Username and password are required", "warning")
+            flash("Please enter both username and password.", "danger")
             return render_template("auth/login.html")
         
-        # Get user from database (returns sqlite3.Row)
-        user_row = get_user_by_username(username)
+        # Authenticate
+        from app.modules.users.models import get_user_by_username, verify_password
+        user = get_user_by_username(username)
         
-        if not user_row or not verify_password(user_row, password):
-            flash("Invalid username or password", "danger")
-            record_audit(None, "failed_login", "auth", f"Failed login attempt for: {username}")
-            return render_template("auth/login.html")
-        
-        # Successful login - convert to dict for easier access
-        user = row_to_dict(user_row)
-        
-        session["uid"] = user["id"]
-        session["username"] = user["username"]
-        session.permanent = True
-        
-        # Get display name for greeting (these fields might not exist)
-        first_name = user.get("first_name", "").strip() if "first_name" in user else ""
-        last_name = user.get("last_name", "").strip() if "last_name" in user else ""
-        
-        if first_name and last_name:
-            display_name = f"{first_name} {last_name}"
-        elif first_name:
-            display_name = first_name
+        if user and verify_password(user, password):
+            # Convert Row to dict
+            if not isinstance(user, dict):
+                user = dict(user)
+            
+            # Check if user is deleted
+            if user.get('deleted_at'):
+                flash("This account has been deactivated.", "danger")
+                return render_template("auth/login.html")
+            
+            # Set session
+            session.clear()
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session.permanent = True
+            
+            flash(f"Welcome back, {user.get('first_name') or user['username']}!", "success")
+            
+            # Redirect to home
+            return redirect(url_for("home.index"))
         else:
-            display_name = username
-        
-        flash(f"Welcome back, {display_name}!", "success")
-        
-        record_audit(user, "login", "auth", f"User logged in: {username}")
-        
-        return redirect(url_for("home"))
+            flash("Invalid username or password.", "danger")
+            return render_template("auth/login.html")
     
     return render_template("auth/login.html")
 
@@ -137,7 +137,8 @@ def change_password():
             record_audit(user, "password_change", "auth", f"Password changed for user: {user['username']}")
             
             flash("Password changed successfully", "success")
-            return redirect(url_for("home"))
+            # After successful login
+            return redirect(url_for("home.index"))
         
         except Exception as e:
             flash(f"Failed to change password: {str(e)}", "danger")

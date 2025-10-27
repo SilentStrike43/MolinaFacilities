@@ -39,40 +39,45 @@ def get_user_permission_level(user_data):
     return None
 
 def inject_globals():
-    """
-    Inject global variables into all templates.
-    Includes NEW permission system with effective_permissions calculation.
-    """
+    """Inject global variables into all templates."""
+    from flask import g
+    from app.modules.auth.security import current_user
+    from app.modules.users.permissions import PermissionManager
+    
+    # Get current user (will use cached version if available)
     cu = current_user()
-    elevated = False
     
     if cu:
-        # Convert to mutable dict
-        cu = dict(cu)
+        # User is logged in - add their permissions
+        # Use already-computed effective_permissions from cached user
+        effective_perms = cu.get('effective_permissions', {})
         
-        # Get user's permission level
-        cu["permission_level"] = get_user_permission_level(cu) or ""
-        
-        # Get NEW permission system effective permissions
-        effective_perms = PermissionManager.get_effective_permissions(cu)
-        
-        # Merge effective permissions into cu object for template access
-        cu.update(effective_perms)
-        
-        # Add permission level description
-        cu["permission_level_desc"] = PermissionManager.get_permission_description(
-            cu.get("permission_level", "")
-        )
-        
-        # Set elevated flag (anyone with L1+ admin level)
-        elevated = cu.get("permission_level", "") in ["L1", "L2", "L3", "S1"]
-        
-        # Legacy compatibility - keep old flags for existing templates
-        if not elevated:
-            elevated = cu.get("is_admin", False) or cu.get("is_sysadmin", False)
-        
-        # Add system flag
-        cu["is_system"] = cu.get("is_system", False) or cu.get("username") in ("AppAdmin", "system")
+        return {
+            'cu': cu,
+            'current_user': cu,
+            'elevated': cu.get('permission_level') in ['S1', 'L3', 'L2', 'L1'],
+            'APP_VERSION': APP_VERSION,
+            'BRAND_TEAL': BRAND_TEAL,
+            **effective_perms
+        }
+    else:
+        # User not logged in
+        return {
+            'cu': None,
+            'current_user': None,
+            'elevated': False,
+            'can_send': False,
+            'can_inventory': False,
+            'can_asset': False,
+            'can_fulfillment_customer': False,
+            'can_fulfillment_service': False,
+            'can_fulfillment_manager': False,
+            'can_admin_users': False,
+            'can_view_audit_logs': False,
+            'can_manage_system': False,
+            'APP_VERSION': APP_VERSION,
+            'BRAND_TEAL': BRAND_TEAL,
+        }
     
     return {
         "cu": cu,

@@ -75,21 +75,48 @@ def _fetch_user_by_username(username: str) -> Optional[dict]:
 
 # ------------------------------ session API ----------------------------
 
-def current_user() -> Optional[dict]:
-    """
-    Resolve the logged-in user from session. We accept several keys so
-    this works with both the new auth views and anything left from legacy.
-    """
-    uid = session.get("uid") or session.get("user_id")
-    username = session.get("username")
-    user = _fetch_user_by_id(uid) if uid else None
-    if not user and username:
-        user = _fetch_user_by_username(username)
+def current_user():
+    """Get current logged-in user (cached per request)."""
+    from flask import g
+    
+    # Check if already cached in this request
+    if hasattr(g, '_current_user_cache'):
+        return g._current_user_cache
+    
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        g._current_user_cache = None
+        return None
+    
+    # Get user from database
+    from app.modules.users.models import get_user_by_id
+    user = get_user_by_id(user_id)
+    
+    if not user:
+        # User doesn't exist anymore, clear session
+        session.clear()
+        g._current_user_cache = None
+        return None
+    
+    # Convert to dict
+    if not isinstance(user, dict):
+        user = dict(user)
+    
+    # Add effective permissions
+    try:
+        from app.modules.users.permissions import PermissionManager
+        user['effective_permissions'] = PermissionManager.get_effective_permissions(user)
+        user['permission_level_desc'] = PermissionManager.get_permission_description(
+            user.get('permission_level', '')
+        )
+    except Exception as e:
+        user['effective_permissions'] = {}
+        user['permission_level_desc'] = 'Unknown'
+    
+    # Cache the result
+    g._current_user_cache = user
     return user
-
-# Handy alias some templates/code use
-cu = current_user
-
 
 # ------------------------------ capability logic -----------------------
 
@@ -167,13 +194,21 @@ def has_cap(user_row: Optional[dict], cap: str) -> bool:
 
 # ------------------------------- decorators ----------------------------
 
-def login_required(view):
-    @wraps(view)
+def login_required(f):
+    """Decorator to require login for routes."""
+    @wraps(f)
     def wrapped(*args, **kwargs):
-        if not current_user():
-            flash("Please sign in to continue.", "warning")
-            return redirect(url_for("auth.login", next=request.full_path or request.path))
-        return view(*args, **kwargs)
+        user_id = session.get("user_id")
+        print(f"✓ login_required check: user_id in session = {user_id}")
+        print(f"✓ Session contents: {dict(session)}")
+        
+        if not user_id:
+            session['next_url'] = request.url
+            flash("Please log in to access this page.", "warning")
+            return redirect(url_for("auth.login"))
+        
+        return f(*args, **kwargs)
+    
     return wrapped
 
 def require_cap(cap: str):
@@ -185,7 +220,11 @@ def require_cap(cap: str):
                 flash("Please sign in to continue.", "warning")
                 return redirect(url_for("auth.login", next=request.full_path or request.path))
             if not has_cap(u, cap):
-                # Consistent message but you can tune per module if needed
+                # TEMPORARY DEBUG
+                print(f"⚠️ PERMISSION DENIED: User {u.get('username')} tried to access {request.endpoint} requiring {cap}")
+                print(f"   URL: {request.url}")
+                print(f"   User caps: {_parse_caps(u)}")
+                
                 flash("Access denied for this feature.", "danger")
                 return redirect(url_for("home"))
             return view(*args, **kwargs)
