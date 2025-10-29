@@ -1,26 +1,29 @@
-import os, sqlite3
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-DB = os.path.join(DATA_DIR, "fulfillment.sqlite")
+"""
+Inventory storage - AZURE SQL ONLY
+"""
+from app.core.database import get_db_connection
 
-def _conn():
-    con = sqlite3.connect(DB); con.row_factory = sqlite3.Row; return con
 
 def ensure_schema():
-    con = _conn()
-    con.executescript("""
-    CREATE TABLE IF NOT EXISTS service_queue(
-      id INTEGER PRIMARY KEY,
-      ts_utc TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-      requester TEXT, item TEXT, qty INTEGER, notes TEXT, status TEXT
-    );
-    CREATE TABLE IF NOT EXISTS service_archive(
-      id INTEGER PRIMARY KEY,
-      ts_utc TEXT NOT NULL,
-      completed_utc TEXT NOT NULL,
-      requester TEXT, item TEXT, qty INTEGER, notes TEXT, status TEXT
-    );
-    """)
-    con.commit(); con.close()
+    """Schema is managed by Azure SQL migrations, not application code."""
+    pass
 
-def queue_db(): ensure_schema(); return _conn()
+
+def inventory_db():
+    """
+    DEPRECATED: Legacy compatibility function.
+    Returns a connection but caller must manage it properly.
+    
+    New code should use: with get_db_connection("inventory") as conn:
+    """
+    return get_db_connection("inventory").__enter__()
+
+
+def insights_db():
+    """
+    DEPRECATED: Legacy compatibility function.
+    Returns a connection but caller must manage it properly.
+    
+    New code should use: with get_db_connection("inventory") as conn:
+    """
+    return get_db_connection("inventory").__enter__()

@@ -30,3 +30,2208 @@ Traceback (most recent call last):
   File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
     raise BuildError(endpoint, values, method, self)
 werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'home'. Did you mean 'home.index' instead?
+2025-10-28 10:29:11 | [35mCRITICAL[0m | __main__ | create_app:120 | Failed to register blueprints: name 'login_required' is not defined
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 103, in create_app
+    from app.modules.send import bp as send_bp
+  File "C:\BTManifest\app\modules\send\__init__.py", line 6, in <module>
+    from . import views, reports
+  File "C:\BTManifest\app\modules\send\reports.py", line 9, in <module>
+    @login_required
+     ^^^^^^^^^^^^^^
+NameError: name 'login_required' is not defined
+2025-10-28 10:29:52 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateSyntaxError: Unexpected end of template. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 282, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\templates\base.html", line 624, in template
+    {% block extra_scripts %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: Unexpected end of template. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+2025-10-28 11:21:14 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'get_db' from 'app.modules.users.models' (C:\BTManifest\app\modules\users\models.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 98, in create_app
+    from app.modules.users.views import bp as users_bp
+  File "C:\BTManifest\app\modules\users\views.py", line 13, in <module>
+    from .models import (
+    ...<5 lines>...
+    )
+ImportError: cannot import name 'get_db' from 'app.modules.users.models' (C:\BTManifest\app\modules\users\models.py)
+2025-10-28 11:24:08 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'users_db' from 'app.modules.users.models' (C:\BTManifest\app\modules\users\models.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 98, in create_app
+    from app.modules.users.views import bp as users_bp
+  File "C:\BTManifest\app\modules\users\views.py", line 27, in <module>
+    from app.modules.users.models import (
+    ...<2 lines>...
+    )
+ImportError: cannot import name 'users_db' from 'app.modules.users.models' (C:\BTManifest\app\modules\users\models.py)
+2025-10-28 11:24:46 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: 'pyodbc.Connection' object has no attribute 'executescript'
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 110, in create_app
+    from app.modules.fulfillment.views import bp as fulfillment_bp
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 69, in <module>
+    _ensure_extended_schema()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 35, in _ensure_extended_schema
+    con.executescript("""
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'pyodbc.Connection' object has no attribute 'executescript'
+2025-10-28 13:06:29 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 67, in login
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-28 13:08:09 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 114, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 18, in <module>
+    from app.modules.inventory.storage import inventory_db, ensure_schema
+ImportError: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+2025-10-28 13:09:19 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 114, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 18, in <module>
+    from app.modules.inventory.storage import inventory_db, ensure_schema
+ImportError: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+2025-10-28 13:10:18 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 114, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 18, in <module>
+    from app.modules.inventory.storage import inventory_db, ensure_schema
+ImportError: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+2025-10-28 13:12:06 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 114, in create_app
+    from app.modules.inventory import bp as inventory_bp
+  File "C:\BTManifest\app\modules\inventory\__init__.py", line 13, in <module>
+    from . import views  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\inventory\views.py", line 18, in <module>
+    from app.modules.inventory.storage import inventory_db, ensure_schema
+ImportError: cannot import name 'inventory_db' from 'app.modules.inventory.storage' (C:\BTManifest\app\modules\inventory\storage.py)
+2025-10-28 13:15:02 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\views.py", line 67, in login
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-28 13:17:06 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 280, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 21, in index
+    cu = current_user()
+  File "C:\BTManifest\app\modules\auth\security.py", line 102, in current_user
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-28 13:18:59 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:18:59 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\views.py", line 38, in page
+    suggested_checkin = peek_next_checkin_id()
+  File "C:\BTManifest\app\modules\send\models.py", line 70, in peek_next_checkin_id
+    conn = _conn()
+  File "C:\BTManifest\app\modules\send\models.py", line 21, in _conn
+    return get_db_connection("send").__enter__()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:19:41 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW); [42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 340, in asset
+    next_sku_preview = generate_next_sku(default_category)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 196, in generate_next_sku
+    result = con.execute("""
+             ~~~~~~~~~~~^^^^
+        SELECT sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        LIMIT 1
+        ^^^^^^^
+    """, (f"{prefix}-%",)).fetchone()
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW); [42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:19:50 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'counters'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\views.py", line 38, in page
+    suggested_checkin = peek_next_checkin_id()
+  File "C:\BTManifest\app\modules\send\models.py", line 71, in peek_next_checkin_id
+    return _peek(conn, "checkin_seq")
+  File "C:\BTManifest\app\modules\send\models.py", line 58, in _peek
+    cursor.execute("SELECT value FROM counters WHERE name = ?", (name,))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'counters'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:20:32 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW); [42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 340, in asset
+    next_sku_preview = generate_next_sku(default_category)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 196, in generate_next_sku
+    result = con.execute("""
+             ~~~~~~~~~~~^^^^
+        SELECT sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        LIMIT 1
+        ^^^^^^^
+    """, (f"{prefix}-%",)).fetchone()
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW); [42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:21:01 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:21:01 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\ledger.py", line 14, in ledger_home
+    assets = list_assets()
+  File "C:\BTManifest\app\modules\inventory\models.py", line 14, in list_assets
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:21:30 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 527, in insights
+    rows = con.execute(sql, params).fetchall()
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42000', "[42000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Incorrect syntax near 'LIMIT'. (102) (SQLExecDirectW)")
+2025-10-28 13:22:18 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 268, in user_list
+    rows = list_users(include_system=False, include_deleted=include_inactive)
+  File "C:\BTManifest\app\modules\users\views.py", line 64, in list_users
+    rows = con.execute(query).fetchall()
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:22:41 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 559, in elevation_management
+    rows = list_users(include_system=False, include_deleted=False)
+  File "C:\BTManifest\app\modules\users\views.py", line 64, in list_users
+    rows = con.execute(query).fetchall()
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:47:06 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:47:06 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\views.py", line 38, in page
+    suggested_checkin = peek_next_checkin_id()
+  File "C:\BTManifest\app\modules\send\models.py", line 70, in peek_next_checkin_id
+    conn = _conn()
+  File "C:\BTManifest\app\modules\send\models.py", line 21, in _conn
+    return get_db_connection("send").__enter__()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:48:27 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:48:27 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 354, in asset
+    next_sku_preview = generate_next_sku(default_category)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 192, in generate_next_sku
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:49:06 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:49:06 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\ledger.py", line 14, in ledger_home
+    assets = list_assets()
+  File "C:\BTManifest\app\modules\inventory\models.py", line 14, in list_assets
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:49:25 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 229, in dashboard
+    stats = get_audit_statistics(30)
+  File "C:\BTManifest\app\modules\admin\views.py", line 171, in get_audit_statistics
+    stats["total_actions"] = con.execute(
+                             ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:49:34 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 297, in audit_logs
+    logs = query_audit_logs(filters, limit=500)
+  File "C:\BTManifest\app\modules\admin\views.py", line 159, in query_audit_logs
+    rows = con.execute(query, params).fetchall()
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:49:39 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 486, in system_management
+    record_audit_log(cu, "view_system_management", "admin", "Accessed system management interface")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\admin\views.py", line 93, in record_audit_log
+    con.execute("""
+    ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:51:00 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:51:00 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 354, in asset
+    next_sku_preview = generate_next_sku(default_category)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 192, in generate_next_sku
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:51:30 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:51:30 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 317, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\ledger.py", line 14, in ledger_home
+    assets = list_assets()
+  File "C:\BTManifest\app\modules\inventory\models.py", line 14, in list_assets
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:52:09 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 229, in dashboard
+    stats = get_audit_statistics(30)
+  File "C:\BTManifest\app\modules\admin\views.py", line 171, in get_audit_statistics
+    stats["total_actions"] = con.execute(
+                             ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:52:30 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 297, in audit_logs
+    logs = query_audit_logs(filters, limit=500)
+  File "C:\BTManifest\app\modules\admin\views.py", line 159, in query_audit_logs
+    rows = con.execute(query, params).fetchall()
+           ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 13:52:58 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: AttributeError: 'NoneType' object has no attribute 'execute'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 74, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 486, in system_management
+    record_audit_log(cu, "view_system_management", "admin", "Accessed system management interface")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\admin\views.py", line 93, in record_audit_log
+    con.execute("""
+    ^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'execute'
+2025-10-28 14:05:29 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 176, in get_audit_statistics
+    cursor.execute(
+    ~~~~~~~~~~~~~~^
+        "SELECT COUNT(*) FROM audit_logs WHERE CAST(ts_utc AS DATE) >= ?",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        (cutoff_date,)
+        ^^^^^^^^^^^^^^
+    )
+    ^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:05:29 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 176, in get_audit_statistics
+    cursor.execute(
+    ~~~~~~~~~~~~~~^
+        "SELECT COUNT(*) FROM audit_logs WHERE CAST(ts_utc AS DATE) >= ?",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        (cutoff_date,)
+        ^^^^^^^^^^^^^^
+    )
+    ^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 75, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 239, in dashboard
+    stats = get_audit_statistics(30)
+  File "C:\BTManifest\app\modules\admin\views.py", line 168, in get_audit_statistics
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:06:42 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 161, in query_audit_logs
+    cursor.execute(query, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+2025-10-28 14:06:43 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 161, in query_audit_logs
+    cursor.execute(query, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 75, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 321, in audit_logs
+    logs = query_audit_logs(filters, limit=500)
+  File "C:\BTManifest\app\modules\admin\views.py", line 120, in query_audit_logs
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+2025-10-28 14:07:02 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 95, in record_audit_log
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO audit_logs(
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<16 lines>...
+        session_id
+        ^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:07:02 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 95, in record_audit_log
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO audit_logs(
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<16 lines>...
+        session_id
+        ^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 75, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 535, in system_management
+    record_audit_log(cu, "view_system_management", "admin", "Accessed system management interface")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\admin\views.py", line 84, in record_audit_log
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:15:51 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 256, in dashboard
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT COUNT(*) FROM deletion_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE status = 'pending'
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+2025-10-28 14:15:51 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 256, in dashboard
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT COUNT(*) FROM deletion_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE status = 'pending'
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 75, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 241, in dashboard
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+2025-10-28 14:23:06 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: row indices must be integers, not str
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 75, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\admin\views.py", line 340, in audit_logs
+    modules=[m["module"] for m in modules],
+             ~^^^^^^^^^^
+TypeError: row indices must be integers, not str
+2025-10-28 14:33:48 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 176, in list_queue
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=0
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:33:48 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 176, in list_queue
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=0
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 374, in queue
+    rows = list_queue(location if should_filter else None)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 166, in list_queue
+    with get_db_connection("fulfillment") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:34:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 198, in list_archive
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=1
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY completed_at DESC, created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:34:14 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 198, in list_archive
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=1
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY completed_at DESC, created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 395, in archive
+    rows = list_archive(location if should_filter else None)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 188, in list_archive
+    with get_db_connection("fulfillment") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:40:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 84, in create_user
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+2025-10-28 14:40:14 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 84, in create_user
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 434, in create
+    uid = create_user(data)
+  File "C:\BTManifest\app\modules\users\models.py", line 81, in create_user
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: Attempt to use a closed connection.
+2025-10-28 14:49:09 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 85, in create_user
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO users (
+        ^^^^^^^^^^^^^^^^^^^
+    ...<18 lines>...
+        data.get('location', 'NY')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:49:09 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 85, in create_user
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO users (
+        ^^^^^^^^^^^^^^^^^^^
+    ...<18 lines>...
+        data.get('location', 'NY')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 445, in create
+    uid = create_user(data)
+  File "C:\BTManifest\app\modules\users\models.py", line 81, in create_user
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:51:51 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 297, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 272, in user_list
+    row_dict = dict(row)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-28 16:45:47 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateSyntaxError: Encountered unknown tag 'endif'.
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\templates\base.html", line 593, in template
+    {% endif %}
+jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endif'.
+2025-10-28 16:51:42 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 16:51:42 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\reports.py", line 20, in insights
+    with get_db_connection("send") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 16:52:05 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 16:52:05 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\views.py", line 38, in page
+    suggested_checkin = peek_next_checkin_id()
+  File "C:\BTManifest\app\modules\send\models.py", line 70, in peek_next_checkin_id
+    conn = _conn()
+  File "C:\BTManifest\app\modules\send\models.py", line 21, in _conn
+    return get_db_connection("send").__enter__()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:01:56 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:05:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:05:00 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 110, in create_app
+    from app.modules.fulfillment.views import bp as fulfillment_bp
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 105, in <module>
+    _ensure_extended_schema()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 35, in _ensure_extended_schema
+    with get_db_connection("fulfillment") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:12:23 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.insights'. Did you mean 'inventory.insights' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 502, in top-level template code
+    <a href="{{ url_for('send.insights') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='insights' else '' }}">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.insights'. Did you mean 'inventory.insights' instead?
+2025-10-29 09:17:00 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 502, in top-level template code
+    <a href="{{ url_for('send.reports') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='insights' else '' }}">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+2025-10-29 09:22:15 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 502, in top-level template code
+    <a href="{{ url_for('send.reports') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='insights' else '' }}">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+2025-10-29 09:28:12 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.insights'. Did you mean 'inventory.insights' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\home\views.py", line 76, in index
+    return render_template(
+        "home/index.html",
+    ...<4 lines>...
+        **effective_perms
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\home\templates\home\index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 546, in top-level template code
+    <a href="{{ url_for('fulfillment.insights') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='insights' else '' }}">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.insights'. Did you mean 'inventory.insights' instead?
+2025-10-29 09:32:30 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 593, in elevation_management
+    row_dict = dict(row)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-29 09:32:44 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 593, in elevation_management
+    row_dict = dict(row)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-29 09:33:13 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.insights.export' with values ['completed_by', 'date_from', 'date_to', 'location', 'order_number', 'page_count_max', 'page_count_min', 'requester_name']. Did you mean 'fulfillment.insights_export' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 524, in insights
+    return render_template(
+        "fulfillment/insights.html",
+    ...<15 lines>...
+        user_location=user_location if should_filter else None
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\insights.html", line 67, in block 'body'
+    <a href="{{ url_for('fulfillment.insights.export', order_number=order_number, date_from=date_from, date_to=date_to, requester_name=requester_name, page_count_min=page_count_min, page_count_max=page_count_max, completed_by=completed_by, location=location) }}" class="btn btn-success">
+    
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.insights.export' with values ['completed_by', 'date_from', 'date_to', 'location', 'order_number', 'page_count_max', 'page_count_min', 'requester_name']. Did you mean 'fulfillment.insights_export' instead?
+2025-10-29 09:34:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:34:16 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\inventory\views.py", line 517, in insights
+    with get_db_connection("inventory") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:35:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:35:16 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\reports.py", line 33, in reports
+    with get_db_connection("send") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:43:18 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in send: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\send\reports.py", line 74, in reports
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-29 09:43:18 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\send\reports.py", line 74, in reports
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\reports.py", line 33, in reports
+    with get_db_connection("send") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-29 09:51:49 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\reports.py", line 115, in reports
+    return render_template(
+        "send/insights.html",
+    ...<12 lines>...
+        by_location=by_location
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\send\templates\send\insights.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\send\templates\send\insights.html", line 373, in block 'body'
+    <form method="get" action="{{ url_for('send.reports') }}" class="filter-form">
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'send.reports'. Did you mean 'send.export' instead?
+2025-10-29 10:38:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 10:38:00 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 41, in get_connection
+    conn = pyodbc.connect(self.connection_string)
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\auth\security.py", line 331, in wrapped
+    return view(*args, **kwargs)
+  File "C:\BTManifest\app\modules\send\views.py", line 38, in page
+    suggested_checkin = peek_next_checkin_id()
+  File "C:\BTManifest\app\modules\send\models.py", line 70, in peek_next_checkin_id
+    conn = _conn()
+  File "C:\BTManifest\app\modules\send\models.py", line 21, in _conn
+    return get_db_connection("send").__enter__()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\BTManifest\app\core\database.py", line 134, in get_db_connection
+    conn = pool.get_connection()
+  File "C:\BTManifest\app\core\database.py", line 45, in get_connection
+    raise DatabaseError(f"Database connection failed: {e}")
+app.core.database.DatabaseError: Database connection failed: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 11:34:49 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 85, in record_audit_log
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+2025-10-29 11:34:49 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database error: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 85, in record_audit_log
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 798, in request_user_deletion
+    record_audit(cu, "request_user_deletion", "users",
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                f"Requested deletion of user {target['username']} (ID: {uid})")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\users\views.py", line 263, in record_audit
+    record_audit_log(user_data, action, module, details, target_user_id, target_username)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\admin\views.py", line 84, in record_audit_log
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 158, in get_db_connection
+    raise DatabaseError(f"Database error: {e}")
+app.core.database.DatabaseError: Database error: Attempt to use a closed connection.
+2025-10-29 11:44:06 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 726, in elevate_user
+    update_user_permissions(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        uid,
+        ^^^^
+    ...<3 lines>...
+        reason=request.json.get("reason", "")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\app\modules\users\views.py", line 118, in update_user_permissions
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-29 11:44:16 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 726, in elevate_user
+    update_user_permissions(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        uid,
+        ^^^^
+    ...<3 lines>...
+        reason=request.json.get("reason", "")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\app\modules\users\views.py", line 118, in update_user_permissions
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-29 11:44:28 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: cannot convert dictionary update sequence element #0 to a sequence
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 726, in elevate_user
+    update_user_permissions(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        uid,
+        ^^^^
+    ...<3 lines>...
+        reason=request.json.get("reason", "")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\app\modules\users\views.py", line 118, in update_user_permissions
+    user = dict(user)
+TypeError: cannot convert dictionary update sequence element #0 to a sequence
+2025-10-29 11:49:02 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: row indices must be integers, not str
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 747, in elevate_user
+    f"Elevated {target['username']} to {new_level}",
+                ~~~~~~^^^^^^^^^^^^
+TypeError: row indices must be integers, not str
+2025-10-29 11:49:08 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: row indices must be integers, not str
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 747, in elevate_user
+    f"Elevated {target['username']} to {new_level}",
+                ~~~~~~^^^^^^^^^^^^
+TypeError: row indices must be integers, not str
+2025-10-29 11:49:14 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TypeError: row indices must be integers, not str
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\users\views.py", line 747, in elevate_user
+    f"Elevated {target['username']} to {new_level}",
+                ~~~~~~^^^^^^^^^^^^
+TypeError: row indices must be integers, not str
+2025-10-29 12:07:25 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Data integrity violation: ('23000', '[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT statement conflicted with the FOREIGN KEY constraint "FK__fulfillme__reque__1DB06A4F". The conflict occurred in database "fulfillment", table "dbo.fulfillment_requests", column \'id\'. (547) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 62, in add_file
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO fulfillment_files(request_id, orig_name, stored_name, ext, bytes, ok)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        VALUES (?,?,?,?,?,?)
+        ^^^^^^^^^^^^^^^^^^^^
+    """, (request_id, orig_name, stored_name, ext, size, ok))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.IntegrityError: ('23000', '[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT statement conflicted with the FOREIGN KEY constraint "FK__fulfillme__reque__1DB06A4F". The conflict occurred in database "fulfillment", table "dbo.fulfillment_requests", column \'id\'. (547) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 266, in request_form
+    add_file(rid, orig, stored, ext, size, ok=1)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 60, in add_file
+    with get_db_connection("fulfillment") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\BTManifest\app\core\database.py", line 144, in get_db_connection
+    raise DatabaseError(f"Data integrity violation: {e}")
+app.core.database.DatabaseError: Data integrity violation: ('23000', '[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT statement conflicted with the FOREIGN KEY constraint "FK__fulfillme__reque__1DB06A4F". The conflict occurred in database "fulfillment", table "dbo.fulfillment_requests", column \'id\'. (547) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2025-10-29 12:11:43 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateNotFound: fulfillment/request_form.html
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 296, in request_form
+    return render_template(
+        "fulfillment/request_form.html",
+        active="fulfillment",
+        page="request"
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 149, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 65, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 99, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: fulfillment/request_form.html
+2025-10-29 12:14:48 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.request'. Did you mean 'fulfillment.request_form' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 213, in request_form
+    return redirect(url_for("fulfillment.request"))
+                    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\helpers.py", line 239, in url_for
+    return current_app.url_for(
+           ~~~~~~~~~~~~~~~~~~~^
+        endpoint,
+        ^^^^^^^^^
+    ...<4 lines>...
+        **values,
+        ^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.request'. Did you mean 'fulfillment.request_form' instead?
+2025-10-29 14:31:40 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 111, in create_app
+    app.register_blueprint(fulfillment_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+2025-10-29 14:32:29 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 111, in create_app
+    app.register_blueprint(fulfillment_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+2025-10-29 14:35:17 | [35mCRITICAL[0m | __main__ | create_app:123 | Failed to register blueprints: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+Traceback (most recent call last):
+  File "C:\BTManifest\app\app.py", line 111, in create_app
+    app.register_blueprint(fulfillment_bp)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 595, in register_blueprint
+    blueprint.register(self, options)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 335, in register
+    deferred(state)
+    ~~~~~~~~^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 434, in <lambda>
+    lambda s: s.add_url_rule(
+              ~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rule,
+        ^^^^^
+    ...<3 lines>...
+        **options,
+        ^^^^^^^^^^
+    )
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\scaffold.py", line 47, in wrapper_func
+    return f(self, *args, **kwargs)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\sansio\app.py", line 657, in add_url_rule
+    raise AssertionError(
+    ...<2 lines>...
+    )
+AssertionError: View function mapping is overwriting an existing endpoint function: fulfillment.view_request
+2025-10-29 14:36:09 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'flask.wrappers.Request object' has no attribute 'id'
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 362, in queue
+    return render_template("fulfillment/queue.html",
+                           active="fulfillment",
+    ...<2 lines>...
+                           statuses=STATUS_CHOICES,
+                           user_location=location)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\queue.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\queue.html", line 466, in block 'body'
+    <a href="{{ url_for('fulfillment.view_request', request_id=request.id) }}">View Details</a>
+    ^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 922, in build
+    rv = self._partial_build(endpoint, values, method, append_unknown)
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 801, in _partial_build
+    rv = self._partial_build(
+        endpoint, values, self.default_method, append_unknown
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 814, in _partial_build
+    build_rv = rule.build(values, append_unknown)
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\rules.py", line 850, in build
+    return self._build_unknown(**values)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "<werkzeug routing>", line 1, in <builder:'/fulfillment/request/<int:request_id>'>
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\converters.py", line 163, in to_url
+    value_str = str(self.num_convert(value))
+                    ~~~~~~~~~~~~~~~~^^^^^^^
+jinja2.exceptions.UndefinedError: 'flask.wrappers.Request object' has no attribute 'id'
+2025-10-29 14:57:11 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.view_request' with values ['rid']. Did you forget to specify values ['request_id']?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 627, in archive
+    return render_template("fulfillment/archive.html",
+                           active="fulfillment",
+                           page="archive",
+                           rows=rows,
+                           user_location=location)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\archive.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\archive.html", line 161, in block 'body'
+    <a href="{{ url_for('fulfillment.view_request', rid=r.id) }}" class="btn-view">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.view_request' with values ['rid']. Did you forget to specify values ['request_id']?
+2025-10-29 15:04:31 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.edit_request' with values ['request_id']. Did you mean 'fulfillment.view_request' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 606, in view_request
+    return render_template(
+        "fulfillment/view_request.html",
+    ...<3 lines>...
+        files=files
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\view_request.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\view_request.html", line 114, in block 'body'
+    <a href="{{ url_for('fulfillment.edit_request', request_id=request.id) }}" class="btn btn-primary">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.edit_request' with values ['request_id']. Did you mean 'fulfillment.view_request' instead?
+2025-10-29 15:05:40 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'fulfillment.edit_request' with values ['request_id']. Did you mean 'fulfillment.view_request' instead?
+Traceback (most recent call last):
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 606, in view_request
+    return render_template(
+        "fulfillment/view_request.html",
+    ...<3 lines>...
+        files=files
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\BTManifest\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\BTManifest\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\view_request.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\BTManifest\app\templates\base.html", line 645, in top-level template code
+    {% block body %}{% endblock %}
+    ^^^^^^^^^^^^^
+  File "C:\BTManifest\app\modules\fulfillment\templates\fulfillment\view_request.html", line 114, in block 'body'
+    <a href="{{ url_for('fulfillment.edit_request', request_id=request.id) }}" class="btn btn-primary">
+    ^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\BTManifest\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.edit_request' with values ['request_id']. Did you mean 'fulfillment.view_request' instead?

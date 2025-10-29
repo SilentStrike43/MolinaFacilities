@@ -2,11 +2,11 @@
 import os
 import json
 import datetime
-import sqlite3
 import logging
 from flask import render_template, request, redirect, url_for, flash, jsonify
 
 from app.modules.auth.security import login_required, require_asset, current_user, record_audit
+from app.core.database import get_db_connection
 
 # Import the blueprint from __init__.py (DON'T create it here!)
 from . import bp
@@ -189,100 +189,114 @@ def get_category_info(sku: str) -> dict:
 
 def generate_next_sku(category_code: str) -> str:
     """Generate next SKU for given category code."""
-    con = assets_db()
-    
-    # Find highest SKU for this category
-    prefix = category_code
-    result = con.execute("""
-        SELECT sku FROM assets 
-        WHERE sku LIKE ? 
-        ORDER BY sku DESC 
-        LIMIT 1
-    """, (f"{prefix}-%",)).fetchone()
-    
-    if result:
-        # Extract number and increment
-        last_sku = result["sku"]
-        try:
-            last_num = int(last_sku.split("-")[1])
-            next_num = last_num + 1
-        except:
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        
+        # Find highest SKU for this category - SQL Server uses TOP instead of LIMIT
+        prefix = category_code
+        cursor.execute("""
+            SELECT TOP 1 sku FROM assets 
+            WHERE sku LIKE ? 
+            ORDER BY sku DESC
+        """, (f"{prefix}-%",))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if result:
+            # Extract number and increment
+            last_sku = result[0]
+            try:
+                last_num = int(last_sku.split("-")[1])
+                next_num = last_num + 1
+            except:
+                next_num = 1
+        else:
             next_num = 1
-    else:
-        next_num = 1
-    
-    con.close()
-    return f"{prefix}-{next_num:06d}"
+        
+        return f"{prefix}-{next_num:06d}"
 
 def create_asset(data: dict) -> int:
     """Create new asset in database."""
-    con = assets_db()
-    cur = con.execute("""
-        INSERT INTO assets(sku, product, uom, location, qty_on_hand, manufacturer, part_number, serial_number, pii, notes, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        data.get("sku", ""),
-        data.get("product", ""),
-        data.get("uom", "EA"),
-        data.get("location", ""),
-        int(data.get("qty_on_hand", 0)),
-        data.get("manufacturer", ""),
-        data.get("part_number", ""),
-        data.get("serial_number", ""),
-        data.get("pii", ""),
-        data.get("notes", ""),
-        data.get("status", "active")
-    ))
-    asset_id = cur.lastrowid
-    con.commit()
-    con.close()
-    return asset_id
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO assets(sku, product, uom, location, qty_on_hand, manufacturer, part_number, serial_number, pii, notes, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data.get("sku", ""),
+            data.get("product", ""),
+            data.get("uom", "EA"),
+            data.get("location", ""),
+            int(data.get("qty_on_hand", 0)),
+            data.get("manufacturer", ""),
+            data.get("part_number", ""),
+            data.get("serial_number", ""),
+            data.get("pii", ""),
+            data.get("notes", ""),
+            data.get("status", "active")
+        ))
+        conn.commit()
+        
+        # Get last inserted ID
+        cursor.execute("SELECT @@IDENTITY")
+        asset_id = int(cursor.fetchone()[0])
+        cursor.close()
+        return asset_id
 
 def record_initial_checkin(asset_id: int, qty: int, username: str, note: str = "Initial inventory"):
     """Record initial check-in to ledger and log to insights."""
-    con = assets_db()
-    con.execute("""
-        INSERT INTO asset_ledger(asset_id, action, qty, username, note)
-        VALUES (?, 'CHECKIN', ?, ?, ?)
-    """, (asset_id, qty, username, note))
-    con.commit()
-    con.close()
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO asset_ledger(asset_id, action, qty, username, note)
+            VALUES (?, 'CHECKIN', ?, ?, ?)
+        """, (asset_id, qty, username, note))
+        conn.commit()
+        cursor.close()
     
     log_to_insights(asset_id, "CHECKIN", qty, username, note)
 
 def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: str = ""):
     """Log asset movements to insights for reporting."""
-    con = assets_db()
-    asset = con.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
-    con.close()
+    # Get asset info
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM assets WHERE id=?", (asset_id,))
+        asset = cursor.fetchone()
+        cursor.close()
     
     if not asset:
         return
     
-    cat_info = get_category_info(asset["sku"])
+    # Convert to dict
+    asset_dict = dict(zip([col[0] for col in asset.cursor_description], asset))
     
-    con = inventory_db()
-    con.execute("""
-        INSERT INTO inventory_reports(
-            checkin_date, inventory_id, item_type, manufacturer, product_name,
-            submitter_name, notes, part_number, serial_number, count, location, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        datetime.date.today().isoformat(),
-        asset_id,
-        f"{cat_info['category']} - {cat_info['subcategory']}",
-        asset.get("manufacturer", ""),
-        asset["product"] or "",
-        username,
-        f"{action}: {note}" if note else action,
-        asset.get("part_number", "N/A"),
-        asset.get("serial_number", "N/A"),
-        qty,
-        asset["location"] or "",
-        "completed"
-    ))
-    con.commit()
-    con.close()
+    cat_info = get_category_info(asset_dict.get("sku", ""))
+    
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO inventory_reports(
+                checkin_date, inventory_id, item_type, manufacturer, product_name,
+                submitter_name, notes, part_number, serial_number, count, location, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            datetime.date.today().isoformat(),
+            asset_id,
+            f"{cat_info['category']} - {cat_info['subcategory']}",
+            asset_dict.get("manufacturer", ""),
+            asset_dict.get("product", ""),
+            username,
+            f"{action}: {note}" if note else action,
+            asset_dict.get("part_number", "N/A"),
+            asset_dict.get("serial_number", "N/A"),
+            qty,
+            asset_dict.get("location", ""),
+            "completed"
+        ))
+        conn.commit()
+        cursor.close()
 
 def queue_asset_label(data: dict):
     """Queue an asset label for BarTender printing."""
@@ -340,24 +354,28 @@ def asset():
     next_sku_preview = generate_next_sku(default_category)
     
     # Get existing assets for display
-    con = assets_db()
-    q = (request.args.get("q") or "").strip()
-    status_filter = request.args.get("status", "active")
-    
-    sql = "SELECT * FROM assets WHERE 1=1"
-    params = []
-    
-    if status_filter != "all":
-        sql += " AND status = ?"
-        params.append(status_filter)
-    
-    if q:
-        sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ? OR manufacturer LIKE ?)"
-        params.extend([f"%{q}%"] * 4)
-    
-    sql += " ORDER BY id DESC LIMIT 100"
-    rows = con.execute(sql, params).fetchall()
-    con.close()
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        
+        q = (request.args.get("q") or "").strip()
+        status_filter = request.args.get("status", "active")
+        
+        sql = "SELECT TOP 100 * FROM assets WHERE 1=1"
+        params = []
+        
+        if status_filter != "all":
+            sql += " AND status = ?"
+            params.append(status_filter)
+        
+        if q:
+            sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ? OR manufacturer LIKE ?)"
+            params.extend([f"%{q}%"] * 4)
+        
+        sql += " ORDER BY id DESC"
+        
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+        cursor.close()
     
     # Handle POST
     if request.method == "POST":
@@ -416,8 +434,8 @@ def asset():
                     flashmsg = (f"Asset #{asset_id} created successfully! Label: {os.path.basename(label_file)}", True)
                     record_audit(cu, "create_asset", "inventory", f"Asset #{asset_id}, SKU {sku}: {product}")
                 except Exception as e:
-                    flashmsg = (f"⚠️ Asset #{asset_id} created but label failed: {str(e)}", False)
-                    record_audit(cu, "create_asset_error", "inventory", f"Asset #{asset_id} label error: {str(e)}")
+                    flashmsg = (f"⚠️ Asset created but label failed: {str(e)}", False)
+                    record_audit(cu, "create_asset_error", "inventory", f"Asset label error: {str(e)}")
         
         elif mode == "update":
             asset_id = int(request.form.get("id") or 0)
@@ -428,14 +446,15 @@ def asset():
             notes = (request.form.get("Notes") or "").strip()
             status = request.form.get("Status", "active")
             
-            con = assets_db()
-            con.execute("""
-                UPDATE assets 
-                SET product=?, manufacturer=?, uom=?, location=?, notes=?, status=?
-                WHERE id=?
-            """, (product, manufacturer, uom, location, notes, status, asset_id))
-            con.commit()
-            con.close()
+            with get_db_connection("inventory") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE assets 
+                    SET product=?, manufacturer=?, uom=?, location=?, notes=?, status=?
+                    WHERE id=?
+                """, (product, manufacturer, uom, location, notes, status, asset_id))
+                conn.commit()
+                cursor.close()
             
             record_audit(cu, "update_asset", "inventory", f"Updated asset #{asset_id}")
             flashmsg = (f"Asset #{asset_id} updated successfully.", True)
@@ -444,9 +463,11 @@ def asset():
     edit_id = request.args.get("edit", type=int)
     edit = None
     if edit_id:
-        con = assets_db()
-        edit = con.execute("SELECT * FROM assets WHERE id=?", (edit_id,)).fetchone()
-        con.close()
+        with get_db_connection("inventory") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM assets WHERE id=?", (edit_id,))
+            edit = cursor.fetchone()
+            cursor.close()
 
     return render_template(
         "inventory/asset.html",
@@ -493,39 +514,49 @@ def insights():
          ["q","inventory_id","product_name","manufacturer","item_type",
           "submitter_name","date_from","date_to"]}
     
-    con = inventory_db()
-    sql = "SELECT * FROM inventory_reports WHERE 1=1"
-    params = []
-    
-    def add_like(field, val):
-        nonlocal sql, params
-        if val:
-            sql += f" AND {field} LIKE ?"
-            params.append(f"%{val}%")
-    
-    add_like("submitter_name", f["submitter_name"])
-    add_like("product_name", f["product_name"])
-    add_like("manufacturer", f["manufacturer"])
-    add_like("item_type", f["item_type"])
-    
-    if f["inventory_id"]:
-        sql += " AND inventory_id = ?"
-        params.append(f["inventory_id"])
-    
-    if f["q"]:
-        add_like("(notes || ' ' || product_name || ' ' || manufacturer)", f["q"])
-    
-    if f["date_from"]:
-        sql += " AND date(ts_utc) >= date(?)"
-        params.append(f["date_from"])
-    
-    if f["date_to"]:
-        sql += " AND date(ts_utc) <= date(?)"
-        params.append(f["date_to"])
-    
-    sql += " ORDER BY ts_utc DESC LIMIT 2000"
-    rows = con.execute(sql, params).fetchall()
-    con.close()
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        
+        sql = "SELECT TOP 2000 * FROM inventory_reports WHERE 1=1"
+        params = []
+        
+        if f["submitter_name"]:
+            sql += " AND submitter_name LIKE ?"
+            params.append(f"%{f['submitter_name']}%")
+        
+        if f["product_name"]:
+            sql += " AND product_name LIKE ?"
+            params.append(f"%{f['product_name']}%")
+        
+        if f["manufacturer"]:
+            sql += " AND manufacturer LIKE ?"
+            params.append(f"%{f['manufacturer']}%")
+        
+        if f["item_type"]:
+            sql += " AND item_type LIKE ?"
+            params.append(f"%{f['item_type']}%")
+        
+        if f["inventory_id"]:
+            sql += " AND inventory_id = ?"
+            params.append(f["inventory_id"])
+        
+        if f["q"]:
+            sql += " AND (notes LIKE ? OR product_name LIKE ? OR manufacturer LIKE ?)"
+            params.extend([f"%{f['q']}%"] * 3)
+        
+        if f["date_from"]:
+            sql += " AND CAST(ts_utc AS DATE) >= ?"
+            params.append(f["date_from"])
+        
+        if f["date_to"]:
+            sql += " AND CAST(ts_utc AS DATE) <= ?"
+            params.append(f["date_to"])
+        
+        sql += " ORDER BY ts_utc DESC"
+        
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+        cursor.close()
     
     return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
 
@@ -538,16 +569,20 @@ def insights_export():
     import csv
     from flask import send_file
     
-    con = inventory_db()
-    rows = con.execute("SELECT * FROM inventory_reports ORDER BY ts_utc DESC").fetchall()
-    con.close()
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM inventory_reports ORDER BY ts_utc DESC")
+        rows = cursor.fetchall()
+        cursor.close()
     
     out = io.StringIO()
     w = csv.writer(out)
     w.writerow(["ts_utc","inventory_id","product_name","manufacturer","item_type","submitter_name","notes","count","location"])
     for r in rows:
-        w.writerow([r["ts_utc"], r["inventory_id"], r["product_name"], r["manufacturer"],
-                    r["item_type"], r["submitter_name"], r["notes"], r.get("count", ""), r.get("location", "")])
+        row_dict = dict(zip([col[0] for col in r.cursor_description], r)) if hasattr(r, 'cursor_description') else dict(r)
+        w.writerow([row_dict.get("ts_utc"), row_dict.get("inventory_id"), row_dict.get("product_name"), 
+                    row_dict.get("manufacturer"), row_dict.get("item_type"), row_dict.get("submitter_name"), 
+                    row_dict.get("notes"), row_dict.get("count", ""), row_dict.get("location", "")])
     
     mem = io.BytesIO(out.getvalue().encode("utf-8"))
     mem.seek(0)

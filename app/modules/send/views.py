@@ -1,6 +1,6 @@
 # app/modules/send/views.py
 import datetime
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify 
 
 from . import bp  # Import bp from __init__.py - DO NOT redefine it
 
@@ -30,6 +30,8 @@ def get_next_id():
 @login_required
 @require_cap("can_send")
 def page():
+    from app.modules.auth.security import get_user_location
+    
     ensure_schema()
     today = datetime.date.today().isoformat()
     default_pkg_type = "Box"
@@ -38,46 +40,44 @@ def page():
 
     flashmsg = None
     if request.method == "POST":
-        recipient_name = (request.form.get("RecipientName") or "").strip()
-        tracking       = (request.form.get("TrackingNumber") or "").strip()
-        checkin_date   = request.form.get("CheckInDate") or today
-        pkg_type       = request.form.get("PackageType") or default_pkg_type
-
-        raw_checkin = (request.form.get("CheckInID") or "").strip()
-        checkin_id  = raw_checkin if raw_checkin.isdigit() else str(next_checkin_id())
-
-        raw_pkgid   = (request.form.get("PackageID") or "").strip()
-        package_id  = raw_pkgid if raw_pkgid else next_package_id(pkg_type)
-
-        if not recipient_name or not tracking:
-            flashmsg = ("Recipient and Tracking Number are required.", False)
-        else:
-            payload = {
-                "CheckInDate": checkin_date,
-                "CheckInID": checkin_id,
-                "PackageType": pkg_type,
-                "PackageID": package_id,
-                "RecipientName": recipient_name,
-                "TrackingNumber": tracking,
-                "Template": "iOffice_Template.btw",
-                "Printer":  ""
-            }
+        checkin_date = request.form.get("CheckInDate", today)
+        checkin_id = next_checkin_id()
+        pkg_type = request.form.get("PackageType", default_pkg_type)
+        package_id = next_package_id(pkg_type)
+        recipient_name = request.form.get("RecipientName", "")
+        tracking = request.form.get("TrackingNumber", "")
+        
+        # Get user's location
+        cu = current_user()
+        user_location = get_user_location(cu)
+        
+        payload = {
+            "CheckInDate": checkin_date,
+            "CheckInID": checkin_id,
+            "PackageType": pkg_type,
+            "PackageID": package_id,
+            "RecipientName": recipient_name,
+            "TrackingNumber": tracking,
+            "Template": "iOffice_Template.btw",
+            "Printer": "",
+            "Location": user_location
+        }
+        
+        try:
             job = drop_to_bartender(payload, hint="manifest")
-            record_audit(current_user(), "print_label", "send", 
-                        f"CheckInID={checkin_id}, PackageID={package_id}")
-            flashmsg = (f"Label queued successfully.", True)
-            suggested_checkin = int(checkin_id) + 1
-            suggested_package = peek_next_package_id(pkg_type)
-
+            record_audit(cu, "print_label", "send", f"Printed {pkg_type} label {package_id}")
+            flashmsg = f"Label printed: {package_id}"
+        except Exception as e:
+            flashmsg = f"Error printing label: {str(e)}"
+    
     return render_template(
         "send/index.html",
         active="send",
-        flashmsg=flashmsg,
         today=today,
-        package_types=PACKAGE_TYPES,
         suggested_checkin=suggested_checkin,
         suggested_package=suggested_package,
-        package_prefix=PACKAGE_PREFIX,
+        package_types=PACKAGE_TYPES,
+        flashmsg=flashmsg
     )
 
 # ---------- Tracking ----------

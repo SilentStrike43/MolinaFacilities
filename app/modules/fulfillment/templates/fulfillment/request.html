@@ -419,7 +419,7 @@
                     <input 
                         type="number" 
                         class="form-control-modern" 
-                        name="total_pages" 
+                        name="page_count" 
                         min="0" 
                         placeholder="If known"
                     >
@@ -451,13 +451,21 @@
                         type="file" 
                         id="fileInput"
                         class="file-input-hidden" 
-                        name="files" 
+                        name="attachments" 
                         multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif"
                     >
                 </div>
-                <div class="form-text">
-                    <i class="bi bi-paperclip"></i>
-                    You can attach multiple files at once
+
+                <!-- Selected Files Display -->
+                <div id="selectedFilesContainer" style="margin-top: 1rem; display: none;">
+                    <div style="background: #d1fae5; border: 2px solid #10b981; border-radius: 0.875rem; padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <i class="bi bi-check-circle-fill" style="color: #059669; font-size: 1.25rem;"></i>
+                            <strong style="color: #065f46;">Files Ready to Upload:</strong>
+                        </div>
+                        <ul id="selectedFilesList" style="margin: 0; padding-left: 1.5rem; color: #065f46;"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -563,6 +571,8 @@
 // File upload drag and drop functionality
 const fileUpload = document.querySelector('.file-upload-modern');
 const fileInput = document.getElementById('fileInput');
+const uploadText = document.querySelector('.file-upload-text');
+const uploadHint = document.querySelector('.file-upload-hint');
 
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     fileUpload.addEventListener(eventName, preventDefaults, false);
@@ -589,7 +599,28 @@ fileUpload.addEventListener('drop', (e) => {
     const dt = e.dataTransfer;
     const files = dt.files;
     fileInput.files = files;
+    updateFileDisplay(files);
 }, false);
+
+// Update display when files are selected
+fileInput.addEventListener('change', (e) => {
+    updateFileDisplay(e.target.files);
+});
+
+function updateFileDisplay(files) {
+    if (files.length > 0) {
+        const fileList = Array.from(files).map(f => f.name).join(', ');
+        uploadText.textContent = `${files.length} file(s) selected`;
+        uploadHint.innerHTML = `<strong style="color: #059669;">${fileList}</strong>`;
+        fileUpload.style.borderColor = '#10b981';
+        fileUpload.style.background = '#d1fae5';
+    } else {
+        uploadText.textContent = 'Click to upload or drag and drop';
+        uploadHint.textContent = 'PDF, DOC, DOCX, XLS, XLSX, or images (Max size depends on server)';
+        fileUpload.style.borderColor = '#d1d5db';
+        fileUpload.style.background = '#f9fafb';
+    }
+}
 </script>
 
 {% endblock %}

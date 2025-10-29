@@ -147,31 +147,23 @@
         <tbody>
             {% for r in rows %}
             <tr>
-                <td><strong>{{ r.id }}</strong></td>
-                <td>{{ r.item_type or r.details }}</td>
-                <td>{{ r.submitter or '—' }}</td>
+                <td><strong>#{{ r['id'] }}</strong></td>
+                <td>{{ r['description'] }}</td>
+                <td>{{ r['requester_name'] }}</td>
                 <td>
-                    <span class="status-badge status-archive">
-                        Archive
+                    <span class="badge badge-{{ r['status']|lower|replace(' ', '-') }}">
+                        {{ r['status'] }}
                     </span>
                 </td>
-                <td>{{ r.completed_utc or r.submitted_utc }}</td>
-                <td>{{ r.assigned_to or '—' }}</td>
+                <td>{{ r['completed_at'] if r['completed_at'] else '—' }}</td>
+                <td>{{ r['assigned_staff_name'] if r['assigned_staff_name'] else '—' }}</td>
                 <td>
-                    <a href="{{ url_for('fulfillment.view_request', rid=r.id) }}" class="btn-view">
-                        View
+                    <a href="{{ url_for('fulfillment.view_request', request_id=r['id']) }}" class="btn btn-sm btn-info">
+                        <i class="bi bi-eye"></i> View
                     </a>
                 </td>
             </tr>
             {% endfor %}
-            {% if not rows %}
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                    <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
-                    <p style="margin-top: 1rem;">No archived requests</p>
-                </td>
-            </tr>
-            {% endif %}
         </tbody>
     </table>
 </div>

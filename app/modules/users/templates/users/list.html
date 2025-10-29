@@ -319,6 +319,25 @@
         background: #fef3c7;
         color: #92400e;
     }
+
+        /* Fix modal flickering */
+    .modal {
+        z-index: 9999 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 9998 !important;
+    }
+
+    .modal-dialog {
+        animation: none !important;
+    }
+
+/* Disable hover effects when modal is open */
+body.modal-open .user-card:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
     
     /* Empty State */
     .empty-state {
@@ -421,7 +440,9 @@
                     {{ user.username[0]|upper }}
                 </div>
                 <div class="user-info">
-                    <div class="user-name">{{ user.username }}</div>
+                    <a href="{{ url_for('users.view_profile', uid=user.id) }}" class="user-name" style="text-decoration: none; color: #1f2937;">
+                        {{ user.username }}
+                    </a>
                     <div class="user-details">
                         {% if user.first_name or user.last_name %}
                             {{ user.first_name }} {{ user.last_name }}
@@ -495,22 +516,57 @@
                 </div>
             </div>
             
-            <!-- Actions -->
-            <div class="user-actions">
-                <a href="{{ url_for('users.edit_user', uid=user.id) }}" class="btn-user-action">
-                    <i class="bi bi-pencil"></i>
-                    Edit
+            <!-- This would be in the user card/row display -->
+            <div class="btn-group-vertical" role="group">
+                <a href="{{ url_for('users.edit_user', uid=user.id) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil"></i> Edit
                 </a>
-                {% if user.deletion_requested_at and cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
-                <a href="{{ url_for('users.deletion_requests') }}" class="btn-user-action">
-                    <i class="bi bi-shield-exclamation"></i>
-                    Review
-                </a>
-                {% endif %}
+                <button type="button" class="btn btn-sm btn-danger" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteModal{{ user.id }}">
+                    <i class="bi bi-trash"></i> Delete User
+                </button>
             </div>
         </div>
         {% endfor %}
     </div>
+
+        <!-- Delete Modals - Moved outside of cards to prevent flickering -->
+        {% for user in rows %}
+        <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Delete User
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <strong>⚠️ WARNING:</strong> You are about to delete this user.
+                        </div>
+                        <p>Please keep in mind that:</p>
+                        <ul>
+                            <li>Deleting this user only removes their profile and login access</li>
+                            <li>It does <strong>NOT</strong> delete their data in other modules</li>
+                            <li><strong>This action is irreversible</strong></li>
+                        </ul>
+                        <p class="mb-0"><strong>Are you sure you want to proceed?</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="POST" action="{{ url_for('users.request_user_deletion', uid=user.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Yes, Delete User
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
     {% else %}
     <!-- Empty State -->
     <div class="empty-state">

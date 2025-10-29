@@ -171,6 +171,16 @@
                     <input type="text" name="position" class="form-control">
                 </div>
             </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label">Location</label>
+                    <select class="form-select" id="location" name="location" required>
+                        <option value="NY">New York</option>
+                        <option value="CT">Connecticut</option>
+                        {% if can_set_all %}
+                        <option value="ALL">All Locations (Admin Only)</option>
+                        {% endif %}
+                    </select>
+                </div>
             
             <!-- Module Permissions -->
             <div class="form-section">

@@ -1,0 +1,215 @@
+2025-10-28 13:18:59 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:21:01 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:47:06 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 13:48:27 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:49:06 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 13:51:00 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT TOP 1 sku FROM assets
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE sku LIKE ?
+        ^^^^^^^^^^^^^^^^
+        ORDER BY sku DESC
+        ^^^^^^^^^^^^^^^^^
+    """, (f"{prefix}-%",))
+    ^^^^^^^^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 13:51:30 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM assets
+        ^^^^^^^^^^^^^^^^^^^^
+        WHERE status != 'deleted'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        ORDER BY product, sku
+        ^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-10-28 14:05:29 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 176, in get_audit_statistics
+    cursor.execute(
+    ~~~~~~~~~~~~~~^
+        "SELECT COUNT(*) FROM audit_logs WHERE CAST(ts_utc AS DATE) >= ?",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        (cutoff_date,)
+        ^^^^^^^^^^^^^^
+    )
+    ^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:06:42 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 161, in query_audit_logs
+    cursor.execute(query, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
+2025-10-28 14:07:02 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 95, in record_audit_log
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO audit_logs(
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<16 lines>...
+        session_id
+        ^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 14:15:51 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 256, in dashboard
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT COUNT(*) FROM deletion_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE status = 'pending'
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
+2025-10-28 14:33:48 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 176, in list_queue
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=0
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:34:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\fulfillment\views.py", line 198, in list_archive
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT * FROM service_requests
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        WHERE is_archived=1
+        ^^^^^^^^^^^^^^^^^^^
+        ORDER BY completed_at DESC, created_at DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
+2025-10-28 14:40:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 84, in create_user
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+2025-10-28 14:49:09 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\users\models.py", line 85, in create_user
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        INSERT INTO users (
+        ^^^^^^^^^^^^^^^^^^^
+    ...<18 lines>...
+        data.get('location', 'NY')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^^
+pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-28 16:51:42 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-28 16:52:05 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:01:56 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:05:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:34:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:35:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 09:43:18 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in send: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\send\reports.py", line 74, in reports
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-29 10:38:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
+2025-10-29 11:34:49 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+Traceback (most recent call last):
+  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+    yield conn
+  File "C:\BTManifest\app\modules\admin\views.py", line 85, in record_audit_log
+    cursor = conn.cursor()
+pyodbc.ProgrammingError: Attempt to use a closed connection.
+2025-10-29 12:07:25 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', '[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT statement conflicted with the FOREIGN KEY constraint "FK__fulfillme__reque__1DB06A4F". The conflict occurred in database "fulfillment", table "dbo.fulfillment_requests", column \'id\'. (547) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)')
+2025-10-29 12:27:05 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'title', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
+2025-10-29 12:33:47 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'request_type', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
+2025-10-29 12:36:26 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'requester_id', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
+2025-10-29 12:43:36 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Violation of UNIQUE KEY constraint 'UQ__service___8EF03D9CEAB2E20C'. Cannot insert duplicate key in object 'dbo.service_requests'. The duplicate key value is (<NULL>). (2627) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
+2025-10-29 14:48:08 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert explicit value for identity column in table 'fulfillment_requests' when IDENTITY_INSERT is set to OFF. (544) (SQLExecDirectW)")

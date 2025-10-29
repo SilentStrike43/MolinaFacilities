@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Request #{{ request.id }} - Fulfillment{% endblock %}
+
+{% block page_title %}Request Details{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> 
+                        Request #{{ request.id }}
+                        <span class="badge bg-light text-dark ms-2">{{ request.status }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Request Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="150">Request Number:</th>
+                                    <td>{{ request.request_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Requester:</th>
+                                    <td>{{ request.requester_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Location:</th>
+                                    <td>{{ request.location }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Submitted:</th>
+                                    <td>{{ request.date_submitted }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total Pages:</th>
+                                    <td>{{ request.total_pages or 0 }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Assignment & Status</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="150">Status:</th>
+                                    <td>
+                                        {% if request.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif request.status == 'in_progress' %}
+                                        <span class="badge bg-info">In Progress</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ request.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Assigned To:</th>
+                                    <td>{{ request.assigned_staff_name or 'Unassigned' }}</td>
+                                </tr>
+                                {% if request.date_due %}
+                                <tr>
+                                    <th>Due Date:</th>
+                                    <td>{{ request.date_due }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if request.completed_at %}
+                                <tr>
+                                    <th>Completed:</th>
+                                    <td>{{ request.completed_at }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="text-muted">Description</h6>
+                    <p class="mb-4">{{ request.description }}</p>
+                    
+                    {% if request.notes %}
+                    <h6 class="text-muted">Notes</h6>
+                    <p class="mb-4">{{ request.notes }}</p>
+                    {% endif %}
+                    
+                    {% if files %}
+                    <hr>
+                    <h6 class="text-muted">Attached Files ({{ files|length }})</h6>
+                    <ul class="list-group">
+                        {% for file in files %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark"></i>
+                                {{ file[1] }}
+                                <small class="text-muted">({{ (file[3] / 1024) | round(2) }} KB)</small>
+                            </div>
+                            <span class="badge bg-primary">{{ file[2] }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('fulfillment.queue') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Queue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -29,10 +29,26 @@ from app.modules.users.models import (
     users_db
 )
 
+from app.core.database import get_db_connection
+
 from app.modules.users.permissions import PermissionManager, PermissionLevel
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
 bp = users_bp
+
+def row_to_dict(row):
+    """Convert pyodbc Row to dictionary."""
+    if isinstance(row, dict):
+        return row
+    if hasattr(row, 'cursor_description'):
+        return dict(zip([col[0] for col in row.cursor_description], row))
+    # For pyodbc.Row objects, use direct iteration
+    try:
+        columns = [column[0] for column in row.cursor_description]
+        return dict(zip(columns, row))
+    except:
+        # Fallback - try to iterate and hope it works
+        return dict(row)
 
 # Audit logging wrapper - avoids circular import
 def record_audit(user_data, action, module, details, target_user_id=None, target_username=None):
@@ -41,29 +57,25 @@ def record_audit(user_data, action, module, details, target_user_id=None, target
     record_audit_log(user_data, action, module, details, target_user_id, target_username)
 
 # ---------- Database helpers ----------
-def get_db():
-    """Get users database connection."""
-    return users_db()
-
 def list_users(include_system=False, include_deleted=False):
     """List all users with enhanced filtering."""
-    con = get_db()
-    query = "SELECT * FROM users"
-    conditions = []
-    
-    if not include_system:
-        conditions.append("username NOT IN ('system', 'sysadmin', 'AppAdmin')")
-    
-    if not include_deleted:
-        conditions.append("(deleted_at IS NULL OR deleted_at = '')")
-    
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-    
-    query += " ORDER BY username"
-    rows = con.execute(query).fetchall()
-    con.close()
-    return rows
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        query = "SELECT * FROM users WHERE 1=1"
+        
+        if not include_system:
+            query += " AND username NOT IN ('system', 'sysadmin', 'AppAdmin')"
+        
+        if not include_deleted:
+            query += " AND (deleted_at IS NULL OR deleted_at = '')"
+        
+        query += " ORDER BY username"
+        
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        cursor.close()
+        return rows
 
 def get_user_permission_level(user_data):
     """Get the effective permission level for a user."""
@@ -101,84 +113,108 @@ def update_user_permissions(uid: int, permission_level: str, module_permissions:
     if not user:
         return False
     
-    # Convert to dict if it's a Row object
-    if not isinstance(user, dict):
-        user = dict(user)
-    
-    con = get_db()
+    # Convert pyodbc Row to dict properly
+    if hasattr(user, 'cursor_description'):
+        user = dict(zip([col[0] for col in user.cursor_description], user))
+    elif not isinstance(user, dict):
+        # Try to convert Row-like objects
+        try:
+            user = dict(user)
+        except (TypeError, ValueError):
+            # If that fails, try accessing as attributes
+            user = {key: getattr(user, key) for key in dir(user) if not key.startswith('_')}
     
     # Get old permissions for history
     old_level = user.get("permission_level", "")
     old_modules = user.get("module_permissions", "[]")
     
-    # Update user
-    con.execute("""
-        UPDATE users 
-        SET permission_level = ?,
-            module_permissions = ?,
-            elevated_by = ?,
-            elevated_at = ?,
-            last_modified_at = ?
-        WHERE id = ?
-    """, (
-        permission_level,
-        json.dumps(module_permissions),
-        elevated_by,
-        datetime.utcnow().isoformat() + "Z" if elevated_by else None,
-        datetime.utcnow().isoformat() + "Z",
-        uid
-    ))
-    
-    # Record elevation history if this is an elevation
-    if elevated_by and (permission_level != old_level or module_permissions != old_modules):
-        con.execute("""
-            INSERT INTO user_elevation_history(
-                user_id, elevated_by, old_level, new_level,
-                old_permissions, new_permissions, reason
-            )
-            VALUES (?,?,?,?,?,?,?)
+    # Update user in Azure SQL
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users 
+            SET permission_level = ?,
+                module_permissions = ?,
+                elevated_by = ?,
+                elevated_at = ?,
+                last_modified_at = ?
+            WHERE id = ?
         """, (
-            uid, elevated_by, old_level, permission_level,
-            old_modules, json.dumps(module_permissions), reason
+            permission_level,
+            json.dumps(module_permissions),
+            elevated_by,
+            datetime.utcnow().isoformat() + "Z" if elevated_by else None,
+            datetime.utcnow().isoformat() + "Z",
+            uid
         ))
+        
+        # Record elevation history if this is an elevation
+        if elevated_by and (permission_level != old_level or json.dumps(module_permissions) != old_modules):
+            cursor.execute("""
+                INSERT INTO user_elevation_history(
+                    user_id, elevated_by, old_level, new_level,
+                    old_permissions, new_permissions, reason, elevated_at
+                )
+                VALUES (?,?,?,?,?,?,?,GETUTCDATE())
+            """, (
+                uid, elevated_by, old_level, permission_level,
+                old_modules, json.dumps(module_permissions), reason
+            ))
+        
+        conn.commit()
+        cursor.close()
     
-    con.commit()
-    con.close()
     return True
 
-def request_user_deletion(uid: int, reason: str = None):
+def _request_user_deletion_db(uid: int, reason: str = None):
     """Request user account deletion (requires admin approval)."""
-    con = get_db()
-    con.execute("""
-        INSERT INTO deletion_requests(user_id, reason, status)
-        VALUES (?,?,?)
-    """, (uid, reason, "pending"))
-    
-    # Mark user as deletion requested
-    con.execute("""
-        UPDATE users 
-        SET deletion_requested_at = ?
-        WHERE id = ?
-    """, (datetime.utcnow().isoformat() + "Z", uid))
-    
-    con.commit()
-    con.close()
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO deletion_requests(user_id, reason, status, requested_at)
+            VALUES (?, ?, ?, GETUTCDATE())
+        """, (uid, reason, "pending"))
+        
+        # Mark user as deletion requested
+        cursor.execute("""
+            UPDATE users 
+            SET deletion_requested_at = GETUTCDATE()
+            WHERE id = ?
+        """, (uid,))
+        
+        conn.commit()
+        cursor.close()
 
 def approve_user_deletion(uid: int, approved_by: int, notes: str = None):
     """Approve and execute user deletion."""
-    con = get_db()
-    
-    # Update deletion request
-    con.execute("""
-        UPDATE deletion_requests
-        SET status = 'approved',
-            approved_by = ?,
-            approved_at = ?
-        WHERE user_id = ? AND status = 'pending'
-    """, (approved_by, datetime.utcnow().isoformat() + "Z", uid))
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        # Update deletion request
+        cursor.execute("""
+            UPDATE deletion_requests
+            SET status = 'approved',
+                approved_by = ?,
+                approved_at = GETUTCDATE()
+            WHERE user_id = ? AND status = 'pending'
+        """, (approved_by, uid))
+        
+        # Soft delete the user
+        cursor.execute("""
+            UPDATE users 
+            SET deleted_at = GETUTCDATE(),
+                deletion_approved_by = ?,
+                deletion_notes = ?
+            WHERE id = ?
+        """, (approved_by, notes, uid))
+        
+        conn.commit()
+        cursor.close()
     
     # Soft delete the user
-    con.execute("""
+    conn.execute("""
         UPDATE users 
         SET deleted_at = ?,
             deletion_approved_by = ?,
@@ -191,8 +227,8 @@ def approve_user_deletion(uid: int, approved_by: int, notes: str = None):
         uid
     ))
     
-    con.commit()
-    con.close()
+    conn.commit()
+    cursor.close()
 
 # ---------- Permission Checking ----------
 def can_view_users(user_data) -> bool:
@@ -270,7 +306,11 @@ def user_list():
     # Filter and enhance user data
     filtered = []
     for row in rows:
-        row_dict = dict(row)
+        # Convert pyodbc Row to dict properly
+        if hasattr(row, 'cursor_description'):
+            row_dict = dict(zip([col[0] for col in row.cursor_description], row))
+        else:
+            row_dict = dict(row) if not isinstance(row, dict) else row
         
         # Add effective permissions
         row_dict["effective_permissions"] = PermissionManager.get_effective_permissions(row_dict)
@@ -281,11 +321,11 @@ def user_list():
         # Search filter
         if q:
             searchable = " ".join([
-                row_dict.get("username", ""),
-                row_dict.get("first_name", ""),
-                row_dict.get("last_name", ""),
-                row_dict.get("email", ""),
-                row_dict.get("department", ""),
+                str(row_dict.get("username", "")),
+                str(row_dict.get("first_name", "")),
+                str(row_dict.get("last_name", "")),
+                str(row_dict.get("email", "")),
+                str(row_dict.get("department", "")),
                 str(row_dict.get("id", ""))
             ]).lower()
             if q not in searchable:
@@ -300,6 +340,78 @@ def user_list():
                          q=q, 
                          show_all=include_inactive,
                          can_create=can_create_users(cu))
+
+@users_bp.route("/profile/<int:uid>")
+@login_required
+def view_profile(uid: int):
+    """View detailed user profile."""
+    cu = current_user()
+    
+    # Get target user
+    target = get_user_by_id(uid)
+    if not target:
+        flash("User not found.", "warning")
+        return redirect(url_for("users.user_list"))
+    
+    # Convert to dict
+    target = dict(zip([col[0] for col in target.cursor_description], target)) if hasattr(target, 'cursor_description') else target
+    
+    # Check if current user can view this profile
+    # Users can view their own profile, or admins can view any profile
+    if uid != cu['id'] and not can_view_users(cu):
+        flash("You don't have permission to view this profile.", "danger")
+        return redirect(url_for("users.user_list"))
+    
+    # Get permission information
+    permission_level = get_user_permission_level(target)
+    permission_desc = PermissionManager.get_permission_description(permission_level or "")
+    effective_perms = PermissionManager.get_effective_permissions(target)
+    module_perms_list = PermissionManager.parse_module_permissions(target.get("module_permissions", "[]"))
+    
+    # Get recent audit logs for this user
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT TOP 5 action, module, details, ts_utc
+            FROM audit_logs
+            WHERE user_id = ?
+            ORDER BY ts_utc DESC
+        """, (uid,))
+        recent_actions = cursor.fetchall()
+        cursor.close()
+    
+    # Get elevation history if admin
+    elevation_history = []
+    if permission_level:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT TOP 5 
+                    old_level, new_level, reason, elevated_at,
+                    (SELECT username FROM users WHERE id = elevated_by) as elevated_by_name
+                FROM user_elevation_history
+                WHERE user_id = ?
+                ORDER BY elevated_at DESC
+            """, (uid,))
+            elevation_history = cursor.fetchall()
+            cursor.close()
+    
+    # Record profile view
+    record_audit(cu, "view_user_profile", "users", f"Viewed profile of {target['username']}")
+    
+    return render_template(
+        "users/profile_view.html",
+        active="users",
+        page="profile",
+        user=target,
+        permission_level=permission_level,
+        permission_desc=permission_desc,
+        effective_perms=effective_perms,
+        module_perms_list=module_perms_list,
+        recent_actions=recent_actions,
+        elevation_history=elevation_history,
+        is_own_profile=(uid == cu['id'])
+    )
 
 @users_bp.route("/profile")
 @login_required
@@ -374,7 +486,7 @@ def request_deletion():
     cu = current_user()
     reason = request.form.get("reason", "")
     
-    request_user_deletion(cu["id"], reason)
+    _request_user_deletion_db(cu["id"], reason)
     record_audit(cu, "request_deletion", "users", f"Requested account deletion: {reason}")
     flash("Deletion request submitted. An administrator will review your request.", "info")
     
@@ -398,9 +510,11 @@ def create():
             return redirect(url_for("users.create"))
         
         # Check if username exists
-        con = get_db()
-        existing = con.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
-        con.close()
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            existing = cursor.fetchone()
+            cursor.close()
         
         if existing:
             flash("Username already exists.", "danger")
@@ -419,6 +533,14 @@ def create():
         if request.form.get("perm_m3c"):
             module_perms.append("M3C")
         
+        # Get location (only admins can set to ALL)
+        location = request.form.get("location", "NY")
+        cu_level = get_user_permission_level(cu)
+        if location == "ALL" and cu_level not in ['L1', 'L2', 'L3', 'S1']:
+            location = "NY"
+        if location not in ['NY', 'CT', 'ALL']:
+            location = 'NY'
+        
         data = {
             "username": username,
             "password": password,
@@ -429,20 +551,26 @@ def create():
             "department": request.form.get("department", ""),
             "position": request.form.get("position", ""),
             "permission_level": "",  # Regular users start without admin level
-            "module_permissions": module_perms
+            "module_permissions": module_perms,
+            "location": location  # ADD THIS
         }
         
         uid = create_user(data)
         record_audit(cu, "create_user", "users", 
-                    f"Created user {username} with permissions: {', '.join(module_perms)}")
+                    f"Created user {username} with permissions: {', '.join(module_perms)}, location: {location}")
         flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("users.user_list"))
     
+    # Check if current user can set ALL location
+    cu_level = get_user_permission_level(cu)
+    can_set_all = cu_level in ['L1', 'L2', 'L3', 'S1']
+    
     return render_template("users/create.html",
                          active="users",
-                         page="create")
+                         page="create",
+                         can_set_all=can_set_all)
 
-@users_bp.route("/<int:uid>/edit", methods=["GET", "POST"])
+@users_bp.route("/edit/<int:uid>", methods=["GET","POST"])
 @login_required
 def edit_user(uid: int):
     """Edit user (admin only, cannot edit users at same or higher level)."""
@@ -456,7 +584,7 @@ def edit_user(uid: int):
             return redirect(url_for("users.user_list"))
         
         # Convert to dict
-        target = dict(target) if not isinstance(target, dict) else target
+        target = dict(zip([col[0] for col in target.cursor_description], target)) if hasattr(target, 'cursor_description') else target
         
         if not can_modify_user(cu, target):
             flash("You cannot modify users at your level or higher.", "danger")
@@ -464,55 +592,53 @@ def edit_user(uid: int):
         
         if request.method == "POST":
             try:
-                # Update profile fields
-                con = get_db()
-                con.execute("""
-                    UPDATE users 
-                    SET first_name = ?, last_name = ?, 
-                        email = ?, phone = ?,
-                        department = ?, position = ?,
-                        last_modified_by = ?,
-                        last_modified_at = ?
-                    WHERE id = ?
-                """, (
-                    request.form.get("first_name", ""),
-                    request.form.get("last_name", ""),
-                    request.form.get("email", ""),
-                    request.form.get("phone", ""),
-                    request.form.get("department", ""),
-                    request.form.get("position", ""),
-                    cu["id"],
-                    datetime.utcnow().isoformat() + "Z",
-                    uid
-                ))
+                # Get form data
+                first_name = request.form.get("first_name", "")
+                last_name = request.form.get("last_name", "")
+                email = request.form.get("email", "")
+                phone = request.form.get("phone", "")
+                department = request.form.get("department", "")
+                position = request.form.get("position", "")
+                location = request.form.get("location", "NY")
                 
-                # Update module permissions only if user is not an admin
-                if not target.get("permission_level"):
-                    module_perms = []
-                    if request.form.get("perm_m1"):
-                        module_perms.append("M1")
-                    if request.form.get("perm_m2"):
-                        module_perms.append("M2")
-                    if request.form.get("perm_m3a"):
-                        module_perms.append("M3A")
-                    if request.form.get("perm_m3b"):
-                        module_perms.append("M3B")
-                    if request.form.get("perm_m3c"):
-                        module_perms.append("M3C")
-                    
-                    con.execute("""
+                # Get module permissions
+                module_perms = []
+                if request.form.get("perm_m1"):
+                    module_perms.append("M1")
+                if request.form.get("perm_m2"):
+                    module_perms.append("M2")
+                if request.form.get("perm_m3a"):
+                    module_perms.append("M3A")
+                if request.form.get("perm_m3b"):
+                    module_perms.append("M3B")
+                if request.form.get("perm_m3c"):
+                    module_perms.append("M3C")
+                
+                # Validate location
+                cu_level = get_user_permission_level(cu)
+                if location == "ALL" and cu_level not in ['L1', 'L2', 'L3', 'S1']:
+                    location = "NY"
+                if location not in ['NY', 'CT', 'ALL']:
+                    location = 'NY'
+                
+                # Update database
+                with get_db_connection("core") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
                         UPDATE users 
-                        SET module_permissions = ?
+                        SET first_name=?, last_name=?, email=?, phone=?, 
+                            department=?, position=?, location=?, module_permissions=?,
+                            last_modified_by=?, last_modified_at=?
                         WHERE id = ?
-                    """, (json.dumps(module_perms), uid))
+                    """, (first_name, last_name, email, phone, 
+                          department, position, location, json.dumps(module_perms),
+                          cu["id"], datetime.utcnow().isoformat() + "Z", uid))
+                    conn.commit()
+                    cursor.close()
                 
-                con.commit()
-                con.close()
-                
-                # Try to record audit
+                # Record audit
                 try:
-                    record_audit(cu, "update_user", "users", 
-                                f"Updated user {target['username']}")
+                    record_audit(cu, "update_user", "users", f"Updated user {target['username']}")
                 except Exception as audit_error:
                     print(f"Audit log failed: {audit_error}")
                 
@@ -545,12 +671,13 @@ def edit_user(uid: int):
 @users_bp.route("/elevation")
 @login_required
 def elevation_management():
-    """Elevation management page (L1+ only)."""
+    """Elevation management page (L2+ only - L1 cannot access)."""
     cu = current_user()
     cu_level = get_user_permission_level(cu)
     
-    if not can_elevate_users(cu):
-        flash("You need administrative permissions to access elevation management.", "danger")
+    # FIXED: Changed to L2+ only (was checking can_elevate_users which includes L1)
+    if cu_level not in ['L2', 'L3', 'S1']:
+        flash("You need L2 (Systems Administrator) permissions or higher to access elevation management.", "danger")
         return redirect(url_for("users.user_list"))
     
     # Get all users
@@ -559,7 +686,9 @@ def elevation_management():
     # Filter to show only users this admin can manage
     users = []
     for row in rows:
-        row_dict = dict(row)
+        # FIX: rows is already a list of dicts from list_users
+        row_dict = row if isinstance(row, dict) else dict(zip([col[0] for col in row.cursor_description], row))
+        
         row_dict["current_level"] = get_user_permission_level(row_dict) or "None"
         row_dict["level_description"] = PermissionManager.get_permission_description(row_dict["current_level"])
         
@@ -593,6 +722,9 @@ def elevate_user(uid: int):
     target = get_user_by_id(uid)
     if not target:
         return jsonify({"error": "User not found"}), 404
+    
+    # FIXED: Convert to dict
+    target = dict(zip([col[0] for col in target.cursor_description], target)) if hasattr(target, 'cursor_description') else target
     
     new_level = request.json.get("level")
     if not new_level:
@@ -669,6 +801,32 @@ def demote_user(uid: int):
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
+    
+@users_bp.route("/request-deletion/<int:uid>", methods=["POST"])
+@login_required
+def request_user_deletion(uid: int):
+    """Request user deletion (requires L1+ approval)."""
+    cu = current_user()
+    
+    if not can_modify_user(cu, None):
+        flash("You don't have permission to request user deletions.", "danger")
+        return redirect(url_for("users.user_list"))
+    
+    target = get_user_by_id(uid)
+    if not target:
+        flash("User not found.", "warning")
+        return redirect(url_for("users.user_list"))
+    
+    # Convert to dict if needed
+    target = dict(zip([col[0] for col in target.cursor_description], target)) if hasattr(target, 'cursor_description') else target
+    
+    _request_user_deletion_db(uid, reason=f"Requested by {cu['username']}")
+    
+    record_audit(cu, "request_user_deletion", "users", 
+                f"Requested deletion of user {target['username']} (ID: {uid})")
+    
+    flash(f"Deletion request submitted for user '{target['username']}'. Awaiting admin approval.", "info")
+    return redirect(url_for("users.user_list"))
 
 @users_bp.route("/deletion-requests")
 @login_required

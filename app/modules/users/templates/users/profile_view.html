@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.first_name }} {{ user.last_name }} - Profile{% endblock %}
+
+{% block page_title %}User Profile{% endblock %}
+
+{% block body %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        border-radius: 1.5rem;
+        padding: 3rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.3);
+    }
+    
+    .profile-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-username {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    .profile-card {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .permission-badge-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .admin-shield {
+        font-size: 1.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        width: 150px;
+        flex-shrink: 0;
+    }
+    
+    .info-value {
+        color: var(--text-primary);
+        flex: 1;
+    }
+    
+    .audit-item {
+        padding: 1rem;
+        border-left: 3px solid var(--molina-teal);
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .audit-action {
+        font-weight: 600;
+        color: var(--molina-teal);
+    }
+    
+    .audit-time {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-name">
+            {{ user.first_name or 'N/A' }} {{ user.last_name or 'N/A' }}
+        </div>
+        <div class="profile-username">
+            <i class="bi bi-person-circle"></i> @{{ user.username }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-6">
+            <!-- Permissions Card -->
+            <div class="profile-card">
+                <div class="profile-card-title">
+                    <i class="bi bi-shield-check"></i> Permissions
+                </div>
+                
+                {% if permission_level %}
+                <div class="permission-badge-large" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+                    <i class="bi bi-shield-fill-check admin-shield"></i>
+                    <div>
+                        <div style="font-size: 0.75rem; opacity: 0.9;">Administrator</div>
+                        <div>{{ permission_level }}</div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <strong>{{ permission_desc }}</strong>
+                </div>
+                {% else %}
+                <div class="permission-badge-large" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                    <i class="bi bi-person-check admin-shield"></i>
+                    <div>Module User</div>
+                </div>
+                {% endif %}
+                
+                {% if module_perms_list %}
+                <h6 class="mt-3 mb-2">Module Access:</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for perm in module_perms_list %}
+                    <span class="badge bg-primary">{{ perm }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if effective_perms %}
+                <h6 class="mt-3 mb-2">Capabilities:</h6>
+                <ul class="list-unstyled">
+                    {% if effective_perms.can_send %}<li><i class="bi bi-check-circle text-success"></i> Send/Shipping</li>{% endif %}
+                    {% if effective_perms.can_inventory %}<li><i class="bi bi-check-circle text-success"></i> Inventory Management</li>{% endif %}
+                    {% if effective_perms.can_fulfillment_customer %}<li><i class="bi bi-check-circle text-success"></i> Fulfillment Requests</li>{% endif %}
+                    {% if effective_perms.can_fulfillment_service %}<li><i class="bi bi-check-circle text-success"></i> Service Queue</li>{% endif %}
+                    {% if effective_perms.can_admin_users %}<li><i class="bi bi-check-circle text-success"></i> User Administration</li>{% endif %}
+                </ul>
+                {% endif %}
+            </div>
+            
+            <!-- Profile Information Card -->
+            <div class="profile-card">
+                <div class="profile-card-title">
+                    <i class="bi bi-person-badge"></i> Profile Information
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">{{ user.email or 'Not provided' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Phone:</div>
+                    <div class="info-value">{{ user.phone or 'Not provided' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Department:</div>
+                    <div class="info-value">{{ user.department or 'Not provided' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Position:</div>
+                    <div class="info-value">{{ user.position or 'Not provided' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Location:</div>
+                    <div class="info-value">
+                        {% if user.location == 'ALL' %}
+                            <span class="badge bg-info">All Locations</span>
+                        {% elif user.location == 'CT' %}
+                            <span class="badge bg-secondary">Connecticut</span>
+                        {% else %}
+                            <span class="badge bg-primary">New York</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Account Created:</div>
+                    <div class="info-value">{{ user.created_at or 'Unknown' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-6">
+            <!-- Recent Actions Card -->
+            <div class="profile-card">
+                <div class="profile-card-title">
+                    <i class="bi bi-clock-history"></i> Recent Actions
+                </div>
+                
+                {% if recent_actions %}
+                    {% for action in recent_actions %}
+                    <div class="audit-item">
+                        <div class="audit-action">
+                            {{ action[0] }} <span class="badge bg-secondary">{{ action[1] }}</span>
+                        </div>
+                        <div class="text-muted small">{{ action[2] }}</div>
+                        <div class="audit-time">
+                            <i class="bi bi-clock"></i> {{ action[3]|format_datetime('%Y-%m-%d %H:%M') }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <p class="text-muted">No recent activity</p>
+                {% endif %}
+            </div>
+            
+            {% if elevation_history %}
+            <!-- Elevation History Card -->
+            <div class="profile-card">
+                <div class="profile-card-title">
+                    <i class="bi bi-arrow-up-circle"></i> Elevation History
+                </div>
+                
+                {% for elev in elevation_history %}
+                <div class="audit-item">
+                    <div>
+                        <span class="badge bg-warning">{{ elev[0] or 'None' }}</span>
+                        <i class="bi bi-arrow-right"></i>
+                        <span class="badge bg-success">{{ elev[1] }}</span>
+                    </div>
+                    <div class="text-muted small mt-1">
+                        By: {{ elev[4] }}<br>
+                        {% if elev[2] %}Reason: {{ elev[2] }}{% endif %}
+                    </div>
+                    <div class="audit-time">
+                        <i class="bi bi-clock"></i> {{ elev[3]|format_datetime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="mt-4">
+        {% if is_own_profile %}
+        <a href="{{ url_for('users.edit_profile') }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Edit My Profile
+        </a>
+        {% elif can_admin_users or elevated %}
+        <a href="{{ url_for('users.edit_user', uid=user.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Edit User
+        </a>
+        {% endif %}
+        <a href="{{ url_for('users.user_list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Users
+        </a>
+    </div>
+</div>
+{% endblock %}

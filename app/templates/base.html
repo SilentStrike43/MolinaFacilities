@@ -326,6 +326,24 @@
             font-weight: 600;
         }
         
+        /* User Location Badge */
+        .user-location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background: rgba(0, 163, 173, 0.15);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: var(--molina-teal-light);
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .user-location-badge i {
+            font-size: 0.75rem;
+        }
+        
         /* ==================== MAIN CONTENT ==================== */
         .main-content {
             margin-left: var(--sidebar-width);
@@ -459,6 +477,7 @@
             </a>
         </div>
         
+        <div class="sidebar-nav">
             <div class="nav-section">
                 <a href="{{ url_for('home.index') }}" class="nav-link-custom {{ 'active' if active=='home' else '' }}">
                     <i class="bi bi-house-door nav-link-icon"></i>
@@ -472,13 +491,17 @@
                 {% if can_send or elevated %}
                 <div class="nav-section">
                     <div class="nav-section-title">CHECK-IN</div>
-                    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' and page!='tracking' else '' }}">
+                    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' and page not in ['tracking', 'insights'] else '' }}">
                         <i class="bi bi-box-seam nav-link-icon"></i>
                         <span>Send</span>
                     </a>
                     <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='tracking' else '' }}">
                         <i class="bi bi-geo-alt nav-link-icon"></i>
                         <span>Tracking</span>
+                    </a>
+                    <a href="{{ url_for('send.insights') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='insights' else '' }}">
+                    <i class="bi bi-bar-chart-line nav-link-icon"></i>
+                    <span>Insights</span>
                     </a>
                 </div>
                 {% endif %}
@@ -520,6 +543,10 @@
                         <i class="bi bi-archive nav-link-icon"></i>
                         <span>Archive</span>
                     </a>
+                    <a href="{{ url_for('fulfillment.insights') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='insights' else '' }}">
+                    <i class="bi bi-bar-chart-line nav-link-icon"></i>
+                    <span>Insights</span>
+                    </a>
                 </div>
                 {% endif %}
                 
@@ -531,12 +558,14 @@
                         <i class="bi bi-people nav-link-icon"></i>
                         <span>Users</span>
                     </a>
-                    {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
+                    
+                    {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
                     <a href="{{ url_for('users.elevation_management') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='elevation' else '' }}">
                         <i class="bi bi-shield-check nav-link-icon"></i>
                         <span>Elevation Management</span>
                     </a>
                     {% endif %}
+                    
                     {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-link-custom {{ 'active' if active=='admin' else '' }}">
                         <i class="bi bi-speedometer2 nav-link-icon"></i>
@@ -547,6 +576,7 @@
                         <span>Audit Logs</span>
                     </a>
                     {% endif %}
+                    
                     {% if cu.permission_level in ['L3', 'S1'] %}
                     <a href="{{ url_for('admin.system_management') }}" class="nav-link-custom {{ 'active' if active=='system' else '' }}">
                         <i class="bi bi-gear nav-link-icon"></i>
@@ -555,10 +585,8 @@
                     {% endif %}
                 </div>
                 {% endif %}
-            {% endif %}
                 
                 <!-- User Profile -->
-                {% if cu %}
                 <div class="sidebar-user">
                     <div class="user-info">
                         <div class="user-avatar">
@@ -569,11 +597,23 @@
                             <div class="user-role">
                                 {% if elevated %}Administrator{% else %}User{% endif %}
                             </div>
+                            <!-- Location badge inside user-details -->
+                            <div class="user-location-badge">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                {% if cu.location == 'ALL' %}
+                                    <span>All Locations</span>
+                                {% elif cu.location == 'CT' %}
+                                    <span>Connecticut</span>
+                                {% else %}
+                                    <span>New York</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
-                {% endif %}
-            </div>
+            {% endif %}
+        </div>
+    </div>
     
     <!-- Main Content -->
     <div class="main-content">
@@ -602,7 +642,6 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
             {% block body %}{% endblock %}
         </div>
     </div>

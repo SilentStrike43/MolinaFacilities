@@ -1,4 +1,4 @@
-# app/core/ui.py - UPDATED FOR NEW PERMISSION SYSTEM
+# app/core/ui.py - FIXED VERSION
 """
 UI context processor - injects global variables and user permissions into templates
 """
@@ -42,23 +42,70 @@ def inject_globals():
     """Inject global variables into all templates."""
     from flask import g
     from app.modules.auth.security import current_user
-    from app.modules.users.permissions import PermissionManager
     
     # Get current user (will use cached version if available)
     cu = current_user()
     
     if cu:
-        # User is logged in - add their permissions
-        # Use already-computed effective_permissions from cached user
-        effective_perms = cu.get('effective_permissions', {})
+        # Get permission level
+        permission_level = cu.get('permission_level', '')
+        
+        # Parse module permissions - CRITICAL FIX
+        try:
+            module_perms_raw = cu.get('module_permissions', '[]')
+            if isinstance(module_perms_raw, str):
+                module_perms = json.loads(module_perms_raw or '[]')
+            elif isinstance(module_perms_raw, list):
+                module_perms = module_perms_raw
+            else:
+                module_perms = []
+        except Exception as e:
+            print(f"ERROR parsing module_permissions: {e}")
+            print(f"Raw value: {cu.get('module_permissions')}")
+            module_perms = []
+        
+        # Check if elevated (admin level)
+        elevated = permission_level in ['L1', 'L2', 'L3', 'S1']
+        
+        # CRITICAL FIX: Use PermissionManager for consistent permission checking
+        effective_perms = PermissionManager.get_effective_permissions(cu)
+        
+        # Module permissions - use effective permissions from PermissionManager
+        can_send = effective_perms['can_send'] or elevated
+        can_inventory = effective_perms['can_inventory'] or elevated
+        can_asset = effective_perms['can_inventory'] or elevated
+        
+        # Fulfillment permissions
+        can_fulfillment_customer = effective_perms['can_fulfillment_customer'] or elevated
+        can_fulfillment_service = effective_perms['can_fulfillment_service'] or elevated
+        can_fulfillment_manager = effective_perms['can_fulfillment_manager'] or elevated
+        
+        # Admin permissions
+        can_admin_users = elevated
+        can_view_audit_logs = permission_level in ['L2', 'L3', 'S1']
+        can_manage_system = permission_level in ['L3', 'S1']
+        
+        # Debug output (remove after testing)
+        if not elevated:
+            print(f"DEBUG: User {cu.get('username')} - Module Perms: {module_perms}")
+            print(f"DEBUG: Effective Perms: {effective_perms}")
+            print(f"DEBUG: can_fulfillment_manager = {can_fulfillment_manager}")
         
         return {
             'cu': cu,
             'current_user': cu,
-            'elevated': cu.get('permission_level') in ['S1', 'L3', 'L2', 'L1'],
+            'elevated': elevated,
+            'can_send': can_send,
+            'can_inventory': can_inventory,
+            'can_asset': can_asset,
+            'can_fulfillment_customer': can_fulfillment_customer,
+            'can_fulfillment_service': can_fulfillment_service,
+            'can_fulfillment_manager': can_fulfillment_manager,
+            'can_admin_users': can_admin_users,
+            'can_view_audit_logs': can_view_audit_logs,
+            'can_manage_system': can_manage_system,
             'APP_VERSION': APP_VERSION,
             'BRAND_TEAL': BRAND_TEAL,
-            **effective_perms
         }
     else:
         # User not logged in
@@ -78,10 +125,3 @@ def inject_globals():
             'APP_VERSION': APP_VERSION,
             'BRAND_TEAL': BRAND_TEAL,
         }
-    
-    return {
-        "cu": cu,
-        "elevated": elevated,
-        "APP_VERSION": APP_VERSION,
-        "BRAND_TEAL": BRAND_TEAL,
-    }

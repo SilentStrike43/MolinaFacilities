@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Request #{{ request.id }} - Fulfillment{% endblock %}
+
+{% block page_title %}Edit Request{% endblock %}
+
+{% block body %}
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(245, 158, 11, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+    }
+    
+    /* Form Container */
+    .form-container {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .form-section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-section-title i {
+        color: #f59e0b;
+        font-size: 1.5rem;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-box-title {
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .info-box-content {
+        color: #1e3a8a;
+        font-size: 0.9375rem;
+        line-height: 1.8;
+    }
+    
+    .info-box-content strong {
+        color: #1e40af;
+    }
+    
+    /* Modern Form Controls */
+    .form-label-modern {
+        display: block;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+        letter-spacing: 0.01em;
+    }
+    
+    .form-label-modern .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control-modern {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--text-primary);
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        background: #fffbeb;
+    }
+    
+    .form-select-modern {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--text-primary);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-position: right 1rem center;
+        background-repeat: no-repeat;
+        background-size: 1.25rem;
+        padding-right: 3rem;
+    }
+    
+    .form-select-modern:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        background-color: #fffbeb;
+    }
+    
+    /* Buttons */
+    .btn-save-modern {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1.125rem 3rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-save-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-cancel-modern {
+        background: #f3f4f6;
+        color: var(--text-primary);
+        padding: 1.125rem 2.5rem;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-cancel-modern:hover {
+        background: #e5e7eb;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+        margin-top: 2rem;
+    }
+    
+    /* Warning Box */
+    .warning-box {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-left: 4px solid #f59e0b;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-top: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .warning-box-icon {
+        font-size: 1.5rem;
+        color: #d97706;
+        flex-shrink: 0;
+    }
+    
+    .warning-box-content {
+        flex: 1;
+        color: #92400e;
+        font-size: 0.9375rem;
+    }
+    
+    .warning-box-content strong {
+        color: #78350f;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 2rem 1.5rem;
+        }
+        
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-save-modern,
+        .btn-cancel-modern {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-pencil-square"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Edit Request #{{ request.id }}</h2>
+            <p>Modify request details and update status</p>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Form -->
+<div class="form-container">
+    <form method="POST">
+        <!-- Request Info Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-info-circle"></i>
+                Request Information
+            </h3>
+            
+            <div class="info-box">
+                <div class="info-box-content">
+                    <strong>Request Number:</strong> {{ request.request_number }}<br>
+                    <strong>Submitted by:</strong> {{ request.requester_name }}<br>
+                    <strong>Location:</strong> {{ request.location }}<br>
+                    <strong>Submitted on:</strong> {{ request.date_submitted }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request Details Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-file-text"></i>
+                Request Details
+            </h3>
+            
+            <div class="mb-4">
+                <label class="form-label-modern">
+                    Description
+                    <span class="required">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control-modern" 
+                       name="description" 
+                       value="{{ request.description }}" 
+                       required
+                       placeholder="Brief description of the request">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <label class="form-label-modern">Status</label>
+                    <select class="form-select-modern" name="status">
+                        {% for status in statuses %}
+                        <option value="{{ status }}" {% if status == request.status %}selected{% endif %}>
+                            {{ status }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="form-label-modern">Total Pages</label>
+                    <input type="number" 
+                           class="form-control-modern" 
+                           name="total_pages" 
+                           value="{{ request.total_pages or 0 }}" 
+                           min="0"
+                           placeholder="0">
+                </div>
+                
+                <div>
+                    <label class="form-label-modern">Due Date</label>
+                    <input type="date" 
+                           class="form-control-modern" 
+                           name="date_due" 
+                           value="{{ request.date_due }}">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Notes Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-chat-left-text"></i>
+                Additional Notes
+            </h3>
+            
+            <div>
+                <label class="form-label-modern">Notes</label>
+                <textarea class="form-control-modern" 
+                          name="notes" 
+                          rows="5" 
+                          placeholder="Add any notes, special instructions, or updates..."
+                          style="resize: vertical; min-height: 120px;">{{ request.notes }}</textarea>
+            </div>
+        </div>
+        
+        <!-- Warning Box -->
+        <div class="warning-box">
+            <div class="warning-box-icon">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="warning-box-content">
+                <strong>Note:</strong> Editing this request will update the description, page count, status, and notes. 
+                The requester, submission date, and location cannot be changed.
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{{ url_for('fulfillment.view_request', request_id=request.id) }}" class="btn-cancel-modern">
+                <i class="bi bi-x-circle"></i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-save-modern">
+                <i class="bi bi-check-circle"></i>
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

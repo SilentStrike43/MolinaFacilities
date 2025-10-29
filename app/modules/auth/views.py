@@ -58,26 +58,22 @@ def login():
             return render_template("auth/login.html")
         
         # Authenticate
-        from app.modules.users.models import get_user_by_username, verify_password
-        user = get_user_by_username(username)
+        from app.modules.users.models import authenticate_user
+        user_dict = authenticate_user(username, password)
         
-        if user and verify_password(user, password):
-            # Convert Row to dict
-            if not isinstance(user, dict):
-                user = dict(user)
-            
+        if user_dict:
             # Check if user is deleted
-            if user.get('deleted_at'):
+            if user_dict.get('deleted_at'):
                 flash("This account has been deactivated.", "danger")
                 return render_template("auth/login.html")
             
             # Set session
             session.clear()
-            session['user_id'] = user['id']
-            session['username'] = user['username']
+            session['user_id'] = user_dict['id']
+            session['username'] = user_dict['username']
             session.permanent = True
             
-            flash(f"Welcome back, {user.get('first_name') or user['username']}!", "success")
+            flash(f"Welcome back, {user_dict.get('first_name') or user_dict['username']}!", "success")
             
             # Redirect to home
             return redirect(url_for("home.index"))
