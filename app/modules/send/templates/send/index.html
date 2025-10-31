@@ -70,48 +70,6 @@
         font-size: 1.0625rem;
     }
     
-    /* Alert Messages */
-    .alert-modern {
-        padding: 1.125rem 1.5rem;
-        border-radius: 0.875rem;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        font-size: 0.9375rem;
-        animation: fadeInUp 0.4s ease-out;
-        font-weight: 600;
-    }
-    
-    .alert-modern i {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-    
-    .alert-modern-success {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
-        border-left: 4px solid #10b981;
-    }
-    
-    .alert-modern-danger {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
-        border-left: 4px solid #ef4444;
-    }
-    
-    .alert-modern-warning {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        border-left: 4px solid #f59e0b;
-    }
-    
-    .alert-modern-info {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
-        border-left: 4px solid #3b82f6;
-    }
-    
     /* Form Container */
     .form-container {
         background: white;
@@ -444,18 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
-
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert-modern alert-modern-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }}">
-            <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-circle-fill{% elif category == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
-            <span>{{ message }}</span>
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
 
 <!-- Info Box -->
 <div class="info-box">

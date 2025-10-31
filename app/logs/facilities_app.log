@@ -4292,3 +4292,581 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfil
 2025-10-29 15:18:46 | [32mINFO[0m | app.core.database | cleanup_all_pools:391 | All database connection pools closed
 2025-10-29 15:18:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:391 | All database connection pools closed
 2025-10-29 15:18:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:391 | All database connection pools closed
+2025-10-30 09:03:57 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\BTManifest\app\logs
+2025-10-30 09:03:57 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 09:03:57 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 09:04:01 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 09:04:01 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 09:04:01 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 09:04:01 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 09:04:02 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\BTManifest\app\logs
+2025-10-30 09:04:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 09:04:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 09:04:06 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 09:04:06 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 09:04:06 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 09:04:06 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 09:04:06 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 11:16:57 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\BTManifest\app\logs
+2025-10-30 11:16:57 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 11:16:57 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 11:16:57 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:02 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 11:17:02 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 11:17:02 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 11:17:02 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 11:17:02 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\BTManifest\app\logs
+2025-10-30 11:17:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 11:17:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 11:17:02 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:06 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 11:17:06 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 11:17:06 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 11:17:06 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 11:17:06 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 11:17:15 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:16 | [32mINFO[0m | app.core.errors | handle_404:89 | 404 Not Found: /favicon.ico
+2025-10-30 11:17:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:21 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:31 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:31 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 11:17:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 11:17:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:35 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:36 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 11:17:36 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:37 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 11:17:37 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:37 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:38 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:38 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 11:17:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 11:17:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:41 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:17:42 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 11:17:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:17:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 11:17:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:17:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:19:51 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:19:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:19:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:19:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:08 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:20:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:20:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:31 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:20:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:20:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:33 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:20:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:20:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:42 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:20:42 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:20:42 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:20:42 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:38:51 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:38:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:38:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:38:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:39:05 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:39:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:39:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:39:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:41:16 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:41:17 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 11:41:19 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:41:19 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 11:41:19 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:41:19 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:41:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 11:41:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 11:41:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 11:41:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:08:50 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:08:51 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:08:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:08:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:08:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:08:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:08:56 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:08:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:08:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:08:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:22:01 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:22:02 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:22:03 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:22:03 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:22:03 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:22:03 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:06 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:23:07 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:23:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:23:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:23:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:16 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:23:16 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:23:17 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 16:23:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:23:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:23:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:23 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:23:24 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:23:24 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:23:24 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:23:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:23:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:02 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 16:52:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 16:52:02 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 16:52:02 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:07 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 16:52:07 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 16:52:07 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 16:52:07 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 16:52:07 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 16:52:07 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 16:52:07 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 16:52:07 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:11 | [32mINFO[0m | __main__ | create_app:121 | All blueprints registered successfully
+2025-10-30 16:52:11 | [32mINFO[0m | __main__ | create_app:139 | Database schemas initialized
+2025-10-30 16:52:11 | [32mINFO[0m | __main__ | create_app:156 | Application initialization complete
+2025-10-30 16:52:11 | [32mINFO[0m | __main__ | <module>:194 | Starting server on 127.0.0.1:5000
+2025-10-30 16:52:11 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 16:52:28 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:28 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:28 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:34 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:34 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:35 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:52:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:52:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:39 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:42 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:42 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:52:43 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 16:52:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:52:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:49 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:50 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:52:50 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 16:52:50 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:50 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:52:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:53 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:52:53 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:52:54 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:52:54 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:52:55 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:52:55 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:53:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:53:23 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:53:25 | [31mERROR[0m | app.core.database | get_db_connection:307 | Programming error in send: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'carrier'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_by'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+2025-10-30 16:53:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:53:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:53:26 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:53:26 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 16:53:26 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 16:53:27 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 16:53:27 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 16:53:27 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 16:53:27 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:02:32 | [32mINFO[0m | __main__ | shutdown_handler:175 | Application shutting down...
+2025-10-30 17:02:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:02:32 | [32mINFO[0m | __main__ | shutdown_handler:180 | Cleanup complete
+2025-10-30 17:02:32 | [32mINFO[0m | __main__ | shutdown_handler:175 | Application shutting down...
+2025-10-30 17:02:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:02:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:02:33 | [32mINFO[0m | __main__ | shutdown_handler:180 | Cleanup complete
+2025-10-30 17:08:19 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 17:08:19 | [32mINFO[0m | __main__ | create_app:61 | Initializing database schemas...
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:184 | 
+======================================================================
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:185 | RUNNING AUTOMATED SCHEMA MIGRATIONS
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:186 | ======================================================================
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:141 | 🔧 Checking Core database schema...
+2025-10-30 17:08:19 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:08:21 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:152 |    ✅ Core schema up to date
+2025-10-30 17:08:21 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:64 | 🔧 Checking Send database schema...
+2025-10-30 17:08:21 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:08:23 | [32mINFO[0m | app.core.schema_migration | add_column_if_missing:54 |    ✅ Added column package_manifest.carrier
+2025-10-30 17:08:23 | [32mINFO[0m | app.core.schema_migration | add_column_if_missing:54 |    ✅ Added column package_manifest.created_by
+2025-10-30 17:08:24 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:157 | 🔧 Checking Inventory database schema...
+2025-10-30 17:08:24 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:08:25 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:164 |    ✅ Inventory schema up to date
+2025-10-30 17:08:25 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:169 | 🔧 Checking Fulfillment database schema...
+2025-10-30 17:08:25 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:08:26 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:177 |    ✅ Fulfillment schema up to date
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:194 | 
+======================================================================
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:195 | ✅ ALL MIGRATIONS COMPLETE
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:196 | ======================================================================
+
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | create_app:78 | ✅ Database schemas initialized
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | create_app:140 | All blueprints registered successfully
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | create_app:158 | Database schemas initialized
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | create_app:175 | Application initialization complete
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | <module>:213 | Starting server on 127.0.0.1:5000
+2025-10-30 17:08:27 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 17:08:27 | [32mINFO[0m | __main__ | create_app:61 | Initializing database schemas...
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:184 | 
+======================================================================
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:185 | RUNNING AUTOMATED SCHEMA MIGRATIONS
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:186 | ======================================================================
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:141 | 🔧 Checking Core database schema...
+2025-10-30 17:08:27 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:08:29 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:152 |    ✅ Core schema up to date
+2025-10-30 17:08:29 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:64 | 🔧 Checking Send database schema...
+2025-10-30 17:08:29 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:08:31 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:119 |    ✅ Send schema up to date
+2025-10-30 17:08:31 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:157 | 🔧 Checking Inventory database schema...
+2025-10-30 17:08:31 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:08:32 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:164 |    ✅ Inventory schema up to date
+2025-10-30 17:08:32 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:169 | 🔧 Checking Fulfillment database schema...
+2025-10-30 17:08:32 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:08:34 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:177 |    ✅ Fulfillment schema up to date
+2025-10-30 17:08:34 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:194 | 
+======================================================================
+2025-10-30 17:08:34 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:195 | ✅ ALL MIGRATIONS COMPLETE
+2025-10-30 17:08:34 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:196 | ======================================================================
+
+2025-10-30 17:08:34 | [32mINFO[0m | __main__ | create_app:78 | ✅ Database schemas initialized
+2025-10-30 17:08:34 | [32mINFO[0m | __main__ | create_app:140 | All blueprints registered successfully
+2025-10-30 17:08:34 | [32mINFO[0m | __main__ | create_app:158 | Database schemas initialized
+2025-10-30 17:08:34 | [32mINFO[0m | __main__ | create_app:175 | Application initialization complete
+2025-10-30 17:08:34 | [32mINFO[0m | __main__ | <module>:213 | Starting server on 127.0.0.1:5000
+2025-10-30 17:08:34 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: fulfillment
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:50 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:08:51 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:08:52 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 17:08:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:08:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:08:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:53 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:55 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:08:56 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:08:56 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:08:57 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:08:57 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:57 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:59 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:08:59 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:08:59 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:08:59 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:00 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:01 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:09:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:09:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:02 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:24 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:25 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:09:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:25 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:09:26 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:26 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:33 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:33 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:09:34 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 17:09:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:09:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:34 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:09:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:09:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:09:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:09:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:09:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:05 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:05 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:10:08 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: create_package | User: AppAdmin (ID:1) | Source: send | Details: Created package PACK00000002 for TestSender
+2025-10-30 17:10:08 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:08 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:10:08 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:08 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:09 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:10:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:10:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:10 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:13 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:13 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:10:14 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_send_insights | User: AppAdmin (ID:1) | Source: send | Details: Viewed send insights: 2025-09-30 to 2025-10-30
+2025-10-30 17:10:14 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:14 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:10:14 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:14 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:37 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:10:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:10:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:38 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:41 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:41 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:10:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:10:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:43 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:10:47 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:10:47 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:10:47 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:10:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:10:48 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:11:29 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:11:29 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:11:32 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: create_asset_error | User: AppAdmin (ID:1) | Source: inventory | Details: Asset label error: basename() missing 1 required positional argument: 'p'
+2025-10-30 17:11:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:11:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:11:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:11:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:15:14 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 17:15:14 | [32mINFO[0m | __main__ | create_app:61 | Initializing database schemas...
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:184 | 
+======================================================================
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:185 | RUNNING AUTOMATED SCHEMA MIGRATIONS
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:186 | ======================================================================
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:141 | 🔧 Checking Core database schema...
+2025-10-30 17:15:14 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:15:16 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:152 |    ✅ Core schema up to date
+2025-10-30 17:15:16 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:64 | 🔧 Checking Send database schema...
+2025-10-30 17:15:16 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:15:18 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:119 |    ✅ Send schema up to date
+2025-10-30 17:15:18 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:157 | 🔧 Checking Inventory database schema...
+2025-10-30 17:15:18 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:15:20 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:164 |    ✅ Inventory schema up to date
+2025-10-30 17:15:20 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:169 | 🔧 Checking Fulfillment database schema...
+2025-10-30 17:15:20 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:15:21 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:177 |    ✅ Fulfillment schema up to date
+2025-10-30 17:15:21 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:194 | 
+======================================================================
+2025-10-30 17:15:21 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:195 | ✅ ALL MIGRATIONS COMPLETE
+2025-10-30 17:15:21 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:196 | ======================================================================
+
+2025-10-30 17:15:21 | [32mINFO[0m | __main__ | create_app:78 | ✅ Database schemas initialized
+2025-10-30 17:15:21 | [32mINFO[0m | __main__ | create_app:140 | All blueprints registered successfully
+2025-10-30 17:15:21 | [32mINFO[0m | __main__ | create_app:158 | Database schemas initialized
+2025-10-30 17:15:21 | [32mINFO[0m | __main__ | create_app:175 | Application initialization complete
+2025-10-30 17:15:21 | [32mINFO[0m | __main__ | <module>:213 | Starting server on 127.0.0.1:5000
+2025-10-30 17:15:21 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 17:15:30 | [32mINFO[0m | __main__ | shutdown_handler:194 | Application shutting down...
+2025-10-30 17:15:30 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: fulfillment
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:15:31 | [32mINFO[0m | __main__ | shutdown_handler:199 | Cleanup complete
+2025-10-30 17:15:31 | [32mINFO[0m | __main__ | shutdown_handler:194 | Application shutting down...
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:15:31 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:15:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:15:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: fulfillment
+2025-10-30 17:15:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:15:32 | [32mINFO[0m | __main__ | shutdown_handler:199 | Cleanup complete
+2025-10-30 17:15:33 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 17:15:33 | [32mINFO[0m | __main__ | create_app:61 | Initializing database schemas...
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:184 | 
+======================================================================
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:185 | RUNNING AUTOMATED SCHEMA MIGRATIONS
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:186 | ======================================================================
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:141 | 🔧 Checking Core database schema...
+2025-10-30 17:15:33 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:15:35 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:152 |    ✅ Core schema up to date
+2025-10-30 17:15:35 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:64 | 🔧 Checking Send database schema...
+2025-10-30 17:15:35 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:15:37 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:119 |    ✅ Send schema up to date
+2025-10-30 17:15:38 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:157 | 🔧 Checking Inventory database schema...
+2025-10-30 17:15:38 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:15:39 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:164 |    ✅ Inventory schema up to date
+2025-10-30 17:15:39 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:169 | 🔧 Checking Fulfillment database schema...
+2025-10-30 17:15:39 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:15:40 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:177 |    ✅ Fulfillment schema up to date
+2025-10-30 17:15:40 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:194 | 
+======================================================================
+2025-10-30 17:15:40 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:195 | ✅ ALL MIGRATIONS COMPLETE
+2025-10-30 17:15:40 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:196 | ======================================================================
+
+2025-10-30 17:15:40 | [32mINFO[0m | __main__ | create_app:78 | ✅ Database schemas initialized
+2025-10-30 17:15:40 | [32mINFO[0m | __main__ | create_app:140 | All blueprints registered successfully
+2025-10-30 17:15:40 | [32mINFO[0m | __main__ | create_app:158 | Database schemas initialized
+2025-10-30 17:15:40 | [32mINFO[0m | __main__ | create_app:175 | Application initialization complete
+2025-10-30 17:15:40 | [32mINFO[0m | __main__ | <module>:213 | Starting server on 127.0.0.1:5000
+2025-10-30 17:15:41 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: DEBUG | Directory: C:\GridlineService\app\logs
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-10-30 17:15:41 | [32mINFO[0m | __main__ | create_app:61 | Initializing database schemas...
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:184 | 
+======================================================================
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:185 | RUNNING AUTOMATED SCHEMA MIGRATIONS
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:186 | ======================================================================
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:141 | 🔧 Checking Core database schema...
+2025-10-30 17:15:41 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:15:42 | [32mINFO[0m | app.core.schema_migration | migrate_core_database:152 |    ✅ Core schema up to date
+2025-10-30 17:15:43 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:64 | 🔧 Checking Send database schema...
+2025-10-30 17:15:43 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'send' database (size: 5)
+2025-10-30 17:15:45 | [32mINFO[0m | app.core.schema_migration | migrate_send_database:119 |    ✅ Send schema up to date
+2025-10-30 17:15:45 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:157 | 🔧 Checking Inventory database schema...
+2025-10-30 17:15:45 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:15:46 | [32mINFO[0m | app.core.schema_migration | migrate_inventory_database:164 |    ✅ Inventory schema up to date
+2025-10-30 17:15:46 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:169 | 🔧 Checking Fulfillment database schema...
+2025-10-30 17:15:46 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:15:48 | [32mINFO[0m | app.core.schema_migration | migrate_fulfillment_database:177 |    ✅ Fulfillment schema up to date
+2025-10-30 17:15:48 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:194 | 
+======================================================================
+2025-10-30 17:15:48 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:195 | ✅ ALL MIGRATIONS COMPLETE
+2025-10-30 17:15:48 | [32mINFO[0m | app.core.schema_migration | run_all_migrations:196 | ======================================================================
+
+2025-10-30 17:15:48 | [32mINFO[0m | __main__ | create_app:78 | ✅ Database schemas initialized
+2025-10-30 17:15:48 | [32mINFO[0m | __main__ | create_app:140 | All blueprints registered successfully
+2025-10-30 17:15:48 | [32mINFO[0m | __main__ | create_app:158 | Database schemas initialized
+2025-10-30 17:15:48 | [32mINFO[0m | __main__ | create_app:175 | Application initialization complete
+2025-10-30 17:15:48 | [32mINFO[0m | __main__ | <module>:213 | Starting server on 127.0.0.1:5000
+2025-10-30 17:15:48 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-10-30 17:16:08 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: send
+2025-10-30 17:16:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: fulfillment
+2025-10-30 17:16:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:15 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:16 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:16 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:17 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:20 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:20 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:16:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:30 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:30 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:30 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:30 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:31 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:16:32 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:33 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:44 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:44 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:16:45 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:45 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:45 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:45 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:49 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:50 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:16:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:57 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:57 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:16:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:16:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:16:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:16:58 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:16:59 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:17:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:17:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:17:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:07 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:17:08 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:17:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:17:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:17:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:20 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:17:21 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'fulfillment' database (size: 5)
+2025-10-30 17:17:22 | [32mINFO[0m | app.security.audit | record_audit:27 | AUDIT: view_fulfillment_insights | User: AppAdmin (ID:1) | Source: fulfillment | Details: Viewed fulfillment insights: 2025-08-01 to 2025-10-30
+2025-10-30 17:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: fulfillment
+2025-10-30 17:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:50 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:17:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:17:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:51 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:56 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:17:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:17:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:17:58 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:07 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:18:08 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:18:09 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:09 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:18:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:18:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:11 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:15 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:18:15 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:18:15 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:15 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:22 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:18:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:18:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:23 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:18:58 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:18:59 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'inventory' database (size: 5)
+2025-10-30 17:19:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:19:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: inventory
+2025-10-30 17:19:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:19:00 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:19:17 | [32mINFO[0m | app.core.database | get_pool:260 | Created connection pool for 'core' database (size: 5)
+2025-10-30 17:19:18 | [32mINFO[0m | app.core.database | cleanup_all_pools:410 | Closing connection pool: core
+2025-10-30 17:19:18 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed
+2025-10-30 17:19:18 | [32mINFO[0m | app.core.database | cleanup_all_pools:413 | All database connection pools closed

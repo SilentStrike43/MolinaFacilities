@@ -16,6 +16,7 @@ from flask import Flask, render_template, redirect, url_for, g, session
 # Import core modules
 from app.core.logging_config import setup_flask_logging
 from app.core.errors import register_error_handlers
+from app.core.schema_migration import run_all_migrations
 
 from app.modules.users.models import ensure_user_schema, ensure_first_sysadmin
 from app.modules.auth.security import current_user, login_required
@@ -55,10 +56,28 @@ def create_app():
     # ==================== Setup Logging ====================
     setup_flask_logging(app)
     
-    # ==================== Setup Database ====================
-    # Initialize user authentication schema
-    ensure_user_schema()
-    ensure_first_sysadmin()
+    # ==================== Initialize Module Schemas ====================
+    try:
+        logger.info("Initializing database schemas...")
+        
+        # Run automated migrations FIRST
+        from app.core.schema_migration import run_all_migrations
+        run_all_migrations()
+        
+        # Then ensure base schemas exist
+        from app.modules.send.storage import ensure_schema as ensure_send_schema
+        from app.modules.fulfillment.storage import ensure_schema as ensure_fulfillment_schema
+        from app.modules.inventory.storage import ensure_schema as ensure_inventory_schema
+        from app.modules.inventory.assets import ensure_schema as ensure_assets_schema
+        
+        ensure_send_schema()
+        ensure_fulfillment_schema()
+        ensure_inventory_schema()
+        ensure_assets_schema()
+        
+        logger.info("✅ Database schemas initialized")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize schemas: {e}", exc_info=True)
     
     # ==================== Register Error Handlers ====================
     register_error_handlers(app)

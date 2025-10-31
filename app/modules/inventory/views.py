@@ -298,44 +298,6 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
         conn.commit()
         cursor.close()
 
-def queue_asset_label(data: dict):
-    """Queue an asset label for BarTender printing."""
-    try:
-        BARTENDER_DROP = r"C:\BTManifest\BTInvDrop"
-        os.makedirs(BARTENDER_DROP, exist_ok=True)
-        
-        import uuid
-        ts = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-        filename = f"{ts}_asset_{uuid.uuid4().hex[:8]}.json"
-        filepath = os.path.join(BARTENDER_DROP, filename)
-        
-        # BarTender payload
-        payload = {
-            "CheckInDate": data.get("CheckInDate", datetime.date.today().isoformat()),
-            "InventoryID": data.get("InventoryID", ""),
-            "SKU": data.get("SKU", ""),
-            "ItemType": data.get("ItemType", ""),
-            "Manufacturer": data.get("Manufacturer", ""),
-            "ProductName": data.get("ProductName", ""),
-            "SubmitterName": data.get("SubmitterName", "System"),
-            "Location": data.get("Location", ""),
-            "PartNumber": data.get("PartNumber", "N/A"),
-            "SerialNumber": data.get("SerialNumber", "N/A"),
-            "PII": data.get("PII", "")
-        }
-        
-        temp_path = filepath + ".tmp"
-        with open(temp_path, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-        os.replace(temp_path, filepath)
-        
-        logger.info(f"Label queued: {filename}")
-        return filepath
-        
-    except Exception as e:
-        logger.exception("queue_asset_label failed")
-        raise
-
 # ---------- Routes ----------
 
 @bp.route("/asset", methods=["GET", "POST"])
@@ -377,7 +339,7 @@ def asset():
         rows = cursor.fetchall()
         cursor.close()
     
-    # Handle POST
+   # Handle POST
     if request.method == "POST":
         mode = request.form.get("mode", "create")
         
@@ -415,28 +377,15 @@ def asset():
                     asset_id = create_asset(asset_data)
                     record_initial_checkin(asset_id, qty, username, "Initial inventory")
                     
-                    # Queue label for printing
-                    label_data = {
-                        "CheckInDate": today,
-                        "InventoryID": str(asset_id),
-                        "SKU": sku,
-                        "ItemType": f"{cat_info['category']} - {cat_info['subcategory']}",
-                        "Manufacturer": manufacturer,
-                        "ProductName": product,
-                        "SubmitterName": username,
-                        "Location": location,
-                        "PartNumber": part_number or "N/A",
-                        "SerialNumber": serial_number or "N/A",
-                        "PII": pii
-                    }
-                    label_file = queue_asset_label(label_data)
+                    record_audit(cu, "create_asset", "inventory", 
+                                f"Created asset #{asset_id}, SKU {sku}: {product}")
                     
-                    flashmsg = (f"Asset #{asset_id} created successfully! Label: {os.path.basename(label_file)}", True)
-                    record_audit(cu, "create_asset", "inventory", f"Asset #{asset_id}, SKU {sku}: {product}")
+                    flashmsg = (f"✅ Asset #{asset_id} created successfully! SKU: {sku}", True)
+                    
                 except Exception as e:
-                    flashmsg = (f"⚠️ Asset created but label failed: {str(e)}", False)
-                    record_audit(cu, "create_asset_error", "inventory", f"Asset label error: {str(e)}")
-        
+                    flashmsg = (f"❌ Error creating asset: {str(e)}", False)
+                    record_audit(cu, "create_asset_error", "inventory", f"Asset creation error: {str(e)}")
+    
         elif mode == "update":
             asset_id = int(request.form.get("id") or 0)
             product = (request.form.get("ProductName") or "").strip()
@@ -457,7 +406,7 @@ def asset():
                 cursor.close()
             
             record_audit(cu, "update_asset", "inventory", f"Updated asset #{asset_id}")
-            flashmsg = (f"Asset #{asset_id} updated successfully.", True)
+            flashmsg = (f"✅ Asset #{asset_id} updated successfully.", True)
 
     # Check if editing
     edit_id = request.args.get("edit", type=int)

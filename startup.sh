@@ -1,7 +1,7 @@
 #!/bin/bash
 # startup.sh - Azure App Service startup script
 
-echo "Starting BTManifest application..."
+echo "Starting GridlineService application..."
 
 # Install ODBC Driver 18 for SQL Server (if not already installed)
 if [ ! -f /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.3.so.2.1 ]; then

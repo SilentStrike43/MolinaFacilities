@@ -2235,3 +2235,4 @@ Traceback (most recent call last):
   File "C:\BTManifest\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
     raise BuildError(endpoint, values, method, self)
 werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfillment.edit_request' with values ['request_id']. Did you mean 'fulfillment.view_request' instead?
+2025-10-30 16:53:25 | [31mERROR[0m | app.core.database | get_db_connection:307 | Programming error in send: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'carrier'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_by'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
