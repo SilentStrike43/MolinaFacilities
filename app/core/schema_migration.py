@@ -180,22 +180,72 @@ def migrate_fulfillment_database():
 
 
 def run_all_migrations():
-    """Run all database migrations."""
+    """Run all database migrations - skip databases that aren't configured."""
     logger.info("\n" + "=" * 70)
     logger.info("RUNNING AUTOMATED SCHEMA MIGRATIONS")
     logger.info("=" * 70)
     
+    migration_results = []
+    
+    # Try Core database
     try:
         migrate_core_database()
-        migrate_send_database()
-        migrate_inventory_database()
-        migrate_fulfillment_database()
-        
-        logger.info("\n" + "=" * 70)
-        logger.info("✅ ALL MIGRATIONS COMPLETE")
-        logger.info("=" * 70 + "\n")
-        return True
-        
+        migration_results.append(("core", True))
     except Exception as e:
-        logger.error(f"\n❌ MIGRATION FAILED: {e}\n", exc_info=True)
-        return False
+        if "Environment variable" in str(e):
+            logger.info("   ⚠️  Core database not configured - skipping")
+            migration_results.append(("core", "skipped"))
+        else:
+            logger.error(f"   ❌ Core migration failed: {e}")
+            migration_results.append(("core", False))
+    
+    # Try Send database
+    try:
+        migrate_send_database()
+        migration_results.append(("send", True))
+    except Exception as e:
+        if "Environment variable" in str(e):
+            logger.info("   ⚠️  Send database not configured - skipping")
+            migration_results.append(("send", "skipped"))
+        else:
+            logger.error(f"   ❌ Send migration failed: {e}")
+            migration_results.append(("send", False))
+    
+    # Try Inventory database
+    try:
+        migrate_inventory_database()
+        migration_results.append(("inventory", True))
+    except Exception as e:
+        if "Environment variable" in str(e):
+            logger.info("   ⚠️  Inventory database not configured - skipping")
+            migration_results.append(("inventory", "skipped"))
+        else:
+            logger.error(f"   ❌ Inventory migration failed: {e}")
+            migration_results.append(("inventory", False))
+    
+    # Try Fulfillment database
+    try:
+        migrate_fulfillment_database()
+        migration_results.append(("fulfillment", True))
+    except Exception as e:
+        if "Environment variable" in str(e):
+            logger.info("   ⚠️  Fulfillment database not configured - skipping")
+            migration_results.append(("fulfillment", "skipped"))
+        else:
+            logger.error(f"   ❌ Fulfillment migration failed: {e}")
+            migration_results.append(("fulfillment", False))
+    
+    logger.info("\n" + "=" * 70)
+    logger.info("MIGRATION SUMMARY")
+    for db_name, result in migration_results:
+        if result is True:
+            logger.info(f"   ✅ {db_name}: Success")
+        elif result == "skipped":
+            logger.info(f"   ⏭️  {db_name}: Skipped (not configured)")
+        else:
+            logger.info(f"   ❌ {db_name}: Failed")
+    logger.info("=" * 70 + "\n")
+    
+    # Return True if no actual failures (skips are OK)
+    actual_failures = [r for r in migration_results if r[1] is False]
+    return len(actual_failures) == 0
