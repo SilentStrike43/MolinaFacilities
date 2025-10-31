@@ -18,7 +18,7 @@ You'll set these in the Azure Portal (NOT in code/GitHub):
 ```
 FLASK_ENV = production
 
-SECRET_KEY = [paste your generated secret key]
+SECRET_KEY = xqcNId0Jt5v9SVaajFjSkKfjSUfX51KwVJb70BnpWRQFXmBqdvzn1zbW1NGuTihR48IJaQ6YE2h6SPRWORCSr4ObWqzWxNYAbcJD
 
 DB_CORE_CONNECTION_STRING = Driver={ODBC Driver 18 for SQL Server};Server=tcp:facilitieswebservice.database.windows.net,1433;Database=users;Uid=CloudSAc9a971d5;Pwd=qonvIt-2dazki-huttop;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=60;
 

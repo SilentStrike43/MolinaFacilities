@@ -3,9 +3,6 @@
 Main application file with Flask application factory pattern.
 """
 
-from dotenv import load_dotenv
-load_dotenv()
-
 import os
 import sys
 import signal
