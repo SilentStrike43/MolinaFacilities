@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Activate virtual environment
-source antenv/bin/activate
+source /tmp/8de18818102b142/antenv/bin/activate
+cd /tmp/8de18818102b142
 
-# Start Gunicorn
-gunicorn --bind=0.0.0.0:8000 \
-         --timeout 600 \
-         --workers 4 \
-         --worker-class sync \
-         --access-logfile '-' \
-         --error-logfile '-' \
-         wsgi:app
+# Call the create_app factory directly
+exec gunicorn \
+    --bind=0.0.0.0:8000 \
+    --timeout 600 \
+    --workers 4 \
+    --access-logfile - \
+    --error-logfile - \
+    "app.app:create_app()"
