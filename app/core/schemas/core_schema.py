@@ -1,99 +1,61 @@
 # app/core/schemas/core_schema.py
-"""
-Core database schema - Users, authentication, permissions, audit logs
-"""
+"""Core schema - users and system tables in dbo schema"""
 
 CORE_SCHEMA = """
--- Users table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'users')
+-- Users table (in dbo schema, no prefix needed)
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'users' AND schema_id = SCHEMA_ID('dbo'))
 BEGIN
-    CREATE TABLE users (
+    CREATE TABLE dbo.users (
         id INT IDENTITY(1,1) PRIMARY KEY,
-        username NVARCHAR(255) NOT NULL UNIQUE,
+        username NVARCHAR(100) UNIQUE NOT NULL,
         password_hash NVARCHAR(255) NOT NULL,
-        permission_level NVARCHAR(50),
-        first_name NVARCHAR(255),
-        last_name NVARCHAR(255),
+        full_name NVARCHAR(255),
         email NVARCHAR(255),
         phone NVARCHAR(50),
+        role NVARCHAR(50) DEFAULT 'user',
+        location NVARCHAR(50) DEFAULT 'NY',
+        position NVARCHAR(255),
         department NVARCHAR(255),
         is_active BIT DEFAULT 1,
+        module_permissions NVARCHAR(MAX) DEFAULT '[]',
         created_at DATETIME2 DEFAULT GETDATE(),
         updated_at DATETIME2 DEFAULT GETDATE(),
         last_login DATETIME2,
-        created_by INT,
-        updated_by INT
+        last_modified_by INT,
+        last_modified_at DATETIME2
     )
     
-    CREATE INDEX idx_users_username ON users(username)
-    CREATE INDEX idx_users_email ON users(email)
-    CREATE INDEX idx_users_permission_level ON users(permission_level)
+    CREATE INDEX idx_users_username ON dbo.users(username)
+    CREATE INDEX idx_users_role ON dbo.users(role)
+    CREATE INDEX idx_users_is_active ON dbo.users(is_active)
 END
 GO
 
--- Audit logs table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'audit_logs')
+-- Audit log table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'audit_log' AND schema_id = SCHEMA_ID('dbo'))
 BEGIN
-    CREATE TABLE audit_logs (
+    CREATE TABLE dbo.audit_log (
         id INT IDENTITY(1,1) PRIMARY KEY,
         user_id INT,
+        username NVARCHAR(100),
         action NVARCHAR(100) NOT NULL,
-        entity_type NVARCHAR(100),
-        entity_id INT,
+        module NVARCHAR(100),
         details NVARCHAR(MAX),
         ip_address NVARCHAR(50),
         user_agent NVARCHAR(500),
-        timestamp DATETIME2 DEFAULT GETDATE(),
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        timestamp DATETIME2 DEFAULT GETDATE()
     )
     
-    CREATE INDEX idx_audit_user_id ON audit_logs(user_id)
-    CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp)
-    CREATE INDEX idx_audit_action ON audit_logs(action)
-END
-GO
-
--- Sessions table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'sessions')
-BEGIN
-    CREATE TABLE sessions (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        session_id NVARCHAR(255) NOT NULL UNIQUE,
-        user_id INT NOT NULL,
-        data NVARCHAR(MAX),
-        created_at DATETIME2 DEFAULT GETDATE(),
-        expires_at DATETIME2 NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    )
-    
-    CREATE INDEX idx_sessions_user_id ON sessions(user_id)
-    CREATE INDEX idx_sessions_expires_at ON sessions(expires_at)
-END
-GO
-
--- User capabilities table
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'user_capabilities')
-BEGIN
-    CREATE TABLE user_capabilities (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        user_id INT NOT NULL,
-        capability NVARCHAR(100) NOT NULL,
-        granted_by INT,
-        granted_at DATETIME2 DEFAULT GETDATE(),
-        expires_at DATETIME2,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (granted_by) REFERENCES users(id)
-    )
-    
-    CREATE INDEX idx_capabilities_user_id ON user_capabilities(user_id)
-    CREATE INDEX idx_capabilities_capability ON user_capabilities(capability)
+    CREATE INDEX idx_audit_user_id ON dbo.audit_log(user_id)
+    CREATE INDEX idx_audit_action ON dbo.audit_log(action)
+    CREATE INDEX idx_audit_timestamp ON dbo.audit_log(timestamp)
 END
 GO
 """
 
 
 def initialize_core_schema():
-    """Initialize core database schema."""
+    """Initialize core module schema."""
     from app.core.database import execute_script
     execute_script("core", CORE_SCHEMA)
-    print("   ✅ users, audit_logs, sessions, user_capabilities tables created")
+    print("   ✅ core (dbo) schema tables created")
