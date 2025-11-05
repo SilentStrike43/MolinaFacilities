@@ -9481,3 +9481,102 @@ werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'fulfil
 2025-11-05 16:02:59 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
 2025-11-05 16:02:59 | [32mINFO[0m | app.core.database | cleanup_all_pools:375 | All database connection pools closed
 2025-11-05 16:02:59 | [32mINFO[0m | __main__ | shutdown_handler:203 | Cleanup complete
+2025-11-05 16:03:00 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\GridlineService\app\logs
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | create_app:57 | Initializing database schemas...
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'send' database
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'fulfillment' database
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:00 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'inventory' database
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | create_app:70 | ✅ Database schemas initialized
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | create_app:144 | All blueprints registered successfully
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | create_app:162 | Database schemas initialized
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | create_app:179 | Application initialization complete
+2025-11-05 16:03:00 | [32mINFO[0m | __main__ | <module>:217 | Starting server on 127.0.0.1:5000
+2025-11-05 16:03:01 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\GridlineService\app\logs
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | create_app:57 | Initializing database schemas...
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'send' database
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'fulfillment' database
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:01 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'inventory' database
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | create_app:70 | ✅ Database schemas initialized
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | create_app:144 | All blueprints registered successfully
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | create_app:162 | Database schemas initialized
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | create_app:179 | Application initialization complete
+2025-11-05 16:03:01 | [32mINFO[0m | __main__ | <module>:217 | Starting server on 127.0.0.1:5000
+2025-11-05 16:03:01 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'core' database
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: send
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: fulfillment
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: inventory
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: core
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-05 16:03:05 | [32mINFO[0m | app.core.database | cleanup_all_pools:375 | All database connection pools closed
+2025-11-05 16:13:52 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-05 16:13:52 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'core' database
+2025-11-05 16:13:52 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+
+2025-11-05 16:13:52 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: DatabaseError: Database query error: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\views.py", line 1152, in system_health
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT
+        ^^^^^^
+    ...<3 lines>...
+        ORDER BY n_live_tup DESC
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\GridlineService\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\GridlineService\app\modules\horizon\views.py", line 71, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\GridlineService\app\modules\horizon\views.py", line 1148, in system_health
+    with get_db_connection("core") as conn:
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\chris\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\GridlineService\app\core\database.py", line 285, in get_db_connection
+    raise DatabaseError(f"Database query error: {e}")
+app.core.database.DatabaseError: Database query error: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+
+2025-11-05 16:13:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: core
+2025-11-05 16:13:52 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-05 16:13:52 | [32mINFO[0m | app.core.database | cleanup_all_pools:375 | All database connection pools closed

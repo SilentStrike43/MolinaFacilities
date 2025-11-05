@@ -1749,3 +1749,7 @@ KeyError: 0
 LINE 7:                     OUTPUT INSERTED.id
                             ^
 
+2025-11-05 16:13:52 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+
