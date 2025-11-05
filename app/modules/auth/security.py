@@ -347,6 +347,119 @@ def require_any(caps: Iterable[str]):
             return view(*args, **kwargs)
         return wrapped
     return deco
+    
+def get_audit_logs(filters: dict = None, limit: int = 100):
+    """Get audit logs with optional filters."""
+    from app.core.database import get_db_connection
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        query = "SELECT * FROM audit_logs WHERE 1=1"
+        params = []
+        
+        if filters:
+            if filters.get("user_id"):
+                query += " AND user_id = %s"
+                params.append(filters["user_id"])
+            
+            if filters.get("action"):
+                query += " AND action = %s"
+                params.append(filters["action"])
+            
+            if filters.get("module"):
+                query += " AND module = %s"
+                params.append(filters["module"])
+            
+            if filters.get("date_from"):
+                query += " AND DATE(ts_utc) >= %s"
+                params.append(filters["date_from"])
+            
+            if filters.get("date_to"):
+                query += " AND DATE(ts_utc) <= %s"
+                params.append(filters["date_to"])
+            
+            if filters.get("permission_level"):
+                query += " AND permission_level = %s"
+                params.append(filters["permission_level"])
+            
+            if filters.get("target_user_id"):
+                query += " AND target_user_id = %s"
+                params.append(filters["target_user_id"])
+        
+        query += " ORDER BY ts_utc DESC LIMIT %s"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        cursor.close()
+        return [dict(row) for row in rows]
+
+
+def get_audit_statistics(days=30):
+    """Get audit log statistics for dashboard."""
+    from datetime import datetime, timedelta
+    from app.core.database import get_db_connection
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).date()
+        
+        stats = {}
+        
+        # Total actions
+        cursor.execute(
+            "SELECT COUNT(*) as count FROM audit_logs WHERE DATE(ts_utc) >= %s", 
+            (cutoff_date,)
+        )
+        stats["total_actions"] = cursor.fetchone()['count']
+        
+        # Actions by module
+        cursor.execute("""
+            SELECT module, COUNT(*) as count
+            FROM audit_logs
+            WHERE DATE(ts_utc) >= %s
+            GROUP BY module
+            ORDER BY count DESC
+        """, (cutoff_date,))
+        module_stats = cursor.fetchall()
+        stats["by_module"] = {row['module']: row['count'] for row in module_stats}
+        
+        # Actions by permission level
+        cursor.execute("""
+            SELECT permission_level, COUNT(*) as count
+            FROM audit_logs
+            WHERE DATE(ts_utc) >= %s AND permission_level != ''
+            GROUP BY permission_level
+            ORDER BY count DESC
+        """, (cutoff_date,))
+        level_stats = cursor.fetchall()
+        stats["by_level"] = {row['permission_level']: row['count'] for row in level_stats}
+        
+        # Most active users
+        cursor.execute("""
+            SELECT username, COUNT(*) as count
+            FROM audit_logs
+            WHERE DATE(ts_utc) >= %s
+            GROUP BY username
+            ORDER BY count DESC
+            LIMIT 10
+        """, (cutoff_date,))
+        user_stats = cursor.fetchall()
+        stats["top_users"] = [(row['username'], row['count']) for row in user_stats]
+        
+        # Critical actions
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM audit_logs
+            WHERE DATE(ts_utc) >= %s
+            AND action IN ('delete_user', 'elevate_user', 'system_config_change')
+        """, (cutoff_date,))
+        stats["critical_actions"] = cursor.fetchone()['count']
+        
+        cursor.close()
+        
+        return stats
 
 
 # --------- convenience shims (let old names continue to work) ----------

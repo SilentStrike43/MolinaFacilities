@@ -7,7 +7,6 @@ import os
 import json
 from flask import g
 
-from app.modules.auth.security import current_user
 from app.modules.users.permissions import PermissionManager
 
 APP_VERSION = os.environ.get("APP_VERSION", "0.4.0")

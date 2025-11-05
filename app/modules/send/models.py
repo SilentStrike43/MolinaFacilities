@@ -1,7 +1,7 @@
+# app/modules/send/models.py
 """
-Send/Mail module models - AZURE SQL ONLY
+Send/Mail module models - PostgreSQL Edition
 """
-import os
 from typing import Dict
 from app.core.database import get_db_connection
 
@@ -17,13 +17,65 @@ PACKAGE_PREFIX: Dict[str, str] = {
 
 
 def _conn():
-    """Get database connection - Azure SQL only."""
+    """Get database connection."""
     return get_db_connection("send").__enter__()
 
 
 def ensure_schema():
-    """Schema is managed by Azure SQL migrations, not application code."""
-    pass  # No-op for Azure SQL
+    """Ensure send schema exists."""
+    with get_db_connection("send") as conn:
+        cursor = conn.cursor()
+        
+        # Create counters table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS counters (
+                name VARCHAR(100) PRIMARY KEY,
+                value INTEGER DEFAULT 0
+            )
+        """)
+        
+        # Create package_manifest table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS package_manifest (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
+                created_by INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                tracking_number VARCHAR(255),
+                recipient VARCHAR(255),
+                sender VARCHAR(255),
+                package_type VARCHAR(100),
+                location VARCHAR(50),
+                status VARCHAR(50) DEFAULT 'received',
+                notes TEXT,
+                picked_up_at TIMESTAMP,
+                picked_up_by VARCHAR(255),
+                ts_utc TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                checkin_id VARCHAR(50),
+                package_id VARCHAR(50),
+                recipient_name VARCHAR(255),
+                recipient_address TEXT,
+                submitter_name VARCHAR(255),
+                checkin_date DATE
+            )
+        """)
+        
+        # Create indexes
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_package_tracking 
+            ON package_manifest(tracking_number)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_package_recipient 
+            ON package_manifest(recipient)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_package_status 
+            ON package_manifest(status)
+        """)
+        
+        cursor.close()
+        print("✓ Send schema initialized")
 
 
 def jobs_db():
@@ -37,15 +89,15 @@ def _bump(conn, name: str) -> int:
     cursor = conn.cursor()
     
     # Try to get current value
-    cursor.execute("SELECT value FROM counters WHERE name = ?", (name,))
+    cursor.execute("SELECT value FROM counters WHERE name = %s", (name,))
     row = cursor.fetchone()
     
     if row:
-        val = row[0] + 1
-        cursor.execute("UPDATE counters SET value = ? WHERE name = ?", (val, name))
+        val = row['value'] + 1
+        cursor.execute("UPDATE counters SET value = %s WHERE name = %s", (val, name))
     else:
         val = 1
-        cursor.execute("INSERT INTO counters(name, value) VALUES(?, ?)", (name, val))
+        cursor.execute("INSERT INTO counters(name, value) VALUES(%s, %s)", (name, val))
     
     conn.commit()
     cursor.close()
@@ -55,10 +107,10 @@ def _bump(conn, name: str) -> int:
 def _peek(conn, name: str) -> int:
     """Peek at next counter value without incrementing."""
     cursor = conn.cursor()
-    cursor.execute("SELECT value FROM counters WHERE name = ?", (name,))
+    cursor.execute("SELECT value FROM counters WHERE name = %s", (name,))
     row = cursor.fetchone()
     cursor.close()
-    return (row[0] + 1) if row else 1
+    return (row['value'] + 1) if row else 1
 
 
 def next_checkin_id() -> int:

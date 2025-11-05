@@ -18,7 +18,7 @@ def insights():
         
         if q:
             like = f"%{q}%"
-            sql += " AND (requester_name LIKE ? OR description LIKE ? OR status LIKE ?)"
+            sql += " AND (requester_name LIKE %s OR description LIKE %s OR status LIKE %s)"
             params += [like, like, like]
         
         sql += " ORDER BY ts_utc DESC"
@@ -43,10 +43,11 @@ def export():
     
     # Write header
     if rows:
-        w.writerow([col[0] for col in rows[0].cursor_description])
+        # PostgreSQL returns RealDictCursor, get keys
+        w.writerow(rows[0].keys())
         # Write data
         for r in rows:
-            w.writerow(list(r))
+            w.writerow(list(r.values()))
     else:
         w.writerow(["id","requester_name","description","date_submitted","status","completed_at","ts_utc"])
     

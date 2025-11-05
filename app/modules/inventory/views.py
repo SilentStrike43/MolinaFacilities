@@ -14,15 +14,7 @@ from . import bp
 # Create alias for compatibility with existing code
 inventory_bp = bp
 
-# module-local DB
-from app.modules.inventory.storage import inventory_db, ensure_schema
-from app.modules.inventory.assets import db as assets_db, ensure_schema as ensure_assets_schema
-
 logger = logging.getLogger(__name__)
-
-# Ensure schemas exist
-ensure_schema()
-ensure_assets_schema()
 
 # ---------- CATEGORY AND SKU SYSTEM ----------
 INVENTORY_CATEGORIES = {
@@ -192,12 +184,12 @@ def generate_next_sku(category_code: str) -> str:
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         
-        # Find highest SKU for this category - SQL Server uses TOP instead of LIMIT
+        # Find highest SKU for this category
         prefix = category_code
         cursor.execute("""
-            SELECT TOP 1 sku FROM assets 
-            WHERE sku LIKE ? 
-            ORDER BY sku DESC
+            SELECT sku FROM assets 
+            WHERE sku LIKE %s 
+            ORDER BY sku DESC LIMIT 1
         """, (f"{prefix}-%",))
         
         result = cursor.fetchone()
@@ -205,7 +197,7 @@ def generate_next_sku(category_code: str) -> str:
         
         if result:
             # Extract number and increment
-            last_sku = result[0]
+            last_sku = result['sku']  # ✅ FIXED: Use column name
             try:
                 last_num = int(last_sku.split("-")[1])
                 next_num = last_num + 1
@@ -222,7 +214,8 @@ def create_asset(data: dict) -> int:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO assets(sku, product, uom, location, qty_on_hand, manufacturer, part_number, serial_number, pii, notes, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
         """, (
             data.get("sku", ""),
             data.get("product", ""),
@@ -236,11 +229,10 @@ def create_asset(data: dict) -> int:
             data.get("notes", ""),
             data.get("status", "active")
         ))
-        conn.commit()
         
         # Get last inserted ID
-        cursor.execute("SELECT @@IDENTITY")
-        asset_id = int(cursor.fetchone()[0])
+        result = cursor.fetchone()
+        asset_id = result['id']
         cursor.close()
         return asset_id
 
@@ -250,7 +242,7 @@ def record_initial_checkin(asset_id: int, qty: int, username: str, note: str = "
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO asset_ledger(asset_id, action, qty, username, note)
-            VALUES (?, 'CHECKIN', ?, ?, ?)
+            VALUES (%s, 'CHECKIN', %s, %s, %s)
         """, (asset_id, qty, username, note))
         conn.commit()
         cursor.close()
@@ -262,7 +254,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
     # Get asset info
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM assets WHERE id=?", (asset_id,))
+        cursor.execute("SELECT * FROM assets WHERE id=%s", (asset_id,))
         asset = cursor.fetchone()
         cursor.close()
     
@@ -270,7 +262,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
         return
     
     # Convert to dict
-    asset_dict = dict(zip([col[0] for col in asset.cursor_description], asset))
+    asset_dict = dict(asset)
     
     cat_info = get_category_info(asset_dict.get("sku", ""))
     
@@ -280,7 +272,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
             INSERT INTO inventory_reports(
                 checkin_date, inventory_id, item_type, manufacturer, product_name,
                 submitter_name, notes, part_number, serial_number, count, location, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             datetime.date.today().isoformat(),
             asset_id,
@@ -322,18 +314,18 @@ def asset():
         q = (request.args.get("q") or "").strip()
         status_filter = request.args.get("status", "active")
         
-        sql = "SELECT TOP 100 * FROM assets WHERE 1=1"
+        sql = "SELECT * FROM assets WHERE 1=1"
         params = []
         
         if status_filter != "all":
-            sql += " AND status = ?"
+            sql += " AND status = %s"
             params.append(status_filter)
         
         if q:
-            sql += " AND (product LIKE ? OR sku LIKE ? OR location LIKE ? OR manufacturer LIKE ?)"
+            sql += " AND (product LIKE %s OR sku LIKE %s OR location LIKE %s OR manufacturer LIKE %s)"
             params.extend([f"%{q}%"] * 4)
         
-        sql += " ORDER BY id DESC"
+        sql += " ORDER BY id DESC LIMIT 100"
         
         cursor.execute(sql, params)
         rows = cursor.fetchall()
@@ -399,8 +391,8 @@ def asset():
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE assets 
-                    SET product=?, manufacturer=?, uom=?, location=?, notes=?, status=?
-                    WHERE id=?
+                    SET product=%s, manufacturer=%s, uom=%s, location=%s, notes=%s, status=%s
+                    WHERE id=%s
                 """, (product, manufacturer, uom, location, notes, status, asset_id))
                 conn.commit()
                 cursor.close()
@@ -414,7 +406,7 @@ def asset():
     if edit_id:
         with get_db_connection("inventory") as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM assets WHERE id=?", (edit_id,))
+            cursor.execute("SELECT * FROM assets WHERE id=%s", (edit_id,))
             edit = cursor.fetchone()
             cursor.close()
 
@@ -466,7 +458,7 @@ def insights():
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         
-        sql = "SELECT TOP 2000 * FROM inventory_reports WHERE 1=1"
+        sql = "SELECT* FROM inventory_reports WHERE 1=1"
         params = []
         
         if f["submitter_name"]:
@@ -494,14 +486,14 @@ def insights():
             params.extend([f"%{f['q']}%"] * 3)
         
         if f["date_from"]:
-            sql += " AND CAST(ts_utc AS DATE) >= ?"
+            sql += " AND DATE(ts_utc) >= ?"
             params.append(f["date_from"])
         
         if f["date_to"]:
-            sql += " AND CAST(ts_utc AS DATE) <= ?"
+            sql += " AND DATE(ts_utc) <= ?"
             params.append(f["date_to"])
         
-        sql += " ORDER BY ts_utc DESC"
+        sql += " ORDER BY ts_utc DESC LIMIT 2000"
         
         cursor.execute(sql, params)
         rows = cursor.fetchall()

@@ -11,14 +11,15 @@ bp = Blueprint("home", __name__, url_prefix="/home", template_folder="templates"
 
 
 @bp.route("/")
-@bp.route("/index")
 @login_required
 def index():
-    """
-    Home page - accessible to all authenticated users.
-    Shows personalized dashboard based on user's permissions.
-    """
+    """Home page - redirects S1/L3 to Horizon."""
     cu = current_user()
+    
+    # Redirect S1/L3 users to Horizon dashboard
+    permission_level = cu.get('permission_level', '')
+    if permission_level in ['S1', 'L3']:
+        return redirect(url_for('horizon.dashboard'))
     
     if not cu:
         return redirect(url_for("auth.login"))

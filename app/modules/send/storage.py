@@ -1,5 +1,6 @@
+# app/modules/send/storage.py
 """
-Send storage - AZURE SQL ONLY
+Send storage - PostgreSQL Edition
 """
 from app.core.database import get_db_connection
 
@@ -11,8 +12,29 @@ PACKAGE_PREFIX = {
 
 
 def ensure_schema():
-    """Schema is managed by Azure SQL migrations, not application code."""
-    pass
+    """Ensure send schema exists."""
+    with get_db_connection("send") as conn:
+        cursor = conn.cursor()
+        
+        # Create counters table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS counters (
+                name VARCHAR(100) PRIMARY KEY,
+                value INTEGER DEFAULT 0
+            )
+        """)
+        
+        # Create cache table for tracking lookups
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cache (
+                tracking VARCHAR(255) PRIMARY KEY,
+                carrier VARCHAR(50),
+                payload TEXT,
+                updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        cursor.close()
 
 
 # Counter functions
@@ -21,16 +43,15 @@ def _bump(name: str) -> int:
     with get_db_connection("send") as conn:
         cursor = conn.cursor()
         
-        cursor.execute("SELECT value FROM counters WHERE name=?", (name,))
+        cursor.execute("SELECT value FROM counters WHERE name=%s", (name,))
         r = cursor.fetchone()
-        val = (r[0] if r else 0) + 1
+        val = (r['value'] if r else 0) + 1
         
         if r:
-            cursor.execute("UPDATE counters SET value=? WHERE name=?", (val, name))
+            cursor.execute("UPDATE counters SET value=%s WHERE name=%s", (val, name))
         else:
-            cursor.execute("INSERT INTO counters(name, value) VALUES(?,?)", (name, val))
+            cursor.execute("INSERT INTO counters(name, value) VALUES(%s,%s)", (name, val))
         
-        conn.commit()
         cursor.close()
         return val
 
@@ -39,10 +60,10 @@ def _peek(name: str) -> int:
     """Peek at next counter value without incrementing."""
     with get_db_connection("send") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT value FROM counters WHERE name=?", (name,))
+        cursor.execute("SELECT value FROM counters WHERE name=%s", (name,))
         r = cursor.fetchone()
         cursor.close()
-        val = (r[0] if r else 0) + 1
+        val = (r['value'] if r else 0) + 1
         return val
 
 
@@ -75,7 +96,7 @@ def cache_get(tracking: str):
     """Get cached tracking data."""
     with get_db_connection("send") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT carrier, payload, updated FROM cache WHERE tracking=?", (tracking,))
+        cursor.execute("SELECT carrier, payload, updated FROM cache WHERE tracking=%s", (tracking,))
         r = cursor.fetchone()
         cursor.close()
         return r
@@ -87,20 +108,19 @@ def cache_set(tracking: str, carrier: str, payload_json: str):
         cursor = conn.cursor()
         
         # Check if exists
-        cursor.execute("SELECT 1 FROM cache WHERE tracking=?", (tracking,))
+        cursor.execute("SELECT 1 FROM cache WHERE tracking=%s", (tracking,))
         exists = cursor.fetchone()
         
         if exists:
             cursor.execute("""
                 UPDATE cache 
-                SET carrier=?, payload=?, updated=GETUTCDATE() 
-                WHERE tracking=?
+                SET carrier=%s, payload=%s, updated=CURRENT_TIMESTAMP 
+                WHERE tracking=%s
             """, (carrier, payload_json, tracking))
         else:
             cursor.execute("""
                 INSERT INTO cache(tracking, carrier, payload, updated) 
-                VALUES (?,?,?,GETUTCDATE())
+                VALUES (%s,%s,%s,CURRENT_TIMESTAMP)
             """, (tracking, carrier, payload_json))
         
-        conn.commit()
         cursor.close()

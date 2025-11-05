@@ -1,0 +1,740 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Global Insights{% endblock %}
+{% block page_title %}Global Insights{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Global Insights</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .insight-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .metric-box {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .metric-box h4 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+    
+    .metric-box p {
+        margin: 5px 0 0 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .trend-up {
+        color: #198754;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .comparison-row {
+        border-bottom: 1px solid #e9ecef;
+        padding: 10px 0;
+    }
+    
+    .comparison-row:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Date Range Filter -->
+<div class="filter-card">
+    <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="date_from" class="form-label">From Date</label>
+            <input type="date" 
+                   class="form-control" 
+                   id="date_from" 
+                   name="date_from" 
+                   value="{{ date_from }}">
+        </div>
+        
+        <div class="col-md-3">
+            <label for="date_to" class="form-label">To Date</label>
+            <input type="date" 
+                   class="form-control" 
+                   id="date_to" 
+                   name="date_to" 
+                   value="{{ date_to }}">
+        </div>
+        
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Apply Filter
+            </button>
+        </div>
+        
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-secondary w-100" onclick="setQuickRange('7d')">
+                Last 7 Days
+            </button>
+        </div>
+        
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-secondary w-100" onclick="setQuickRange('30d')">
+                Last 30 Days
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Key Metrics Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="metric-box">
+            <h4 class="text-primary">{{ insights.user_growth.total_new_users }}</h4>
+            <p>New Users</p>
+            <small class="trend-up">
+                <i class="bi bi-arrow-up"></i> +{{ insights.user_growth.growth_rate }}%
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="metric-box">
+            <h4 class="text-success">{{ insights.instance_comparison|length }}</h4>
+            <p>Active Instances</p>
+            <small class="text-muted">All operational</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="metric-box">
+            <h4 class="text-info">{{ insights.activity_by_module.by_module|length }}</h4>
+            <p>Active Modules</p>
+            <small class="text-muted">In use</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="metric-box">
+            <h4 class="text-warning">
+                {% set total_actions = 0 %}
+                {% for module in insights.activity_by_module.by_module %}
+                    {% set total_actions = total_actions + module.actions %}
+                {% endfor %}
+                {{ total_actions }}
+            </h4>
+            <p>Total Actions</p>
+            <small class="text-muted">Selected period</small>
+        </div>
+    </div>
+</div>
+
+<!-- User Growth Chart -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-graph-up"></i> User Growth Trend</h5>
+            <div class="chart-container">
+                <canvas id="userGrowthChart"></canvas>
+            </div>
+            
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <strong>{{ insights.user_growth.total_new_users }}</strong>
+                    <br><small class="text-muted">New Users</small>
+                </div>
+                <div class="col-4">
+                    <strong class="text-success">+{{ insights.user_growth.growth_rate }}%</strong>
+                    <br><small class="text-muted">Growth Rate</small>
+                </div>
+                <div class="col-4">
+                    <strong>{{ insights.user_growth.users_before_period }}</strong>
+                    <br><small class="text-muted">Existing Users</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-pie-chart"></i> Users by Permission</h5>
+            <div class="chart-container">
+                <canvas id="permissionPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Module Activity -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-bar-chart"></i> Activity by Module</h5>
+            <div class="chart-container">
+                <canvas id="moduleActivityChart"></canvas>
+            </div>
+            
+            <div class="table-responsive mt-3">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th class="text-end">Actions</th>
+                            <th class="text-end">Users</th>
+                            <th class="text-end">Avg/User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module in insights.activity_by_module.by_module %}
+                        <tr>
+                            <td>
+                                {% if module.module == 'ledger' %}
+                                    <i class="bi bi-mailbox text-primary"></i> Ledger
+                                {% elif module.module == 'flow' %}
+                                    <i class="bi bi-box-seam text-info"></i> Flow
+                                {% elif module.module == 'fulfillment' %}
+                                    <i class="bi bi-clipboard-check text-success"></i> Fulfillment
+                                {% else %}
+                                    {{ module.module|title }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end"><strong>{{ module.actions }}</strong></td>
+                            <td class="text-end">{{ module.unique_users }}</td>
+                            <td class="text-end">
+                                {{ (module.actions / module.unique_users)|round(1) if module.unique_users > 0 else 0 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-trophy"></i> Top Active Users</h5>
+            
+            <div class="list-group">
+                {% for user in insights.activity_by_module.top_users[:10] %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ loop.index }}. {{ user.username }}</strong>
+                        <br><small class="text-muted">{{ user.modules }} modules used</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">{{ user.actions }} actions</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Peak Usage Analysis -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-clock"></i> Peak Usage by Hour</h5>
+            <div class="chart-container">
+                <canvas id="hourlyUsageChart"></canvas>
+            </div>
+            
+            {% if insights.peak_usage_times.peak_day %}
+            <div class="alert alert-info mt-3 mb-0">
+                <strong>Peak Day:</strong> {{ insights.peak_usage_times.peak_day.date }}
+                <br><strong>Activity:</strong> {{ insights.peak_usage_times.peak_day.count }} actions
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-calendar-week"></i> Activity by Day of Week</h5>
+            <div class="chart-container">
+                <canvas id="weeklyUsageChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instance Comparison -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="insight-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-building"></i> Instance Comparison</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportComparison()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover" id="comparisonTable">
+                    <thead>
+                        <tr>
+                            <th>Instance</th>
+                            <th>Status</th>
+                            <th>Users</th>
+                            <th>Utilization</th>
+                            <th>Ledger</th>
+                            <th>Flow</th>
+                            <th>Fulfillment</th>
+                            <th>Total Records</th>
+                            <th>Activity (7d)</th>
+                            <th>Actions/User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inst in insights.instance_comparison %}
+                        <tr>
+                            <td>
+                                <strong>{{ inst.name }}</strong>
+                                {% if inst.created_at %}
+                                <br><small class="text-muted">Since {{ inst.created_at }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if inst.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ inst.users.total }}</strong> / {{ inst.users.max }}
+                                <br><small class="text-success">{{ inst.users.active }} active</small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar 
+                                        {% if inst.users.utilization >= 90 %}bg-danger
+                                        {% elif inst.users.utilization >= 70 %}bg-warning
+                                        {% else %}bg-success{% endif %}" 
+                                         style="width: {{ inst.users.utilization }}%">
+                                        {{ inst.users.utilization }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ inst.modules.ledger }}</td>
+                            <td>{{ inst.modules.flow }}</td>
+                            <td>{{ inst.modules.fulfillment }}</td>
+                            <td><strong>{{ inst.modules.total }}</strong></td>
+                            <td>{{ inst.activity_7d }}</td>
+                            <td>{{ inst.activity_per_user }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Module Adoption -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-mailbox text-primary"></i> Ledger Adoption</h5>
+            
+            {% set ledger_total = insights.module_adoption.overall[0].instances if insights.module_adoption.overall else 0 %}
+            {% set ledger_records = insights.module_adoption.overall[0].total_records if insights.module_adoption.overall else 0 %}
+            
+            <div class="text-center mb-3">
+                <h2 class="text-primary">{{ ledger_total }}</h2>
+                <p class="text-muted">Instances Using</p>
+                <small>{{ ledger_records }} total records</small>
+            </div>
+            
+            <div class="comparison-row" style="max-height: 200px; overflow-y: auto;">
+                {% for inst in insights.module_adoption.ledger[:5] %}
+                <div class="d-flex justify-content-between py-2">
+                    <span>{{ inst.instance }}</span>
+                    <strong>{{ inst.records }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-box-seam text-info"></i> Flow Adoption</h5>
+            
+            {% set flow_total = insights.module_adoption.overall[1].instances if insights.module_adoption.overall|length > 1 else 0 %}
+            {% set flow_records = insights.module_adoption.overall[1].total_records if insights.module_adoption.overall|length > 1 else 0 %}
+            
+            <div class="text-center mb-3">
+                <h2 class="text-info">{{ flow_total }}</h2>
+                <p class="text-muted">Instances Using</p>
+                <small>{{ flow_records }} total assets</small>
+            </div>
+            
+            <div class="comparison-row" style="max-height: 200px; overflow-y: auto;">
+                {% for inst in insights.module_adoption.flow[:5] %}
+                <div class="d-flex justify-content-between py-2">
+                    <span>{{ inst.instance }}</span>
+                    <strong>{{ inst.assets }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-clipboard-check text-success"></i> Fulfillment Adoption</h5>
+            
+            {% set ff_total = insights.module_adoption.overall[2].instances if insights.module_adoption.overall|length > 2 else 0 %}
+            {% set ff_records = insights.module_adoption.overall[2].total_records if insights.module_adoption.overall|length > 2 else 0 %}
+            
+            <div class="text-center mb-3">
+                <h2 class="text-success">{{ ff_total }}</h2>
+                <p class="text-muted">Instances Using</p>
+                <small>{{ ff_records }} total requests</small>
+            </div>
+            
+            <div class="comparison-row" style="max-height: 200px; overflow-y: auto;">
+                {% for inst in insights.module_adoption.fulfillment[:5] %}
+                <div class="d-flex justify-content-between py-2">
+                    <span>{{ inst.instance }}</span>
+                    <strong>{{ inst.requests }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="insight-card">
+            <h5 class="mb-3"><i class="bi bi-lightning"></i> Top Actions ({{ date_from }} to {{ date_to }})</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Action</th>
+                            <th>Module</th>
+                            <th class="text-end">Count</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_actions = insights.activity_by_module.top_actions|sum(attribute='count') %}
+                        {% for action in insights.activity_by_module.top_actions[:15] %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><code>{{ action.action }}</code></td>
+                            <td>
+                                <span class="badge bg-secondary">{{ action.module }}</span>
+                            </td>
+                            <td class="text-end"><strong>{{ action.count }}</strong></td>
+                            <td>
+                                <div class="progress" style="height: 10px; width: 100px;">
+                                    <div class="progress-bar" 
+                                         style="width: {{ (action.count / total_actions * 100) if total_actions > 0 else 0 }}%">
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ ((action.count / total_actions * 100)|round(1)) if total_actions > 0 else 0 }}%
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// User Growth Chart
+const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+new Chart(userGrowthCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for day in insights.user_growth.daily_growth %}
+                '{{ day.date }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'New Users',
+            data: [
+                {% for day in insights.user_growth.daily_growth %}
+                    {{ day.new_users }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Cumulative',
+            data: [
+                {% for day in insights.user_growth.daily_growth %}
+                    {{ day.cumulative }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Permission Pie Chart
+const permissionPieCtx = document.getElementById('permissionPieChart').getContext('2d');
+new Chart(permissionPieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for level in insights.user_growth.by_level %}
+                '{{ level.level }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for level in insights.user_growth.by_level %}
+                    {{ level.count }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+
+// Module Activity Chart
+const moduleActivityCtx = document.getElementById('moduleActivityChart').getContext('2d');
+new Chart(moduleActivityCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for module in insights.activity_by_module.by_module %}
+                '{{ module.module|title }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Actions',
+            data: [
+                {% for module in insights.activity_by_module.by_module %}
+                    {{ module.actions }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#0d6efd'
+        }, {
+            label: 'Unique Users',
+            data: [
+                {% for module in insights.activity_by_module.by_module %}
+                    {{ module.unique_users }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#198754'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Hourly Usage Chart
+const hourlyUsageCtx = document.getElementById('hourlyUsageChart').getContext('2d');
+new Chart(hourlyUsageCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for hour in insights.peak_usage_times.by_hour %}
+                '{{ hour.label }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Activity',
+            data: [
+                {% for hour in insights.peak_usage_times.by_hour %}
+                    {{ hour.count }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: '#0dcaf0',
+            backgroundColor: 'rgba(13, 202, 240, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Weekly Usage Chart
+const weeklyUsageCtx = document.getElementById('weeklyUsageChart').getContext('2d');
+new Chart(weeklyUsageCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for day in insights.peak_usage_times.by_day %}
+                '{{ day.day_name }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Activity',
+            data: [
+                {% for day in insights.peak_usage_times.by_day %}
+                    {{ day.count }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#6610f2'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Quick date range functions
+function setQuickRange(range) {
+    const today = new Date();
+    let fromDate;
+    
+    if (range === '7d') {
+        fromDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else if (range === '30d') {
+        fromDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+    
+    document.getElementById('date_from').value = fromDate.toISOString().split('T')[0];
+    document.getElementById('date_to').value = today.toISOString().split('T')[0];
+    
+    document.querySelector('form').submit();
+}
+
+// Export comparison table
+function exportComparison() {
+    const table = document.getElementById('comparisonTable');
+    let csv = [];
+    
+    // Headers
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        headers.push(th.textContent.trim());
+    });
+    csv.push(headers.join(','));
+    
+    // Rows
+    table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => {
+            row.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        csv.push(row.join(','));
+    });
+    
+    // Download
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'instance_comparison_{{ date_from }}_{{ date_to }}.csv';
+    a.click();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Confirm Mirror Session{% endblock %}
+{% block page_title %}Start Mirror Session{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_support') }}">Support</a></li>
+        <li class="breadcrumb-item active">Mirror User</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="stat-card">
+            <div class="alert alert-warning">
+                <h5><i class="bi bi-exclamation-triangle"></i> Mirror Session Confirmation</h5>
+                <p>You are about to start mirroring the following user's session:</p>
+                <ul>
+                    <li><strong>Username:</strong> {{ username }}</li>
+                    <li><strong>Permission Level:</strong> {{ permission_level or 'Module User' }}</li>
+                    <li><strong>Instance:</strong> {{ instance_name or 'Global' }}</li>
+                </ul>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> <strong>Important:</strong>
+                <ul class="mb-0">
+                    <li>This action will be logged in the audit trail</li>
+                    <li>You will see exactly what the user sees</li>
+                    <li>Actions you perform will be attributed to the target user</li>
+                    <li>Use this feature only for legitimate support purposes</li>
+                </ul>
+            </div>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="reason" class="form-label">
+                        Reason for Mirroring <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" 
+                              id="reason" 
+                              name="reason" 
+                              rows="3" 
+                              placeholder="Describe the support issue or reason for mirroring..."
+                              required></textarea>
+                    <small class="text-muted">This will be logged for audit purposes</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           id="confirmPolicy" 
+                           required>
+                    <label class="form-check-label" for="confirmPolicy">
+                        I confirm this is for legitimate support purposes and will follow company privacy policies
+                    </label>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for(' horizon.instance_support') }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-person-badge"></i> Start Mirror Session
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="stat-card mt-3">
+            <h6><i class="bi bi-shield-check"></i> Security & Compliance</h6>
+            <small class="text-muted">
+                Mirror sessions are subject to the following:
+                <ul>
+                    <li>All actions are logged with timestamps</li>
+                    <li>Session duration is recorded</li>
+                    <li>IP address and user agent are captured</li>
+                    <li>Sessions auto-expire after 4 hours</li>
+                    <li>Only one active mirror session per support user</li>
+                </ul>
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

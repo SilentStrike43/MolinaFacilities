@@ -1,0 +1,235 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2"><i class="bi bi-speedometer"></i> Global Dashboard</h1>
+            <p class="text-muted mb-0">System-wide overview and metrics</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3>{{ total_users }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-building"></i>
+                </div>
+                <h3>{{ active_instances }}</h3>
+                <p>Active Instances</p>
+                <small class="text-muted">{{ total_instances }} total</small>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-activity"></i>
+                </div>
+                <h3>{{ recent_activity }}</h3>
+                <p>Activity (24h)</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-{{ health.status_color }} bg-opacity-10 text-{{ health.status_color }}">
+                    <i class="bi bi-heart-pulse"></i>
+                </div>
+                <h3>{{ health.health_score }}</h3>
+                <p>System Health</p>
+                <small class="text-{{ health.status_color }}">{{ health.status|title }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users by Permission Level -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="stat-card">
+                <h5 class="mb-3"><i class="bi bi-shield-check"></i> Users by Permission Level</h5>
+                <table class="table table-sm">
+                    <tbody>
+                        {% for level in users_by_level %}
+                        <tr>
+                            <td>
+                                {% if level['permission_level'] == 'S1' %}
+                                    <span class="badge bg-danger">Super Admin</span>
+                                {% elif level['permission_level'] == 'L3' %}
+                                    <span class="badge bg-warning">Global Admin</span>
+                                {% elif level['permission_level'] == 'L2' %}
+                                    <span class="badge bg-info">Administrator</span>
+                                {% elif level['permission_level'] == 'L1' %}
+                                    <span class="badge bg-primary">Manager</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Module User</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end"><strong>{{ level['count'] }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="stat-card">
+                <h5 class="mb-3"><i class="bi bi-graph-up"></i> System Health Metrics</h5>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Health Score</span>
+                        <strong class="text-{{ health.status_color }}">{{ health.health_score }}/100</strong>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-{{ health.status_color }}" 
+                             style="width: {{ health.health_score }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="row text-center mt-3">
+                    <div class="col-4">
+                        <small class="text-muted">Database</small>
+                        <div><strong>{{ health.database_size_mb }} MB</strong></div>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted">Errors (24h)</small>
+                        <div><strong>{{ health.activity.errors_24h }}</strong></div>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted">Error Rate</small>
+                        <div><strong>{{ health.activity.error_rate }}%</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instance Statistics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> Instance Overview</h5>
+                    <a href="{{ url_for('horizon.instance_management') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-gear"></i> Manage Instances
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Instance</th>
+                                <th>Status</th>
+                                <th>Users</th>
+                                <th>Ledger</th>
+                                <th>Flow</th>
+                                <th>Fulfillment</th>
+                                <th>Activity (7d)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in instance_stats %}
+                            <tr onclick="window.location='{{ url_for('horizon.instance_detail', instance_id=item.instance.id) }}'">
+                                <td>
+                                    <strong>{{ item.instance.name }}</strong>
+                                    {% if item.instance.subdomain %}
+                                    <br><small class="text-muted">{{ item.instance.subdomain }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.instance.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ item.stats.user_count }}</strong> / {{ item.instance.max_users }}
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar" 
+                                             style="width: {{ (item.stats.user_count / item.instance.max_users * 100) if item.instance.max_users > 0 else 0 }}%">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ item.stats.modules.ledger }}</td>
+                                <td>{{ item.stats.modules.flow }}</td>
+                                <td>{{ item.stats.modules.fulfillment }}</td>
+                                <td>{{ item.stats.activity.last_7d }}</td>
+                                <td>
+                                    <a href="{{ url_for('horizon.instance_detail', instance_id=item.instance.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation()">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Critical Events -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="stat-card">
+                <h5 class="mb-3"><i class="bi bi-exclamation-triangle"></i> Recent Critical Events</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Module</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in recent_critical %}
+                            <tr>
+                                <td>{{ event['ts_utc'] }}</td>
+                                <td>
+                                    {{ event['username'] }}
+                                    {% if event['permission_level'] %}
+                                    <span class="badge bg-secondary">{{ event['permission_level'] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">{{ event['action'] }}</span>
+                                </td>
+                                <td>{{ event['module'] }}</td>
+                                <td><small>{{ event['details'][:50] if event['details'] else '' }}{% if event['details'] and event['details']|length > 50 %}...{% endif %}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('horizon.global_audits') }}" class="btn btn-sm btn-outline-primary">
+                        View All Audit Logs <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

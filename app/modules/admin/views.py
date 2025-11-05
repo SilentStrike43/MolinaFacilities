@@ -11,11 +11,11 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, jsonify
 
 from app.modules.auth.security import (
-    login_required, 
-    current_user,
+    login_required, current_user, record_audit,
+    get_audit_logs, get_audit_statistics  # Add these
 )
 
-from app.modules.users.models import get_user_by_id, users_db
+from app.modules.users.models import get_user_by_id
 from app.modules.users.permissions import PermissionManager, PermissionLevel
 from app.core.database import get_db_connection
 
@@ -98,7 +98,7 @@ def record_audit_log(user_data, action, module, details,
                 target_user_id, target_username, permission_level,
                 ip_address, user_agent, session_id, ts_utc
             )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,GETUTCDATE())
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP)
         """, (
             user_data["id"],
             user_data["username"],
@@ -120,7 +120,7 @@ def query_audit_logs(filters=None, limit=1000):
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         
-        query = "SELECT TOP " + str(limit) + " * FROM audit_logs WHERE 1=1"
+        query = f"SELECT * FROM audit_logs WHERE 1=1"
         params = []
         
         if filters:
@@ -141,11 +141,11 @@ def query_audit_logs(filters=None, limit=1000):
                 params.append(filters["module"])
             
             if filters.get("date_from"):
-                query += " AND CAST(ts_utc AS DATE) >= ?"
+                query += " AND DATE(ts_utc) >= ?"
                 params.append(filters["date_from"])
             
             if filters.get("date_to"):
-                query += " AND CAST(ts_utc AS DATE) <= ?"
+                query += " AND DATE(ts_utc) <= ?"
                 params.append(filters["date_to"])
             
             if filters.get("permission_level"):
@@ -157,6 +157,7 @@ def query_audit_logs(filters=None, limit=1000):
                 params.append(filters["target_user_id"])
         
         query += " ORDER BY ts_utc DESC"
+        query += f" LIMIT {limit}"
         
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -174,53 +175,55 @@ def get_audit_statistics(days=30):
         
         # Total actions
         cursor.execute(
-            "SELECT COUNT(*) FROM audit_logs WHERE CAST(ts_utc AS DATE) >= ?", 
+            "SELECT COUNT(*) as count FROM audit_logs WHERE DATE(ts_utc) >= %s", 
             (cutoff_date,)
         )
-        stats["total_actions"] = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        stats["total_actions"] = result['count'] if result else 0
         
         # Actions by module
         cursor.execute("""
             SELECT module, COUNT(*) as count
             FROM audit_logs
-            WHERE CAST(ts_utc AS DATE) >= ?
+            WHERE DATE(ts_utc) >= %s
             GROUP BY module
             ORDER BY count DESC
         """, (cutoff_date,))
         module_stats = cursor.fetchall()
-        stats["by_module"] = {row[0]: row[1] for row in module_stats}
+        stats["by_module"] = {row['module']: row['count'] for row in module_stats}
         
         # Actions by permission level
         cursor.execute("""
             SELECT permission_level, COUNT(*) as count
             FROM audit_logs
-            WHERE CAST(ts_utc AS DATE) >= ? AND permission_level != ''
+            WHERE DATE(ts_utc) >= %s AND permission_level != ''
             GROUP BY permission_level
             ORDER BY count DESC
         """, (cutoff_date,))
         level_stats = cursor.fetchall()
-        stats["by_level"] = {row[0]: row[1] for row in level_stats}
+        stats["by_level"] = {row['permission_level']: row['count'] for row in level_stats}
         
         # Most active users
         cursor.execute("""
-            SELECT TOP 10 username, COUNT(*) as count
+            SELECT username, COUNT(*) as count
             FROM audit_logs
-            WHERE CAST(ts_utc AS DATE) >= ?
+            WHERE DATE(ts_utc) >= %s
             GROUP BY username
-            ORDER BY count DESC
+            ORDER BY count DESC LIMIT 10
         """, (cutoff_date,))
         user_stats = cursor.fetchall()
-        stats["top_users"] = [(row[0], row[1]) for row in user_stats]
+        stats["top_users"] = [(row['username'], row['count']) for row in user_stats]
         
         # Critical actions
         cursor.execute("""
-            SELECT COUNT(*) FROM audit_logs
-            WHERE CAST(ts_utc AS DATE) >= ? AND action IN (
+            SELECT COUNT(*) as count FROM audit_logs
+            WHERE DATE(ts_utc) >= %s AND action IN (
                 'elevate_user', 'demote_user', 'delete_user', 
                 'approve_deletion', 'create_user', 'system_config_change'
             )
         """, (cutoff_date,))
-        stats["critical_actions"] = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        stats["critical_actions"] = result['count'] if result else 0
         
         cursor.close()
         return stats
@@ -254,12 +257,12 @@ def dashboard():
 
         # Get recent critical actions
         cursor.execute("""
-            SELECT TOP 10 * FROM audit_logs
+            SELECT* FROM audit_logs
             WHERE action IN (
                 'elevate_user', 'demote_user', 'delete_user', 
                 'approve_deletion', 'create_user', 'system_config_change'
             )
-            ORDER BY ts_utc DESC
+            ORDER BY ts_utc DESC LIMIT 10
         """)
         recent_critical = cursor.fetchall()
         
@@ -268,46 +271,45 @@ def dashboard():
             SELECT COUNT(*) FROM deletion_requests
             WHERE status = 'pending'
         """)
-        pending_deletions = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        pending_deletions = result['count'] if result else 0
         
         # Get user counts by permission level
         cursor.execute("""
-            SELECT 
-                SUM(CASE WHEN permission_level = 'S1' THEN 1 ELSE 0 END) as s1_count,
-                SUM(CASE WHEN permission_level = 'L3' THEN 1 ELSE 0 END) as l3_count,
-                SUM(CASE WHEN permission_level = 'L2' THEN 1 ELSE 0 END) as l2_count,
-                SUM(CASE WHEN permission_level = 'L1' THEN 1 ELSE 0 END) as l1_count,
-                SUM(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 ELSE 0 END) as module_count,
-                COUNT(*) as total_count
-            FROM users
-            WHERE deleted_at IS NULL OR deleted_at = ''
+        SELECT 
+            SUM(CASE WHEN permission_level = 'S1' THEN 1 ELSE 0 END) as s1_count,
+            SUM(CASE WHEN permission_level = 'L3' THEN 1 ELSE 0 END) as l3_count,
+            SUM(CASE WHEN permission_level = 'L2' THEN 1 ELSE 0 END) as l2_count,
+            SUM(CASE WHEN permission_level = 'L1' THEN 1 ELSE 0 END) as l1_count,
+            SUM(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 ELSE 0 END) as module_count,
+            COUNT(*) as total_count
+        FROM users
+        WHERE deleted_at IS NULL
         """)
         user_counts = cursor.fetchone()
-        
-        cursor.close()
+
+        # Convert to dict with proper key access
+        user_counts_dict = {
+            "s1_count": user_counts['s1_count'] or 0,
+            "l3_count": user_counts['l3_count'] or 0,
+            "l2_count": user_counts['l2_count'] or 0,
+            "l1_count": user_counts['l1_count'] or 0,
+            "module_count": user_counts['module_count'] or 0,
+            "total_count": user_counts['total_count'] or 0
+        }
     
     # Record dashboard access
     record_audit_log(cu, "view_dashboard", "admin", "Accessed admin dashboard")
     
-    # Convert user_counts to dict
-    user_counts_dict = {
-        "s1_count": user_counts[0] or 0,
-        "l3_count": user_counts[1] or 0,
-        "l2_count": user_counts[2] or 0,
-        "l1_count": user_counts[3] or 0,
-        "module_count": user_counts[4] or 0,
-        "total_count": user_counts[5] or 0
-    }
-    
     return render_template("admin/dashboard.html",
-                         active="admin",
-                         page="dashboard",
-                         user_level=user_level,
-                         stats=stats,
-                         deletion_requests=deletion_requests,
-                         recent_critical=recent_critical,
-                         pending_deletions=pending_deletions,
-                         user_counts=user_counts_dict)
+                        active="admin",
+                        page="dashboard",
+                        user_level=user_level,
+                        stats=stats,
+                        deletion_requests=deletion_requests,
+                        recent_critical=recent_critical,
+                        pending_deletions=pending_deletions,
+                        user_counts=user_counts_dict)
 
 @admin_bp.route("/audit")
 @login_required
@@ -342,8 +344,8 @@ def audit_logs():
         cursor.close()
     
     # Convert rows to lists - FIX: pyodbc rows are accessed by index
-    modules = [row[0] for row in modules_rows]
-    actions = [row[0] for row in actions_rows]
+    modules = [row['module'] for row in modules_rows]
+    actions = [row['action'] for row in actions_rows]
     
     # Record audit log access
     record_audit_log(cu, "view_audit_logs", "admin", f"Viewed audit logs with filters: {filters}")
@@ -421,7 +423,7 @@ def export_audit_logs():
             cursor.execute("""
                 SELECT COUNT(*) 
                 FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_NAME = ?
+                WHERE TABLE_NAME = %s
             """, (table,))
             result = cursor.fetchone()
             table_info[table] = result[0] if result else 0
@@ -466,24 +468,22 @@ def database_management():
         flash("You need L2 (Systems Administrator) permissions or higher to access database management.", "danger")
         return redirect(url_for("admin.dashboard"))
     
-    # Get database statistics
-    con = users_db()
-    
-    try:
-        cursor = con.cursor()
+    # Get database statistics using PostgreSQL
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
         
-        # Get table counts (works on both SQLite and SQL Server)
+        # Get table counts
         cursor.execute("SELECT COUNT(*) FROM users")
-        users_count = cursor.fetchone()[0]
+        users_count = cursor.fetchone()['count']
         
         cursor.execute("SELECT COUNT(*) FROM audit_logs")
-        audit_logs_count = cursor.fetchone()[0]
+        audit_logs_count = cursor.fetchone()['count']
         
         cursor.execute("SELECT COUNT(*) FROM deletion_requests")
-        deletion_requests_count = cursor.fetchone()[0]
+        deletion_requests_count = cursor.fetchone()['count']
         
         cursor.execute("SELECT COUNT(*) FROM user_elevation_history")
-        elevation_history_count = cursor.fetchone()[0]
+        elevation_history_count = cursor.fetchone()['count']
         
         db_stats = {
             "users_count": users_count,
@@ -492,37 +492,21 @@ def database_management():
             "elevation_history_count": elevation_history_count,
         }
         
-        # FIXED: Use SQL Server compatible query instead of PRAGMA
-        # Get table column counts (SQL Server compatible)
+        # Get table column counts (PostgreSQL compatible)
         table_info = {}
         tables = ["users", "audit_logs", "deletion_requests", "user_elevation_history"]
         
-        # Detect if we're using Azure SQL or SQLite
-        import os
-        use_azure = os.environ.get("DB_CORE_CONNECTION_STRING") is not None
-        
         for table in tables:
-            if use_azure:
-                # SQL Server query
-                cursor.execute("""
-                    SELECT COUNT(*) 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_NAME = ?
-                """, (table,))
-            else:
-                # SQLite query
-                cursor.execute(f"PRAGMA table_info({table})")
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM information_schema.columns 
+                WHERE table_name = %s
+            """, (table,))
             
             result = cursor.fetchone()
-            table_info[table] = result[0] if result else 0
+            table_info[table] = result['count'] if result else 0
         
         cursor.close()
-        
-    finally:
-        # Only close if not using Azure SQL (which uses connection pooling)
-        import os
-        if not os.environ.get("DB_CORE_CONNECTION_STRING"):
-            con.close()
     
     record_audit_log(cu, "view_database_management", "admin", "Accessed database management interface")
     
@@ -595,14 +579,13 @@ def elevation_history():
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT TOP 100
-                eh.*,
+            SELECTeh.*,
                 u1.username as user_username,
                 u2.username as elevated_by_username
             FROM user_elevation_history eh
             JOIN users u1 ON eh.user_id = u1.id
             JOIN users u2 ON eh.elevated_by = u2.id
-            ORDER BY eh.elevated_at DESC
+            ORDER BY eh.elevated_at DESC LIMIT 100
         """)
         history = cursor.fetchall()
         cursor.close()
@@ -627,7 +610,7 @@ def approve_deletion_request(request_id: int):
             SELECT dr.user_id, u.username
             FROM deletion_requests dr
             JOIN users u ON dr.user_id = u.id
-            WHERE dr.id = ? AND dr.status = 'pending'
+            WHERE dr.id = %s AND dr.status = 'pending'
         """, (request_id,))
         req = cursor.fetchone()
         
@@ -641,16 +624,16 @@ def approve_deletion_request(request_id: int):
         cursor.execute("""
             UPDATE deletion_requests
             SET status = 'approved',
-                approved_by = ?,
-                approved_at = GETUTCDATE()
-            WHERE id = ?
+                approved_by = %s,
+                approved_at = CURRENT_TIMESTAMP
+            WHERE id = %s
         """, (cu['id'], request_id))
         
         cursor.execute("""
             UPDATE users
-            SET deleted_at = GETUTCDATE(),
-                deletion_approved_by = ?
-            WHERE id = ?
+            SET deleted_at = CURRENT_TIMESTAMP,
+                deletion_approved_by = %s
+            WHERE id = %s
         """, (cu['id'], user_id))
         
         conn.commit()
@@ -677,7 +660,7 @@ def reject_deletion_request(request_id: int):
             SELECT dr.user_id, u.username
             FROM deletion_requests dr
             JOIN users u ON dr.user_id = u.id
-            WHERE dr.id = ? AND dr.status = 'pending'
+            WHERE dr.id = %s AND dr.status = 'pending'
         """, (request_id,))
         req = cursor.fetchone()
         
@@ -690,10 +673,10 @@ def reject_deletion_request(request_id: int):
         cursor.execute("""
             UPDATE deletion_requests
             SET status = 'rejected',
-                approved_by = ?,
-                approved_at = GETUTCDATE(),
-                rejection_reason = ?
-            WHERE id = ?
+                approved_by = %s,
+                approved_at = CURRENT_TIMESTAMP,
+                rejection_reason = %s
+            WHERE id = %s
         """, (cu['id'], reason, request_id))
         
         conn.commit()

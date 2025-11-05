@@ -11,26 +11,16 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash
 
 from .models import (
-    get_db, 
-    get_user_by_id, 
+    get_user_by_id,
     get_user_by_username,
     list_users,
     create_user,
 )
-
-from app.modules.auth.security import (
-    login_required, 
-    current_user,
-    # NOTE: record_audit removed - using admin module's version
-)
-
-from app.modules.users.models import (
-    get_user_by_id,
-    users_db
-)
-
 from app.core.database import get_db_connection
-
+from app.modules.auth.security import (
+    login_required,
+    current_user,
+)
 from app.modules.users.permissions import PermissionManager, PermissionLevel
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
@@ -68,7 +58,7 @@ def list_users(include_system=False, include_deleted=False):
             query += " AND username NOT IN ('system', 'sysadmin', 'AppAdmin')"
         
         if not include_deleted:
-            query += " AND (deleted_at IS NULL OR deleted_at = '')"
+            query += " AND deleted_at IS NULL"
         
         query += " ORDER BY username"
         
@@ -134,12 +124,12 @@ def update_user_permissions(uid: int, permission_level: str, module_permissions:
         
         cursor.execute("""
             UPDATE users 
-            SET permission_level = ?,
-                module_permissions = ?,
-                elevated_by = ?,
-                elevated_at = ?,
-                last_modified_at = ?
-            WHERE id = ?
+            SET permission_level = %s,
+                module_permissions = %s,
+                elevated_by = %s,
+                elevated_at = %s,
+                last_modified_at = %s
+            WHERE id = %s
         """, (
             permission_level,
             json.dumps(module_permissions),
@@ -156,7 +146,7 @@ def update_user_permissions(uid: int, permission_level: str, module_permissions:
                     user_id, elevated_by, old_level, new_level,
                     old_permissions, new_permissions, reason, elevated_at
                 )
-                VALUES (?,?,?,?,?,?,?,GETUTCDATE())
+                VALUES (%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP)
             """, (
                 uid, elevated_by, old_level, permission_level,
                 old_modules, json.dumps(module_permissions), reason
@@ -174,14 +164,14 @@ def _request_user_deletion_db(uid: int, reason: str = None):
         
         cursor.execute("""
             INSERT INTO deletion_requests(user_id, reason, status, requested_at)
-            VALUES (?, ?, ?, GETUTCDATE())
+            VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
         """, (uid, reason, "pending"))
         
         # Mark user as deletion requested
         cursor.execute("""
             UPDATE users 
-            SET deletion_requested_at = GETUTCDATE()
-            WHERE id = ?
+            SET deletion_requested_at = CURRENT_TIMESTAMP
+            WHERE id = %s
         """, (uid,))
         
         conn.commit()
@@ -196,18 +186,18 @@ def approve_user_deletion(uid: int, approved_by: int, notes: str = None):
         cursor.execute("""
             UPDATE deletion_requests
             SET status = 'approved',
-                approved_by = ?,
-                approved_at = GETUTCDATE()
-            WHERE user_id = ? AND status = 'pending'
+                approved_by = %s,
+                approved_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s AND status = 'pending'
         """, (approved_by, uid))
         
         # Soft delete the user
         cursor.execute("""
             UPDATE users 
-            SET deleted_at = GETUTCDATE(),
-                deletion_approved_by = ?,
-                deletion_notes = ?
-            WHERE id = ?
+            SET deleted_at = CURRENT_TIMESTAMP,
+                deletion_approved_by = %s,
+                deletion_notes = %s
+            WHERE id = %s
         """, (approved_by, notes, uid))
         
         conn.commit()
@@ -372,10 +362,10 @@ def view_profile(uid: int):
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT TOP 5 action, module, details, ts_utc
+            SELECTaction, module, details, ts_utc
             FROM audit_logs
-            WHERE user_id = ?
-            ORDER BY ts_utc DESC
+            WHERE user_id = %s
+            ORDER BY ts_utc DESC LIMIT 5
         """, (uid,))
         recent_actions = cursor.fetchall()
         cursor.close()
@@ -386,12 +376,11 @@ def view_profile(uid: int):
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT TOP 5 
-                    old_level, new_level, reason, elevated_at,
+                SELECTold_level, new_level, reason, elevated_at,
                     (SELECT username FROM users WHERE id = elevated_by) as elevated_by_name
                 FROM user_elevation_history
-                WHERE user_id = ?
-                ORDER BY elevated_at DESC
+                WHERE user_id = %s
+                ORDER BY elevated_at DESC LIMIT 5
             """, (uid,))
             elevation_history = cursor.fetchall()
             cursor.close()
@@ -427,7 +416,7 @@ def profile():
     )
     
     # Get deletion request status if any
-    con = get_db()
+    con = get_db_connection()
     deletion_request = con.execute("""
         SELECT * FROM deletion_requests 
         WHERE user_id = ? AND status = 'pending'
@@ -449,7 +438,7 @@ def edit_profile():
     
     if request.method == "POST":
         # Update profile fields
-        con = get_db()
+        con = get_db_connection()
         con.execute("""
             UPDATE users 
             SET first_name = ?, last_name = ?, 
@@ -512,7 +501,7 @@ def create():
         # Check if username exists
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
             existing = cursor.fetchone()
             cursor.close()
         
@@ -626,10 +615,10 @@ def edit_user(uid: int):
                     cursor = conn.cursor()
                     cursor.execute("""
                         UPDATE users 
-                        SET first_name=?, last_name=?, email=?, phone=?, 
-                            department=?, position=?, location=?, module_permissions=?,
-                            last_modified_by=?, last_modified_at=?
-                        WHERE id = ?
+                        SET first_name=%s, last_name=%s, email=%s, phone=%s, 
+                            department=%s, position=%s, location=%s, module_permissions=%s,
+                            last_modified_by=%s, last_modified_at=%s
+                        WHERE id = %s
                     """, (first_name, last_name, email, phone, 
                           department, position, location, json.dumps(module_perms),
                           cu["id"], datetime.utcnow().isoformat() + "Z", uid))
@@ -772,7 +761,7 @@ def demote_user(uid: int):
     
     try:
         # Clear admin level but preserve module permissions
-        con = get_db()
+        con = get_db_connection()
         con.execute("""
             UPDATE users 
             SET permission_level = '',
@@ -837,7 +826,7 @@ def deletion_requests():
         flash("You need administrative permissions to view deletion requests.", "danger")
         return redirect(url_for("home.index"))
     
-    con = get_db()
+    con = get_db_connection()
     requests = con.execute("""
         SELECT dr.*, u.username, u.first_name, u.last_name
         FROM deletion_requests dr
@@ -860,7 +849,7 @@ def approve_deletion(request_id: int):
     if not can_view_users(cu):
         return jsonify({"error": "Insufficient permissions"}), 403
     
-    con = get_db()
+    con = get_db_connection()
     req = con.execute("SELECT * FROM deletion_requests WHERE id = ?", (request_id,)).fetchone()
     con.close()
     
@@ -892,7 +881,7 @@ def reject_deletion(request_id: int):
     
     reason = request.json.get("reason", "")
     
-    con = get_db()
+    con = get_db_connection()
     con.execute("""
         UPDATE deletion_requests
         SET status = 'rejected',

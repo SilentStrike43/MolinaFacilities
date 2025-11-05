@@ -38,7 +38,7 @@ def create_request(data: dict, user_location: str = 'NY') -> int:
             INSERT INTO service_requests(
                 requester_id, requester_name, title, description, 
                 request_type, status, location
-            ) VALUES (?,?,?,?,?,?,?)
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s)
         """, (
             data.get("requester_id"),
             data.get("requester_name"),
@@ -48,9 +48,7 @@ def create_request(data: dict, user_location: str = 'NY') -> int:
             data.get("status", "pending"),
             user_location
         ))
-        conn.commit()
-        
-        cursor.execute("SELECT @@IDENTITY")
+        conn.commit()        
         rid = int(cursor.fetchone()[0])
         cursor.close()
         return rid
@@ -64,29 +62,29 @@ def update_status(request_id: int, status: str, archive: bool = False, staff_id:
         if archive:
             cursor.execute("""
                 UPDATE fulfillment_requests 
-                SET status=?, is_archived=1, assigned_staff_id=?, assigned_staff_name=?,
-                    completed_at=GETUTCDATE()
-                WHERE id=?
+                SET status=%s, is_archived=1, assigned_staff_id=%s, assigned_staff_name=%s,
+                    completed_at=CURRENT_TIMESTAMP
+                WHERE id=%s
             """, (status, staff_id, staff_name, request_id))
             
             # Also update service_requests
             cursor.execute("""
                 UPDATE service_requests
-                SET status=?, is_archived=1, completed_at=GETUTCDATE()
-                WHERE id=?
+                SET status=%s, is_archived=1, completed_at=CURRENT_TIMESTAMP
+                WHERE id=%s
             """, (status, request_id))
         else:
             cursor.execute("""
                 UPDATE fulfillment_requests 
-                SET status=?, assigned_staff_id=?, assigned_staff_name=?
-                WHERE id=?
+                SET status=%s, assigned_staff_id=%s, assigned_staff_name=%s
+                WHERE id=%s
             """, (status, staff_id, staff_name, request_id))
             
             # Also update service_requests
             cursor.execute("""
                 UPDATE service_requests
-                SET status=?, assigned_to=?
-                WHERE id=?
+                SET status=%s, assigned_to=%s
+                WHERE id=%s
             """, (status, staff_id, request_id))
         
         conn.commit()
@@ -107,10 +105,10 @@ def list_queue(location=None):
                     sr.location,
                     fr.status,
                     fr.assigned_staff_name,
-                    sr.is_archived
+                    fr.is_archived
                 FROM service_requests sr
                 LEFT JOIN fulfillment_requests fr ON sr.id = fr.id
-                WHERE sr.is_archived=0 AND sr.location=?
+                WHERE fr.is_archived=FALSE AND sr.location=%s
                 ORDER BY sr.created_at DESC
             """, (location,))
         else:
@@ -123,10 +121,10 @@ def list_queue(location=None):
                     sr.location,
                     fr.status,
                     fr.assigned_staff_name,
-                    sr.is_archived
+                    fr.is_archived
                 FROM service_requests sr
                 LEFT JOIN fulfillment_requests fr ON sr.id = fr.id
-                WHERE sr.is_archived=0
+                WHERE fr.is_archived=FALSE
                 ORDER BY sr.created_at DESC
             """)
         
@@ -165,10 +163,10 @@ def list_archive(location=None):
                     fr.status,
                     fr.assigned_staff_name,
                     fr.completed_at,
-                    sr.is_archived
+                    fr.is_archived
                 FROM service_requests sr
                 LEFT JOIN fulfillment_requests fr ON sr.id = fr.id
-                WHERE sr.is_archived=1 AND sr.location=?
+                WHERE fr.is_archived=TRUE AND sr.location=%s
                 ORDER BY fr.completed_at DESC, sr.created_at DESC
             """, (location,))
         else:
@@ -182,10 +180,10 @@ def list_archive(location=None):
                     fr.status,
                     fr.assigned_staff_name,
                     fr.completed_at,
-                    sr.is_archived
+                    fr.is_archived
                 FROM service_requests sr
                 LEFT JOIN fulfillment_requests fr ON sr.id = fr.id
-                WHERE sr.is_archived=1
+                WHERE fr.is_archived=TRUE
                 ORDER BY fr.completed_at DESC, sr.created_at DESC
             """)
         
@@ -213,7 +211,7 @@ def get_request(request_id: int):
     """Get a single request."""
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM fulfillment_requests WHERE id=?", (request_id,))
+        cursor.execute("SELECT * FROM fulfillment_requests WHERE id=%s", (request_id,))
         row = cursor.fetchone()
         cursor.close()
         return row
@@ -224,7 +222,7 @@ def list_files(request_id: int):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT * FROM fulfillment_files 
-            WHERE request_id=? 
+            WHERE request_id=%s 
             ORDER BY ts_utc
         """, (request_id,))
         rows = cursor.fetchall()
@@ -325,8 +323,8 @@ def request_form():
                         requester_id, requester_name, location,
                         status, is_archived, created_at
                     )
-                    OUTPUT INSERTED.id
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, GETDATE())
+                    RETURNING id
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending', 0, CURRENT_TIMESTAMP)
                 """, (
                     request_number,      # unique request_number (FR-YYYYMMDD-USERID-HHMMSS)
                     description[:100],   # title (first 100 chars)
@@ -347,7 +345,7 @@ def request_form():
                         id, requester_id, requester_name, description, 
                         total_pages, date_submitted, status, is_archived
                     )
-                    VALUES (?, ?, ?, ?, ?, GETDATE(), 'Received', 0);
+                    VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP, 'Received', 0);
                     
                     SET IDENTITY_INSERT fulfillment_requests OFF;
                 """, (
@@ -387,7 +385,7 @@ def request_form():
                                 INSERT INTO fulfillment_files(
                                     request_id, orig_name, stored_name, ext, bytes, ok
                                 )
-                                VALUES (?, ?, ?, ?, ?, ?)
+                                VALUES (%s, %s, %s, %s, %s, %s)
                             """, (request_id, orig_name, stored_name, ext, size, 1))
                             
                         except Exception as e:
@@ -397,7 +395,7 @@ def request_form():
                                 INSERT INTO fulfillment_files(
                                     request_id, orig_name, stored_name, ext, bytes, ok
                                 )
-                                VALUES (?, ?, ?, ?, ?, ?)
+                                VALUES (%s, %s, %s, %s, %s, %s)
                             """, (request_id, orig_name, f"error_{orig_name}", ext, 0, 0))
                 
                 # Final commit for files
@@ -447,8 +445,8 @@ def queue():
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE fulfillment_requests 
-                    SET notes = ?
-                    WHERE id = ?
+                    SET notes = %s
+                    WHERE id = %s
                 """, (f"CANCELLED: {cancellation_reason}", rid))
                 conn.commit()
                 cursor.close()
@@ -505,10 +503,10 @@ def update_request_status():
             cursor.execute("""
                 UPDATE fulfillment_requests 
                 SET notes = CASE 
-                    WHEN notes IS NULL OR notes = '' THEN ?
-                    ELSE notes + CHAR(13) + CHAR(10) + ?
+                    WHEN notes IS NULL OR notes = '' THEN %s
+                    ELSE notes + CHAR(13) + CHAR(10) + %s
                 END
-                WHERE id = ?
+                WHERE id = %s
             """, (f"CANCELLED: {cancellation_reason}", f"CANCELLED: {cancellation_reason}", rid))
             conn.commit()
             cursor.close()
@@ -557,7 +555,7 @@ def view_request(request_id: int):
                 sr.completed_at as sr_completed_at
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.id = sr.id
-            WHERE fr.id = ?
+            WHERE fr.id = %s
         """, (request_id,))
         
         row = cursor.fetchone()
@@ -592,7 +590,7 @@ def view_request(request_id: int):
         cursor.execute("""
             SELECT id, orig_name, ext, bytes, ts_utc
             FROM fulfillment_files
-            WHERE request_id = ? AND ok = 1
+            WHERE request_id = %s AND ok = 1
             ORDER BY ts_utc DESC
         """, (request_id,))
         files = cursor.fetchall()
@@ -640,22 +638,22 @@ def edit_request(request_id: int):
             # Update both tables
             cursor.execute("""
                 UPDATE fulfillment_requests
-                SET description = ?,
-                    total_pages = ?,
-                    date_due = ?,
-                    notes = ?,
-                    status = ?,
-                    assigned_staff_id = ?,
-                    assigned_staff_name = ?
-                WHERE id = ?
+                SET description = %s,
+                    total_pages = %s,
+                    date_due = %s,
+                    notes = %s,
+                    status = %s,
+                    assigned_staff_id = %s,
+                    assigned_staff_name = %s
+                WHERE id = %s
             """, (description, total_pages, date_due, notes, status, cu['id'], cu['username'], request_id))
             
             cursor.execute("""
                 UPDATE service_requests
-                SET description = ?,
-                    status = ?,
-                    assigned_to = ?
-                WHERE id = ?
+                SET description = %s,
+                    status = %s,
+                    assigned_to = %s
+                WHERE id = %s
             """, (description, status, cu['id'], request_id))
             
             conn.commit()
@@ -677,7 +675,7 @@ def edit_request(request_id: int):
                 sr.created_at
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.id = sr.id
-            WHERE fr.id = ?
+            WHERE fr.id = %s
         """, (request_id,))
         
         row = cursor.fetchone()
@@ -804,39 +802,39 @@ def insights():
                 sr.location
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.id = sr.id
-            WHERE fr.is_archived = 1
-            AND CAST(fr.date_submitted AS DATE) >= ? 
-            AND CAST(fr.date_submitted AS DATE) <= ?
+            WHERE fr.is_archived = TRUE
+            AND DATE(fr.date_submitted) >= %s 
+            AND DATE(fr.date_submitted) <= %s
         """
         params = [date_from, date_to]
         
         # Apply location filter if needed
         if should_filter and user_location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(user_location)
         elif location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(location)
         
         # Apply other filters
         if order_number:
-            query += " AND fr.id = ?"
+            query += " AND fr.id = %s"
             params.append(int(order_number))
         
         if requester_name:
-            query += " AND fr.requester_name LIKE ?"
+            query += " AND fr.requester_name LIKE %s"
             params.append(f"%{requester_name}%")
         
         if page_count_min:
-            query += " AND fr.total_pages >= ?"
+            query += " AND fr.total_pages >= %s"
             params.append(int(page_count_min))
         
         if page_count_max:
-            query += " AND fr.total_pages <= ?"
+            query += " AND fr.total_pages <= %s"
             params.append(int(page_count_max))
         
         if completed_by:
-            query += " AND fr.assigned_staff_name LIKE ?"
+            query += " AND fr.assigned_staff_name LIKE %s"
             params.append(f"%{completed_by}%")
         
         query += " ORDER BY fr.date_submitted DESC, fr.id DESC"
@@ -945,44 +943,44 @@ def insights_export():
                 fr.total_pages
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.id = sr.id
-            WHERE fr.is_archived = 1
+            WHERE fr.is_archived = TRUE
         """
         params = []
         
         if date_from:
-            query += " AND CAST(fr.date_submitted AS DATE) >= ?"
+            query += " AND DATE(fr.date_submitted) >= %s"
             params.append(date_from)
         
         if date_to:
-            query += " AND CAST(fr.date_submitted AS DATE) <= ?"
+            query += " AND DATE(fr.date_submitted) <= %s"
             params.append(date_to)
         
         # Apply location filter if needed
         if should_filter and user_location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(user_location)
         elif location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(location)
         
         if order_number:
-            query += " AND fr.id = ?"
+            query += " AND fr.id = %s"
             params.append(int(order_number))
         
         if requester_name:
-            query += " AND fr.requester_name LIKE ?"
+            query += " AND fr.requester_name LIKE %s"
             params.append(f"%{requester_name}%")
         
         if page_count_min:
-            query += " AND fr.total_pages >= ?"
+            query += " AND fr.total_pages >= %s"
             params.append(int(page_count_min))
         
         if page_count_max:
-            query += " AND fr.total_pages <= ?"
+            query += " AND fr.total_pages <= %s"
             params.append(int(page_count_max))
         
         if completed_by:
-            query += " AND fr.assigned_staff_name LIKE ?"
+            query += " AND fr.assigned_staff_name LIKE %s"
             params.append(f"%{completed_by}%")
         
         query += " ORDER BY fr.date_submitted DESC"

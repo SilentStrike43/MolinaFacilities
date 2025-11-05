@@ -1,0 +1,508 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Create Instance{% endblock %}
+{% block page_title %}Create New Instance{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_management') }}">Instances</a></li>
+        <li class="breadcrumb-item active">Create Instance</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <form method="POST" id="createInstanceForm">
+            <!-- Instance Information Section -->
+            <div class="stat-card mb-4">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-building"></i> Instance Information
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">
+                            Instance Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               placeholder="e.g., Molina Healthcare"
+                               value="{{ form_data.name if form_data else '' }}"
+                               required>
+                        <small class="text-muted">Organization display name</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="subdomain" class="form-label">
+                            Custom Subdomain <span class="text-muted">(optional)</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="subdomain" 
+                                   name="subdomain" 
+                                   placeholder="molina"
+                                   pattern="[a-z0-9-]+"
+                                   value="{{ form_data.subdomain if form_data else '' }}"
+                                   onkeyup="updateSubdomainPreview()">
+                            <span class="input-group-text">.gridlineservices.com</span>
+                        </div>
+                        <small id="subdomainPreview" class="text-muted"></small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="contact_email" class="form-label">
+                            Primary Contact Email <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="contact_email" 
+                               name="contact_email" 
+                               placeholder="contact@company.com"
+                               value="{{ form_data.contact_email if form_data else '' }}"
+                               required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="contact_phone" class="form-label">
+                            Contact Phone
+                        </label>
+                        <input type="tel" 
+                               class="form-control" 
+                               id="contact_phone" 
+                               name="contact_phone"
+                               placeholder="+1 (555) 123-4567"
+                               value="{{ form_data.contact_phone if form_data else '' }}">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="address" class="form-label">Physical Address</label>
+                    <textarea class="form-control" 
+                              id="address" 
+                              name="address" 
+                              rows="2"
+                              placeholder="123 Main St, City, State ZIP">{{ form_data.address if form_data else '' }}</textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="max_users" class="form-label">
+                            Maximum Users <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="max_users" 
+                               name="max_users" 
+                               value="{{ form_data.max_users if form_data else '100' }}" 
+                               min="5" 
+                               max="10000"
+                               required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="storage_limit" class="form-label">
+                            Storage Limit
+                        </label>
+                        <select class="form-select" id="storage_limit" name="storage_limit">
+                            <option value="5120" {{ 'selected' if form_data and form_data.storage_limit == '5120' else '' }}>5 GB</option>
+                            <option value="10240" {{ 'selected' if (form_data and form_data.storage_limit == '10240') or not form_data else '' }}>10 GB (Default)</option>
+                            <option value="25600" {{ 'selected' if form_data and form_data.storage_limit == '25600' else '' }}>25 GB</option>
+                            <option value="51200" {{ 'selected' if form_data and form_data.storage_limit == '51200' else '' }}>50 GB</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- L2 Administrator Account Section -->
+            <div class="stat-card mb-4">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-person-badge"></i> Instance Administrator (L2) Account
+                </h4>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    This administrator will have full control over the instance including user management and module configuration.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="admin_username" class="form-label">
+                            Administrator Username <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="admin_username" 
+                               name="admin_username" 
+                               placeholder="admin.smith"
+                               value="{{ form_data.admin_username if form_data else '' }}"
+                               pattern="[a-zA-Z0-9._-]+"
+                               required>
+                        <small class="text-muted">Letters, numbers, dots, underscores, and hyphens only</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="admin_password" class="form-label">
+                            Administrator Password <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="admin_password" 
+                                   name="admin_password" 
+                                   minlength="8"
+                                   required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <i class="bi bi-eye" id="passwordToggle"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Minimum 8 characters</small>
+                        <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="admin_first_name" class="form-label">
+                            First Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="admin_first_name" 
+                               name="admin_first_name"
+                               value="{{ form_data.admin_first_name if form_data else '' }}"
+                               required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="admin_last_name" class="form-label">
+                            Last Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="admin_last_name" 
+                               name="admin_last_name"
+                               value="{{ form_data.admin_last_name if form_data else '' }}"
+                               required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="admin_email" class="form-label">
+                        Administrator Email <span class="text-danger">*</span>
+                    </label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="admin_email" 
+                           name="admin_email"
+                           placeholder="admin@company.com"
+                           value="{{ form_data.admin_email if form_data else '' }}"
+                           required>
+                    <small class="text-muted">Will receive instance notifications and password reset emails</small>
+                </div>
+            </div>
+            
+            <!-- Module Access Section -->
+            <div class="stat-card mb-4">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-grid-3x3-gap"></i> Module Access
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input module-check" 
+                                           type="checkbox" 
+                                           id="module_ledger" 
+                                           name="features" 
+                                           value="ledger"
+                                           {{ 'checked' if not form_data or (form_data and 'ledger' in form_data.getlist('features')) else '' }}>
+                                    <label class="form-check-label" for="module_ledger">
+                                        <strong><i class="bi bi-mailbox text-primary"></i> Ledger</strong>
+                                        <br><small class="text-muted">Mail tracking & logging</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input module-check" 
+                                           type="checkbox" 
+                                           id="module_flow" 
+                                           name="features" 
+                                           value="flow"
+                                           {{ 'checked' if not form_data or (form_data and 'flow' in form_data.getlist('features')) else '' }}>
+                                    <label class="form-check-label" for="module_flow">
+                                        <strong><i class="bi bi-box-seam text-info"></i> Flow</strong>
+                                        <br><small class="text-muted">Inventory management</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input module-check" 
+                                           type="checkbox" 
+                                           id="module_fulfillment" 
+                                           name="features" 
+                                           value="fulfillment"
+                                           {{ 'checked' if not form_data or (form_data and 'fulfillment' in form_data.getlist('features')) else '' }}>
+                                    <label class="form-check-label" for="module_fulfillment">
+                                        <strong><i class="bi bi-clipboard-check text-success"></i> Fulfillment</strong>
+                                        <br><small class="text-muted">Service requests</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Open Ended Features Section -->
+            <div class="stat-card mb-4">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-toggles"></i> Advanced Features
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="sso" name="features" value="sso">
+                            <label class="form-check-label" for="sso">
+                                <strong>SSO Login</strong> - Single Sign-On integration
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="ip_whitelist" name="features" value="ip_whitelist">
+                            <label class="form-check-label" for="ip_whitelist">
+                                <strong>IP Whitelisting</strong> - Restrict access by IP
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="api_access" name="features" value="api_access">
+                            <label class="form-check-label" for="api_access">
+                                <strong>API Access</strong> - REST API endpoints
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="custom_reports" name="features" value="custom_reports">
+                            <label class="form-check-label" for="custom_reports">
+                                <strong>Custom Reports</strong> - Advanced analytics
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="mobile_app" name="features" value="mobile_app">
+                            <label class="form-check-label" for="mobile_app">
+                                <strong>Mobile App</strong> - iOS/Android access
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="force_2fa" name="features" value="force_2fa">
+                            <label class="form-check-label" for="force_2fa">
+                                <strong>Force 2FA</strong> - Mandatory two-factor auth
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Themes Section (Optional) -->
+            <div class="stat-card mb-4">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="bi bi-palette"></i> Custom Theme <span class="text-muted small">(Optional)</span>
+                </h4>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="primary_color" class="form-label">Primary Color</label>
+                        <input type="color" 
+                               class="form-control form-control-color" 
+                               id="primary_color" 
+                               name="primary_color" 
+                               value="{{ form_data.primary_color if form_data else '#0d6efd' }}">
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="secondary_color" class="form-label">Secondary Color</label>
+                        <input type="color" 
+                               class="form-control form-control-color" 
+                               id="secondary_color" 
+                               name="secondary_color" 
+                               value="{{ form_data.secondary_color if form_data else '#6c757d' }}">
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="logo_url" class="form-label">Logo URL</label>
+                        <input type="url" 
+                               class="form-control" 
+                               id="logo_url" 
+                               name="logo_url" 
+                               placeholder="https://example.com/logo.png"
+                               value="{{ form_data.logo_url if form_data else '' }}">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Summary and Actions -->
+            <div class="stat-card">
+                <div class="alert alert-warning">
+                    <h5><i class="bi bi-exclamation-triangle"></i> Review Before Creating</h5>
+                    <ul class="mb-0">
+                        <li>Instance will be created with <span id="summaryUsers">100</span> maximum users</li>
+                        <li>Administrator account "<span id="summaryAdmin">-</span>" will have L2 permissions</li>
+                        <li>Modules enabled: <span id="summaryModules">All</span></li>
+                        <li>Storage limit: <span id="summaryStorage">10 GB</span></li>
+                    </ul>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for(' horizon.instance_management') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle"></i> Create Instance & Administrator
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update subdomain preview
+function updateSubdomainPreview() {
+    const subdomain = document.getElementById('subdomain').value.toLowerCase();
+    const preview = document.getElementById('subdomainPreview');
+    
+    if (subdomain) {
+        if (/^[a-z0-9-]+$/.test(subdomain)) {
+            preview.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> https://${subdomain}.gridlineservices.com</span>`;
+        } else {
+            preview.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Invalid format</span>`;
+        }
+    } else {
+        preview.innerHTML = '<span class="text-muted">Default URL will be used</span>';
+    }
+}
+
+// Password visibility toggle
+function togglePassword() {
+    const input = document.getElementById('admin_password');
+    const icon = document.getElementById('passwordToggle');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// Password strength checker
+document.getElementById('admin_password').addEventListener('input', function(e) {
+    const password = e.target.value;
+    const strengthBar = document.getElementById('passwordStrength');
+    let strength = 0;
+    
+    if (password.length >= 8) strength += 25;
+    if (password.length >= 12) strength += 25;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 12.5;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 12.5;
+    
+    strengthBar.style.width = strength + '%';
+    
+    if (strength < 50) {
+        strengthBar.className = 'progress-bar bg-danger';
+    } else if (strength < 75) {
+        strengthBar.className = 'progress-bar bg-warning';
+    } else {
+        strengthBar.className = 'progress-bar bg-success';
+    }
+});
+
+// Update summaries
+function updateSummaries() {
+    // Users
+    document.getElementById('summaryUsers').textContent = document.getElementById('max_users').value;
+    
+    // Admin username
+    const adminUsername = document.getElementById('admin_username').value;
+    document.getElementById('summaryAdmin').textContent = adminUsername || '(not set)';
+    
+    // Modules
+    const modules = [];
+    document.querySelectorAll('.module-check:checked').forEach(cb => {
+        modules.push(cb.parentElement.querySelector('strong').textContent);
+    });
+    document.getElementById('summaryModules').textContent = modules.length > 0 ? modules.join(', ') : 'None';
+    
+    // Storage
+    const storageSelect = document.getElementById('storage_limit');
+    document.getElementById('summaryStorage').textContent = storageSelect.options[storageSelect.selectedIndex].text;
+}
+
+// Add event listeners
+document.getElementById('max_users').addEventListener('input', updateSummaries);
+document.getElementById('admin_username').addEventListener('input', updateSummaries);
+document.getElementById('storage_limit').addEventListener('change', updateSummaries);
+document.querySelectorAll('.module-check').forEach(cb => {
+    cb.addEventListener('change', updateSummaries);
+});
+
+// Form validation
+document.getElementById('createInstanceForm').addEventListener('submit', function(e) {
+    // Check at least one module is selected
+    const modulesChecked = document.querySelectorAll('.module-check:checked').length;
+    
+    if (modulesChecked === 0) {
+        e.preventDefault();
+        alert('Please select at least one module for this instance.');
+        return false;
+    }
+    
+    // Confirm password is strong enough
+    const password = document.getElementById('admin_password').value;
+    if (password.length < 8) {
+        e.preventDefault();
+        alert('Administrator password must be at least 8 characters.');
+        return false;
+    }
+});
+
+// Initialize
+updateSubdomainPreview();
+updateSummaries();
+</script>
+{% endblock %}

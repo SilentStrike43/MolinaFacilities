@@ -76,38 +76,38 @@ def insights():
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.id = sr.id
             WHERE fr.is_archived = 1
-            AND CAST(fr.date_submitted AS DATE) >= ? 
-            AND CAST(fr.date_submitted AS DATE) <= ?
+            AND DATE(fr.date_submitted) >= %s 
+            AND DATE(fr.date_submitted) <= %s
         """
         params = [date_from, date_to]
         
         # Apply location filter if needed
         if should_filter and user_location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(user_location)
         elif location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(location)
         
         # Apply other filters
         if order_number:
-            query += " AND fr.id = ?"
+            query += " AND fr.id = %s"
             params.append(int(order_number))
         
         if requester_name:
-            query += " AND fr.requester_name LIKE ?"
+            query += " AND fr.requester_name LIKE %s"
             params.append(f"%{requester_name}%")
         
         if page_count_min:
-            query += " AND fr.total_pages >= ?"
+            query += " AND fr.total_pages >= %s"
             params.append(int(page_count_min))
         
         if page_count_max:
-            query += " AND fr.total_pages <= ?"
+            query += " AND fr.total_pages <= %s"
             params.append(int(page_count_max))
         
         if completed_by:
-            query += " AND fr.assigned_staff_name LIKE ?"
+            query += " AND fr.assigned_staff_name LIKE %s"
             params.append(f"%{completed_by}%")
         
         query += " ORDER BY fr.date_submitted DESC, fr.id DESC"
@@ -216,39 +216,39 @@ def export():
         params = []
         
         if date_from:
-            query += " AND CAST(fr.date_submitted AS DATE) >= ?"
+            query += " AND DATE(fr.date_submitted) >= %s"
             params.append(date_from)
         
         if date_to:
-            query += " AND CAST(fr.date_submitted AS DATE) <= ?"
+            query += " AND DATE(fr.date_submitted) <= %s"
             params.append(date_to)
         
         # Apply location filter if needed
         if should_filter and user_location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(user_location)
         elif location:
-            query += " AND sr.location = ?"
+            query += " AND sr.location = %s"
             params.append(location)
         
         if order_number:
-            query += " AND fr.id = ?"
+            query += " AND fr.id = %s"
             params.append(int(order_number))
         
         if requester_name:
-            query += " AND fr.requester_name LIKE ?"
+            query += " AND fr.requester_name LIKE %s"
             params.append(f"%{requester_name}%")
         
         if page_count_min:
-            query += " AND fr.total_pages >= ?"
+            query += " AND fr.total_pages >= %s"
             params.append(int(page_count_min))
         
         if page_count_max:
-            query += " AND fr.total_pages <= ?"
+            query += " AND fr.total_pages <= %s"
             params.append(int(page_count_max))
         
         if completed_by:
-            query += " AND fr.assigned_staff_name LIKE ?"
+            query += " AND fr.assigned_staff_name LIKE %s"
             params.append(f"%{completed_by}%")
         
         query += " ORDER BY fr.date_submitted DESC"

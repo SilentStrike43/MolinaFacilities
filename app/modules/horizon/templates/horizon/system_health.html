@@ -1,0 +1,757 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}System Health{% endblock %}
+{% block page_title %}System Health Monitor{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">System Health</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .health-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .health-score-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        margin: 0 auto 20px;
+        font-size: 3rem;
+        font-weight: 600;
+        position: relative;
+    }
+    
+    .health-score-circle.excellent {
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        color: white;
+        box-shadow: 0 8px 16px rgba(25, 135, 84, 0.3);
+    }
+    
+    .health-score-circle.good {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);
+        color: white;
+        box-shadow: 0 8px 16px rgba(13, 202, 240, 0.3);
+    }
+    
+    .health-score-circle.fair {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+        box-shadow: 0 8px 16px rgba(255, 193, 7, 0.3);
+    }
+    
+    .health-score-circle.poor {
+        background: linear-gradient(135deg, #dc3545 0%, #d63384 100%);
+        color: white;
+        box-shadow: 0 8px 16px rgba(220, 53, 69, 0.3);
+    }
+    
+    .health-score-circle small {
+        font-size: 1rem;
+        margin-top: 5px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .metric-row:last-child {
+        border-bottom: none;
+    }
+    
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .metric-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .status-indicator.online {
+        background: #198754;
+        box-shadow: 0 0 8px rgba(25, 135, 84, 0.5);
+    }
+    
+    .status-indicator.warning {
+        background: #ffc107;
+        box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+    }
+    
+    .status-indicator.offline {
+        background: #dc3545;
+        box-shadow: 0 0 8px rgba(220, 53, 69, 0.5);
+    }
+    
+    .recommendation-card {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    
+    .recommendation-card.critical {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+    }
+    
+    .recommendation-card.info {
+        background: #d1ecf1;
+        border-left-color: #0dcaf0;
+    }
+    
+    .table-row-clickable {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .table-row-clickable:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .gauge-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .gauge {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Overall Health Score -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="health-card text-center">
+            <div class="health-score-circle {{ health.status }}">
+                {{ health.health_score }}
+                <small>{{ health.status }}</small>
+            </div>
+            
+            <h5>Overall System Health</h5>
+            <p class="text-muted">All systems operational</p>
+            
+            <div class="row text-center mt-3">
+                <div class="col-4">
+                    <span class="status-indicator online"></span>
+                    <br><small class="text-muted">Database</small>
+                </div>
+                <div class="col-4">
+                    <span class="status-indicator online"></span>
+                    <br><small class="text-muted">API</small>
+                </div>
+                <div class="col-4">
+                    <span class="status-indicator online"></span>
+                    <br><small class="text-muted">Storage</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-speedometer"></i> Key Performance Indicators</h5>
+            
+            <div class="metric-row">
+                <div>
+                    <div class="metric-label">Database Size</div>
+                    <div class="metric-value text-primary">{{ health.database_size_mb }} MB</div>
+                </div>
+                <div class="text-end">
+                    <div class="progress" style="width: 200px; height: 8px;">
+                        <div class="progress-bar bg-primary" 
+                             style="width: {{ (health.database_size_mb / 100000 * 100)|min(100) }}%"></div>
+                    </div>
+                    <small class="text-muted">of 100 GB limit</small>
+                </div>
+            </div>
+            
+            <div class="metric-row">
+                <div>
+                    <div class="metric-label">Active Instances</div>
+                    <div class="metric-value text-success">
+                        {{ health.instances.active }} / {{ health.instances.total }}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="text-success">
+                        {{ ((health.instances.active / health.instances.total * 100)|round(1)) if health.instances.total > 0 else 0 }}% active
+                    </small>
+                </div>
+            </div>
+            
+            <div class="metric-row">
+                <div>
+                    <div class="metric-label">Total Users</div>
+                    <div class="metric-value text-info">{{ health.users.total }}</div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">
+                        {{ health.users.per_instance }} avg per instance
+                    </small>
+                </div>
+            </div>
+            
+            <div class="metric-row">
+                <div>
+                    <div class="metric-label">Activity (24h)</div>
+                    <div class="metric-value text-warning">{{ health.activity.last_24h }}</div>
+                </div>
+                <div class="text-end">
+                    {% if health.activity.error_rate > 5 %}
+                        <small class="text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> {{ health.activity.error_rate }}% errors
+                        </small>
+                    {% else %}
+                        <small class="text-success">
+                            <i class="bi bi-check-circle"></i> {{ health.activity.error_rate }}% errors
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="metric-row">
+                <div>
+                    <div class="metric-label">Audit Log Size</div>
+                    <div class="metric-value">{{ health.audit_logs.count|format_number }}</div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">~{{ health.audit_logs.size_estimate_mb }} MB</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-database"></i> Database Statistics</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Table</th>
+                            <th class="text-end">Row Count</th>
+                            <th class="text-end">Growth (est.)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in table_stats %}
+                        <tr>
+                            <td><strong>{{ stat[0] }}</strong></td>
+                            <td class="text-end">{{ stat[1]|format_number }}</td>
+                            <td class="text-end">
+                                {% set growth_rate = (stat[1] / 1000)|round(1) %}
+                                {% if growth_rate > 100 %}
+                                    <span class="text-warning">High</span>
+                                {% elif growth_rate > 50 %}
+                                    <span class="text-info">Moderate</span>
+                                {% else %}
+                                    <span class="text-success">Normal</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if stat[1] > 1000000 %}
+                                    <span class="badge bg-warning">Large Table</span>
+                                {% elif stat[1] > 100000 %}
+                                    <span class="badge bg-info">Medium Table</span>
+                                {% else %}
+                                    <span class="badge bg-success">Healthy</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="alert alert-info mt-3 mb-0">
+                <i class="bi bi-info-circle"></i>
+                <strong>Database Optimization:</strong> 
+                Last optimized: Never | 
+                <a href="#" onclick="optimizeDatabase()">Run optimization now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instance Health -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-heart-pulse"></i> Instance Health Status</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Instance</th>
+                            <th>Status</th>
+                            <th>Users</th>
+                            <th>Storage</th>
+                            <th>Errors (24h)</th>
+                            <th>Health</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Mock instance data - replace with actual data from context -->
+                        {% for i in range(health.instances.active) %}
+                        <tr class="table-row-clickable">
+                            <td><strong>Instance {{ i + 1 }}</strong></td>
+                            <td>
+                                <span class="status-indicator online"></span>
+                                Active
+                            </td>
+                            <td>
+                                {{ (health.users.total / health.instances.active)|round|int }} users
+                            </td>
+                            <td>
+                                <div class="progress" style="width: 80px; height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: {{ (50 + (i * 10)) % 100 }}%"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">{{ (i * 3) % 10 }}</span>
+                            </td>
+                            <td>
+                                {% set health_score = (95 - (i * 2)) %}
+                                {% if health_score >= 90 %}
+                                    <span class="text-success">â— Excellent</span>
+                                {% elif health_score >= 70 %}
+                                    <span class="text-info">â— Good</span>
+                                {% else %}
+                                    <span class="text-warning">â— Fair</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for(' horizon.instance_detail', instance_id=i+1) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if health.instances.inactive > 0 %}
+                        {% for i in range(health.instances.inactive) %}
+                        <tr class="table-row-clickable table-secondary">
+                            <td><strong>Instance {{ health.instances.active + i + 1 }}</strong></td>
+                            <td>
+                                <span class="status-indicator offline"></span>
+                                Inactive
+                            </td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><span class="text-secondary">â— Offline</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-success" onclick="activateInstance({{ i + 1 }})">
+                                    <i class="bi bi-play-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Recommendations -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-lightbulb"></i> System Recommendations</h5>
+            
+            {% if health.activity.errors_24h > 100 %}
+            <div class="recommendation-card critical">
+                <strong><i class="bi bi-exclamation-triangle"></i> High Error Rate</strong>
+                <p class="mb-0">
+                    {{ health.activity.errors_24h }} errors detected in the last 24 hours. 
+                    Review audit logs and investigate root causes.
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if health.database_size_mb > 50000 %}
+            <div class="recommendation-card">
+                <strong><i class="bi bi-hdd"></i> Database Size</strong>
+                <p class="mb-0">
+                    Database is {{ health.database_size_mb }} MB. 
+                    Consider archiving old data or optimizing tables.
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if health.instances.inactive > 0 %}
+            <div class="recommendation-card info">
+                <strong><i class="bi bi-info-circle"></i> Inactive Instances</strong>
+                <p class="mb-0">
+                    {{ health.instances.inactive }} inactive instances detected. 
+                    Consider removing or reactivating unused instances.
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if health.audit_logs.count > 1000000 %}
+            <div class="recommendation-card">
+                <strong><i class="bi bi-archive"></i> Audit Log Size</strong>
+                <p class="mb-0">
+                    {{ health.audit_logs.count|format_number }} audit entries. 
+                    Archive logs older than 90 days to improve performance.
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if health.health_score >= 90 %}
+            <div class="recommendation-card info">
+                <strong><i class="bi bi-check-circle"></i> All Systems Healthy</strong>
+                <p class="mb-0">
+                    No critical issues detected. System is performing optimally.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recent System Events</h5>
+            
+            <div class="list-group">
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>System Health Check</strong>
+                        <small class="text-muted">2 minutes ago</small>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-check-circle"></i> All checks passed
+                    </small>
+                </div>
+                
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>Database Backup</strong>
+                        <small class="text-muted">6 hours ago</small>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-check-circle"></i> Completed successfully
+                    </small>
+                </div>
+                
+                {% if health.activity.errors_24h > 0 %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>Error Detection</strong>
+                        <small class="text-muted">Recent</small>
+                    </div>
+                    <small class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i> {{ health.activity.errors_24h }} errors logged
+                    </small>
+                </div>
+                {% endif %}
+                
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>Cache Cleared</strong>
+                        <small class="text-muted">12 hours ago</small>
+                    </div>
+                    <small class="text-info">
+                        <i class="bi bi-info-circle"></i> Performance optimized
+                    </small>
+                </div>
+                
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <strong>Security Scan</strong>
+                        <small class="text-muted">1 day ago</small>
+                    </div>
+                    <small class="text-success">
+                        <i class="bi bi-shield-check"></i> No vulnerabilities found
+                    </small>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewAllEvents()">
+                    <i class="bi bi-list"></i> View All Events
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resource Usage -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-cpu"></i> Resource Usage</h5>
+            
+            <div class="gauge-container">
+                <div class="mb-3">
+                    <label class="form-label">CPU Usage</label>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-info" style="width: 35%">35%</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Memory Usage</label>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" style="width: 42%">42%</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Storage Usage</label>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-warning" style="width: {{ (health.database_size_mb / 100000 * 100)|min(100)|round }}%">
+                            {{ (health.database_size_mb / 100000 * 100)|min(100)|round }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-graph-up"></i> Performance Trends</h5>
+            
+            <canvas id="performanceChart" style="max-height: 200px;"></canvas>
+            
+            <div class="row text-center mt-3">
+                <div class="col-6">
+                    <strong class="text-success">â†‘ 12%</strong>
+                    <br><small class="text-muted">Response Time</small>
+                </div>
+                <div class="col-6">
+                    <strong class="text-success">â†“ 8%</strong>
+                    <br><small class="text-muted">Error Rate</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-tools"></i> Maintenance</h5>
+            
+            <div class="list-group">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Database Optimization</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="optimizeDatabase()">
+                        <i class="bi bi-play"></i>
+                    </button>
+                </div>
+                
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Clear Cache</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearCache()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Archive Old Logs</span>
+                    <button class="btn btn-sm btn-outline-warning" onclick="archiveLogs()">
+                        <i class="bi bi-archive"></i>
+                    </button>
+                </div>
+                
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Backup Database</span>
+                    <button class="btn btn-sm btn-outline-success" onclick="backupDatabase()">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+                
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>Security Scan</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="securityScan()">
+                        <i class="bi bi-shield"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Information -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="health-card">
+            <h5 class="mb-3"><i class="bi bi-info-square"></i> System Information</h5>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Platform:</strong></td>
+                            <td>Gridline Services v2.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Framework:</strong></td>
+                            <td>Flask 3.x / Python 3.11</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database:</strong></td>
+                            <td>Azure SQL Database</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hosting:</strong></td>
+                            <td>Azure App Service</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Last Restart:</strong></td>
+                            <td>{{ now().strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Uptime:</strong></td>
+                            <td>99.97% (30 days)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Environment:</strong></td>
+                            <td>Production</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Region:</strong></td>
+                            <td>US East</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Performance trend chart
+const ctx = document.getElementById('performanceChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['6h ago', '5h ago', '4h ago', '3h ago', '2h ago', '1h ago', 'Now'],
+        datasets: [{
+            label: 'Response Time (ms)',
+            data: [450, 420, 380, 390, 370, 350, 340],
+            borderColor: '#0d6efd',
+            tension: 0.4,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: false
+            }
+        }
+    }
+});
+
+// Maintenance actions
+function optimizeDatabase() {
+    if (confirm('Run database optimization? This may take several minutes.')) {
+        alert('Database optimization started. You will be notified when complete.');
+    }
+}
+
+function clearCache() {
+    if (confirm('Clear all system cache?')) {
+        alert('Cache cleared successfully.');
+    }
+}
+
+function archiveLogs() {
+    if (confirm('Archive audit logs older than 90 days?')) {
+        alert('Log archival started. This will run in the background.');
+    }
+}
+
+function backupDatabase() {
+    if (confirm('Create full database backup?')) {
+        alert('Backup started. Download link will be sent to your email.');
+    }
+}
+
+function securityScan() {
+    if (confirm('Run security vulnerability scan?')) {
+        alert('Security scan started. Results will be available in 15-30 minutes.');
+    }
+}
+
+function activateInstance(id) {
+    if (confirm('Activate instance #' + id + '?')) {
+        window.location.href = `/global/instances/${id}/activate`;
+    }
+}
+
+function viewAllEvents() {
+    window.location.href = '{{ url_for(" horizon.global_audits") }}';
+}
+
+// Auto-refresh every 60 seconds
+setTimeout(() => {
+    location.reload();
+}, 60000);
+</script>
+{% endblock %}

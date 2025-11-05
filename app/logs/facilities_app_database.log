@@ -1,216 +1,1751 @@
-2025-10-28 13:18:59 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-28 13:21:01 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:35:36 | [31mERROR[0m | app.core.database | __init__:108 | Failed to create connection pool: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+2025-11-05 11:37:53 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
 Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
     yield conn
-  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:37:53 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:37:53 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:37:53 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:40:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:40:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:40:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:40:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:41:35 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:41:35 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:41:35 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:41:36 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:58 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:58 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:58 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:58 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:58 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:59 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:59 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:43:59 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:50:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:20 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:20 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:20 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:20 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:56:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:03 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:03 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:03 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:46 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:46 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:46 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:46 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:47 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:47 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:47 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:58:47 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 11:59:19 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient" does not exist
+
+2025-11-05 11:59:30 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "ts_utc" does not exist
+LINE 3:                 ts_utc,
+                        ^
+
+2025-11-05 12:00:21 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "ts_utc" does not exist
+LINE 3:                 ts_utc,
+                        ^
+
+2025-11-05 12:00:45 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "SELECTsku"
+LINE 2:             SELECTsku FROM assets 
+                    ^
+
+2025-11-05 12:01:15 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: column "product" does not exist
+LINE 4:             ORDER BY product, sku
+                             ^
+
+2025-11-05 12:01:42 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: relation "inventory_reports" does not exist
+LINE 1: SELECT* FROM inventory_reports WHERE 1=1 ORDER BY ts_utc DES...
+                     ^
+
+2025-11-05 12:02:09 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 10:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:02:31 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 11:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:02:39 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 12:03:05 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 1: ...ppAdmin') AND (deleted_at IS NULL OR deleted_at = '') ORDER ...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\users\views.py", line 65, in list_users
+    cursor.execute(query)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 1: ...ppAdmin') AND (deleted_at IS NULL OR deleted_at = '') ORDER ...
+                                                             ^
+
+2025-11-05 12:03:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 1: ...ppAdmin') AND (deleted_at IS NULL OR deleted_at = '') ORDER ...
+                                                             ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\users\views.py", line 65, in list_users
+    cursor.execute(query)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 1: ...ppAdmin') AND (deleted_at IS NULL OR deleted_at = '') ORDER ...
+                                                             ^
+
+2025-11-05 12:03:48 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 180, in get_audit_statistics
+    stats["total_actions"] = cursor.fetchone()[0]
+                             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:04:17 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "500"
+LINE 1: SELECT TOP 500 * FROM audit_logs WHERE 1=1 ORDER BY ts_utc D...
+                   ^
+
+2025-11-05 12:04:44 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "session_id" of relation "audit_logs" does not exist
+LINE 5:                 ip_address, user_agent, session_id, ts_utc
+                                                ^
+
+2025-11-05 12:06:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:06:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:06:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:06:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:31 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:07:49 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient" does not exist
+
+2025-11-05 12:07:58 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "ts_utc" does not exist
+LINE 3:                 ts_utc,
+                        ^
+
+2025-11-05 12:08:05 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "SELECTsku"
+LINE 2:             SELECTsku FROM assets 
+                    ^
+
+2025-11-05 12:09:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:09:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:09:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:09:21 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:11:39 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:11:39 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:11:39 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:11:39 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:13:45 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:13:45 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:13:45 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:13:45 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:01 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:01 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:01 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:14:10 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient" does not exist
+
+2025-11-05 12:14:14 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient" does not exist
+
+2025-11-05 12:14:20 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "ORDER"
+LINE 1: SELECT* FROM assets WHERE 1=1 AND status = ? ORDER BY id DES...
+                                                     ^
+
+2025-11-05 12:14:23 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient" does not exist
+
+2025-11-05 12:16:08 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:09 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:09 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:09 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:29 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:16:30 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:23:13 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:23:13 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:23:13 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:23:13 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:14 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:28:46 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient_address" does not exist
+LINE 6:                 recipient_address,
+                        ^
+
+2025-11-05 12:29:06 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "ORDER"
+LINE 1: SELECT* FROM assets WHERE 1=1 AND status = ? ORDER BY id DES...
+                                                     ^
+
+2025-11-05 12:29:33 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient_address" does not exist
+LINE 6:                 recipient_address,
+                        ^
+
+2025-11-05 12:30:08 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient_address" does not exist
+LINE 6:                 recipient_address,
+                        ^
+
+2025-11-05 12:30:27 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "ORDER"
+LINE 1: SELECT* FROM assets WHERE 1=1 AND status = ? ORDER BY id DES...
+                                                     ^
+
+2025-11-05 12:30:55 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: column "product" does not exist
+LINE 4:             ORDER BY product, sku
+                             ^
+
+2025-11-05 12:31:26 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 10:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:32:05 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 12:32:43 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 181, in get_audit_statistics
+    stats["total_actions"] = cursor.fetchone()[0]
+                             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:33:17 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "session_id" of relation "audit_logs" does not exist
+LINE 5:                 ip_address, user_agent, session_id, ts_utc
+                                                ^
+
+2025-11-05 12:36:11 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:36:11 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:36:11 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:36:11 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 61, in migrate_core_database
+    added = add_column_if_missing(conn, "users", "location", "VARCHAR(50) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 106, in migrate_send_database
+    if table_exists(conn, "package_manifest"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 78, in migrate_inventory_database
+    added = add_column_if_missing(conn, "assets", "location", "VARCHAR(100) DEFAULT 'NY'")
+  File "C:\GridlineService\app\core\schema_migration.py", line 41, in add_column_if_missing
+    if not column_exists(conn, table_name, column_name):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 34, in column_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\core\schema_migration.py", line 91, in migrate_fulfillment_database
+    if table_exists(conn, "service_requests"):
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\app\core\schema_migration.py", line 20, in table_exists
+    exists = cursor.fetchone()[0]
+             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: column "asset_tag" does not exist
+
+2025-11-05 12:37:27 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: column "asset_tag" does not exist
+
+2025-11-05 12:45:49 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "ORDER"
+LINE 1: SELECT* FROM assets WHERE 1=1 AND status = ? ORDER BY id DES...
+                                                     ^
+
+2025-11-05 12:46:29 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 10:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:46:34 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 11:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:47:08 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 12:47:35 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 181, in get_audit_statistics
+    stats["total_actions"] = cursor.fetchone()[0]
+                             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:48:15 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 1: ...NT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''
+                                                                     ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\views.py", line 119, in dashboard
+    cursor.execute("SELECT COUNT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''")
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 1: ...NT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''
+                                                                     ^
+
+2025-11-05 12:53:07 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column sr.is_archived does not exist
+LINE 10:                     sr.is_archived
+                             ^
+HINT:  Perhaps you meant to reference the column "fr.is_archived".
+
+2025-11-05 12:54:09 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: operator does not exist: boolean = integer
+LINE 13:                 WHERE fr.is_archived=0
+                                             ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+2025-11-05 12:54:25 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 12:54:58 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 12:55:24 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 181, in get_audit_statistics
+    stats["total_actions"] = cursor.fetchone()[0]
+                             ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 12:56:42 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 1: ...NT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''
+                                                                     ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\views.py", line 119, in dashboard
+    cursor.execute("SELECT COUNT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''")
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 1: ...NT(*) FROM users WHERE deleted_at IS NULL OR deleted_at = ''
+                                                                     ^
+
+2025-11-05 13:02:58 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 13:03:09 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 193, in get_audit_statistics
+    stats["by_module"] = {row[0]: row[1] for row in module_stats}
+                          ~~~^^^
+KeyError: 0
+2025-11-05 13:03:25 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\views.py", line 120, in dashboard
+    total_users = cursor.fetchone()[0]
+                  ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 13:04:19 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "AND"
+LINE 15:             AND DATE(fr.date_submitted) <= ?
+                     ^
+
+2025-11-05 13:04:44 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 193, in get_audit_statistics
+    stats["by_module"] = {row[0]: row[1] for row in module_stats}
+                          ~~~^^^
+KeyError: 0
+2025-11-05 13:09:41 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: operator does not exist: boolean = integer
+LINE 13:             WHERE fr.is_archived = 1
+                                          ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+2025-11-05 13:09:59 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\admin\views.py", line 193, in get_audit_statistics
+    stats["by_module"] = {row[0]: row[1] for row in module_stats}
+                          ~~~^^^
+KeyError: 0
+2025-11-05 13:10:13 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 4:             WHERE deleted_at IS NULL OR deleted_at = ''
+                                                             ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\models.py", line 251, in get_system_health_metrics
     cursor.execute("""
     ~~~~~~~~~~~~~~^^^^
-        SELECT * FROM assets
-        ^^^^^^^^^^^^^^^^^^^^
-        WHERE status != 'deleted'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-        ORDER BY product, sku
-        ^^^^^^^^^^^^^^^^^^^^^
-    """)
-    ^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
-2025-10-28 13:47:06 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-28 13:48:27 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT TOP 1 sku FROM assets
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        WHERE sku LIKE ?
-        ^^^^^^^^^^^^^^^^
-        ORDER BY sku DESC
-        ^^^^^^^^^^^^^^^^^
-    """, (f"{prefix}-%",))
-    ^^^^^^^^^^^^^^^^^^^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-28 13:49:06 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT * FROM assets
-        ^^^^^^^^^^^^^^^^^^^^
-        WHERE status != 'deleted'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-        ORDER BY product, sku
-        ^^^^^^^^^^^^^^^^^^^^^
-    """)
-    ^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
-2025-10-28 13:51:00 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\inventory\views.py", line 197, in generate_next_sku
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT TOP 1 sku FROM assets
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        WHERE sku LIKE ?
-        ^^^^^^^^^^^^^^^^
-        ORDER BY sku DESC
-        ^^^^^^^^^^^^^^^^^
-    """, (f"{prefix}-%",))
-    ^^^^^^^^^^^^^^^^^^^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-28 13:51:30 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in inventory: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\inventory\models.py", line 16, in list_assets
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT * FROM assets
-        ^^^^^^^^^^^^^^^^^^^^
-        WHERE status != 'deleted'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-        ORDER BY product, sku
-        ^^^^^^^^^^^^^^^^^^^^^
-    """)
-    ^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'status'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'product'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'sku'. (207)")
-2025-10-28 14:05:29 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\admin\views.py", line 176, in get_audit_statistics
-    cursor.execute(
-    ~~~~~~~~~~~~~~^
-        "SELECT COUNT(*) FROM audit_logs WHERE CAST(ts_utc AS DATE) >= ?",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        (cutoff_date,)
-        ^^^^^^^^^^^^^^
-    )
-    ^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-28 14:06:42 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\admin\views.py", line 161, in query_audit_logs
-    cursor.execute(query, params)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207) (SQLExecDirectW)")
-2025-10-28 14:07:02 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\admin\views.py", line 95, in record_audit_log
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        INSERT INTO audit_logs(
-        ^^^^^^^^^^^^^^^^^^^^^^^
-    ...<16 lines>...
-        session_id
+        SELECT COUNT(*) as total_users
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        FROM users
         ^^^^^^^^^^
-    ))
-    ^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'username'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'module'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_user_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'target_username'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'permission_level'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'session_id'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'ts_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-28 14:15:51 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\admin\views.py", line 256, in dashboard
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT COUNT(*) FROM deletion_requests
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        WHERE status = 'pending'
-        ^^^^^^^^^^^^^^^^^^^^^^^^
-    """)
-    ^^^^
-pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'deletion_requests'. (208) (SQLExecDirectW)")
-2025-10-28 14:33:48 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\fulfillment\views.py", line 176, in list_queue
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT * FROM service_requests
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        WHERE is_archived=0
-        ^^^^^^^^^^^^^^^^^^^
-        ORDER BY created_at DESC
-        ^^^^^^^^^^^^^^^^^^^^^^^^
-    """)
-    ^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
-2025-10-28 14:34:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in fulfillment: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
-Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
-    yield conn
-  File "C:\BTManifest\app\modules\fulfillment\views.py", line 198, in list_archive
-    cursor.execute("""
-    ~~~~~~~~~~~~~~^^^^
-        SELECT * FROM service_requests
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        WHERE is_archived=1
-        ^^^^^^^^^^^^^^^^^^^
-        ORDER BY completed_at DESC, created_at DESC
+        WHERE deleted_at IS NULL OR deleted_at = ''
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     """)
     ^^^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'is_archived'. (207) (SQLExecDirectW)")
-2025-10-28 14:40:14 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 4:             WHERE deleted_at IS NULL OR deleted_at = ''
+                                                             ^
+
+2025-11-05 13:10:57 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: operator does not exist: boolean = integer
+LINE 13:             WHERE fr.is_archived = 1
+                                          ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+2025-11-05 13:11:33 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
 Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
     yield conn
-  File "C:\BTManifest\app\modules\users\models.py", line 84, in create_user
-    cursor = conn.cursor()
-pyodbc.ProgrammingError: Attempt to use a closed connection.
-2025-10-28 14:49:09 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+  File "C:\GridlineService\app\modules\admin\views.py", line 193, in get_audit_statistics
+    stats["by_module"] = {row[0]: row[1] for row in module_stats}
+                          ~~~^^^
+KeyError: 0
+2025-11-05 13:19:38 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "SELECTusername"
+LINE 2:             SELECTusername, COUNT(*) as count
+                    ^
+
+2025-11-05 13:20:02 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 4:             WHERE deleted_at IS NULL OR deleted_at = ''
+                                                             ^
 Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
     yield conn
-  File "C:\BTManifest\app\modules\users\models.py", line 85, in create_user
+  File "C:\GridlineService\app\modules\horizon\models.py", line 251, in get_system_health_metrics
     cursor.execute("""
     ~~~~~~~~~~~~~~^^^^
-        INSERT INTO users (
-        ^^^^^^^^^^^^^^^^^^^
-    ...<18 lines>...
-        data.get('location', 'NY')
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ))
-    ^^
-pyodbc.ProgrammingError: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'phone'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'department'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'position'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_utc'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-28 16:51:42 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-28 16:52:05 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 09:01:56 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 09:05:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 09:34:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 09:35:16 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 09:43:18 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in send: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+        SELECT COUNT(*) as total_users
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        FROM users
+        ^^^^^^^^^^
+        WHERE deleted_at IS NULL OR deleted_at = ''
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 4:             WHERE deleted_at IS NULL OR deleted_at = ''
+                                                             ^
+
+2025-11-05 13:20:40 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "SELECTusername"
+LINE 2:             SELECTusername, COUNT(*) as count
+                    ^
+
+2025-11-05 13:24:28 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
 Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
     yield conn
-  File "C:\BTManifest\app\modules\send\reports.py", line 74, in reports
-    cursor.execute(sql, params)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
-pyodbc.ProgrammingError: ('42S02', "[42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid object name 'package_manifest'. (208) (SQLExecDirectW); [42S02] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
-2025-10-29 10:38:00 | [31mERROR[0m | app.core.database | get_connection:44 | Failed to create database connection: ('08001', '[08001] [Microsoft][ODBC Driver 18 for SQL Server]TCP Provider: Timeout error [258].  (258) (SQLDriverConnect); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Invalid connection string attribute (0); [08001] [Microsoft][ODBC Driver 18 for SQL Server]Unable to complete login process due to delay in login response (258)')
-2025-10-29 11:34:49 | [31mERROR[0m | app.core.database | get_db_connection:157 | Unexpected error in core: Attempt to use a closed connection.
+  File "C:\GridlineService\app\modules\admin\views.py", line 225, in get_audit_statistics
+    stats["critical_actions"] = cursor.fetchone()[0]
+                                ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-05 14:14:03 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in send: 0
 Traceback (most recent call last):
-  File "C:\BTManifest\app\core\database.py", line 137, in get_db_connection
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
     yield conn
-  File "C:\BTManifest\app\modules\admin\views.py", line 85, in record_audit_log
-    cursor = conn.cursor()
-pyodbc.ProgrammingError: Attempt to use a closed connection.
-2025-10-29 12:07:25 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', '[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The INSERT statement conflicted with the FOREIGN KEY constraint "FK__fulfillme__reque__1DB06A4F". The conflict occurred in database "fulfillment", table "dbo.fulfillment_requests", column \'id\'. (547) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)')
-2025-10-29 12:27:05 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'title', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
-2025-10-29 12:33:47 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'request_type', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
-2025-10-29 12:36:26 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert the value NULL into column 'requester_id', table 'fulfillment.dbo.service_requests'; column does not allow nulls. INSERT fails. (515) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
-2025-10-29 12:43:36 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Violation of UNIQUE KEY constraint 'UQ__service___8EF03D9CEAB2E20C'. Cannot insert duplicate key in object 'dbo.service_requests'. The duplicate key value is (<NULL>). (2627) (SQLExecDirectW); [23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]The statement has been terminated. (3621)")
-2025-10-29 14:48:08 | [33mWARNING[0m | app.core.database | get_db_connection:143 | Integrity error in fulfillment: ('23000', "[23000] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Cannot insert explicit value for identity column in table 'fulfillment_requests' when IDENTITY_INSERT is set to OFF. (544) (SQLExecDirectW)")
-2025-10-30 16:53:25 | [31mERROR[0m | app.core.database | get_db_connection:307 | Programming error in send: ('42S22', "[42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'carrier'. (207) (SQLExecDirectW); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Invalid column name 'created_by'. (207); [42S22] [Microsoft][ODBC Driver 18 for SQL Server][SQL Server]Statement(s) could not be prepared. (8180)")
+  File "C:\GridlineService\app\modules\send\reports.py", line 81, in reports
+    'ts_utc': row[0],
+              ~~~^^^
+KeyError: 0
+2025-11-05 14:18:09 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "recipient_department" does not exist
+LINE 6:                 recipient_department,
+                        ^
+
+2025-11-05 14:21:47 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in send: column "weight_oz" does not exist
+LINE 9:                     weight_oz,
+                            ^
+
+2025-11-05 14:36:05 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\inventory\views.py", line 200, in generate_next_sku
+    last_sku = result[0]
+               ~~~~~~^^^
+KeyError: 0
+2025-11-05 14:36:16 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in inventory: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\inventory\views.py", line 200, in generate_next_sku
+    last_sku = result[0]
+               ~~~~~~^^^
+KeyError: 0
+2025-11-05 14:46:31 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: syntax error at or near "OUTPUT"
+LINE 7:                     OUTPUT INSERTED.id
+                            ^
+

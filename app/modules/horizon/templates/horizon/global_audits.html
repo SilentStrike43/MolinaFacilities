@@ -1,0 +1,648 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Global Audits{% endblock %}
+{% block page_title %}Global Audit Logs{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Audit Logs</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .log-entry {
+        border-left: 3px solid #0d6efd;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    
+    .log-entry:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateX(2px);
+    }
+    
+    .log-entry.critical {
+        border-left-color: #dc3545;
+    }
+    
+    .log-entry.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .log-entry.info {
+        border-left-color: #0dcaf0;
+    }
+    
+    .log-timestamp {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .log-user {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    
+    .log-action {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.875rem;
+    }
+    
+    .log-details {
+        margin-top: 5px;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .filter-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #e9ecef;
+        border-radius: 4px;
+        margin: 5px 5px 5px 0;
+        font-size: 0.875rem;
+    }
+    
+    .filter-badge .btn-close {
+        font-size: 0.7rem;
+        margin-left: 8px;
+    }
+    
+    .stats-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-box {
+        flex: 1;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stat-box h4 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    
+    .stat-box p {
+        margin: 5px 0 0 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Summary -->
+<div class="stats-row">
+    <div class="stat-box">
+        <h4 class="text-primary">{{ logs|length }}</h4>
+        <p>Audit Entries</p>
+    </div>
+    
+    <div class="stat-box">
+        <h4 class="text-info">{{ instances|length }}</h4>
+        <p>Instances</p>
+    </div>
+    
+    <div class="stat-box">
+        <h4 class="text-success">{{ modules|length }}</h4>
+        <p>Modules</p>
+    </div>
+    
+    <div class="stat-box">
+        <h4 class="text-warning">{{ actions|length }}</h4>
+        <p>Action Types</p>
+    </div>
+</div>
+
+<!-- Active Filters Display -->
+{% if filters %}
+<div class="mb-3">
+    <strong>Active Filters:</strong>
+    {% if filters.instance_id %}
+    <span class="filter-badge">
+        Instance: 
+        {% for inst in instances %}
+            {% if inst[0] == filters.instance_id|int %}{{ inst[1] }}{% endif %}
+        {% endfor %}
+        <a href="{{ url_for(' horizon.global_audits', 
+                   username=filters.username, 
+                   action=filters.action, 
+                   module=filters.module, 
+                   date_from=filters.date_from, 
+                   date_to=filters.date_to, 
+                   permission_level=filters.permission_level) }}" 
+           class="btn-close" aria-label="Remove"></a>
+    </span>
+    {% endif %}
+    
+    {% if filters.username %}
+    <span class="filter-badge">
+        User: {{ filters.username }}
+        <a href="{{ url_for(' horizon.global_audits', 
+                   instance_id=filters.instance_id, 
+                   action=filters.action, 
+                   module=filters.module, 
+                   date_from=filters.date_from, 
+                   date_to=filters.date_to, 
+                   permission_level=filters.permission_level) }}" 
+           class="btn-close" aria-label="Remove"></a>
+    </span>
+    {% endif %}
+    
+    {% if filters.action %}
+    <span class="filter-badge">
+        Action: {{ filters.action }}
+        <a href="{{ url_for(' horizon.global_audits', 
+                   instance_id=filters.instance_id, 
+                   username=filters.username, 
+                   module=filters.module, 
+                   date_from=filters.date_from, 
+                   date_to=filters.date_to, 
+                   permission_level=filters.permission_level) }}" 
+           class="btn-close" aria-label="Remove"></a>
+    </span>
+    {% endif %}
+    
+    {% if filters.module %}
+    <span class="filter-badge">
+        Module: {{ filters.module }}
+        <a href="{{ url_for(' horizon.global_audits', 
+                   instance_id=filters.instance_id, 
+                   username=filters.username, 
+                   action=filters.action, 
+                   date_from=filters.date_from, 
+                   date_to=filters.date_to, 
+                   permission_level=filters.permission_level) }}" 
+           class="btn-close" aria-label="Remove"></a>
+    </span>
+    {% endif %}
+    
+    {% if filters.permission_level %}
+    <span class="filter-badge">
+        Level: {{ filters.permission_level }}
+        <a href="{{ url_for(' horizon.global_audits', 
+                   instance_id=filters.instance_id, 
+                   username=filters.username, 
+                   action=filters.action, 
+                   module=filters.module, 
+                   date_from=filters.date_from, 
+                   date_to=filters.date_to) }}" 
+           class="btn-close" aria-label="Remove"></a>
+    </span>
+    {% endif %}
+    
+    <a href="{{ url_for(' horizon.global_audits') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-x-circle"></i> Clear All
+    </a>
+</div>
+{% endif %}
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <form method="GET" id="filterForm">
+        <div class="row g-3">
+            <!-- Instance Filter -->
+            <div class="col-md-3">
+                <label for="instance_id" class="form-label">Instance</label>
+                <select class="form-select" id="instance_id" name="instance_id">
+                    <option value="">All Instances</option>
+                    {% for inst in instances %}
+                    <option value="{{ inst[0] }}" 
+                            {% if filters.instance_id == inst[0]|string %}selected{% endif %}>
+                        {{ inst[1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Username Filter -->
+            <div class="col-md-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="username" 
+                       name="username" 
+                       placeholder="Search username..."
+                       value="{{ filters.username or '' }}">
+            </div>
+            
+            <!-- Action Filter -->
+            <div class="col-md-3">
+                <label for="action" class="form-label">Action</label>
+                <select class="form-select" id="action" name="action">
+                    <option value="">All Actions</option>
+                    {% for act in actions %}
+                    <option value="{{ act }}" 
+                            {% if filters.action == act %}selected{% endif %}>
+                        {{ act }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Module Filter -->
+            <div class="col-md-3">
+                <label for="module" class="form-label">Module</label>
+                <select class="form-select" id="module" name="module">
+                    <option value="">All Modules</option>
+                    {% for mod in modules %}
+                    <option value="{{ mod }}" 
+                            {% if filters.module == mod %}selected{% endif %}>
+                        {{ mod }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Date From -->
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="date_from" 
+                       name="date_from"
+                       value="{{ filters.date_from or '' }}">
+            </div>
+            
+            <!-- Date To -->
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="date_to" 
+                       name="date_to"
+                       value="{{ filters.date_to or '' }}">
+            </div>
+            
+            <!-- Permission Level -->
+            <div class="col-md-3">
+                <label for="permission_level" class="form-label">Permission Level</label>
+                <select class="form-select" id="permission_level" name="permission_level">
+                    <option value="">All Levels</option>
+                    <option value="S1" {% if filters.permission_level == 'S1' %}selected{% endif %}>S1 - Super Admin</option>
+                    <option value="L3" {% if filters.permission_level == 'L3' %}selected{% endif %}>L3 - Global Admin</option>
+                    <option value="L2" {% if filters.permission_level == 'L2' %}selected{% endif %}>L2 - Administrator</option>
+                    <option value="L1" {% if filters.permission_level == 'L1' %}selected{% endif %}>L1 - Manager</option>
+                    <option value="" {% if filters.permission_level == '' %}selected{% endif %}>Module User</option>
+                </select>
+            </div>
+            
+            <!-- Submit Buttons -->
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                    <i class="bi bi-funnel"></i> Apply
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportLogs()">
+                    <i class="bi bi-download"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick Filters -->
+        <div class="mt-3">
+            <strong class="me-2">Quick Filters:</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="setQuickFilter('critical')">
+                Critical Actions
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning" onclick="setQuickFilter('elevate')">
+                Elevations
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-info" onclick="setQuickFilter('today')">
+                Today
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setQuickFilter('7d')">
+                Last 7 Days
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Audit Logs List -->
+<div class="stat-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="bi bi-list-ul"></i> 
+            Audit Entries ({{ logs|length }})
+        </h5>
+        
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-sm btn-outline-primary active" onclick="setView('list')">
+                <i class="bi bi-list-ul"></i> List
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setView('table')">
+                <i class="bi bi-table"></i> Table
+            </button>
+        </div>
+    </div>
+    
+    <!-- List View -->
+    <div id="listView">
+        {% if logs %}
+            {% for log in logs %}
+            <div class="log-entry {% if log[1] in ['elevate_user', 'demote_user', 'delete_user', 'create_instance', 'delete_instance'] %}critical{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="mb-1">
+                            <span class="log-user">{{ log[2] }}</span>
+                            {% if log[6] %}
+                                <span class="badge 
+                                    {% if log[6] == 'S1' %}bg-danger
+                                    {% elif log[6] == 'L3' %}bg-warning
+                                    {% elif log[6] == 'L2' %}bg-info
+                                    {% elif log[6] == 'L1' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ log[6] }}
+                                </span>
+                            {% endif %}
+                            
+                            {% if log[8] %}
+                                <span class="badge bg-light text-dark">{{ log[8] }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-1">
+                            <span class="log-action">{{ log[1] }}</span>
+                            in 
+                            <span class="badge bg-secondary">{{ log[3] }}</span>
+                        </div>
+                        
+                        {% if log[4] %}
+                        <div class="log-details">
+                            <i class="bi bi-info-circle"></i> {{ log[4] }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if log[11] or log[12] %}
+                        <div class="log-details">
+                            {% if log[11] %}
+                                <i class="bi bi-person-badge"></i> Target: <strong>{{ log[12] }}</strong> (ID: {{ log[11] }})
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-end">
+                        <div class="log-timestamp">
+                            <i class="bi bi-clock"></i>
+                            {{ log[5] }}
+                        </div>
+                        
+                        {% if log[7] %}
+                        <div class="mt-1">
+                            <small class="text-muted">
+                                <i class="bi bi-router"></i> {{ log[7] }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                No audit logs found matching the current filters.
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Table View (hidden by default) -->
+    <div id="tableView" style="display: none;">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm" id="auditTable">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Level</th>
+                        <th>Action</th>
+                        <th>Module</th>
+                        <th>Instance</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="white-space: nowrap;">
+                            <small>{{ log[5] }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ log[2] }}</strong>
+                        </td>
+                        <td>
+                            {% if log[6] %}
+                                <span class="badge 
+                                    {% if log[6] == 'S1' %}bg-danger
+                                    {% elif log[6] == 'L3' %}bg-warning
+                                    {% elif log[6] == 'L2' %}bg-info
+                                    {% elif log[6] == 'L1' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ log[6] }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code style="font-size: 0.8rem;">{{ log[1] }}</code>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ log[3] }}</span>
+                        </td>
+                        <td>
+                            {% if log[8] %}
+                                <small>{{ log[8] }}</small>
+                            {% else %}
+                                <small class="text-muted">-</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ log[4][:50] if log[4] else '-' }}{% if log[4] and log[4]|length > 50 %}...{% endif %}</small>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ log[7] if log[7] else '-' }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination Info -->
+    <div class="mt-3 text-center text-muted">
+        <small>
+            <i class="bi bi-info-circle"></i>
+            Showing {{ logs|length }} of last 500 entries. 
+            Use filters to narrow results.
+        </small>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Audit Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Export audit logs with current filters applied?</p>
+                
+                <div class="alert alert-info">
+                    <strong>Current filters:</strong>
+                    <ul class="mb-0">
+                        {% if filters.instance_id %}
+                        <li>Instance: 
+                            {% for inst in instances %}
+                                {% if inst[0] == filters.instance_id|int %}{{ inst[1] }}{% endif %}
+                            {% endfor %}
+                        </li>
+                        {% endif %}
+                        {% if filters.username %}<li>Username: {{ filters.username }}</li>{% endif %}
+                        {% if filters.action %}<li>Action: {{ filters.action }}</li>{% endif %}
+                        {% if filters.module %}<li>Module: {{ filters.module }}</li>{% endif %}
+                        {% if filters.date_from %}<li>From: {{ filters.date_from }}</li>{% endif %}
+                        {% if filters.date_to %}<li>To: {{ filters.date_to }}</li>{% endif %}
+                        {% if not filters %}<li>No filters applied (all logs)</li>{% endif %}
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Export Format:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="exportFormat" id="formatCSV" value="csv" checked>
+                        <label class="form-check-label" for="formatCSV">
+                            CSV (Excel compatible)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="exportFormat" id="formatJSON" value="json">
+                        <label class="form-check-label" for="formatJSON">
+                            JSON (for data processing)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmExport()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// View switching
+function setView(view) {
+    const listView = document.getElementById('listView');
+    const tableView = document.getElementById('tableView');
+    
+    if (view === 'list') {
+        listView.style.display = 'block';
+        tableView.style.display = 'none';
+    } else {
+        listView.style.display = 'none';
+        tableView.style.display = 'block';
+    }
+    
+    // Update button states
+    document.querySelectorAll('.btn-group button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.closest('button').classList.add('active');
+}
+
+// Quick filters
+function setQuickFilter(type) {
+    const form = document.getElementById('filterForm');
+    
+    // Clear existing filters
+    form.querySelectorAll('input, select').forEach(input => {
+        if (input.type !== 'button') {
+            input.value = '';
+        }
+    });
+    
+    if (type === 'critical') {
+        // Set action filter to critical actions
+        const actionSelect = document.getElementById('action');
+        const criticalActions = ['elevate_user', 'demote_user', 'delete_user', 'create_instance', 'delete_instance', 'deactivate_instance'];
+        // For simplicity, just search for "delete" or "elevate"
+        document.getElementById('action').value = '';
+        document.getElementById('username').value = '';
+    } else if (type === 'elevate') {
+        const actionSelect = document.getElementById('action');
+        // Find first option containing "elevate"
+        for (let option of actionSelect.options) {
+            if (option.value.includes('elevate')) {
+                option.selected = true;
+                break;
+            }
+        }
+    } else if (type === 'today') {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date_from').value = today;
+        document.getElementById('date_to').value = today;
+    } else if (type === '7d') {
+        const today = new Date();
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        document.getElementById('date_from').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('date_to').value = today.toISOString().split('T')[0];
+    }
+    
+    form.submit();
+}
+
+// Export logs
+function exportLogs() {
+    new bootstrap.Modal(document.getElementById('exportModal')).show();
+}
+
+function confirmExport() {
+    const format = document.querySelector('input[name="exportFormat"]:checked').value;
+    const params = new URLSearchParams(window.location.search);
+    params.append('export', format);
+    
+    window.location.href = '{{ url_for(" horizon.global_audits") }}?' + params.toString();
+}
+
+// Search in table
+let searchTimeout;
+document.getElementById('username').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        // Could implement real-time search here
+    }, 500);
+});
+</script>
+{% endblock %}

@@ -7,7 +7,7 @@ from . import bp
 from app.modules.auth.security import require_cap, current_user, record_audit, should_filter_by_location
 from app.core.database import get_db_connection
 
-@bp.route("/insights", endpoint="insights")  # Changed endpoint to "insights"
+@bp.route("/insights", endpoint="insights")
 @require_cap("can_send")
 def reports():
     """Send insights with date range filtering and enhanced metrics."""
@@ -29,7 +29,7 @@ def reports():
     # Check if user should be filtered by location
     should_filter, user_location = should_filter_by_location(cu)
     
-    # Build query with Azure SQL
+    # Build query with PostgreSQL
     with get_db_connection("send") as conn:
         cursor = conn.cursor()
         
@@ -40,33 +40,36 @@ def reports():
                 recipient_name,
                 recipient_address,
                 tracking_number,
+                carrier,
                 submitter_name,
                 location,
+                notes,
                 checkin_id,
-                package_id
+                package_id,
+                checkin_date
             FROM package_manifest
-            WHERE CAST(checkin_date AS DATE) >= ? 
-            AND CAST(checkin_date AS DATE) <= ?
+            WHERE DATE(checkin_date) >= %s 
+            AND DATE(checkin_date) <= %s
         """
         params = [date_from, date_to]
-        
+
         # Apply location filter if user is restricted
         if should_filter and user_location:
-            sql += " AND location = ?"
+            sql += " AND location = %s"
             params.append(user_location)
         elif location_filter:
-            sql += " AND location = ?"
+            sql += " AND location = %s"
             params.append(location_filter)
-        
+
         # Apply search filter
         if q:
-            sql += " AND (tracking_number LIKE ? OR recipient_name LIKE ? OR package_type LIKE ?)"
+            sql += " AND (tracking_number LIKE %s OR recipient_name LIKE %s OR package_type LIKE %s)"
             like = f"%{q}%"
             params.extend([like, like, like])
-        
+
         # Apply package type filter
         if item_type:
-            sql += " AND package_type = ?"
+            sql += " AND package_type = %s"
             params.append(item_type)
         
         sql += " ORDER BY ts_utc DESC"
@@ -75,27 +78,15 @@ def reports():
         rows = cursor.fetchall()
         
         # Convert to list of dicts
-        results = []
-        for row in rows:
-            results.append({
-                'ts_utc': row[0],
-                'package_type': row[1],
-                'recipient_name': row[2],
-                'recipient_address': row[3],
-                'tracking_number': row[4],
-                'submitter_name': row[5],
-                'location': row[6],
-                'checkin_id': row[7],
-                'package_id': row[8]
-            })
+        results = [dict(row) for row in rows]
         
         # Get unique package types for dropdown
         cursor.execute("SELECT DISTINCT package_type FROM package_manifest WHERE package_type IS NOT NULL ORDER BY package_type")
-        package_types = [r[0] for r in cursor.fetchall()]
+        package_types = [r['package_type'] for r in cursor.fetchall()]
         
         # Get unique locations for dropdown
         cursor.execute("SELECT DISTINCT location FROM package_manifest WHERE location IS NOT NULL ORDER BY location")
-        locations = [r[0] for r in cursor.fetchall()]
+        locations = [r['location'] for r in cursor.fetchall()]
         
         cursor.close()
     
@@ -104,10 +95,10 @@ def reports():
     by_type = {}
     by_location = {}
     for r in results:
-        pkg_type = r['package_type'] or 'Unknown'
+        pkg_type = r.get('package_type') or 'Unknown'
         by_type[pkg_type] = by_type.get(pkg_type, 0) + 1
         
-        loc = r['location'] or 'Unknown'
+        loc = r.get('location') or 'Unknown'
         by_location[loc] = by_location.get(loc, 0) + 1
     
     record_audit(cu, "view_send_insights", "send", f"Viewed send insights: {date_from} to {date_to}")
@@ -164,28 +155,28 @@ def export():
         params = []
         
         if date_from:
-            sql += " AND CAST(checkin_date AS DATE) >= ?"
+            sql += " AND DATE(checkin_date) >= %s"
             params.append(date_from)
         
         if date_to:
-            sql += " AND CAST(checkin_date AS DATE) <= ?"
+            sql += " AND DATE(checkin_date) <= %s"
             params.append(date_to)
         
         # Apply location filter
         if should_filter and user_location:
-            sql += " AND location = ?"
+            sql += " AND location = %s"
             params.append(user_location)
         elif location_filter:
-            sql += " AND location = ?"
+            sql += " AND location = %s"
             params.append(location_filter)
         
         if q:
-            sql += " AND (tracking_number LIKE ? OR recipient_name LIKE ? OR package_type LIKE ?)"
+            sql += " AND (tracking_number LIKE %s OR recipient_name LIKE ? OR package_type LIKE ?)"
             like = f"%{q}%"
             params.extend([like, like, like])
         
         if item_type:
-            sql += " AND package_type = ?"
+            sql += " AND package_type = %s"
             params.append(item_type)
         
         sql += " ORDER BY ts_utc DESC"
@@ -210,16 +201,25 @@ def export():
     ])
     
     # Data rows
-    for r in rows:
-        w.writerow([
-            r[0],  # timestamp
-            r[1],  # package_type (Item Type)
-            r[2],  # recipient_name
-            r[3],  # recipient_address
-            r[4],  # tracking_number
-            r[5],  # submitter_name (Who Submitted)
-            r[6]   # location (Location of Origin)
-        ])
+    results = []
+    for row in rows:
+        results.append({
+            'ts_utc': row['ts_utc'],
+            'checkin_id': row['checkin_id'],
+            'package_id': row['package_id'],
+            'tracking_number': row['tracking_number'],
+            'recipient_name': row['recipient_name'],
+            'recipient_address': row['recipient_address'],
+            'package_type': row['package_type'],
+            'carrier': row['carrier'],
+            'weight_oz': row['weight_oz'],
+            'length': row['length'],
+            'width': row['width'],
+            'height': row['height'],
+            'location': row['location'],
+            'submitter_name': row['submitter_name'],
+            'notes': row['notes']
+        })
     
     record_audit(cu, "export_send_insights", "send", f"Exported {len(rows)} send records")
     

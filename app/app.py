@@ -13,7 +13,6 @@ from flask import Flask, render_template, redirect, url_for, g, session
 # Import core modules
 from app.core.logging_config import setup_flask_logging
 from app.core.errors import register_error_handlers
-from app.core.schema_migration import run_all_migrations
 
 from app.modules.users.models import ensure_user_schema, ensure_first_sysadmin
 from app.modules.auth.security import current_user, login_required
@@ -56,10 +55,6 @@ def create_app():
     # ==================== Initialize Module Schemas ====================
     try:
         logger.info("Initializing database schemas...")
-        
-        # Run automated migrations FIRST
-        from app.core.schema_migration import run_all_migrations
-        run_all_migrations()
         
         # Then ensure base schemas exist
         from app.modules.send.storage import ensure_schema as ensure_send_schema
@@ -133,6 +128,18 @@ def create_app():
         # Asset Ledger module
         from app.modules.inventory.ledger import bp as asset_ledger_bp
         app.register_blueprint(asset_ledger_bp, url_prefix='/asset-ledger')
+
+        # Horizon - Global Admin Module (L3/S1 only)
+        from app.modules.horizon import bp as horizon_bp
+        app.register_blueprint(horizon_bp, url_prefix='/horizon')
+
+        # Register Horizon filters
+        from app.modules.horizon.filters import register_filters
+        register_filters(app)
+
+        # Register Horizon middleware
+        from app.modules.horizon.middleware import inject_permission_context
+        app.context_processor(inject_permission_context)
         
         logger.info("All blueprints registered successfully")
     except Exception as e:

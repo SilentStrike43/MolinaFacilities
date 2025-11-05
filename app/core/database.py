@@ -1,27 +1,30 @@
 # app/core/database.py
 """
-Azure SQL Database utilities with connection pooling and proper error handling.
+PostgreSQL Database utilities with connection pooling and proper error handling.
 Supports 4 separate databases: core (users), send (mail), inventory, fulfillment.
 
 Production-optimized version with:
+- psycopg2 connection pooling
 - Retry logic for transient failures
-- Larger connection pools
 - Performance monitoring
 - Better error handling
 """
 
 import os
-import pyodbc
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+import psycopg2
+import psycopg2.pool
+import psycopg2.extras
 import logging
 import threading
 import time
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
-
-# Thread-local storage for connection management
-_thread_local = threading.local()
 
 
 class DatabaseError(Exception):
@@ -46,7 +49,6 @@ class ConnectionMetrics:
         with self._lock:
             self.total_connections += 1
             if success:
-                # Update rolling average
                 self.avg_connection_time = (
                     (self.avg_connection_time * (self.total_connections - 1) + duration) 
                     / self.total_connections
@@ -81,123 +83,80 @@ class ConnectionMetrics:
             }
 
 
-class AzureSQLPool:
-    """Connection pool for Azure SQL databases with retry logic."""
+class PostgreSQLPool:
+    """Connection pool for PostgreSQL databases with retry logic."""
     
-    def __init__(self, connection_string: str, pool_size: int = 15):
-        self.connection_string = connection_string
+    def __init__(self, connection_params: dict, pool_size: int = 15):
+        self.connection_params = connection_params
         self.pool_size = pool_size
-        self._pool: List[pyodbc.Connection] = []
-        self._lock = threading.Lock()
         self.metrics = ConnectionMetrics()
         
         # Retry configuration
         self.max_retries = 3
-        self.base_retry_delay = 0.5  # seconds
-        self.max_retry_delay = 5.0   # seconds
-    
-    def get_connection(self) -> pyodbc.Connection:
-        """Get a connection from the pool or create a new one with retry logic."""
-        # Try to get from pool first
-        with self._lock:
-            if self._pool:
-                conn = self._pool.pop()
-                # Validate connection before returning
-                if self._validate_connection(conn):
-                    self.metrics.active_connections += 1
-                    return conn
-                else:
-                    # Connection is stale, try to close it
-                    try:
-                        conn.close()
-                    except:
-                        pass
+        self.base_retry_delay = 0.5
+        self.max_retry_delay = 5.0
         
-        # No valid connection in pool, create a new one
-        return self._create_connection_with_retry()
-    
-    def _validate_connection(self, conn: pyodbc.Connection) -> bool:
-        """Check if a connection is still valid."""
+        # Create connection pool
         try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-            return True
-        except:
-            return False
+            self.pool = psycopg2.pool.ThreadedConnectionPool(
+                minconn=2,
+                maxconn=pool_size,
+                **connection_params
+            )
+            logger.info(f"Created PostgreSQL connection pool (size: {pool_size})")
+        except Exception as e:
+            logger.error(f"Failed to create connection pool: {e}")
+            raise DatabaseError(f"Connection pool creation failed: {e}")
     
-    def _create_connection_with_retry(self) -> pyodbc.Connection:
-        """Create a new connection with exponential backoff retry."""
+    def get_connection(self):
+        """Get a connection from the pool with retry logic."""
         retry_delay = self.base_retry_delay
         
         for attempt in range(self.max_retries):
             start_time = time.time()
             
             try:
-                conn = pyodbc.connect(self.connection_string)
+                conn = self.pool.getconn()
                 duration = time.time() - start_time
                 
                 self.metrics.record_connection(duration, success=True)
                 self.metrics.active_connections += 1
                 
-                logger.debug(f"Connection created successfully in {duration:.3f}s")
+                # Set default cursor factory for dict-like results
+                conn.cursor_factory = psycopg2.extras.RealDictCursor
+                
+                logger.debug(f"Connection retrieved in {duration:.3f}s")
                 return conn
                 
-            except pyodbc.Error as e:
+            except psycopg2.OperationalError as e:
                 duration = time.time() - start_time
                 self.metrics.record_connection(duration, success=False)
                 
-                error_code = e.args[0] if e.args else None
-                
-                # Check if error is transient (retryable)
-                transient_errors = [
-                    '08001',  # SQL Server connection failure
-                    '08S01',  # Communication link failure
-                    '40197',  # Service unavailable
-                    '40501',  # Service busy
-                    '40613',  # Database unavailable
-                    '49918',  # Cannot process request
-                    '49919',  # Cannot process create or update
-                    '49920',  # Cannot process delete
-                ]
-                
-                is_transient = error_code in transient_errors
-                
-                if attempt < self.max_retries - 1 and is_transient:
+                if attempt < self.max_retries - 1:
                     self.metrics.record_retry()
                     logger.warning(
-                        f"Connection attempt {attempt + 1}/{self.max_retries} failed "
-                        f"(error: {error_code}). Retrying in {retry_delay:.1f}s..."
+                        f"Connection attempt {attempt + 1}/{self.max_retries} failed. "
+                        f"Retrying in {retry_delay:.1f}s..."
                     )
                     time.sleep(retry_delay)
-                    # Exponential backoff with jitter
                     retry_delay = min(retry_delay * 2, self.max_retry_delay)
                 else:
-                    logger.error(
-                        f"Failed to create database connection after {attempt + 1} attempts: {e}"
-                    )
+                    logger.error(f"Failed to get connection after {attempt + 1} attempts: {e}")
                     raise DatabaseError(f"Database connection failed: {e}")
-        
-        # Should never reach here, but just in case
-        raise DatabaseError("Failed to create connection after all retries")
-    
-    def return_connection(self, conn: pyodbc.Connection):
-        """Return a connection to the pool."""
-        self.metrics.active_connections -= 1
-        
-        try:
-            # Validate before returning to pool
-            if not self._validate_connection(conn):
-                conn.close()
-                return
             
-            with self._lock:
-                if len(self._pool) < self.pool_size:
-                    self._pool.append(conn)
-                else:
-                    # Pool is full, close the connection
-                    conn.close()
-        except:
+            except Exception as e:
+                logger.error(f"Unexpected error getting connection: {e}")
+                raise DatabaseError(f"Connection error: {e}")
+        
+        raise DatabaseError("Failed to get connection after all retries")
+    
+    def return_connection(self, conn):
+        """Return a connection to the pool."""
+        try:
+            self.metrics.active_connections -= 1
+            self.pool.putconn(conn)
+        except Exception as e:
+            logger.error(f"Error returning connection to pool: {e}")
             try:
                 conn.close()
             except:
@@ -205,59 +164,85 @@ class AzureSQLPool:
     
     def close_all(self):
         """Close all connections in the pool."""
-        with self._lock:
-            for conn in self._pool:
-                try:
-                    conn.close()
-                except:
-                    pass
-            self._pool.clear()
+        try:
+            self.pool.closeall()
             self.metrics.active_connections = 0
+            logger.info("All connections closed")
+        except Exception as e:
+            logger.error(f"Error closing connections: {e}")
 
 
 # Global connection pools
-_pools: Dict[str, AzureSQLPool] = {}
+_pools: Dict[str, PostgreSQLPool] = {}
 _pool_lock = threading.Lock()
 
-
-def get_connection_string(db_name: str) -> str:
+def parse_connection_string(conn_str: str) -> dict:
     """
-    Get connection string for a database.
+    Parse PostgreSQL connection string into parameters.
+    
+    Supports formats:
+    - postgresql://user:pass@host:port/dbname
+    - host=host port=port dbname=dbname user=user password=pass
+    """
+    if conn_str.startswith('postgresql://') or conn_str.startswith('postgres://'):
+        # Parse URI format
+        return {'dsn': conn_str}
+    else:
+        # Parse key=value format
+        params = {}
+        for part in conn_str.split():
+            if '=' in part:
+                key, value = part.split('=', 1)
+                params[key] = value
+        return params
+
+
+def get_connection_params(db_name: str) -> dict:
+    """
+    Get connection parameters for a database.
     
     Args:
         db_name: Database name (core, send, inventory, fulfillment)
     
     Returns:
-        Connection string from environment variables
+        Dictionary of connection parameters
     """
     env_map = {
-        "core": "DB_CORE_CONNECTION_STRING",
-        "send": "DB_SEND_CONNECTION_STRING",
-        "inventory": "DB_INVENTORY_CONNECTION_STRING",
-        "fulfillment": "DB_FULFILLMENT_CONNECTION_STRING"
+        "core": "DATABASE_URL_CORE",
+        "send": "DATABASE_URL_SEND",
+        "inventory": "DATABASE_URL_INVENTORY",
+        "fulfillment": "DATABASE_URL_FULFILLMENT"
     }
     
+    # Try new PostgreSQL env vars first
     env_var = env_map.get(db_name)
-    if not env_var:
-        raise ValueError(f"Unknown database: {db_name}")
+    conn_str = os.environ.get(env_var) if env_var else None
     
-    conn_str = os.environ.get(env_var)
+    # Fallback to single DATABASE_URL with schema suffix
     if not conn_str:
-        raise DatabaseError(f"Environment variable {env_var} not set")
+        base_url = os.environ.get('DATABASE_URL')
+        if base_url:
+            # Use same database but different schemas
+            params = parse_connection_string(base_url)
+            params['options'] = f"-c search_path={db_name},public"
+            return params
+        else:
+            raise DatabaseError(
+                f"No database connection configured. "
+                f"Set {env_var} or DATABASE_URL environment variable"
+            )
     
-    return conn_str
+    return parse_connection_string(conn_str)
 
 
-def get_pool(db_name: str) -> AzureSQLPool:
+def get_pool(db_name: str) -> PostgreSQLPool:
     """Get or create a connection pool for a database."""
     with _pool_lock:
         if db_name not in _pools:
-            conn_str = get_connection_string(db_name)
-            # Production: 15 connections per pool
-            # Local dev: Can reduce to 5 by setting environment variable
+            params = get_connection_params(db_name)
             pool_size = int(os.environ.get('DB_POOL_SIZE', '15'))
-            _pools[db_name] = AzureSQLPool(conn_str, pool_size=pool_size)
-            logger.info(f"Created connection pool for '{db_name}' database (size: {pool_size})")
+            _pools[db_name] = PostgreSQLPool(params, pool_size=pool_size)
+            logger.info(f"Created pool for '{db_name}' database")
         return _pools[db_name]
 
 
@@ -282,36 +267,25 @@ def get_db_connection(db_name: str = "core"):
     try:
         conn = pool.get_connection()
         yield conn
-    except pyodbc.IntegrityError as e:
+        conn.commit()  # Auto-commit on success
+    except psycopg2.IntegrityError as e:
         if conn:
-            try:
-                conn.rollback()
-            except:
-                pass
+            conn.rollback()
         logger.warning(f"Integrity error in {db_name}: {e}")
         raise DatabaseError(f"Data integrity violation: {e}")
-    except pyodbc.OperationalError as e:
+    except psycopg2.OperationalError as e:
         if conn:
-            try:
-                conn.rollback()
-            except:
-                pass
+            conn.rollback()
         logger.error(f"Operational error in {db_name}: {e}")
         raise DatabaseError(f"Database operation failed: {e}")
-    except pyodbc.ProgrammingError as e:
+    except psycopg2.ProgrammingError as e:
         if conn:
-            try:
-                conn.rollback()
-            except:
-                pass
+            conn.rollback()
         logger.error(f"Programming error in {db_name}: {e}")
         raise DatabaseError(f"Database query error: {e}")
     except Exception as e:
         if conn:
-            try:
-                conn.rollback()
-            except:
-                pass
+            conn.rollback()
         logger.error(f"Unexpected error in {db_name}: {e}", exc_info=True)
         raise DatabaseError(f"Database error: {e}")
     finally:
@@ -358,9 +332,6 @@ def execute_query(
         elif fetch_all:
             result = cursor.fetchall()
         
-        if commit:
-            conn.commit()
-        
         cursor.close()
         return result
 
@@ -369,15 +340,7 @@ def execute_script(db_name: str, script: str) -> None:
     """Execute a SQL script (for migrations/schema updates)."""
     with get_db_connection(db_name) as conn:
         cursor = conn.cursor()
-        
-        # Split script into statements (simple approach)
-        statements = [s.strip() for s in script.split('GO') if s.strip()]
-        
-        for statement in statements:
-            if statement:
-                cursor.execute(statement)
-        
-        conn.commit()
+        cursor.execute(script)
         cursor.close()
 
 
@@ -395,7 +358,6 @@ def get_pool_metrics(db_name: Optional[str] = None) -> Dict[str, Any]:
         pool = get_pool(db_name)
         return {db_name: pool.metrics.get_stats()}
     else:
-        # Get metrics for all pools
         metrics = {}
         with _pool_lock:
             for name, pool in _pools.items():
@@ -411,69 +373,3 @@ def cleanup_all_pools():
             pool.close_all()
         _pools.clear()
         logger.info("All database connection pools closed")
-
-
-# Schema creation helpers (for initialization)
-def create_core_tables():
-    """Create basic core tables if schema function doesn't exist."""
-    schema = """
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'users')
-    BEGIN
-        CREATE TABLE users (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            username NVARCHAR(255) UNIQUE,
-            password_hash NVARCHAR(255),
-            created_at DATETIME2 DEFAULT GETDATE()
-        )
-    END
-    """
-    execute_script("core", schema)
-
-
-def create_send_tables():
-    """Create basic send tables if schema function doesn't exist."""
-    schema = """
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'packages')
-    BEGIN
-        CREATE TABLE packages (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            tracking_number NVARCHAR(255),
-            recipient NVARCHAR(255),
-            status NVARCHAR(50),
-            created_at DATETIME2 DEFAULT GETDATE()
-        )
-    END
-    """
-    execute_script("send", schema)
-
-
-def create_inventory_tables():
-    """Create basic inventory tables if schema function doesn't exist."""
-    schema = """
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'assets')
-    BEGIN
-        CREATE TABLE assets (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            name NVARCHAR(255),
-            quantity INT,
-            created_at DATETIME2 DEFAULT GETDATE()
-        )
-    END
-    """
-    execute_script("inventory", schema)
-
-
-def create_fulfillment_tables():
-    """Create basic fulfillment tables if schema function doesn't exist."""
-    schema = """
-    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'requests')
-    BEGIN
-        CREATE TABLE requests (
-            id INT IDENTITY(1,1) PRIMARY KEY,
-            title NVARCHAR(255),
-            status NVARCHAR(50),
-            created_at DATETIME2 DEFAULT GETDATE()
-        )
-    END
-    """
-    execute_script("fulfillment", schema)

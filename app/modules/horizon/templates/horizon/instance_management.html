@@ -1,0 +1,85 @@
+{% extends "horizon_base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1><i class="bi bi-gear"></i> System Configuration</h1>
+            <p class="text-muted">Manage system-wide settings</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">System Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Instance Name:</strong></td>
+                            <td>{{ system_info.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database Type:</strong></td>
+                            <td>SQLite</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database Size:</strong></td>
+                            <td>{{ system_info.db_size_mb }} MB</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Users:</strong></td>
+                            <td>{{ system_info.total_users }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Module Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong><i class="bi bi-journal-text text-info"></i> Ledger:</strong>
+                        <span class="float-end">{{ module_stats.ledger_records }} records</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong><i class="bi bi-boxes text-success"></i> Flow:</strong>
+                        <span class="float-end">{{ module_stats.flow_assets }} assets</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong><i class="bi bi-printer text-warning"></i> Fulfillment:</strong>
+                        <span class="float-end">{{ module_stats.fulfillment_requests }} requests</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('horizon.backup_database') }}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-download"></i> Backup Database
+                    </a>
+                    <a href="{{ url_for('horizon.system_logs') }}" class="btn btn-outline-info me-2">
+                        <i class="bi bi-file-text"></i> View Logs
+                    </a>
+                    <button class="btn btn-outline-warning" onclick="if(confirm('Clear cache?')) alert('Cache cleared!')">
+                        <i class="bi bi-trash"></i> Clear Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -78,7 +78,7 @@ def page():
                         recipient_name, recipient_address, tracking_number,
                         carrier, submitter_name, location, created_by
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     checkin_date, checkin_id, pkg_type, package_id,
                     recipient_name, full_address, tracking,

@@ -1,0 +1,569 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}{{ instance.name }} - Instance Detail{% endblock %}
+{% block page_title %}{{ instance.name }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_management') }}">Instances</a></li>
+        <li class="breadcrumb-item active">{{ instance.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Instance Header -->
+<div class="stat-card mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="mb-2">{{ instance.name }}</h2>
+            
+            <div class="mb-2">
+                {% if instance.is_active %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle"></i> Active
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle"></i> Inactive
+                    </span>
+                    {% if instance.deactivation_reason %}
+                    <small class="text-muted">- {{ instance.deactivation_reason }}</small>
+                    {% endif %}
+                {% endif %}
+                
+                {% if instance.subdomain %}
+                <span class="badge bg-info">
+                    <i class="bi bi-link-45deg"></i> {{ instance.subdomain }}.gridline.services
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <i class="bi bi-envelope"></i> 
+                        <strong>Contact:</strong> {{ instance.contact_email or 'Not set' }}
+                    </p>
+                    <p class="mb-1">
+                        <i class="bi bi-telephone"></i> 
+                        <strong>Phone:</strong> {{ instance.contact_phone or 'Not set' }}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <i class="bi bi-calendar"></i> 
+                        <strong>Created:</strong> {{ instance.created_at.strftime('%Y-%m-%d %H:%M') if instance.created_at else 'Unknown' }}
+                    </p>
+                    <p class="mb-1">
+                        <i class="bi bi-geo-alt"></i> 
+                        <strong>Address:</strong> {{ instance.address or 'Not set' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 text-end">
+            <div class="btn-group mb-2" role="group">
+                <a href="{{ url_for(' horizon.edit_instance', instance_id=instance.id) }}" 
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                
+                {% if instance.is_active %}
+                <button class="btn btn-outline-danger" 
+                        onclick="deactivateInstance()">
+                    <i class="bi bi-pause-circle"></i> Deactivate
+                </button>
+                {% else %}
+                <button class="btn btn-outline-success" 
+                        onclick="activateInstance()">
+                    <i class="bi bi-play-circle"></i> Activate
+                </button>
+                {% endif %}
+            </div>
+            
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" onclick="exportInstanceData()">
+                    <i class="bi bi-download"></i> Export Data
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="cloneInstance()">
+                    <i class="bi bi-files"></i> Clone
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3>{{ stats.user_count }}</h3>
+            <p>Total Users</p>
+            <small class="text-muted">Max: {{ instance.max_users }}</small>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar" 
+                     style="width: {{ (stats.user_count / instance.max_users * 100) if instance.max_users > 0 else 0 }}%">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <h3>{{ stats.active_users }}</h3>
+            <p>Active Users (30d)</p>
+            <small class="text-success">{{ ((stats.active_users / stats.user_count * 100)|round(1)) if stats.user_count > 0 else 0 }}% utilization</small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-box"></i>
+            </div>
+            <h3>{{ stats.modules.total }}</h3>
+            <p>Total Records</p>
+            <small class="text-muted">
+                L:{{ stats.modules.ledger }} F:{{ stats.modules.flow }} FF:{{ stats.modules.fulfillment }}
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-activity"></i>
+            </div>
+            <h3>{{ stats.activity.last_7d }}</h3>
+            <p>Activity (7 days)</p>
+            <small class="text-muted">{{ stats.activity.per_user_30d }} actions/user (30d)</small>
+        </div>
+    </div>
+</div>
+
+<!-- Module Usage Breakdown -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-mailbox"></i> Ledger Module</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Total Records:</span>
+                <strong>{{ stats.modules.ledger }}</strong>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" 
+                     style="width: {{ (stats.modules.ledger / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                </div>
+            </div>
+            <small class="text-muted">
+                {{ ((stats.modules.ledger / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Flow Module</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Total Assets:</span>
+                <strong>{{ stats.modules.flow }}</strong>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-info" 
+                     style="width: {{ (stats.modules.flow / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                </div>
+            </div>
+            <small class="text-muted">
+                {{ ((stats.modules.flow / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-clipboard-check"></i> Fulfillment Module</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Total Requests:</span>
+                <strong>{{ stats.modules.fulfillment }}</strong>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-success" 
+                     style="width: {{ (stats.modules.fulfillment / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                </div>
+            </div>
+            <small class="text-muted">
+                {{ ((stats.modules.fulfillment / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Users -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-shield-check"></i> Administrative Users</h5>
+            <div class="row text-center">
+                <div class="col-3">
+                    <div class="badge bg-primary p-3 w-100">
+                        <h3 class="mb-0">{{ stats.admins.l1 }}</h3>
+                        <small>Managers (L1)</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="badge bg-info p-3 w-100">
+                        <h3 class="mb-0">{{ stats.admins.l2 }}</h3>
+                        <small>Admins (L2)</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="badge bg-warning p-3 w-100">
+                        <h3 class="mb-0">{{ stats.admins.l3 }}</h3>
+                        <small>Global Admins (L3)</small>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="badge bg-danger p-3 w-100">
+                        <h3 class="mb-0">{{ stats.admins.s1 }}</h3>
+                        <small>Super Admins (S1)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Users ({{ users|length }})</h5>
+                <div>
+                    <input type="text" class="form-control form-control-sm" 
+                           id="userSearch" placeholder="Search users..." 
+                           onkeyup="filterUsers()">
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Permission Level</th>
+                            <th>Location</th>
+                            <th>Last Login</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><strong>{{ user[1] }}</strong></td>
+                            <td>{{ user[2] }} {{ user[3] }}</td>
+                            <td>{{ user[4] or '-' }}</td>
+                            <td>
+                                {% if user[5] == 'S1' %}
+                                    <span class="badge bg-danger">Super Admin</span>
+                                {% elif user[5] == 'L3' %}
+                                    <span class="badge bg-warning">Global Admin</span>
+                                {% elif user[5] == 'L2' %}
+                                    <span class="badge bg-info">Administrator</span>
+                                {% elif user[5] == 'L1' %}
+                                    <span class="badge bg-primary">Manager</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Module User</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ user[7] or 'NY' }}</span>
+                            </td>
+                            <td>
+                                {% if user[9] %}
+                                    <small>{{ user[9].strftime('%Y-%m-%d %H:%M') if user[9].__class__.__name__ != 'str' else user[9] }}</small>
+                                {% else %}
+                                    <small class="text-muted">Never</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user[9] and (user[9] > (now() - timedelta(days=30)).replace(tzinfo=None) if user[9].__class__.__name__ != 'str' else False) %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Users Activity -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-star"></i> Most Active Users (30d)</h5>
+            <table class="table table-sm">
+                <tbody>
+                    {% for user in stats.top_users %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td class="text-end">
+                            <span class="badge bg-primary">{{ user.actions }} actions</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recent Activity</h5>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm">
+                    <tbody>
+                        {% for activity in recent_activity %}
+                        <tr>
+                            <td style="width: 140px;">
+                                <small class="text-muted">{{ activity[4] }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ activity[0] }}</strong>
+                                <small class="text-muted">- {{ activity[1] }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ activity[2] }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Storage & Features -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-hdd"></i> Storage Usage</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Current Usage:</span>
+                <strong>{{ stats.storage_mb }} MB</strong>
+            </div>
+            <div class="progress mb-2" style="height: 20px;">
+                <div class="progress-bar" 
+                     style="width: {{ (stats.storage_mb / 10240 * 100)|min(100) }}%">
+                    {{ ((stats.storage_mb / 10240 * 100)|round(1))|min(100) }}%
+                </div>
+            </div>
+            <small class="text-muted">Limit: 10 GB (10,240 MB)</small>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-toggles"></i> Enabled Features</h5>
+            {% if instance.features %}
+                {% for feature in instance.features %}
+                <span class="badge bg-success me-1 mb-1">
+                    <i class="bi bi-check-circle"></i> {{ feature }}
+                </span>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No special features enabled</p>
+            {% endif %}
+            
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-primary" onclick="manageFeatures()">
+                    <i class="bi bi-gear"></i> Manage Features
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Modal -->
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Deactivate Instance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to deactivate <strong>{{ instance.name }}</strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning:</strong> All {{ stats.user_count }} users will be immediately logged out and unable to access the system.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Reason for deactivation (required):</label>
+                    <textarea class="form-control" id="deactivationReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeactivate()">
+                    <i class="bi bi-pause-circle"></i> Deactivate Instance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clone Modal -->
+<div class="modal fade" id="cloneModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clone Instance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Create a copy of <strong>{{ instance.name }}</strong> with the same settings.</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Only settings will be copied. Users and data will NOT be copied.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">New Instance Name:</label>
+                    <input type="text" class="form-control" id="cloneName" 
+                           placeholder="e.g., {{ instance.name }} - Test">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmClone()">
+                    <i class="bi bi-files"></i> Clone Instance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deactivateInstance() {
+    new bootstrap.Modal(document.getElementById('deactivateModal')).show();
+}
+
+function confirmDeactivate() {
+    const reason = document.getElementById('deactivationReason').value.trim();
+    
+    if (!reason) {
+        alert('Please provide a reason for deactivation');
+        return;
+    }
+    
+    fetch('/global/instances/{{ instance.id }}/deactivate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error);
+    });
+}
+
+function activateInstance() {
+    if (confirm('Are you sure you want to activate {{ instance.name }}?')) {
+        fetch('/global/instances/{{ instance.id }}/activate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+}
+
+function cloneInstance() {
+    new bootstrap.Modal(document.getElementById('cloneModal')).show();
+}
+
+function confirmClone() {
+    const newName = document.getElementById('cloneName').value.trim();
+    
+    if (!newName) {
+        alert('Please provide a name for the new instance');
+        return;
+    }
+    
+    // TODO: Implement clone API endpoint
+    alert('Clone functionality - Coming soon!\nNew instance name: ' + newName);
+}
+
+function exportInstanceData() {
+    if (confirm('Export all data for {{ instance.name }}? This may take a few moments.')) {
+        window.location.href = '/global/instances/{{ instance.id }}/export';
+    }
+}
+
+function manageFeatures() {
+    window.location.href = '{{ url_for(" horizon.edit_instance", instance_id=instance.id) }}#features';
+}
+
+function filterUsers() {
+    const input = document.getElementById('userSearch');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('usersTable');
+    const tr = table.getElementsByTagName('tr');
+    
+    for (let i = 1; i < tr.length; i++) {
+        const td = tr[i].getElementsByTagName('td');
+        let found = false;
+        
+        for (let j = 0; j < td.length; j++) {
+            if (td[j]) {
+                const txtValue = td[j].textContent || td[j].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        tr[i].style.display = found ? '' : 'none';
+    }
+}
+</script>
+{% endblock %}
