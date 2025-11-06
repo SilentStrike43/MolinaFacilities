@@ -5,45 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gridline Services{% endblock %}</title>
     
-    <!-- Bootstrap 5.3 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <style>
         :root {
-            /* GRIDLINE SERVICES BRANDED COLOR PALETTE */
-            --gridline-primary: #0066cc;
-            --gridline-secondary: #00b4d8;
-            --gridline-dark: #1a1a2e;
-            --gridline-light: #f8f9fa;
+            /* DYNAMIC BRANDING - Injected per instance */
+            --brand-primary: {{ primary_color|default('#FF8C42') }};
+            --brand-secondary: {{ secondary_color|default('#FFD700') }};
+            --brand-primary-dark: {{ primary_color_dark|default('#E67800') }};
+            --brand-primary-light: {{ primary_color_light|default('#FFAB6B') }};
+            --brand-primary-pale: {{ primary_color_pale|default('#FFF4E6') }};
             
-            --primary-gradient: linear-gradient(135deg, #0066cc 0%, #00b4d8 100%);
-            --primary-color: #0066cc;
-            --primary-dark: #0052a3;
-            --accent-color: #00b4d8;
+            /* MODULE-SPECIFIC COLORS */
+            --ledger-primary: #3b82f6;
+            --ledger-secondary: #2563eb;
+            --flow-primary: #10b981;
+            --flow-secondary: #059669;
+            --fulfillment-primary: #f59e0b;
+            --fulfillment-secondary: #d97706;
             
-            /* Neutral Colors */
+            /* DEFAULT MODULE COLOR (fallback) */
+            --current-module: var(--brand-primary);
+            
+            /* LIGHT THEME FOR CONTENT AREA */
             --bg-primary: #f8f9fc;
             --bg-secondary: #ffffff;
-            --bg-dark: #1a1d2e;
+            --bg-tertiary: #f3f4f6;
+            --bg-card: #ffffff;
+            --bg-hover: #f3f4f6;
+            
             --text-primary: #1a1d2e;
             --text-secondary: #6b7280;
             --text-muted: #9ca3af;
             
-            /* Sidebar - Molina Branded */
-            --sidebar-width: 280px;
+            --border-color: #e5e7eb;
+            --border-subtle: #f3f4f6;
+            
+            /* Sidebar - DARK */
+            --sidebar-width: 260px;
             --sidebar-bg: linear-gradient(180deg, #1a1d2e 0%, #2d3142 100%);
+            --sidebar-text: #ffffff;
+            --sidebar-text-muted: rgba(255, 255, 255, 0.6);
             --sidebar-hover: rgba(0, 163, 173, 0.12);
             --sidebar-active: rgba(0, 163, 173, 0.2);
             
-            /* Shadows */
+            /* Gradients */
+            --primary-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            
+            /* Shadows - for light theme */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -56,6 +66,19 @@
             --radius-xl: 1rem;
         }
         
+        /* Module-Specific Themes */
+        body[data-module="ledger"] {
+            --current-module: var(--ledger-primary);
+        }
+        
+        body[data-module="flow"] {
+            --current-module: var(--flow-primary);
+        }
+        
+        body[data-module="fulfillment"] {
+            --current-module: var(--fulfillment-primary);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -63,243 +86,202 @@
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
-            overflow-x: hidden;
         }
         
-        /* ==================== SIDEBAR ==================== */
-        .sidebar {
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--current-module);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--current-module);
+            filter: brightness(1.2);
+        }
+        
+        /* Layout */
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ========== SIDEBAR ========== */
+        .app-sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);  /* ← Use dark gradient */
+            border-right: 1px solid rgba(255, 255, 255, 0.05);  /* ← Dark border */
             position: fixed;
-            left: 0;
             top: 0;
-            bottom: 0;
-            width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            color: white;
-            overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            box-shadow: var(--shadow-xl);
-        }
-        
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(0, 163, 173, 0.3);
-            border-radius: 3px;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 163, 173, 0.5);
-        }
-        
-        .sidebar-brand {
-            padding: 2rem 1.5rem 1.5rem;
-            border-bottom: 1px solid rgba(0, 163, 173, 0.15);
-        }
-        
-        .brand-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.875rem;
-            text-decoration: none;
-            color: white;
-            transition: opacity 0.2s;
-        }
-        
-        .brand-logo:hover {
-            opacity: 0.9;
-        }
-        
-        .brand-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--primary-gradient);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 16px rgba(0, 163, 173, 0.4);
-            flex-shrink: 0;
-        }
-        
-        /* If logo image exists, use it */
-        .brand-logo-image {
-            max-width: 48px;
-            max-height: 48px;
-            object-fit: contain;
-        }
-        
-        .brand-text {
+            left: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 0.125rem;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            color: var(--sidebar-text);  /* ← White text */
         }
         
-        .brand-name {
-            font-size: 1.125rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
+        .app-sidebar.collapsed {
+            transform: translateX(-100%);
         }
         
-        .brand-subtitle {
-            font-size: 0.8125rem;
-            font-weight: 500;
-            opacity: 0.8;
-            letter-spacing: 0.02em;
+                /* Brand */
+        .sidebar-brand {
+            padding: 28px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);  /* ← Dark border */
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-content h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1;
+            color: white;  /* ← White text instead of gradient */
+        }
+
+        .brand-content p {
+            font-size: 0.75rem;
+            color: var(--sidebar-text-muted);
+            margin: 4px 0 0 0;
         }
         
+        /* Navigation */
         .sidebar-nav {
-            padding: 1rem 0;
+            flex: 1;
+            padding: 20px 16px;
+            overflow-y: auto;
         }
         
         .nav-section {
-            padding: 0 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 28px;
         }
         
-        .nav-section-title {
-            font-size: 0.75rem;
+        .nav-section-label {
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 0.75rem;
-            padding: 0 0.5rem;
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+            padding: 0 12px 10px;
+            display: block;
         }
         
-        .nav-link-custom {
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-item {
+            margin-bottom: 4px;
+        }
+        
+        .nav-link {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: rgba(255, 255, 255, 0.8);
+            gap: 14px;
+            padding: 12px 16px;
+            color: var(--sidebar-text-muted);  /* ← Light gray text */
             text-decoration: none;
-            border-radius: var(--radius-md);
-            transition: all 0.2s;
-            font-size: 0.9375rem;
-            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
             position: relative;
-            overflow: hidden;
+        }
+
+        .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: white;  /* ← White on hover */
+        }
+
+        .nav-link.active {
+            background: var(--sidebar-active);
+            color: white;  /* ← White when active */
+            font-weight: 500;
         }
         
-        .nav-link-custom::before {
+        .nav-link.active::before {
             content: '';
             position: absolute;
             left: 0;
             top: 50%;
             transform: translateY(-50%);
             width: 3px;
-            height: 0;
-            background: var(--primary-color);
+            height: 65%;
+            background: var(--brand-primary);
+            border-radius: 0 3px 3px 0;
         }
         
-        .nav-link-custom:hover {
-            background: var(--sidebar-hover);
-            color: white;
+        /* Module-Specific Nav Colors */
+        .nav-link[data-module="ledger"].active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
         }
         
-        .nav-link-custom.active {
-            background: var(--sidebar-active);
-            color: white;
+        .nav-link[data-module="ledger"].active::before {
+            background: var(--ledger-primary);
         }
         
-        .nav-link-custom.active::before {
-            height: 70%;
+        .nav-link[data-module="flow"].active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
         }
         
-        .nav-link-icon {
-            font-size: 1.125rem;
+        .nav-link[data-module="flow"].active::before {
+            background: var(--flow-primary);
+        }
+        
+        .nav-link[data-module="fulfillment"].active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+        }
+        
+        .nav-link[data-module="fulfillment"].active::before {
+            background: var(--fulfillment-primary);
+        }
+        
+        .nav-icon {
+            font-size: 1.3rem;
             width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        /* Module Badges */
-        .badge-send {
-            background: linear-gradient(135deg, var(--gridline-primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .badge-inventory {
-            background: linear-gradient(135deg, var(--gridline-primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .badge-insights {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--gridline-primary) 100%);
-            color: white;
-        }
-
-        .badge-users {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-        }
-
-        .badge-fulfillment {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-        }
-
-        /* Admin Role Badges */
-        .badge-admin {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-            color: white;
-        }
-
-        .badge-sysadmin {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
-        }
-
-        .badge-system {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
-        }
-        
-        /* User Profile in Sidebar */
-        .sidebar-user {
-            padding: 1.5rem;
-            margin-top: auto;
-            border-top: 1px solid rgba(0, 163, 173, 0.15);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: rgba(0, 102, 204, 0.1);
-        }
-        
-        .user-info:hover {
-            background: rgba(0, 163, 173, 0.15);
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
+        }
+        
+        /* User Section */
+        .sidebar-user {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0, 163, 173, 0.3);
         }
         
         .user-details {
@@ -308,9 +290,9 @@
         }
         
         .user-name {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -318,381 +300,572 @@
         
         .user-role {
             font-size: 0.75rem;
-            color: var(--gridline-secondary);
-            font-weight: 600;
+            color: var(--text-secondary);
         }
         
-        /* User Location Badge */
-        .user-location-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.125rem 0.5rem;
-            background: rgba(0, 102, 204, 0.15);
-            border-radius: 12px;
-            font-size: 0.7rem;
-            color: var(--gridline-secondary);
-        }
-
-        .user-location-badge i {
-            font-size: 0.75rem;
-        }
-        
-        /* ==================== MAIN CONTENT ==================== */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
-        }
-        
-        /* Top Bar */
-        .topbar {
-            background: var(--bg-secondary);
-            padding: 1rem 2rem;
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .user-actions {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
+            gap: 6px;
         }
         
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-        }
-        
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .notification-btn {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-primary);
+        .user-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.2s;
         }
         
-        .notification-btn:hover {
-            background: var(--gridline-primary);
-            color: white;
+        .user-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
         
+        /* ========== MAIN CONTENT ========== */
+        .app-main {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .app-sidebar.collapsed ~ .app-main {
+            margin-left: 0;
+        }
+        
+        /* Top Bar */
+        .app-topbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .topbar-left {
+            flex: 1;
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+        
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .breadcrumb-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-link:hover {
+            color: var(--current-module);
+        }
+        
+        .topbar-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .topbar-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.2rem;
+        }
+        
+        .topbar-btn:hover {
+            background: rgba(255, 140, 66, 0.1);
+            color: var(--brand-primary);
+        }
+        
+        .logout-btn {
+            padding: 8px 20px;
+            border-radius: 10px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
         
         /* Content Area */
-        .content-wrapper {
-            padding: 2rem;
+        .app-content {
+            flex: 1;
+            padding: 32px;
+        }
+        
+        /* ========== COMPONENTS ========== */
+        
+        /* Stat Cards */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--current-module), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .stat-card:hover {
+            border-color: rgba(255, 140, 66, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card[data-module="ledger"] .stat-icon {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--ledger-primary);
+        }
+        
+        .stat-card[data-module="flow"] .stat-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--flow-primary);
+        }
+        
+        .stat-card[data-module="fulfillment"] .stat-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--fulfillment-primary);
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+        
+        .stat-card p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.9rem;
         }
         
         /* Flash Messages */
-        .alert-modern {
-            border: none;
-            border-radius: var(--radius-lg);
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.5rem;
+        .alert {
+            border-radius: 12px;
+            border: 1px solid;
+            padding: 16px 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: var(--shadow-md);
+            gap: 12px;
         }
         
-        .alert-modern-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.25);
+            color: #10b981;
         }
         
-        .alert-modern-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
+        .alert-danger, .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #ef4444;
         }
         
-        .alert-modern-warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.25);
+            color: #f59e0b;
         }
         
-        .alert-modern-info {
-            background: linear-gradient(135deg, var(--gridline-primary) 0%, var(--primary-dark) 100%);
-            color: white;
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.25);
+            color: #3b82f6;
+        }
+        
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table thead th {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .table tbody tr {
+            transition: background 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .table tbody td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            padding: 12px 24px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand-primary), #ffd700);
+            border: none;
+            color: #1a1d2e;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 140, 66, 0.3);
         }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .sidebar {
+            .app-sidebar {
                 transform: translateX(-100%);
             }
             
-            .sidebar.show {
+            .app-sidebar.mobile-open {
                 transform: translateX(0);
             }
             
-            .main-content {
+            .app-main {
                 margin-left: 0;
             }
+            
+            .app-content {
+                padding: 20px;
+            }
         }
+        
+        {% block extra_css %}{% endblock %}
     </style>
-    
-    {% if instance_colors %}
-        <style id="instance-theme">
-            :root {
-                --primary-color: {{ instance_colors.primary|default('#0066cc') }};
-                --primary-dark: {{ instance_colors.primary|default('#0052a3') }};
-                --accent-color: {{ instance_colors.secondary|default('#00b4d8') }};
-                --sidebar-bg-start: {{ instance_colors.sidebar_bg_start|default('#1a1d2e') }};
-                --sidebar-bg-end: {{ instance_colors.sidebar_bg_end|default('#2d3142') }};
-            }
-            
-            .sidebar {
-                background: linear-gradient(180deg, var(--sidebar-bg-start) 0%, var(--sidebar-bg-end) 100%);
-            }
-            
-            .brand-icon {
-                background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            }
-            
-            .user-avatar {
-                background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            }
-            
-            .user-role {
-                color: var(--accent-color);
-            }
-        </style>
-        {% endif %}
-
-    {% block extra_head %}{% endblock %}
 </head>
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <a href="{{ url_for('home.index') }}" class="brand-logo">
+<body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}">
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <!-- Brand -->
+            <div class="sidebar-brand">
                 <div class="brand-icon">
-                    {% if instance_logo %}
-                        <img src="{{ instance_logo }}" alt="{{ instance_name or 'Gridline Services' }}" 
-                             class="brand-logo-image" 
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    {% endif %}
-                    <i class="bi bi-gem" {% if not instance_logo %}style="display:flex;"{% else %}style="display:none;"{% endif %}></i>
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
                 </div>
-                <div class="brand-text">
-                    <div class="brand-name">{{ instance_name or 'Gridline Services' }}</div>
-                    <div class="brand-subtitle">{{ instance_subtitle or 'Enterprise Platform' }}</div>
+                <div class="brand-content">
+                    <h1>Gridline</h1>
+                    <p>{{ cu.instance_name if cu and cu.get('instance_name') else 'Platform' }}</p>
                 </div>
-            </a>
-        </div>
-        
-        <div class="sidebar-nav">
-            <div class="nav-section">
-                <a href="{{ url_for('home.index') }}" class="nav-link-custom {{ 'active' if active=='home' else '' }}">
-                    <i class="bi bi-house-door nav-link-icon"></i>
-                    <span>Home</span>
-                </a>
             </div>
+            
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <!-- Core -->
+                <div class="nav-section">
+                    <span class="nav-section-label">Core</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('home.index') }}" class="nav-link {{ 'active' if active=='home' else '' }}">
+                                <i class="nav-icon bi bi-house-door"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Modules -->
+                {% if cu %}
+                    <!-- Ledger Section (Send Module with new name) -->
+                    {% if can_send or elevated %}
+                    <div class="nav-section">
+                        <span class="nav-section-label">LEDGER</span>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="{{ url_for('send.index') }}" class="nav-link {{ 'active' if active=='send' else '' }}">
+                                    <i class="nav-icon bi bi-box-seam"></i>
+                                    <span>Check In</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('send.tracking') }}" class="nav-link {{ 'active' if active=='tracking' else '' }}">
+                                    <i class="nav-icon bi bi-geo-alt"></i>
+                                    <span>Tracking</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('send.insights') }}" class="nav-link {{ 'active' if active=='insights' else '' }}">
+                                    <i class="nav-icon bi bi-bar-chart-line"></i>
+                                    <span>Insights</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
 
-            <!-- Only show module sections if user has those permissions -->
+                    <!-- FLOW SECTION -->
+                    {% if can_inventory or can_asset or elevated %}
+                    <div class="nav-section">
+                        <span class="nav-section-label">FLOW</span>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="{{ url_for('inventory.asset') }}" class="nav-link {{ 'active' if active=='inventory' else '' }}">
+                                    <i class="nav-icon bi bi-archive"></i>
+                                    <span>Assets</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link {{ 'active' if active=='ledger' else '' }}">
+                                    <i class="nav-icon bi bi-journal-text"></i>
+                                    <span>Ledger</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('inventory.insights') }}" class="nav-link {{ 'active' if active=='insights' else '' }}">
+                                    <i class="nav-icon bi bi-graph-up"></i>
+                                    <span>Insights</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- FULFILLMENT SECTION -->
+                    {% if can_fulfillment_customer or can_fulfillment_service or can_fulfillment_manager or elevated %}
+                    <div class="nav-section">
+                        <span class="nav-section-label">FULFILLMENT</span>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="{{ url_for('fulfillment.request_form') }}" class="nav-link {{ 'active' if active=='fulfillment' else '' }}">
+                                    <i class="nav-icon bi bi-file-earmark-text"></i>
+                                    <span>New Request</span>
+                                </a>
+                            </li>
+                            {% if can_fulfillment_service or can_fulfillment_manager or elevated %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('fulfillment.queue') }}" class="nav-link {{ 'active' if active=='queue' else '' }}">
+                                    <i class="nav-icon bi bi-list-check"></i>
+                                    <span>Service Queue</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('fulfillment.archive') }}" class="nav-link {{ 'active' if active=='archive' else '' }}">
+                                    <i class="nav-icon bi bi-archive"></i>
+                                    <span>Archive</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('fulfillment.insights') }}" class="nav-link {{ 'active' if active=='fulfillment-insights' else '' }}">
+                                    <i class="nav-icon bi bi-bar-chart-line"></i>
+                                    <span>Insights</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                <!-- Administration -->
+                {% if cu and cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
+                <div class="nav-section">
+                    <span class="nav-section-label">Administration</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('users.user_list', instance_id=cu.instance_id) }}" 
+                               class="nav-link {{ 'active' if active=='users' else '' }}">
+                                <i class="nav-icon bi bi-people"></i>
+                                <span>Users</span>
+                            </a>
+                        </li>
+                        {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('users.elevation_management') }}" 
+                               class="nav-link {{ 'active' if active=='elevation' else '' }}">
+                                <i class="nav-icon bi bi-shield-check"></i>
+                                <span>Permissions</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin.audit_logs') }}" 
+                               class="nav-link {{ 'active' if active=='audits' else '' }}">
+                                <i class="nav-icon bi bi-clock-history"></i>
+                                <span>Audit Logs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Horizon -->
+                {% if cu and cu.get('permission_level') in ['L3', 'S1'] %}
+                <div class="nav-section">
+                    <span class="nav-section-label">Horizon</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('horizon.dashboard') }}" 
+                               class="nav-link {{ 'active' if active=='horizon' else '' }}">
+                                <i class="nav-icon bi bi-layers"></i>
+                                <span>Platform Control</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </nav>
+            
+            <!-- User -->
             {% if cu %}
-                <!-- Send Section -->
-                {% if can_send or elevated %}
-                <div class="nav-section">
-                    <div class="nav-section-title">SHIPPING</div>
-                    <a href="{{ url_for('send.index') }}" class="nav-link-custom {{ 'active' if active=='send' and page not in ['tracking', 'insights'] else '' }}">
-                        <i class="bi bi-box-seam nav-link-icon"></i>
-                        <span>Send Package</span>
-                    </a>
-                    <a href="{{ url_for('send.tracking') }}" class="nav-link-custom {{ 'active' if active=='send' and page=='tracking' else '' }}">
-                        <i class="bi bi-geo-alt nav-link-icon"></i>
-                        <span>Tracking</span>
-                    </a>
-                    <a href="{{ url_for('send.insights') }}" class="nav-link-custom {{ 'active' if active=='send-insights' else '' }}">
-                        <i class="bi bi-bar-chart-line nav-link-icon"></i>
-                        <span>Send Insights</span>
-                    </a>
-                </div>
-                {% endif %}
-                
-                <!-- Inventory Section -->
-                {% if can_inventory or can_asset or elevated %}
-                <div class="nav-section">
-                    <div class="nav-section-title">INVENTORY</div>
-                    <a href="{{ url_for('inventory.asset') }}" class="nav-link-custom {{ 'active' if active=='inventory' and page not in ['insights', 'ledger'] else '' }}">
-                        <i class="bi bi-archive nav-link-icon"></i>
-                        <span>Assets</span>
-                    </a>
-                    <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link-custom {{ 'active' if active=='asset-ledger' else '' }}">
-                        <i class="bi bi-journal-text nav-link-icon"></i>
-                        <span>Asset Ledger</span>
-                    </a>
-                    <a href="{{ url_for('inventory.insights') }}" class="nav-link-custom {{ 'active' if active=='insights' and tab=='inventory' else '' }}">
-                        <i class="bi bi-graph-up nav-link-icon"></i>
-                        <span>Inventory Insights</span>
-                    </a>
-                </div>
-                {% endif %}
-                
-                <!-- Fulfillment Section -->
-                {% if can_fulfillment_customer or can_fulfillment_service or can_fulfillment_manager or elevated %}
-                <div class="nav-section">
-                    <div class="nav-section-title">FULFILLMENT</div>
-                    <a href="{{ url_for('fulfillment.request_form') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='request' else '' }}">
-                        <i class="bi bi-file-earmark-text nav-link-icon"></i>
-                        <span>New Request</span>
-                    </a>
-                    {% if can_fulfillment_service or can_fulfillment_manager or elevated %}
-                    <a href="{{ url_for('fulfillment.queue') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='queue' else '' }}">
-                        <i class="bi bi-list-check nav-link-icon"></i>
-                        <span>Service Queue</span>
-                    </a>
-                    {% endif %}
-                    <a href="{{ url_for('fulfillment.archive') }}" class="nav-link-custom {{ 'active' if active=='fulfillment' and page=='archive' else '' }}">
-                        <i class="bi bi-archive nav-link-icon"></i>
-                        <span>Archive</span>
-                    </a>
-                    {% if can_fulfillment_manager or elevated %}
-                    <a href="{{ url_for('fulfillment.insights') }}" class="nav-link-custom {{ 'active' if active=='fulfillment-insights' else '' }}">
-                        <i class="bi bi-bar-chart-line nav-link-icon"></i>
-                        <span>Fulfillment Insights</span>
-                    </a>
-                    {% endif %}
-                </div>
-                {% endif %}
-                
-                <!-- Admin Section (L1+ only) -->
-                {% if can_admin_users or elevated %}
-                <div class="nav-section">
-                    <div class="nav-section-title">ADMINISTRATION</div>
-                    <a href="{{ url_for('users.user_list', instance_id=cu.instance_id) }}" class="nav-link-custom">
-                        <i class="bi bi-people nav-link-icon"></i>
-                        <span>Users</span>
-                    </a>
-                    
-                    {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
-                    <a href="{{ url_for('users.elevation_management') }}" class="nav-link-custom {{ 'active' if active=='users' and page=='elevation' else '' }}">
-                        <i class="bi bi-shield-check nav-link-icon"></i>
-                        <span>Permissions</span>
-                    </a>
-                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link-custom {{ 'active' if active=='admin' else '' }}">
-                        <i class="bi bi-speedometer2 nav-link-icon"></i>
-                        <span>Admin Dashboard</span>
-                    </a>
-                    <a href="{{ url_for('admin.audit_logs') }}" class="nav-link-custom {{ 'active' if active=='audit' else '' }}">
-                        <i class="bi bi-clipboard-data nav-link-icon"></i>
-                        <span>Audit Logs</span>
-                    </a>
-                    {% endif %}
-                </div>
-                {% endif %}
-                
-                <!-- Horizon Section (L3/S1 only) -->
-                {% if cu.permission_level in ['L3', 'S1'] %}
-                <div class="nav-section">
-                    <div class="nav-section-title">HORIZON</div>
-                    <a href="{{ url_for('horizon.dashboard') }}" class="nav-link-custom {{ 'active' if active=='horizon' else '' }}">
-                        <i class="bi bi-sunrise nav-link-icon"></i>
-                        <span>Horizon Platform</span>
-                    </a>
-                </div>
-                {% endif %}
-            {% endif %}
-        </div>
-        
-        <!-- User Profile (bottom of sidebar) -->
-        {% if cu %}
-        <div class="sidebar-user">
-            <div class="user-info">
-                <div class="user-avatar">
-                    {{ cu.username[0]|upper if cu.username else 'U' }}
-                </div>
+            <div class="sidebar-user">
+                <div class="user-avatar">{{ cu.username[0].upper() }}</div>
                 <div class="user-details">
                     <div class="user-name">{{ cu.username }}</div>
                     <div class="user-role">
-                        {% if cu.permission_level == 'S1' %}
-                            System Admin
-                        {% elif cu.permission_level == 'L3' %}
-                            App Operator
-                        {% elif cu.permission_level == 'L2' %}
-                            Administrator
-                        {% elif cu.permission_level == 'L1' %}
-                            Manager
-                        {% elif elevated %}
-                            Administrator
-                        {% else %}
-                            User
-                        {% endif %}
+                        {% if cu.get('permission_level') == 'S1' %}System Admin
+                        {% elif cu.get('permission_level') == 'L3' %}Platform Ops
+                        {% elif cu.get('permission_level') == 'L2' %}Administrator
+                        {% elif cu.get('permission_level') == 'L1' %}Manager
+                        {% else %}User{% endif %}
                     </div>
-                    <!-- Location badge -->
-                    {% if cu.location %}
-                    <div class="user-location-badge">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        {% if cu.location == 'ALL' %}
-                            <span>All Locations</span>
-                        {% elif cu.location == 'CT' %}
-                            <span>Connecticut</span>
-                        {% else %}
-                            <span>New York</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                </div>
+                <div class="user-actions">
+                    <button class="user-action-btn" onclick="window.location.href='{{ url_for('users.profile') }}'" title="Profile">
+                        <i class="bi bi-person"></i>
+                    </button>
+                    <button class="user-action-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'" title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-        {% endif %}
-    </div>
-    
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
-            </div>
-            <div class="topbar-right">
-                {% if cu %}
-                <a href="{{ url_for('auth.logout') }}" class="notification-btn" title="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-                {% endif %}
-            </div>
-        </div>
+            {% endif %}
+        </aside>
         
-        <div class="content-wrapper">
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                    <div class="alert-modern alert-modern-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }}">
-                        <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-circle-fill{% elif category == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Top Bar -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <nav class="breadcrumb-nav">
+                        {% block breadcrumb %}
+                        <a href="{{ url_for('home.index') }}" class="breadcrumb-link">Home</a>
+                        {% endblock %}
+                    </nav>
+                </div>
+                <div class="topbar-actions">
+                    <button class="topbar-btn" title="Settings" onclick="window.location.href='{{ url_for('users.profile') }}'">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <button class="logout-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </div>
+            </header>
             
-            <!-- Main Content -->
-            {% block body %}{% endblock %}
-        </div>
+            <!-- Content -->
+            <div class="app-content">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+                            <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category in ['warning', 'danger'] else 'info-circle' }}"></i>
+                            <span>{{ message }}</span>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block body %}{% endblock %}
+            </div>
+        </main>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_scripts %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('appSidebar').classList.toggle('mobile-open');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

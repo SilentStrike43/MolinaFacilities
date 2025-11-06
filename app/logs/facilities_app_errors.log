@@ -6265,3 +6265,91 @@ app.core.database.DatabaseError: Database query error: cannot cast type text[] t
 LINE 4: ...     COALESCE(jsonb_array_length(i.enabled_modules::jsonb), ...
                                                              ^
 
+2025-11-06 15:08:40 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: UndefinedError: 'csrf_token' is undefined
+Traceback (most recent call last):
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\GridlineService\app\modules\auth\views.py", line 84, in login
+    return render_template("auth/login.html")
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\GridlineService\app\modules\auth\templates\auth\login.html", line 374, in top-level template code
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    ^^^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\utils.py", line 92, in from_obj
+    if hasattr(obj, "jinja_pass_arg"):
+       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'csrf_token' is undefined
+2025-11-06 15:11:46 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: BuildError: Could not build url for endpoint 'auth.forgot_password'. Did you mean 'auth.change_password' instead?
+Traceback (most recent call last):
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\GridlineService\app\modules\auth\views.py", line 84, in login
+    return render_template("auth/login.html")
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\GridlineService\app\modules\auth\templates\auth\login.html", line 421, in top-level template code
+    <a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+    ^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\GridlineService\venv\Lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'auth.forgot_password'. Did you mean 'auth.change_password' instead?
+2025-11-06 15:38:40 | [35mCRITICAL[0m | app.core.errors | handle_unexpected_error:157 | Unexpected error: TemplateRuntimeError: No filter named 'from_json' found.
+Traceback (most recent call last):
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\GridlineService\venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\GridlineService\app\modules\auth\security.py", line 309, in wrapped
+    return f(*args, **kwargs)
+  File "C:\GridlineService\app\modules\users\views.py", line 350, in user_list
+    return render_template("users/list.html",
+                         active="users",
+    ...<2 lines>...
+                         instance_id=instance_id,
+                         show_inactive=show_inactive)
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\GridlineService\venv\Lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\GridlineService\venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\GridlineService\app\modules\users\templates\users\list.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "C:\GridlineService\app\templates\base.html", line 610, in top-level template code
+    {% set module_list = module_perms|tojson|from_json %}
+    
+jinja2.exceptions.TemplateRuntimeError: No filter named 'from_json' found.

@@ -1,22 +1,20 @@
 {% extends "base.html" %}
-{% block extra_head %}
+{% block extra_css %}
 <style>
-    :root {
-        --molina-teal: #00A3AD;
-        --molina-teal-dark: #008A93;
-        --text-primary: #1a1d2e;
-        --text-secondary: #6b7280;
-        --text-muted: #9ca3af;
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     /* Page Header */
     .page-header-card {
-        background: linear-gradient(135deg, var(--molina-teal-dark) 0%, var(--molina-teal) 100%);
+        background: linear-gradient(135deg, #008A93 0%, #00A3AD 100%);
         border-radius: 1.5rem;
         padding: 2.5rem 3rem;
         margin-bottom: 2rem;
         color: white;
         box-shadow: 0 10px 30px rgba(0, 163, 173, 0.3);
+        animation: fadeInUp 0.5s ease-out;
     }
     
     .page-header-content {
@@ -56,6 +54,7 @@
         padding: 2rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         margin-bottom: 1.5rem;
+        animation: fadeInUp 0.6s ease-out;
     }
     
     .card-header-modern {
@@ -70,21 +69,18 @@
     .card-title {
         font-size: 1.125rem;
         font-weight: 700;
-        color: var(--text-primary);
+        color: #1a1d2e;
         display: flex;
         align-items: center;
         gap: 0.625rem;
+        margin: 0;
     }
     
     .card-title i {
-        color: var(--molina-teal);
+        color: #00A3AD;
     }
     
     /* Asset Selector */
-    .asset-selector {
-        position: relative;
-    }
-    
     .form-select-modern {
         width: 100%;
         padding: 0.875rem 1.125rem;
@@ -94,17 +90,18 @@
         background: white;
         cursor: pointer;
         transition: all 0.3s ease;
+        color: #1a1d2e;
     }
     
     .form-select-modern:focus {
         outline: none;
-        border-color: var(--molina-teal);
+        border-color: #00A3AD;
         box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
     }
     
     /* Asset Info Card */
     .asset-info-card {
-        background: linear-gradient(135deg, var(--molina-teal) 0%, var(--molina-teal-dark) 100%);
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1.25rem;
         padding: 2rem;
         color: white;
@@ -190,7 +187,7 @@
     .action-title {
         font-size: 1rem;
         font-weight: 700;
-        color: var(--text-primary);
+        color: #1a1d2e;
         margin: 0;
     }
     
@@ -207,11 +204,12 @@
         border-radius: 0.625rem;
         font-size: 0.875rem;
         transition: all 0.3s ease;
+        color: #1a1d2e;
     }
     
     .form-control-modern:focus {
         outline: none;
-        border-color: var(--molina-teal);
+        border-color: #00A3AD;
         box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
     }
     
@@ -262,17 +260,19 @@
     
     .table-modern thead th {
         background: #f8f9fc;
-        color: var(--text-secondary);
+        color: #6b7280;
         font-weight: 600;
         text-transform: uppercase;
         font-size: 0.75rem;
         letter-spacing: 0.05em;
         padding: 1rem;
         border-bottom: 2px solid #e5e7eb;
+        text-align: left;
     }
     
     .table-modern tbody tr {
         transition: all 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
     }
     
     .table-modern tbody tr:hover {
@@ -281,8 +281,11 @@
     
     .table-modern tbody td {
         padding: 1rem;
-        border-bottom: 1px solid #f3f4f6;
-        color: var(--text-primary);
+        color: #1a1d2e;
+    }
+    
+    .table-modern tbody tr:last-child {
+        border-bottom: none;
     }
     
     /* Action Badges */
@@ -317,7 +320,7 @@
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        color: var(--text-muted);
+        color: #9ca3af;
     }
     
     .empty-state i {
@@ -327,7 +330,7 @@
     }
     
     .empty-state h4 {
-        color: var(--text-secondary);
+        color: #6b7280;
         margin-bottom: 0.5rem;
     }
     
