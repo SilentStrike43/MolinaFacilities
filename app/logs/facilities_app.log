@@ -13641,3 +13641,45 @@ LINE 4: ...     COALESCE(jsonb_array_length(i.enabled_modules::jsonb), ...
 2025-11-06 14:30:13 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
 2025-11-06 14:30:13 | [32mINFO[0m | app.core.database | cleanup_all_pools:375 | All database connection pools closed
 2025-11-06 14:30:13 | [32mINFO[0m | __main__ | shutdown_handler:280 | Cleanup complete
+2025-11-06 14:30:14 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\GridlineService\app\logs
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:57 | Initializing database schemas...
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'send' database
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'fulfillment' database
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'inventory' database
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:70 | ✅ Database schemas initialized
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:221 | All blueprints registered successfully
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:239 | Database schemas initialized
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:256 | Application initialization complete
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | <module>:294 | Starting server on 127.0.0.1:5000
+2025-11-06 14:30:14 | [32mINFO[0m | root | setup_logging:187 | Logging initialized - Level: INFO | Directory: C:\GridlineService\app\logs
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:248 | Flask application started - Environment: development
+2025-11-06 14:30:14 | [32mINFO[0m | app.core.logging_config | setup_flask_logging:249 | Debug mode: False
+2025-11-06 14:30:14 | [32mINFO[0m | __main__ | create_app:57 | Initializing database schemas...
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'send' database
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'fulfillment' database
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:15 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'inventory' database
+2025-11-06 14:30:15 | [32mINFO[0m | __main__ | create_app:70 | ✅ Database schemas initialized
+2025-11-06 14:30:15 | [32mINFO[0m | __main__ | create_app:221 | All blueprints registered successfully
+2025-11-06 14:30:15 | [32mINFO[0m | __main__ | create_app:239 | Database schemas initialized
+2025-11-06 14:30:15 | [32mINFO[0m | __main__ | create_app:256 | Application initialization complete
+2025-11-06 14:30:15 | [32mINFO[0m | __main__ | <module>:294 | Starting server on 127.0.0.1:5000
+2025-11-06 14:30:15 | [33mWARNING[0m | werkzeug | _log:97 |  * Debugger is active!
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | __init__:106 | Created PostgreSQL connection pool (size: 15)
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | get_pool:245 | Created pool for 'core' database
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: send
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: fulfillment
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: inventory
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:372 | Closing connection pool: core
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | close_all:170 | All connections closed
+2025-11-06 14:30:22 | [32mINFO[0m | app.core.database | cleanup_all_pools:375 | All database connection pools closed
