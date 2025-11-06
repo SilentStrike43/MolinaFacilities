@@ -76,6 +76,83 @@ def create_app():
     
     # ==================== Context Processors ====================
     app.context_processor(inject_globals)
+
+    @app.context_processor
+    def inject_user_context():
+        """Inject common user context into all templates."""
+        from app.modules.auth.security import current_user
+        from app.modules.users.permissions import PermissionManager
+        from app.core.module_access import get_user_available_modules
+        
+        # Default Gridline Services branding
+        default_settings = {
+            'instance_name': 'Gridline Services',
+            'instance_subtitle': 'Enterprise Platform',
+            'logo_url': None,
+            'favicon_url': None,
+            'primary_color': '#0066cc',
+            'secondary_color': '#00b4d8',
+            'sidebar_bg_start': '#1a1d2e',
+            'sidebar_bg_end': '#2d3142',
+            'topbar_bg': '#ffffff'
+        }
+        
+        cu = current_user()
+        if not cu:
+            return {
+                'cu': None,
+                'can_send': False,
+                'can_inventory': False,
+                'can_asset': False,
+                'can_fulfillment_customer': False,
+                'can_fulfillment_service': False,
+                'can_fulfillment_manager': False,
+                'can_admin_users': False,
+                'elevated': False,
+                'instance_name': default_settings['instance_name'],
+                'instance_subtitle': default_settings['instance_subtitle'],
+                'instance_logo': default_settings['logo_url'],
+                'instance_favicon': default_settings['favicon_url'],
+                'instance_colors': {
+                    'primary': default_settings['primary_color'],
+                    'secondary': default_settings['secondary_color'],
+                    'sidebar_bg_start': default_settings['sidebar_bg_start'],
+                    'sidebar_bg_end': default_settings['sidebar_bg_end'],
+                    'topbar_bg': default_settings['topbar_bg']
+                }
+            }
+        
+        # Get effective permissions
+        effective_perms = PermissionManager.get_effective_permissions(cu)
+        permission_level = cu.get('permission_level', '')
+        is_elevated = permission_level in ['L1', 'L2', 'L3', 'S1']
+        
+        # For now, just use default branding for all users
+        # Later we can add database lookup based on cu.get('instance_id')
+        
+        return {
+            'cu': cu,
+            'can_send': effective_perms.get('can_send', False) or is_elevated,
+            'can_inventory': effective_perms.get('can_inventory', False) or is_elevated,
+            'can_asset': effective_perms.get('can_asset', False) or is_elevated,
+            'can_fulfillment_customer': effective_perms.get('can_fulfillment_customer', False) or is_elevated,
+            'can_fulfillment_service': effective_perms.get('can_fulfillment_service', False) or is_elevated,
+            'can_fulfillment_manager': effective_perms.get('can_fulfillment_manager', False) or is_elevated,
+            'can_admin_users': is_elevated and permission_level in ['L1', 'L2', 'L3', 'S1'],
+            'elevated': is_elevated,
+            'available_modules': get_user_available_modules(cu) if cu else [],
+            'instance_name': default_settings['instance_name'],
+            'instance_subtitle': default_settings['instance_subtitle'],
+            'instance_logo': default_settings['logo_url'],
+            'instance_favicon': default_settings['favicon_url'],
+            'instance_colors': {
+                'primary': default_settings['primary_color'],
+                'secondary': default_settings['secondary_color'],
+                'sidebar_bg_start': default_settings['sidebar_bg_start'],
+                'sidebar_bg_end': default_settings['sidebar_bg_end'],
+                'topbar_bg': default_settings['topbar_bg']
+            }
+        }
     
     # ==================== Custom Jinja2 Filters ====================
     @app.template_filter('format_datetime')

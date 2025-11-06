@@ -148,7 +148,7 @@
         {% for inst in instances %}
             {% if inst[0] == filters.instance_id|int %}{{ inst[1] }}{% endif %}
         {% endfor %}
-        <a href="{{ url_for(' horizon.global_audits', 
+        <a href="{{ url_for('horizon.global_audits', 
                    username=filters.username, 
                    action=filters.action, 
                    module=filters.module, 
@@ -162,7 +162,7 @@
     {% if filters.username %}
     <span class="filter-badge">
         User: {{ filters.username }}
-        <a href="{{ url_for(' horizon.global_audits', 
+        <a href="{{ url_for('horizon.global_audits', 
                    instance_id=filters.instance_id, 
                    action=filters.action, 
                    module=filters.module, 
@@ -176,7 +176,7 @@
     {% if filters.action %}
     <span class="filter-badge">
         Action: {{ filters.action }}
-        <a href="{{ url_for(' horizon.global_audits', 
+        <a href="{{ url_for('horizon.global_audits', 
                    instance_id=filters.instance_id, 
                    username=filters.username, 
                    module=filters.module, 
@@ -190,7 +190,7 @@
     {% if filters.module %}
     <span class="filter-badge">
         Module: {{ filters.module }}
-        <a href="{{ url_for(' horizon.global_audits', 
+        <a href="{{ url_for('horizon.global_audits', 
                    instance_id=filters.instance_id, 
                    username=filters.username, 
                    action=filters.action, 
@@ -215,7 +215,7 @@
     </span>
     {% endif %}
     
-    <a href="{{ url_for(' horizon.global_audits') }}" class="btn btn-sm btn-outline-secondary">
+    <a href="{{ url_for('horizon.global_audits') }}" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-x-circle"></i> Clear All
     </a>
 </div>
@@ -363,44 +363,43 @@
     <div id="listView">
         {% if logs %}
             {% for log in logs %}
-            <div class="log-entry {% if log[1] in ['elevate_user', 'demote_user', 'delete_user', 'create_instance', 'delete_instance'] %}critical{% endif %}">
+            <div class="log-entry {% if log.action in ['elevate_user', 'demote_user', 'delete_user', 'create_instance', 'delete_instance', 'deactivate_instance'] %}critical{% endif %}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <div class="mb-1">
-                            <span class="log-user">{{ log[2] }}</span>
-                            {% if log[6] %}
+                            <span class="log-user">{{ log.username }}</span>
+                            {% if log.permission_level %}
                                 <span class="badge 
-                                    {% if log[6] == 'S1' %}bg-danger
-                                    {% elif log[6] == 'L3' %}bg-warning
-                                    {% elif log[6] == 'L2' %}bg-info
-                                    {% elif log[6] == 'L1' %}bg-primary
+                                    {% if log.permission_level == 'S1' %}bg-danger
+                                    {% elif log.permission_level == 'L3' %}bg-warning
+                                    {% elif log.permission_level == 'L2' %}bg-info
+                                    {% elif log.permission_level == 'L1' %}bg-primary
                                     {% else %}bg-secondary{% endif %}">
-                                    {{ log[6] }}
+                                    {{ log.permission_level }}
                                 </span>
                             {% endif %}
                             
-                            {% if log[8] %}
-                                <span class="badge bg-light text-dark">{{ log[8] }}</span>
+                            {% if log.instance_name %}
+                                <span class="badge bg-light text-dark">{{ log.instance_name }}</span>
                             {% endif %}
                         </div>
                         
                         <div class="mb-1">
-                            <span class="log-action">{{ log[1] }}</span>
-                            in 
-                            <span class="badge bg-secondary">{{ log[3] }}</span>
+                            <span class="log-action">{{ log.action }}</span>
+                            {% if log.module %}
+                                in <span class="badge bg-secondary">{{ log.module }}</span>
+                            {% endif %}
                         </div>
                         
-                        {% if log[4] %}
+                        {% if log.details %}
                         <div class="log-details">
-                            <i class="bi bi-info-circle"></i> {{ log[4] }}
+                            <i class="bi bi-info-circle"></i> {{ log.details }}
                         </div>
                         {% endif %}
                         
-                        {% if log[11] or log[12] %}
+                        {% if log.target_user_id or log.target_username %}
                         <div class="log-details">
-                            {% if log[11] %}
-                                <i class="bi bi-person-badge"></i> Target: <strong>{{ log[12] }}</strong> (ID: {{ log[11] }})
-                            {% endif %}
+                            <i class="bi bi-person-badge"></i> Target: <strong>{{ log.target_username or 'User ID ' + log.target_user_id|string }}</strong>
                         </div>
                         {% endif %}
                     </div>
@@ -408,13 +407,13 @@
                     <div class="text-end">
                         <div class="log-timestamp">
                             <i class="bi bi-clock"></i>
-                            {{ log[5] }}
+                            {{ log.ts_utc.strftime('%Y-%m-%d %H:%M:%S') if log.ts_utc else 'Unknown' }}
                         </div>
                         
-                        {% if log[7] %}
+                        {% if log.ip_address %}
                         <div class="mt-1">
                             <small class="text-muted">
-                                <i class="bi bi-router"></i> {{ log[7] }}
+                                <i class="bi bi-router"></i> {{ log.ip_address }}
                             </small>
                         </div>
                         {% endif %}
@@ -450,41 +449,43 @@
                     {% for log in logs %}
                     <tr>
                         <td style="white-space: nowrap;">
-                            <small>{{ log[5] }}</small>
+                            <small>{{ log.ts_utc.strftime('%Y-%m-%d %H:%M') if log.ts_utc else '-' }}</small>
                         </td>
                         <td>
-                            <strong>{{ log[2] }}</strong>
+                            <strong>{{ log.username }}</strong>
                         </td>
                         <td>
-                            {% if log[6] %}
+                            {% if log.permission_level %}
                                 <span class="badge 
-                                    {% if log[6] == 'S1' %}bg-danger
-                                    {% elif log[6] == 'L3' %}bg-warning
-                                    {% elif log[6] == 'L2' %}bg-info
-                                    {% elif log[6] == 'L1' %}bg-primary
+                                    {% if log.permission_level == 'S1' %}bg-danger
+                                    {% elif log.permission_level == 'L3' %}bg-warning
+                                    {% elif log.permission_level == 'L2' %}bg-info
+                                    {% elif log.permission_level == 'L1' %}bg-primary
                                     {% else %}bg-secondary{% endif %}">
-                                    {{ log[6] }}
+                                    {{ log.permission_level }}
                                 </span>
+                            {% else %}
+                                <span class="badge bg-secondary">User</span>
                             {% endif %}
                         </td>
                         <td>
-                            <code style="font-size: 0.8rem;">{{ log[1] }}</code>
+                            <code style="font-size: 0.8rem;">{{ log.action }}</code>
                         </td>
                         <td>
-                            <span class="badge bg-secondary">{{ log[3] }}</span>
+                            <span class="badge bg-secondary">{{ log.module or '-' }}</span>
                         </td>
                         <td>
-                            {% if log[8] %}
-                                <small>{{ log[8] }}</small>
+                            {% if log.instance_name %}
+                                <small>{{ log.instance_name }}</small>
                             {% else %}
                                 <small class="text-muted">-</small>
                             {% endif %}
                         </td>
                         <td>
-                            <small>{{ log[4][:50] if log[4] else '-' }}{% if log[4] and log[4]|length > 50 %}...{% endif %}</small>
+                            <small>{{ log.details[:50] if log.details else '-' }}{% if log.details and log.details|length > 50 %}...{% endif %}</small>
                         </td>
                         <td>
-                            <small class="text-muted">{{ log[7] if log[7] else '-' }}</small>
+                            <small class="text-muted">{{ log.ip_address or '-' }}</small>
                         </td>
                     </tr>
                     {% endfor %}
@@ -633,7 +634,7 @@ function confirmExport() {
     const params = new URLSearchParams(window.location.search);
     params.append('export', format);
     
-    window.location.href = '{{ url_for(" horizon.global_audits") }}?' + params.toString();
+    window.location.href = '{{ url_for("horizon.global_audits") }}?' + params.toString();
 }
 
 // Search in table

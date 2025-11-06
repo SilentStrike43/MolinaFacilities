@@ -1,508 +1,467 @@
 {% extends "horizon_base.html" %}
 
-{% block title %}Create Instance{% endblock %}
-{% block page_title %}Create New Instance{% endblock %}
-
-{% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_management') }}">Instances</a></li>
-        <li class="breadcrumb-item active">Create Instance</li>
-    </ol>
-</nav>
-{% endblock %}
+{% block title %}Create Instance - Horizon{% endblock %}
+{% block page_title %}Create Company Instance{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <form method="POST" id="createInstanceForm">
-            <!-- Instance Information Section -->
-            <div class="stat-card mb-4">
-                <h4 class="border-bottom pb-2 mb-3">
-                    <i class="bi bi-building"></i> Instance Information
-                </h4>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label">
-                            Instance Name <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="name" 
-                               name="name" 
-                               placeholder="e.g., Molina Healthcare"
-                               value="{{ form_data.name if form_data else '' }}"
-                               required>
-                        <small class="text-muted">Organization display name</small>
-                    </div>
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="mb-1">Create New Company Instance</h5>
+                    <p class="text-muted mb-0">Set up a new organization in the system</p>
+                </div>
+                <a href="{{ url_for('horizon.instance_management') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+            
+            <form method="POST">
+                <!-- Company Information -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-building"></i> Company Information
+                    </h6>
                     
-                    <div class="col-md-6 mb-3">
-                        <label for="subdomain" class="form-label">
-                            Custom Subdomain <span class="text-muted">(optional)</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="subdomain" 
-                                   name="subdomain" 
-                                   placeholder="molina"
-                                   pattern="[a-z0-9-]+"
-                                   value="{{ form_data.subdomain if form_data else '' }}"
-                                   onkeyup="updateSubdomainPreview()">
-                            <span class="input-group-text">.gridlineservices.com</span>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Company Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="name" class="form-control" required 
+                                placeholder="e.g., Acme Corporation">
+                            <small class="text-muted">Legal or business name</small>
                         </div>
-                        <small id="subdomainPreview" class="text-muted"></small>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="contact_email" class="form-label">
-                            Primary Contact Email <span class="text-danger">*</span>
-                        </label>
-                        <input type="email" 
-                               class="form-control" 
-                               id="contact_email" 
-                               name="contact_email" 
-                               placeholder="contact@company.com"
-                               value="{{ form_data.contact_email if form_data else '' }}"
-                               required>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Display Name
+                            </label>
+                            <input type="text" name="display_name" class="form-control" 
+                                placeholder="e.g., Acme Corp">
+                            <small class="text-muted">Shown in UI (defaults to company name)</small>
+                        </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <label for="contact_phone" class="form-label">
-                            Contact Phone
-                        </label>
-                        <input type="tel" 
-                               class="form-control" 
-                               id="contact_phone" 
-                               name="contact_phone"
-                               placeholder="+1 (555) 123-4567"
-                               value="{{ form_data.contact_phone if form_data else '' }}">
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                placeholder="Brief description of the organization"></textarea>
                     </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="address" class="form-label">Physical Address</label>
-                    <textarea class="form-control" 
-                              id="address" 
-                              name="address" 
-                              rows="2"
-                              placeholder="123 Main St, City, State ZIP">{{ form_data.address if form_data else '' }}</textarea>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="max_users" class="form-label">
-                            Maximum Users <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" 
-                               class="form-control" 
-                               id="max_users" 
-                               name="max_users" 
-                               value="{{ form_data.max_users if form_data else '100' }}" 
-                               min="5" 
-                               max="10000"
-                               required>
+                <!-- Contact Information -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-person-badge"></i> Primary Contact
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact Name</label>
+                            <input type="text" name="contact_name" class="form-control"
+                                   placeholder="Primary administrator">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact Email</label>
+                            <input type="email" name="contact_email" class="form-control"
+                                   placeholder="admin@company.com">
+                        </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <label for="storage_limit" class="form-label">
-                            Storage Limit
-                        </label>
-                        <select class="form-select" id="storage_limit" name="storage_limit">
-                            <option value="5120" {{ 'selected' if form_data and form_data.storage_limit == '5120' else '' }}>5 GB</option>
-                            <option value="10240" {{ 'selected' if (form_data and form_data.storage_limit == '10240') or not form_data else '' }}>10 GB (Default)</option>
-                            <option value="25600" {{ 'selected' if form_data and form_data.storage_limit == '25600' else '' }}>25 GB</option>
-                            <option value="51200" {{ 'selected' if form_data and form_data.storage_limit == '51200' else '' }}>50 GB</option>
+                    <div class="mb-3">
+                        <label class="form-label">Contact Phone</label>
+                        <input type="tel" name="contact_phone" class="form-control"
+                               placeholder="(555) 123-4567">
+                    </div>
+                </div>
+                
+                <!-- Resource Allocation -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-speedometer"></i> Resource Allocation
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Max Users</label>
+                            <input type="number" name="max_users" class="form-control" 
+                                   value="100" min="1" max="10000">
+                            <small class="text-muted">Maximum concurrent users</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Storage Limit (GB)</label>
+                            <input type="number" name="storage_limit_gb" class="form-control" 
+                                   value="10" min="1" max="1000">
+                            <small class="text-muted">File storage allocation</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Subscription Tier</label>
+                        <select name="subscription_tier" class="form-select">
+                            <option value="trial">Trial (30 days)</option>
+                            <option value="basic">Basic</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="premium">Premium</option>
+                            <option value="enterprise">Enterprise</option>
                         </select>
                     </div>
                 </div>
-            </div>
-            
-            <!-- L2 Administrator Account Section -->
-            <div class="stat-card mb-4">
-                <h4 class="border-bottom pb-2 mb-3">
-                    <i class="bi bi-person-badge"></i> Instance Administrator (L2) Account
-                </h4>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> 
-                    This administrator will have full control over the instance including user management and module configuration.
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="admin_username" class="form-label">
-                            Administrator Username <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="admin_username" 
-                               name="admin_username" 
-                               placeholder="admin.smith"
-                               value="{{ form_data.admin_username if form_data else '' }}"
-                               pattern="[a-zA-Z0-9._-]+"
-                               required>
-                        <small class="text-muted">Letters, numbers, dots, underscores, and hyphens only</small>
+
+                <!-- Module Access -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-grid-3x3-gap"></i> Module Access
+                    </h6>
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Select which modules this company will have access to. You can modify these later.
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <label for="admin_password" class="form-label">
-                            Administrator Password <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="password" 
-                                   class="form-control" 
-                                   id="admin_password" 
-                                   name="admin_password" 
-                                   minlength="8"
-                                   required>
-                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                                <i class="bi bi-eye" id="passwordToggle"></i>
-                            </button>
+                    <div class="row">
+                        <!-- Send/Shipping Module -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                            name="module_send" id="module_send" value="send" checked>
+                                        <label class="form-check-label" for="module_send">
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-box-seam text-primary"></i> 
+                                                Shipping Module
+                                            </h6>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Package tracking, shipment management, and logistics
+                                    </small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-check-circle text-success"></i> Core Module
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <small class="text-muted">Minimum 8 characters</small>
-                        <div class="progress mt-1" style="height: 4px;">
-                            <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
+                        
+                        <!-- Inventory Module -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                            name="module_inventory" id="module_inventory" value="inventory" checked>
+                                        <label class="form-check-label" for="module_inventory">
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-archive text-primary"></i> 
+                                                Inventory Module
+                                            </h6>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Asset management, stock control, and ledger tracking
+                                    </small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-check-circle text-success"></i> Core Module
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="admin_first_name" class="form-label">
-                            First Name <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="admin_first_name" 
-                               name="admin_first_name"
-                               value="{{ form_data.admin_first_name if form_data else '' }}"
-                               required>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label for="admin_last_name" class="form-label">
-                            Last Name <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="admin_last_name" 
-                               name="admin_last_name"
-                               value="{{ form_data.admin_last_name if form_data else '' }}"
-                               required>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="admin_email" class="form-label">
-                        Administrator Email <span class="text-danger">*</span>
-                    </label>
-                    <input type="email" 
-                           class="form-control" 
-                           id="admin_email" 
-                           name="admin_email"
-                           placeholder="admin@company.com"
-                           value="{{ form_data.admin_email if form_data else '' }}"
-                           required>
-                    <small class="text-muted">Will receive instance notifications and password reset emails</small>
-                </div>
-            </div>
-            
-            <!-- Module Access Section -->
-            <div class="stat-card mb-4">
-                <h4 class="border-bottom pb-2 mb-3">
-                    <i class="bi bi-grid-3x3-gap"></i> Module Access
-                </h4>
-                
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input module-check" 
-                                           type="checkbox" 
-                                           id="module_ledger" 
-                                           name="features" 
-                                           value="ledger"
-                                           {{ 'checked' if not form_data or (form_data and 'ledger' in form_data.getlist('features')) else '' }}>
-                                    <label class="form-check-label" for="module_ledger">
-                                        <strong><i class="bi bi-mailbox text-primary"></i> Ledger</strong>
-                                        <br><small class="text-muted">Mail tracking & logging</small>
-                                    </label>
+                        
+                        <!-- Fulfillment Module -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                            name="module_fulfillment" id="module_fulfillment" value="fulfillment" checked>
+                                        <label class="form-check-label" for="module_fulfillment">
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-clipboard-check text-primary"></i> 
+                                                Fulfillment Module
+                                            </h6>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Service requests, order processing, and task management
+                                    </small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-check-circle text-success"></i> Core Module
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input module-check" 
-                                           type="checkbox" 
-                                           id="module_flow" 
-                                           name="features" 
-                                           value="flow"
-                                           {{ 'checked' if not form_data or (form_data and 'flow' in form_data.getlist('features')) else '' }}>
-                                    <label class="form-check-label" for="module_flow">
-                                        <strong><i class="bi bi-box-seam text-info"></i> Flow</strong>
-                                        <br><small class="text-muted">Inventory management</small>
-                                    </label>
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> Users in this instance will only see modules that are enabled here. 
+                        Admin users (L1+) within the instance can then grant user-level permissions for these modules.
+                    </div>
+                </div>
+
+                <!-- Instance Administrator (L2) -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-person-badge"></i> Instance Administrator (L2)
+                    </h6>
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Assign or create an <strong>L2 Instance Administrator</strong> who will manage this company. 
+                        L2 users can manage multiple instances and create L1/user accounts.
+                    </div>
+                    
+                    <!-- Option to create new L2 or assign existing -->
+                    <div class="mb-3">
+                        <label class="form-label">Administrator Setup</label>
+                        <select class="form-select" id="l2_setup_option" name="l2_setup_option">
+                            <option value="create_new">Create New L2 Administrator</option>
+                            <option value="assign_existing">Assign Existing L2 User</option>
+                            <option value="skip">Skip (Assign Later)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Create New L2 User -->
+                    <div id="create_l2_section" class="card">
+                        <div class="card-body">
+                            <h6 class="mb-3">Create New L2 Administrator</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" name="l2_username" class="form-control" 
+                                        placeholder="e.g., john.doe">
+                                    <small class="text-muted">Lowercase, no spaces</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Temporary Password <span class="text-danger">*</span></label>
+                                    <input type="password" name="l2_password" class="form-control" 
+                                        placeholder="Temporary password">
+                                    <small class="text-muted">User must change on first login</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="l2_first_name" class="form-control">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="l2_last_name" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="l2_email" class="form-control">
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" name="l2_phone" class="form-control">
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input module-check" 
-                                           type="checkbox" 
-                                           id="module_fulfillment" 
-                                           name="features" 
-                                           value="fulfillment"
-                                           {{ 'checked' if not form_data or (form_data and 'fulfillment' in form_data.getlist('features')) else '' }}>
-                                    <label class="form-check-label" for="module_fulfillment">
-                                        <strong><i class="bi bi-clipboard-check text-success"></i> Fulfillment</strong>
-                                        <br><small class="text-muted">Service requests</small>
-                                    </label>
-                                </div>
+                    <!-- Assign Existing L2 User -->
+                    <div id="assign_l2_section" class="card" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="mb-3">Assign Existing L2 Administrator(s)</h6>
+                            
+                            <p class="text-muted mb-3">Select one or more existing L2 users to manage this instance:</p>
+                            
+                            <div id="l2_user_list">
+                                {% if existing_l2_users %}
+                                    {% for l2_user in existing_l2_users %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" 
+                                            name="assign_l2_users[]" 
+                                            value="{{ l2_user.id }}"
+                                            id="l2_{{ l2_user.id }}">
+                                        <label class="form-check-label" for="l2_{{ l2_user.id }}">
+                                            <strong>{{ l2_user.username }}</strong>
+                                            {% if l2_user.first_name or l2_user.last_name %}
+                                                - {{ l2_user.first_name }} {{ l2_user.last_name }}
+                                            {% endif %}
+                                            {% if l2_user.email %}
+                                                <small class="text-muted">({{ l2_user.email }})</small>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        No existing L2 users found. Create a new one or skip this step.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skip Section -->
+                    <div id="skip_l2_section" class="card" style="display: none;">
+                        <div class="card-body">
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Note:</strong> You can assign L2 administrators later from the instance detail page.
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Open Ended Features Section -->
-            <div class="stat-card mb-4">
-                <h4 class="border-bottom pb-2 mb-3">
-                    <i class="bi bi-toggles"></i> Advanced Features
-                </h4>
+
+                <script>
+                    // Toggle L2 setup sections
+                    document.getElementById('l2_setup_option').addEventListener('change', function() {
+                        const createSection = document.getElementById('create_l2_section');
+                        const assignSection = document.getElementById('assign_l2_section');
+                        const skipSection = document.getElementById('skip_l2_section');
+                        
+                        createSection.style.display = 'none';
+                        assignSection.style.display = 'none';
+                        skipSection.style.display = 'none';
+                        
+                        if (this.value === 'create_new') {
+                            createSection.style.display = 'block';
+                        } else if (this.value === 'assign_existing') {
+                            assignSection.style.display = 'block';
+                        } else if (this.value === 'skip') {
+                            skipSection.style.display = 'block';
+                        }
+                    });
+                </script>
                 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="sso" name="features" value="sso">
-                            <label class="form-check-label" for="sso">
-                                <strong>SSO Login</strong> - Single Sign-On integration
-                            </label>
-                        </div>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="ip_whitelist" name="features" value="ip_whitelist">
-                            <label class="form-check-label" for="ip_whitelist">
-                                <strong>IP Whitelisting</strong> - Restrict access by IP
-                            </label>
-                        </div>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="api_access" name="features" value="api_access">
-                            <label class="form-check-label" for="api_access">
-                                <strong>API Access</strong> - REST API endpoints
-                            </label>
-                        </div>
+                <!-- Future Features -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-globe"></i> Domain Settings 
+                        <span class="badge bg-warning text-dark">Coming Soon</span>
+                    </h6>
+                    
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        These features will be activated when migrating to cloud infrastructure.
                     </div>
                     
-                    <div class="col-md-6">
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="custom_reports" name="features" value="custom_reports">
-                            <label class="form-check-label" for="custom_reports">
-                                <strong>Custom Reports</strong> - Advanced analytics
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Subdomain <small class="text-muted">(Reserved for future)</small>
                             </label>
+                            <div class="input-group">
+                                <input type="text" name="subdomain" class="form-control" 
+                                       placeholder="companyname" pattern="[a-z0-9-]+">
+                                <span class="input-group-text">.gridlineservices.com</span>
+                            </div>
+                            <small class="text-muted">Will be: https://companyname.gridlineservices.com</small>
                         </div>
                         
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="mobile_app" name="features" value="mobile_app">
-                            <label class="form-check-label" for="mobile_app">
-                                <strong>Mobile App</strong> - iOS/Android access
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                Custom Domain <small class="text-muted">(Future feature)</small>
                             </label>
-                        </div>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="force_2fa" name="features" value="force_2fa">
-                            <label class="form-check-label" for="force_2fa">
-                                <strong>Force 2FA</strong> - Mandatory two-factor auth
-                            </label>
+                            <input type="text" name="custom_domain" class="form-control" 
+                                   placeholder="company.com">
+                            <small class="text-muted">Optional: Use your own domain</small>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Custom Themes Section (Optional) -->
-            <div class="stat-card mb-4">
-                <h4 class="border-bottom pb-2 mb-3">
-                    <i class="bi bi-palette"></i> Custom Theme <span class="text-muted small">(Optional)</span>
-                </h4>
                 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="primary_color" class="form-label">Primary Color</label>
-                        <input type="color" 
-                               class="form-control form-control-color" 
-                               id="primary_color" 
-                               name="primary_color" 
-                               value="{{ form_data.primary_color if form_data else '#0d6efd' }}">
+                <!-- Security Settings -->
+                <div class="mb-4 pb-4 border-bottom">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-shield-check"></i> Security Settings 
+                        <span class="badge bg-warning text-dark">Future Features</span>
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Rate Limit (requests/hour) <small class="text-muted">(Not enforced yet)</small>
+                        </label>
+                        <input type="number" name="rate_limit_per_hour" class="form-control" 
+                               value="1000" min="100" max="100000">
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <label for="secondary_color" class="form-label">Secondary Color</label>
-                        <input type="color" 
-                               class="form-control form-control-color" 
-                               id="secondary_color" 
-                               name="secondary_color" 
-                               value="{{ form_data.secondary_color if form_data else '#6c757d' }}">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Allowed IP Addresses <small class="text-muted">(Future feature)</small>
+                        </label>
+                        <textarea name="allowed_ips" class="form-control" rows="2"
+                                  placeholder="192.168.1.0/24, 10.0.0.0/8 (comma-separated)"></textarea>
+                        <small class="text-muted">Leave empty to allow all IPs</small>
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <label for="logo_url" class="form-label">Logo URL</label>
-                        <input type="url" 
-                               class="form-control" 
-                               id="logo_url" 
-                               name="logo_url" 
-                               placeholder="https://example.com/logo.png"
-                               value="{{ form_data.logo_url if form_data else '' }}">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="require_2fa" id="require_2fa">
+                        <label class="form-check-label" for="require_2fa">
+                            <strong>Require Two-Factor Authentication</strong>
+                            <span class="badge bg-warning text-dark ms-2">Future</span>
+                        </label>
+                        <div><small class="text-muted">Force all users to enable 2FA</small></div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Summary and Actions -->
-            <div class="stat-card">
-                <div class="alert alert-warning">
-                    <h5><i class="bi bi-exclamation-triangle"></i> Review Before Creating</h5>
-                    <ul class="mb-0">
-                        <li>Instance will be created with <span id="summaryUsers">100</span> maximum users</li>
-                        <li>Administrator account "<span id="summaryAdmin">-</span>" will have L2 permissions</li>
-                        <li>Modules enabled: <span id="summaryModules">All</span></li>
-                        <li>Storage limit: <span id="summaryStorage">10 GB</span></li>
-                    </ul>
+                
+                <!-- Instance Status -->
+                <div class="mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="bi bi-toggle-on"></i> Instance Status
+                    </h6>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_active" 
+                               id="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            <strong>Active</strong>
+                        </label>
+                        <div><small class="text-muted">Users can only access active instances</small></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Internal Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"
+                                  placeholder="Internal notes (not visible to company users)"></textarea>
+                    </div>
                 </div>
                 
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for(' horizon.instance_management') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Cancel
+                <!-- Next Steps Info -->
+                <div class="alert alert-success mb-4">
+                    <strong><i class="bi bi-list-check me-2"></i>After Creation:</strong>
+                    <ol class="mb-0 mt-2 ps-3">
+                        <li>Create first admin user for this company</li>
+                        <li>Configure custom branding (logo, colors)</li>
+                        <li>Set up module permissions</li>
+                        <li>Import existing data (if applicable)</li>
+                        <li>Test access and functionality</li>
+                    </ol>
+                </div>
+                
+                <!-- Actions -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{{ url_for('horizon.instance_management') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
                     </a>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-plus-circle"></i> Create Instance & Administrator
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-plus-circle"></i> Create Company Instance
                     </button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Update subdomain preview
-function updateSubdomainPreview() {
-    const subdomain = document.getElementById('subdomain').value.toLowerCase();
-    const preview = document.getElementById('subdomainPreview');
-    
-    if (subdomain) {
-        if (/^[a-z0-9-]+$/.test(subdomain)) {
-            preview.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> https://${subdomain}.gridlineservices.com</span>`;
-        } else {
-            preview.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Invalid format</span>`;
-        }
-    } else {
-        preview.innerHTML = '<span class="text-muted">Default URL will be used</span>';
-    }
-}
-
-// Password visibility toggle
-function togglePassword() {
-    const input = document.getElementById('admin_password');
-    const icon = document.getElementById('passwordToggle');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'bi bi-eye-slash';
-    } else {
-        input.type = 'password';
-        icon.className = 'bi bi-eye';
-    }
-}
-
-// Password strength checker
-document.getElementById('admin_password').addEventListener('input', function(e) {
-    const password = e.target.value;
-    const strengthBar = document.getElementById('passwordStrength');
-    let strength = 0;
-    
-    if (password.length >= 8) strength += 25;
-    if (password.length >= 12) strength += 25;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 12.5;
-    if (/[^a-zA-Z0-9]/.test(password)) strength += 12.5;
-    
-    strengthBar.style.width = strength + '%';
-    
-    if (strength < 50) {
-        strengthBar.className = 'progress-bar bg-danger';
-    } else if (strength < 75) {
-        strengthBar.className = 'progress-bar bg-warning';
-    } else {
-        strengthBar.className = 'progress-bar bg-success';
-    }
-});
-
-// Update summaries
-function updateSummaries() {
-    // Users
-    document.getElementById('summaryUsers').textContent = document.getElementById('max_users').value;
-    
-    // Admin username
-    const adminUsername = document.getElementById('admin_username').value;
-    document.getElementById('summaryAdmin').textContent = adminUsername || '(not set)';
-    
-    // Modules
-    const modules = [];
-    document.querySelectorAll('.module-check:checked').forEach(cb => {
-        modules.push(cb.parentElement.querySelector('strong').textContent);
-    });
-    document.getElementById('summaryModules').textContent = modules.length > 0 ? modules.join(', ') : 'None';
-    
-    // Storage
-    const storageSelect = document.getElementById('storage_limit');
-    document.getElementById('summaryStorage').textContent = storageSelect.options[storageSelect.selectedIndex].text;
-}
-
-// Add event listeners
-document.getElementById('max_users').addEventListener('input', updateSummaries);
-document.getElementById('admin_username').addEventListener('input', updateSummaries);
-document.getElementById('storage_limit').addEventListener('change', updateSummaries);
-document.querySelectorAll('.module-check').forEach(cb => {
-    cb.addEventListener('change', updateSummaries);
-});
-
-// Form validation
-document.getElementById('createInstanceForm').addEventListener('submit', function(e) {
-    // Check at least one module is selected
-    const modulesChecked = document.querySelectorAll('.module-check:checked').length;
-    
-    if (modulesChecked === 0) {
-        e.preventDefault();
-        alert('Please select at least one module for this instance.');
-        return false;
-    }
-    
-    // Confirm password is strong enough
-    const password = document.getElementById('admin_password').value;
-    if (password.length < 8) {
-        e.preventDefault();
-        alert('Administrator password must be at least 8 characters.');
-        return false;
-    }
-});
-
-// Initialize
-updateSubdomainPreview();
-updateSummaries();
-</script>
 {% endblock %}

@@ -190,8 +190,7 @@ def get_instance_stats(instance_id: int) -> Dict:
             FROM users u
             LEFT JOIN audit_logs al ON u.id = al.user_id
             WHERE u.instance_id = %s
-            AND (u.deleted_at IS NULL OR u.deleted_at = '')
-            AND al.ts_utc >= CURRENT_TIMESTAMP - INTERVAL '30 days'
+                AND u.deleted_at IS NULL
             GROUP BY u.username
             ORDER BY action_count DESC
             LIMIT 5

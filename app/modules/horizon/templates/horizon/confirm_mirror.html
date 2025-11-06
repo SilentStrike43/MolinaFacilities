@@ -7,7 +7,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_support') }}">Support</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.instance_support') }}">Support</a></li>
         <li class="breadcrumb-item active">Mirror User</li>
     </ol>
 </nav>
@@ -62,7 +62,7 @@
                 </div>
                 
                 <div class="d-flex justify-content-between">
-                    <a href="{{ url_for(' horizon.instance_support') }}" 
+                    <a href="{{ url_for('horizon.instance_support') }}" 
                        class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left"></i> Cancel
                     </a>

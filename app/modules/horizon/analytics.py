@@ -1,233 +1,371 @@
+# app/modules/horizon/analytics.py
 """
-Global Analytics Module - PostgreSQL Edition
-Cross-instance analytics and insights
+Horizon Analytics Engine
+Provides cross-instance analytics and reporting
 """
 
-import json
+import logging
 from datetime import datetime, timedelta
-from typing import Dict, List
 from app.core.database import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 
 class GlobalAnalytics:
-    """Analytics engine for global insights."""
+    """Analytics engine for Horizon platform."""
     
-    def get_user_growth(self, date_from: str, date_to: str) -> Dict:
-        """Get user growth metrics over time."""
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            
-            # Daily new users
-            cursor.execute("""
-                SELECT 
-                    DATE(created_at) as date,
-                    COUNT(*) as new_users,
-                    COUNT(DISTINCT instance_id) as instances_affected
-                FROM users
-                WHERE created_at BETWEEN %s AND %s
-                GROUP BY DATE(created_at)
-                ORDER BY date
-            """, (date_from, date_to))
-            
-            daily_growth = cursor.fetchall()
-            
-            # Total growth
-            cursor.execute("""
-                SELECT 
-                    COUNT(*) as total_new,
-                    COUNT(DISTINCT instance_id) as instances
-                FROM users
-                WHERE created_at BETWEEN %s AND %s
-            """, (date_from, date_to))
-            
-            totals = cursor.fetchone()
-            
-            cursor.close()
-        
-        return {
-            'daily': [
-                {
-                    'date': str(row[0]),
-                    'new_users': row[1],
-                    'instances': row[2]
-                }
-                for row in daily_growth
-            ],
-            'total_new_users': totals[0],
-            'instances_with_growth': totals[1]
-        }
+    def get_user_growth(self, date_from, date_to):
+        """Get user growth over time."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        DATE(created_at) as date,
+                        COUNT(*) as count
+                    FROM users
+                    WHERE created_at >= %s AND created_at <= %s
+                    GROUP BY DATE(created_at)
+                    ORDER BY date
+                """, (date_from, date_to))
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'date': str(row['date']),
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting user growth: {e}")
+            return []
     
-    def get_activity_by_module(self, date_from: str, date_to: str) -> List[Dict]:
+    def get_activity_by_module(self, date_from, date_to):
         """Get activity breakdown by module."""
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT 
-                    module,
-                    COUNT(*) as actions,
-                    COUNT(DISTINCT user_id) as unique_users,
-                    COUNT(DISTINCT DATE(ts_utc)) as active_days
-                FROM audit_logs
-                WHERE ts_utc BETWEEN %s AND %s
-                GROUP BY module
-                ORDER BY actions DESC
-            """, (date_from, date_to))
-            
-            results = cursor.fetchall()
-            cursor.close()
-        
-        return [
-            {
-                'module': row[0],
-                'total_actions': row[1],
-                'unique_users': row[2],
-                'active_days': row[3],
-                'avg_per_day': round(row[1] / row[3] if row[3] > 0 else 0, 2)
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        module,
+                        COUNT(*) as count
+                    FROM audit_logs
+                    WHERE DATE(ts_utc) >= %s AND DATE(ts_utc) <= %s
+                    GROUP BY module
+                    ORDER BY count DESC
+                """, (date_from, date_to))
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'module': row['module'],
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting activity by module: {e}")
+            return []
+    
+    def get_activity_timeline(self, date_from, date_to):
+        """Get activity timeline."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        DATE(ts_utc) as date,
+                        COUNT(*) as count
+                    FROM audit_logs
+                    WHERE DATE(ts_utc) >= %s AND DATE(ts_utc) <= %s
+                    GROUP BY DATE(ts_utc)
+                    ORDER BY date
+                """, (date_from, date_to))
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'date': str(row['date']),
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting activity timeline: {e}")
+            return []
+    
+    def get_top_actions(self, limit=10):
+        """Get most common actions."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        action,
+                        COUNT(*) as count
+                    FROM audit_logs
+                    WHERE ts_utc >= NOW() - INTERVAL '30 days'
+                    GROUP BY action
+                    ORDER BY count DESC
+                    LIMIT %s
+                """, (limit,))
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'action': row['action'],
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting top actions: {e}")
+            return []
+    
+    def get_users_by_permission_level(self):
+        """Get user distribution by permission level."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT 
+                        COALESCE(permission_level, 'Module User') as level,
+                        COUNT(*) as count
+                    FROM users
+                    WHERE deleted_at IS NULL
+                    GROUP BY permission_level
+                    ORDER BY 
+                        CASE permission_level
+                            WHEN 'S1' THEN 1
+                            WHEN 'L3' THEN 2
+                            WHEN 'L2' THEN 3
+                            WHEN 'L1' THEN 4
+                            ELSE 5
+                        END
+                """)
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'level': row['level'],
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting users by permission: {e}")
+            return []
+    
+    def get_instance_activity(self, instance_id, days=7):
+        """Get activity for a specific instance."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                
+                # Get date range
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=days)
+                
+                cursor.execute("""
+                    SELECT 
+                        DATE(al.ts_utc) as date,
+                        COUNT(*) as count
+                    FROM audit_logs al
+                    JOIN users u ON al.user_id = u.id
+                    WHERE u.instance_id = %s
+                    AND DATE(al.ts_utc) >= %s
+                    AND DATE(al.ts_utc) <= %s
+                    GROUP BY DATE(al.ts_utc)
+                    ORDER BY date
+                """, (instance_id, start_date, end_date))
+                
+                rows = cursor.fetchall()
+                cursor.close()
+                
+                return [{
+                    'date': str(row['date']),
+                    'count': row['count']
+                } for row in rows]
+        except Exception as e:
+            logger.error(f"Error getting instance activity: {e}")
+            return []
+    
+    def get_module_usage_stats(self):
+        """Get module usage statistics."""
+        try:
+            stats = {
+                'send': self._get_module_stats('send'),
+                'inventory': self._get_module_stats('inventory'),
+                'fulfillment': self._get_module_stats('fulfillment')
             }
-            for row in results
-        ]
-    
-    def get_instance_comparison(self) -> List[Dict]:
-        """Compare all instances by key metrics."""
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT 
-                    i.id,
-                    i.name,
-                    i.is_active,
-                    COUNT(DISTINCT u.id) as user_count,
-                    COUNT(DISTINCT CASE 
-                        WHEN u.last_login_at >= CURRENT_TIMESTAMP - INTERVAL '30 days' 
-                        THEN u.id 
-                    END) as active_users,
-                    COUNT(DISTINCT al.id) as total_actions,
-                    COALESCE(i.max_users, 100) as max_users
-                FROM public.instances i
-                LEFT JOIN users u ON i.id = u.instance_id
-                LEFT JOIN audit_logs al ON u.id = al.user_id 
-                    AND al.ts_utc >= CURRENT_TIMESTAMP - INTERVAL '30 days'
-                GROUP BY i.id, i.name, i.is_active, i.max_users
-                ORDER BY user_count DESC
-            """)
-            
-            results = cursor.fetchall()
-            cursor.close()
-        
-        return [
-            {
-                'instance_id': row[0],
-                'name': row[1],
-                'is_active': row[2],
-                'user_count': row[3],
-                'active_users': row[4],
-                'total_actions_30d': row[5],
-                'max_users': row[6],
-                'utilization_pct': round((row[3] / row[6] * 100) if row[6] > 0 else 0, 1),
-                'activity_rate': round(row[5] / row[4] if row[4] > 0 else 0, 2)
+            return stats
+        except Exception as e:
+            logger.error(f"Error getting module usage stats: {e}")
+            return {
+                'send': {'total': 0, 'last_30d': 0},
+                'inventory': {'total': 0, 'last_30d': 0},
+                'fulfillment': {'total': 0, 'last_30d': 0}
             }
-            for row in results
-        ]
     
-    def get_peak_usage_times(self, date_from: str, date_to: str) -> Dict:
-        """Identify peak usage patterns."""
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            
-            # Hourly distribution
-            cursor.execute("""
-                SELECT 
-                    EXTRACT(HOUR FROM ts_utc) as hour,
-                    COUNT(*) as actions,
-                    COUNT(DISTINCT user_id) as unique_users
-                FROM audit_logs
-                WHERE ts_utc BETWEEN %s AND %s
-                GROUP BY EXTRACT(HOUR FROM ts_utc)
-                ORDER BY hour
-            """, (date_from, date_to))
-            
-            hourly = cursor.fetchall()
-            
-            # Day of week distribution
-            cursor.execute("""
-                SELECT 
-                    TO_CHAR(ts_utc, 'Day') as day_name,
-                    EXTRACT(DOW FROM ts_utc) as day_num,
-                    COUNT(*) as actions,
-                    COUNT(DISTINCT user_id) as unique_users
-                FROM audit_logs
-                WHERE ts_utc BETWEEN %s AND %s
-                GROUP BY TO_CHAR(ts_utc, 'Day'), EXTRACT(DOW FROM ts_utc)
-                ORDER BY day_num
-            """, (date_from, date_to))
-            
-            daily = cursor.fetchall()
-            
-            cursor.close()
-        
-        return {
-            'hourly': [
-                {
-                    'hour': int(row[0]),
-                    'actions': row[1],
-                    'users': row[2]
+    def _get_module_stats(self, module):
+        """Get stats for a specific module."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                
+                # Total actions
+                cursor.execute("""
+                    SELECT COUNT(*) as total
+                    FROM audit_logs
+                    WHERE module = %s
+                """, (module,))
+                total = cursor.fetchone()['total']
+                
+                # Last 30 days
+                cursor.execute("""
+                    SELECT COUNT(*) as count
+                    FROM audit_logs
+                    WHERE module = %s
+                    AND ts_utc >= NOW() - INTERVAL '30 days'
+                """, (module,))
+                last_30d = cursor.fetchone()['count']
+                
+                cursor.close()
+                
+                return {
+                    'total': total,
+                    'last_30d': last_30d
                 }
-                for row in hourly
-            ],
-            'daily': [
-                {
-                    'day': row[0].strip(),
-                    'actions': row[2],
-                    'users': row[3]
-                }
-                for row in daily
-            ]
-        }
+        except Exception as e:
+            logger.error(f"Error getting module stats for {module}: {e}")
+            return {'total': 0, 'last_30d': 0}
     
-    def get_module_adoption(self) -> Dict:
-        """Get module adoption rates across instances."""
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            
-            # Get total instances
-            cursor.execute("SELECT COUNT(*) FROM public.instances WHERE is_active = true")
-            total_instances = cursor.fetchone()[0]
-            
-            # Module usage by instance
-            cursor.execute("""
-                SELECT 
-                    'Ledger' as module,
-                    COUNT(DISTINCT instance_id) as instances_using,
-                    COUNT(*) as total_records
-                FROM package_manifest
-                UNION ALL
-                SELECT 
-                    'Flow' as module,
-                    COUNT(DISTINCT instance_id) as instances_using,
-                    COUNT(*) as total_records
-                FROM assets
-                UNION ALL
-                SELECT 
-                    'Fulfillment' as module,
-                    COUNT(DISTINCT instance_id) as instances_using,
-                    COUNT(*) as total_records
-                FROM service_requests
-            """)
-            
-            results = cursor.fetchall()
-            cursor.close()
-        
-        return {
-            'total_instances': total_instances,
-            'modules': [
-                {
-                    'name': row[0],
-                    'instances_using': row[1],
-                    'adoption_rate': round((row[1] / total_instances * 100) if total_instances > 0 else 0, 1),
-                    'total_records': row[2]
+    def get_error_rate(self, days=7):
+        """Calculate error rate from audit logs."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=days)
+                
+                # Total actions
+                cursor.execute("""
+                    SELECT COUNT(*) as total
+                    FROM audit_logs
+                    WHERE DATE(ts_utc) >= %s
+                    AND DATE(ts_utc) <= %s
+                """, (start_date, end_date))
+                total = cursor.fetchone()['total']
+                
+                # Error actions (actions containing 'error', 'fail', etc.)
+                cursor.execute("""
+                    SELECT COUNT(*) as errors
+                    FROM audit_logs
+                    WHERE DATE(ts_utc) >= %s
+                    AND DATE(ts_utc) <= %s
+                    AND (action ILIKE '%error%' OR action ILIKE '%fail%' OR action ILIKE '%exception%')
+                """, (start_date, end_date))
+                errors = cursor.fetchone()['errors']
+                
+                cursor.close()
+                
+                error_rate = (errors / total * 100) if total > 0 else 0
+                
+                return {
+                    'total_actions': total,
+                    'errors': errors,
+                    'error_rate': round(error_rate, 2)
                 }
-                for row in results
-            ]
-        }
+        except Exception as e:
+            logger.error(f"Error calculating error rate: {e}")
+            return {
+                'total_actions': 0,
+                'errors': 0,
+                'error_rate': 0
+            }
+    
+    def get_active_users_count(self, days=7):
+        """Get count of active users in the last N days."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=days)
+                
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT user_id) as count
+                    FROM audit_logs
+                    WHERE DATE(ts_utc) >= %s
+                    AND DATE(ts_utc) <= %s
+                """, (start_date, end_date))
+                
+                result = cursor.fetchone()
+                cursor.close()
+                
+                return result['count'] if result else 0
+        except Exception as e:
+            logger.error(f"Error getting active users count: {e}")
+            return 0
+    
+    def get_system_health_metrics(self):
+        """Get system health metrics."""
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                
+                # Database size
+                cursor.execute("""
+                    SELECT pg_database_size(current_database()) as size_bytes
+                """)
+                db_size = cursor.fetchone()['size_bytes']
+                
+                # Table counts
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as table_count
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                """)
+                table_count = cursor.fetchone()['table_count']
+                
+                # Recent errors
+                cursor.execute("""
+                    SELECT COUNT(*) as error_count
+                    FROM audit_logs
+                    WHERE ts_utc >= NOW() - INTERVAL '24 hours'
+                    AND (action ILIKE '%error%' OR action ILIKE '%fail%')
+                """)
+                errors_24h = cursor.fetchone()['error_count']
+                
+                cursor.close()
+                
+                # Calculate health score
+                health_score = 100
+                if errors_24h > 100:
+                    health_score -= 20
+                elif errors_24h > 50:
+                    health_score -= 10
+                elif errors_24h > 10:
+                    health_score -= 5
+                
+                if db_size > 10 * 1024 * 1024 * 1024:  # 10GB
+                    health_score -= 10
+                
+                return {
+                    'health_score': max(health_score, 0),
+                    'database_size_mb': round(db_size / (1024 * 1024), 2),
+                    'table_count': table_count,
+                    'errors_24h': errors_24h,
+                    'status': 'healthy' if health_score >= 80 else 'warning' if health_score >= 60 else 'critical'
+                }
+        except Exception as e:
+            logger.error(f"Error getting system health metrics: {e}")
+            return {
+                'health_score': 0,
+                'database_size_mb': 0,
+                'table_count': 0,
+                'errors_24h': 0,
+                'status': 'unknown'
+            }
+
+
+# Create singleton instance
+analytics = GlobalAnalytics()

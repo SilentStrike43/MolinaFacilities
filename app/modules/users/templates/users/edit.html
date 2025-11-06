@@ -195,6 +195,43 @@
             </div>
             {% endif %}
 
+            <!-- L2 Instance Access -->
+            {% if user.permission_level == 'L2' %}
+            <div class="mb-4 pb-4 border-bottom">
+                <h6 class="text-primary mb-3">
+                    <i class="bi bi-building"></i> Instance Access (L2 Multi-Instance)
+                </h6>
+                
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    As an <strong>L2 (Instance Administrator)</strong>, this user can access multiple instances.
+                    Select all instances they should manage.
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-3"><strong>Select Instances:</strong></p>
+                        
+                        {% for instance in all_instances %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" 
+                                name="instance_access[]" 
+                                value="{{ instance.id }}"
+                                id="inst_{{ instance.id }}"
+                                {% if instance.id in user_instance_ids %}checked{% endif %}>
+                            <label class="form-check-label" for="inst_{{ instance.id }}">
+                                <strong>{{ instance.name }}</strong>
+                                {% if instance.display_name and instance.display_name != instance.name %}
+                                    <small class="text-muted">({{ instance.display_name }})</small>
+                                {% endif %}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
                         <!-- Location Assignment -->
             <div class="form-section" style="margin-top: 2rem;">
                 <h3 class="form-section-title">

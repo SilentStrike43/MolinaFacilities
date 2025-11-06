@@ -1753,3 +1753,82 @@ LINE 7:                     OUTPUT INSERTED.id
 LINE 3:                 schemaname || '.' || tablename AS table_name...
                                              ^
 
+2025-11-06 10:42:20 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\views.py", line 975, in global_audits
+    modules = [row[0] for row in cursor.fetchall()]
+               ~~~^^^
+KeyError: 0
+2025-11-06 10:42:45 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "tablename" does not exist
+LINE 3:                 schemaname || '.' || tablename AS table_name...
+                                             ^
+
+2025-11-06 11:16:23 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "contact_email" of relation "instances" does not exist
+LINE 3:                     name, subdomain, contact_email, contact_...
+                                             ^
+
+2025-11-06 11:44:33 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "contact_phone" of relation "instances" does not exist
+LINE 3: ...                  name, subdomain, contact_email, contact_ph...
+                                                             ^
+
+2025-11-06 12:17:22 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "display_name" of relation "instances" does not exist
+LINE 3:                         name, display_name, description,
+                                      ^
+
+2025-11-06 12:19:37 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "description" of relation "instances" does not exist
+LINE 3:                         name, display_name, description,
+                                                    ^
+
+2025-11-06 12:20:48 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "description" of relation "instances" does not exist
+LINE 3:                         name, display_name, description,
+                                                    ^
+
+2025-11-06 12:23:25 | [33mWARNING[0m | app.core.database | get_db_connection:274 | Integrity error in core: null value in column "subdomain" of relation "instances" violates not-null constraint
+DETAIL:  Failing row contains (1, Molina Healthcare of New York, null, t, null, null, 2025-11-06 12:23:25.997025, 2025-11-06 12:23:25.997025, , , 100, 10, null, 1000, null, , {send,inventory,fulfillment}, Molina-NY, , enterprise, null, f, f, null, null, ).
+
+2025-11-06 12:26:05 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "force_password_reset" of relation "users" does not exist
+LINE 5:                             instance_id, force_password_rese...
+                                                 ^
+
+2025-11-06 12:28:27 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in core: invalid input syntax for type timestamp: ""
+LINE 6:             AND (u.deleted_at IS NULL OR u.deleted_at = '')
+                                                                ^
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\horizon\models.py", line 188, in get_instance_stats
+    cursor.execute("""
+    ~~~~~~~~~~~~~~^^^^
+        SELECT u.username, COUNT(al.id) as action_count
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        LIMIT 5
+        ^^^^^^^
+    """, (instance_id,))
+    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\GridlineService\venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.InvalidDatetimeFormat: invalid input syntax for type timestamp: ""
+LINE 6:             AND (u.deleted_at IS NULL OR u.deleted_at = '')
+                                                                ^
+
+2025-11-06 12:31:26 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "CORRECT"
+LINE 6:                 AND u.deleted_at IS NULL  # ✅ CORRECT
+                                                       ^
+
+2025-11-06 12:32:02 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: column "location" does not exist
+LINE 4: ...             permission_level, module_permissions, location,
+                                                              ^
+HINT:  Perhaps you meant to reference the column "users.position".
+
+2025-11-06 14:16:01 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "SELECTaction"
+LINE 2:             SELECTaction, module, details, ts_utc
+                    ^
+
+2025-11-06 14:27:43 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: cannot cast type text[] to jsonb
+LINE 4: ...     COALESCE(jsonb_array_length(i.enabled_modules::jsonb), ...
+                                                             ^
+

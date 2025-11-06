@@ -7,7 +7,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for(' horizon.instance_management') }}">Instances</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.instance_management') }}">Instances</a></li>
         <li class="breadcrumb-item active">{{ instance.name }}</li>
     </ol>
 </nav>
@@ -19,6 +19,9 @@
     <div class="row align-items-center">
         <div class="col-md-8">
             <h2 class="mb-2">{{ instance.name }}</h2>
+            {% if instance.display_name and instance.display_name != instance.name %}
+                <p class="text-muted mb-2">{{ instance.display_name }}</p>
+            {% endif %}
             
             <div class="mb-2">
                 {% if instance.is_active %}
@@ -29,51 +32,59 @@
                     <span class="badge bg-danger">
                         <i class="bi bi-x-circle"></i> Inactive
                     </span>
-                    {% if instance.deactivation_reason %}
-                    <small class="text-muted">- {{ instance.deactivation_reason }}</small>
-                    {% endif %}
                 {% endif %}
                 
                 {% if instance.subdomain %}
                 <span class="badge bg-info">
-                    <i class="bi bi-link-45deg"></i> {{ instance.subdomain }}.gridline.services
+                    <i class="bi bi-link-45deg"></i> {{ instance.subdomain }}.gridlineservices.com
+                </span>
+                {% endif %}
+                
+                {% if instance.subscription_tier %}
+                <span class="badge bg-primary">
+                    {{ instance.subscription_tier|upper }}
                 </span>
                 {% endif %}
             </div>
             
             <div class="row mt-3">
                 <div class="col-md-6">
+                    {% if instance.contact_email %}
                     <p class="mb-1">
                         <i class="bi bi-envelope"></i> 
-                        <strong>Contact:</strong> {{ instance.contact_email or 'Not set' }}
+                        <strong>Contact:</strong> {{ instance.contact_email }}
                     </p>
+                    {% endif %}
+                    {% if instance.contact_phone %}
                     <p class="mb-1">
                         <i class="bi bi-telephone"></i> 
-                        <strong>Phone:</strong> {{ instance.contact_phone or 'Not set' }}
+                        <strong>Phone:</strong> {{ instance.contact_phone }}
                     </p>
+                    {% endif %}
                 </div>
                 <div class="col-md-6">
                     <p class="mb-1">
                         <i class="bi bi-calendar"></i> 
-                        <strong>Created:</strong> {{ instance.created_at.strftime('%Y-%m-%d %H:%M') if instance.created_at else 'Unknown' }}
+                        <strong>Created:</strong> {{ instance.created_at.strftime('%Y-%m-%d') if instance.created_at else 'Unknown' }}
                     </p>
-                    <p class="mb-1">
-                        <i class="bi bi-geo-alt"></i> 
-                        <strong>Address:</strong> {{ instance.address or 'Not set' }}
+                    {% if instance.description %}
+                    <p class="mb-1 text-muted">
+                        {{ instance.description[:100] }}{% if instance.description|length > 100 %}...{% endif %}
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
         
         <div class="col-md-4 text-end">
             <div class="btn-group mb-2" role="group">
-                <a href="{{ url_for(' horizon.edit_instance', instance_id=instance.id) }}" 
+                <a href="{{ url_for('horizon.edit_instance', instance_id=instance.id) }}" 
                    class="btn btn-outline-primary">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
                 
                 {% if instance.is_active %}
-                <button class="btn btn-outline-danger" 
+                <button class="btn btn-outline-warning" 
                         onclick="deactivateInstance()">
                     <i class="bi bi-pause-circle"></i> Deactivate
                 </button>
@@ -88,9 +99,6 @@
             <div>
                 <button class="btn btn-outline-secondary btn-sm" onclick="exportInstanceData()">
                     <i class="bi bi-download"></i> Export Data
-                </button>
-                <button class="btn btn-outline-info btn-sm" onclick="cloneInstance()">
-                    <i class="bi bi-files"></i> Clone
                 </button>
             </div>
         </div>
@@ -107,11 +115,13 @@
             <h3>{{ stats.user_count }}</h3>
             <p>Total Users</p>
             <small class="text-muted">Max: {{ instance.max_users }}</small>
+            {% if instance.max_users and instance.max_users > 0 %}
             <div class="progress mt-2" style="height: 6px;">
                 <div class="progress-bar" 
-                     style="width: {{ (stats.user_count / instance.max_users * 100) if instance.max_users > 0 else 0 }}%">
+                     style="width: {{ [(stats.user_count / instance.max_users * 100), 100]|min }}%">
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
     
@@ -122,7 +132,9 @@
             </div>
             <h3>{{ stats.active_users }}</h3>
             <p>Active Users (30d)</p>
-            <small class="text-success">{{ ((stats.active_users / stats.user_count * 100)|round(1)) if stats.user_count > 0 else 0 }}% utilization</small>
+            <small class="text-success">
+                {{ ((stats.active_users / stats.user_count * 100)|round(1)) if stats.user_count > 0 else 0 }}% active
+            </small>
         </div>
     </div>
     
@@ -134,7 +146,7 @@
             <h3>{{ stats.modules.total }}</h3>
             <p>Total Records</p>
             <small class="text-muted">
-                L:{{ stats.modules.ledger }} F:{{ stats.modules.flow }} FF:{{ stats.modules.fulfillment }}
+                Across all modules
             </small>
         </div>
     </div>
@@ -146,7 +158,9 @@
             </div>
             <h3>{{ stats.activity.last_7d }}</h3>
             <p>Activity (7 days)</p>
-            <small class="text-muted">{{ stats.activity.per_user_30d }} actions/user (30d)</small>
+            <small class="text-muted">
+                {{ (stats.activity.per_user_30d)|round(1) }} actions/user (30d)
+            </small>
         </div>
     </div>
 </div>
@@ -155,36 +169,36 @@
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="stat-card">
-            <h5 class="mb-3"><i class="bi bi-mailbox"></i> Ledger Module</h5>
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Shipping Module</h5>
             <div class="d-flex justify-content-between mb-2">
                 <span>Total Records:</span>
-                <strong>{{ stats.modules.ledger }}</strong>
+                <strong>{{ stats.modules.send or 0 }}</strong>
             </div>
             <div class="progress" style="height: 8px;">
                 <div class="progress-bar bg-primary" 
-                     style="width: {{ (stats.modules.ledger / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                     style="width: {{ [(stats.modules.send / stats.modules.total * 100), 100]|min if stats.modules.total > 0 else 0 }}%">
                 </div>
             </div>
             <small class="text-muted">
-                {{ ((stats.modules.ledger / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+                {{ ((stats.modules.send / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total
             </small>
         </div>
     </div>
     
     <div class="col-md-4">
         <div class="stat-card">
-            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Flow Module</h5>
+            <h5 class="mb-3"><i class="bi bi-archive"></i> Inventory Module</h5>
             <div class="d-flex justify-content-between mb-2">
                 <span>Total Assets:</span>
-                <strong>{{ stats.modules.flow }}</strong>
+                <strong>{{ stats.modules.inventory or 0 }}</strong>
             </div>
             <div class="progress" style="height: 8px;">
                 <div class="progress-bar bg-info" 
-                     style="width: {{ (stats.modules.flow / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                     style="width: {{ [(stats.modules.inventory / stats.modules.total * 100), 100]|min if stats.modules.total > 0 else 0 }}%">
                 </div>
             </div>
             <small class="text-muted">
-                {{ ((stats.modules.flow / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+                {{ ((stats.modules.inventory / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total
             </small>
         </div>
     </div>
@@ -194,15 +208,15 @@
             <h5 class="mb-3"><i class="bi bi-clipboard-check"></i> Fulfillment Module</h5>
             <div class="d-flex justify-content-between mb-2">
                 <span>Total Requests:</span>
-                <strong>{{ stats.modules.fulfillment }}</strong>
+                <strong>{{ stats.modules.fulfillment or 0 }}</strong>
             </div>
             <div class="progress" style="height: 8px;">
                 <div class="progress-bar bg-success" 
-                     style="width: {{ (stats.modules.fulfillment / stats.modules.total * 100) if stats.modules.total > 0 else 0 }}%">
+                     style="width: {{ [(stats.modules.fulfillment / stats.modules.total * 100), 100]|min if stats.modules.total > 0 else 0 }}%">
                 </div>
             </div>
             <small class="text-muted">
-                {{ ((stats.modules.fulfillment / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total usage
+                {{ ((stats.modules.fulfillment / stats.modules.total * 100)|round(1)) if stats.modules.total > 0 else 0 }}% of total
             </small>
         </div>
     </div>
@@ -229,13 +243,13 @@
                 <div class="col-3">
                     <div class="badge bg-warning p-3 w-100">
                         <h3 class="mb-0">{{ stats.admins.l3 }}</h3>
-                        <small>Global Admins (L3)</small>
+                        <small>Platform Ops (L3)</small>
                     </div>
                 </div>
                 <div class="col-3">
                     <div class="badge bg-danger p-3 w-100">
                         <h3 class="mb-0">{{ stats.admins.s1 }}</h3>
-                        <small>Super Admins (S1)</small>
+                        <small>System Admins (S1)</small>
                     </div>
                 </div>
             </div>
@@ -264,46 +278,40 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Permission Level</th>
-                            <th>Location</th>
-                            <th>Last Login</th>
                             <th>Status</th>
+                            <th>Created</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
                         <tr>
-                            <td><strong>{{ user[1] }}</strong></td>
-                            <td>{{ user[2] }} {{ user[3] }}</td>
-                            <td>{{ user[4] or '-' }}</td>
+                            <td><strong>{{ user.username }}</strong></td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td>{{ user.email or '-' }}</td>
                             <td>
-                                {% if user[5] == 'S1' %}
-                                    <span class="badge bg-danger">Super Admin</span>
-                                {% elif user[5] == 'L3' %}
-                                    <span class="badge bg-warning">Global Admin</span>
-                                {% elif user[5] == 'L2' %}
+                                {% if user.permission_level == 'S1' %}
+                                    <span class="badge bg-danger">System Admin</span>
+                                {% elif user.permission_level == 'L3' %}
+                                    <span class="badge bg-warning">Platform Ops</span>
+                                {% elif user.permission_level == 'L2' %}
                                     <span class="badge bg-info">Administrator</span>
-                                {% elif user[5] == 'L1' %}
+                                {% elif user.permission_level == 'L1' %}
                                     <span class="badge bg-primary">Manager</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">Module User</span>
+                                    <span class="badge bg-secondary">User</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark">{{ user[7] or 'NY' }}</span>
-                            </td>
-                            <td>
-                                {% if user[9] %}
-                                    <small>{{ user[9].strftime('%Y-%m-%d %H:%M') if user[9].__class__.__name__ != 'str' else user[9] }}</small>
-                                {% else %}
-                                    <small class="text-muted">Never</small>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if user[9] and (user[9] > (now() - timedelta(days=30)).replace(tzinfo=None) if user[9].__class__.__name__ != 'str' else False) %}
+                                {% if user.is_active %}
                                     <span class="badge bg-success">Active</span>
                                 {% else %}
                                     <span class="badge bg-secondary">Inactive</span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}
+                                </small>
                             </td>
                         </tr>
                         {% endfor %}
@@ -314,11 +322,12 @@
     </div>
 </div>
 
-<!-- Top Users Activity -->
+<!-- Top Users Activity & Recent Activity -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="stat-card">
             <h5 class="mb-3"><i class="bi bi-star"></i> Most Active Users (30d)</h5>
+            {% if stats.top_users and stats.top_users|length > 0 %}
             <table class="table table-sm">
                 <tbody>
                     {% for user in stats.top_users %}
@@ -332,19 +341,23 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <p class="text-muted">No activity in the last 30 days</p>
+            {% endif %}
         </div>
     </div>
     
     <div class="col-md-6">
         <div class="stat-card">
             <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recent Activity</h5>
+            {% if recent_activity and recent_activity|length > 0 %}
             <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                 <table class="table table-sm">
                     <tbody>
-                        {% for activity in recent_activity %}
+                        {% for activity in recent_activity[:10] %}
                         <tr>
                             <td style="width: 140px;">
-                                <small class="text-muted">{{ activity[4] }}</small>
+                                <small class="text-muted">{{ activity[4] if activity|length > 4 else '-' }}</small>
                             </td>
                             <td>
                                 <strong>{{ activity[0] }}</strong>
@@ -358,46 +371,61 @@
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <p class="text-muted">No recent activity</p>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Storage & Features -->
+<!-- Storage & Enabled Modules -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="stat-card">
             <h5 class="mb-3"><i class="bi bi-hdd"></i> Storage Usage</h5>
             <div class="d-flex justify-content-between mb-2">
                 <span>Current Usage:</span>
-                <strong>{{ stats.storage_mb }} MB</strong>
+                <strong>{{ stats.storage_mb or 0 }} MB</strong>
             </div>
+            {% if instance.storage_limit_gb and instance.storage_limit_gb > 0 %}
+            {% set storage_limit_mb = instance.storage_limit_gb * 1024 %}
+            {% set storage_pct = (stats.storage_mb / storage_limit_mb * 100) if storage_limit_mb > 0 else 0 %}
             <div class="progress mb-2" style="height: 20px;">
-                <div class="progress-bar" 
-                     style="width: {{ (stats.storage_mb / 10240 * 100)|min(100) }}%">
-                    {{ ((stats.storage_mb / 10240 * 100)|round(1))|min(100) }}%
+                <div class="progress-bar {% if storage_pct > 90 %}bg-danger{% elif storage_pct > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                     style="width: {{ [storage_pct, 100]|min }}%">
+                    {{ storage_pct|round(1) }}%
                 </div>
             </div>
-            <small class="text-muted">Limit: 10 GB (10,240 MB)</small>
+            <small class="text-muted">Limit: {{ instance.storage_limit_gb }} GB ({{ storage_limit_mb }} MB)</small>
+            {% else %}
+            <p class="text-muted">No storage limit set</p>
+            {% endif %}
         </div>
     </div>
     
     <div class="col-md-6">
         <div class="stat-card">
-            <h5 class="mb-3"><i class="bi bi-toggles"></i> Enabled Features</h5>
-            {% if instance.features %}
-                {% for feature in instance.features %}
-                <span class="badge bg-success me-1 mb-1">
-                    <i class="bi bi-check-circle"></i> {{ feature }}
+            <h5 class="mb-3"><i class="bi bi-grid-3x3-gap"></i> Enabled Modules</h5>
+            {% if instance.enabled_modules and instance.enabled_modules|length > 0 %}
+                {% for module in instance.enabled_modules %}
+                <span class="badge bg-success me-1 mb-2">
+                    <i class="bi bi-check-circle"></i> 
+                    {% if module == 'send' %}Shipping
+                    {% elif module == 'inventory' %}Inventory
+                    {% elif module == 'fulfillment' %}Fulfillment
+                    {% else %}{{ module|title }}
+                    {% endif %}
                 </span>
                 {% endfor %}
             {% else %}
-                <p class="text-muted">No special features enabled</p>
+                <p class="text-muted">No modules enabled</p>
             {% endif %}
             
             <div class="mt-3">
-                <button class="btn btn-sm btn-outline-primary" onclick="manageFeatures()">
-                    <i class="bi bi-gear"></i> Manage Features
-                </button>
+                <a href="{{ url_for('horizon.edit_instance', instance_id=instance.id) }}" 
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-gear"></i> Manage Modules
+                </a>
             </div>
         </div>
     </div>
@@ -413,49 +441,15 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to deactivate <strong>{{ instance.name }}</strong>?</p>
-                <div class="alert alert-danger">
+                <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Warning:</strong> All {{ stats.user_count }} users will be immediately logged out and unable to access the system.
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Reason for deactivation (required):</label>
-                    <textarea class="form-control" id="deactivationReason" rows="3" required></textarea>
+                    <strong>Warning:</strong> All users will lose access to this instance.
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDeactivate()">
-                    <i class="bi bi-pause-circle"></i> Deactivate Instance
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Clone Modal -->
-<div class="modal fade" id="cloneModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Clone Instance</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Create a copy of <strong>{{ instance.name }}</strong> with the same settings.</p>
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i>
-                    Only settings will be copied. Users and data will NOT be copied.
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">New Instance Name:</label>
-                    <input type="text" class="form-control" id="cloneName" 
-                           placeholder="e.g., {{ instance.name }} - Test">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmClone()">
-                    <i class="bi bi-files"></i> Clone Instance
+                <button type="button" class="btn btn-warning" onclick="confirmDeactivate()">
+                    <i class="bi bi-pause-circle"></i> Deactivate
                 </button>
             </div>
         </div>
@@ -470,36 +464,8 @@ function deactivateInstance() {
 }
 
 function confirmDeactivate() {
-    const reason = document.getElementById('deactivationReason').value.trim();
-    
-    if (!reason) {
-        alert('Please provide a reason for deactivation');
-        return;
-    }
-    
-    fetch('/global/instances/{{ instance.id }}/deactivate', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason: reason })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('Network error: ' + error);
-    });
-}
-
-function activateInstance() {
-    if (confirm('Are you sure you want to activate {{ instance.name }}?')) {
-        fetch('/global/instances/{{ instance.id }}/activate', {
+    if (confirm('Confirm deactivation of {{ instance.name }}?')) {
+        fetch('{{ url_for("horizon.deactivate_instance", instance_id=instance.id) }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -508,38 +474,45 @@ function activateInstance() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                alert(data.message);
                 window.location.reload();
             } else {
-                alert('Error: ' + data.error);
+                alert('Error: ' + (data.error || 'Unknown error'));
             }
+        })
+        .catch(error => {
+            alert('Network error: ' + error);
         });
     }
 }
 
-function cloneInstance() {
-    new bootstrap.Modal(document.getElementById('cloneModal')).show();
-}
-
-function confirmClone() {
-    const newName = document.getElementById('cloneName').value.trim();
-    
-    if (!newName) {
-        alert('Please provide a name for the new instance');
-        return;
+function activateInstance() {
+    if (confirm('Activate {{ instance.name }}?')) {
+        fetch('{{ url_for("horizon.activate_instance", instance_id=instance.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Network error: ' + error);
+        });
     }
-    
-    // TODO: Implement clone API endpoint
-    alert('Clone functionality - Coming soon!\nNew instance name: ' + newName);
 }
 
 function exportInstanceData() {
     if (confirm('Export all data for {{ instance.name }}? This may take a few moments.')) {
-        window.location.href = '/global/instances/{{ instance.id }}/export';
+        window.location.href = '{{ url_for("horizon.export_instance_data", instance_id=instance.id) }}';
     }
-}
-
-function manageFeatures() {
-    window.location.href = '{{ url_for(" horizon.edit_instance", instance_id=instance.id) }}#features';
 }
 
 function filterUsers() {

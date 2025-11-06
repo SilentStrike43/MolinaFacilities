@@ -130,26 +130,6 @@
         background: #d1ecf1;
         border-left-color: #0dcaf0;
     }
-    
-    .table-row-clickable {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    
-    .table-row-clickable:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .gauge-container {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    
-    .gauge {
-        width: 150px;
-        height: 150px;
-        margin: 0 auto;
-    }
 </style>
 {% endblock %}
 
@@ -194,8 +174,9 @@
                 </div>
                 <div class="text-end">
                     <div class="progress" style="width: 200px; height: 8px;">
+                        {% set db_pct = (health.database_size_mb / 100000 * 100) %}
                         <div class="progress-bar bg-primary" 
-                             style="width: {{ (health.database_size_mb / 100000 * 100)|min(100) }}%"></div>
+                             style="width: {{ [db_pct, 100]|min }}%"></div>
                     </div>
                     <small class="text-muted">of 100 GB limit</small>
                 </div>
@@ -222,7 +203,7 @@
                 </div>
                 <div class="text-end">
                     <small class="text-muted">
-                        {{ health.users.per_instance }} avg per instance
+                        {{ (health.users.per_instance)|round(1) }} avg per instance
                     </small>
                 </div>
             </div>
@@ -248,7 +229,7 @@
             <div class="metric-row">
                 <div>
                     <div class="metric-label">Audit Log Size</div>
-                    <div class="metric-value">{{ health.audit_logs.count|format_number }}</div>
+                    <div class="metric-value">{{ "{:,}".format(health.audit_logs.count) if health.audit_logs.count else 0 }}</div>
                 </div>
                 <div class="text-end">
                     <small class="text-muted">~{{ health.audit_logs.size_estimate_mb }} MB</small>
@@ -270,17 +251,17 @@
                         <tr>
                             <th>Table</th>
                             <th class="text-end">Row Count</th>
-                            <th class="text-end">Growth (est.)</th>
+                            <th class="text-end">Growth</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for stat in table_stats %}
                         <tr>
-                            <td><strong>{{ stat[0] }}</strong></td>
-                            <td class="text-end">{{ stat[1]|format_number }}</td>
+                            <td><strong>{{ stat.table_name }}</strong></td>
+                            <td class="text-end">{{ "{:,}".format(stat.row_count) }}</td>
                             <td class="text-end">
-                                {% set growth_rate = (stat[1] / 1000)|round(1) %}
+                                {% set growth_rate = (stat.row_count / 1000)|round(1) %}
                                 {% if growth_rate > 100 %}
                                     <span class="text-warning">High</span>
                                 {% elif growth_rate > 50 %}
@@ -290,9 +271,9 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if stat[1] > 1000000 %}
+                                {% if stat.row_count > 1000000 %}
                                     <span class="badge bg-warning">Large Table</span>
-                                {% elif stat[1] > 100000 %}
+                                {% elif stat.row_count > 100000 %}
                                     <span class="badge bg-info">Medium Table</span>
                                 {% else %}
                                     <span class="badge bg-success">Healthy</span>
@@ -307,93 +288,7 @@
             <div class="alert alert-info mt-3 mb-0">
                 <i class="bi bi-info-circle"></i>
                 <strong>Database Optimization:</strong> 
-                Last optimized: Never | 
-                <a href="#" onclick="optimizeDatabase()">Run optimization now</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Instance Health -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="health-card">
-            <h5 class="mb-3"><i class="bi bi-heart-pulse"></i> Instance Health Status</h5>
-            
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Instance</th>
-                            <th>Status</th>
-                            <th>Users</th>
-                            <th>Storage</th>
-                            <th>Errors (24h)</th>
-                            <th>Health</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Mock instance data - replace with actual data from context -->
-                        {% for i in range(health.instances.active) %}
-                        <tr class="table-row-clickable">
-                            <td><strong>Instance {{ i + 1 }}</strong></td>
-                            <td>
-                                <span class="status-indicator online"></span>
-                                Active
-                            </td>
-                            <td>
-                                {{ (health.users.total / health.instances.active)|round|int }} users
-                            </td>
-                            <td>
-                                <div class="progress" style="width: 80px; height: 6px;">
-                                    <div class="progress-bar bg-success" style="width: {{ (50 + (i * 10)) % 100 }}%"></div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">{{ (i * 3) % 10 }}</span>
-                            </td>
-                            <td>
-                                {% set health_score = (95 - (i * 2)) %}
-                                {% if health_score >= 90 %}
-                                    <span class="text-success">â— Excellent</span>
-                                {% elif health_score >= 70 %}
-                                    <span class="text-info">â— Good</span>
-                                {% else %}
-                                    <span class="text-warning">â— Fair</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{{ url_for(' horizon.instance_detail', instance_id=i+1) }}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        
-                        {% if health.instances.inactive > 0 %}
-                        {% for i in range(health.instances.inactive) %}
-                        <tr class="table-row-clickable table-secondary">
-                            <td><strong>Instance {{ health.instances.active + i + 1 }}</strong></td>
-                            <td>
-                                <span class="status-indicator offline"></span>
-                                Inactive
-                            </td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td><span class="text-secondary">â— Offline</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-success" onclick="activateInstance({{ i + 1 }})">
-                                    <i class="bi bi-play-circle"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        {% endif %}
-                    </tbody>
-                </table>
+                Consider running optimization during off-peak hours
             </div>
         </div>
     </div>
@@ -405,7 +300,7 @@
         <div class="health-card">
             <h5 class="mb-3"><i class="bi bi-lightbulb"></i> System Recommendations</h5>
             
-            {% if health.activity.errors_24h > 100 %}
+            {% if health.activity.errors_24h and health.activity.errors_24h > 100 %}
             <div class="recommendation-card critical">
                 <strong><i class="bi bi-exclamation-triangle"></i> High Error Rate</strong>
                 <p class="mb-0">
@@ -429,7 +324,7 @@
             <div class="recommendation-card info">
                 <strong><i class="bi bi-info-circle"></i> Inactive Instances</strong>
                 <p class="mb-0">
-                    {{ health.instances.inactive }} inactive instances detected. 
+                    {{ health.instances.inactive }} inactive instance(s) detected. 
                     Consider removing or reactivating unused instances.
                 </p>
             </div>
@@ -439,7 +334,7 @@
             <div class="recommendation-card">
                 <strong><i class="bi bi-archive"></i> Audit Log Size</strong>
                 <p class="mb-0">
-                    {{ health.audit_logs.count|format_number }} audit entries. 
+                    {{ "{:,}".format(health.audit_logs.count) }} audit entries. 
                     Archive logs older than 90 days to improve performance.
                 </p>
             </div>
@@ -464,24 +359,14 @@
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between">
                         <strong>System Health Check</strong>
-                        <small class="text-muted">2 minutes ago</small>
+                        <small class="text-muted">Just now</small>
                     </div>
                     <small class="text-success">
                         <i class="bi bi-check-circle"></i> All checks passed
                     </small>
                 </div>
                 
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <strong>Database Backup</strong>
-                        <small class="text-muted">6 hours ago</small>
-                    </div>
-                    <small class="text-success">
-                        <i class="bi bi-check-circle"></i> Completed successfully
-                    </small>
-                </div>
-                
-                {% if health.activity.errors_24h > 0 %}
+                {% if health.activity.errors_24h and health.activity.errors_24h > 0 %}
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between">
                         <strong>Error Detection</strong>
@@ -495,29 +380,19 @@
                 
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between">
-                        <strong>Cache Cleared</strong>
-                        <small class="text-muted">12 hours ago</small>
-                    </div>
-                    <small class="text-info">
-                        <i class="bi bi-info-circle"></i> Performance optimized
-                    </small>
-                </div>
-                
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <strong>Security Scan</strong>
-                        <small class="text-muted">1 day ago</small>
+                        <strong>Instance Created</strong>
+                        <small class="text-muted">Today</small>
                     </div>
                     <small class="text-success">
-                        <i class="bi bi-shield-check"></i> No vulnerabilities found
+                        <i class="bi bi-plus-circle"></i> New instance added
                     </small>
                 </div>
             </div>
             
             <div class="text-center mt-3">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewAllEvents()">
+                <a href="{{ url_for('horizon.global_audits') }}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-list"></i> View All Events
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -525,94 +400,50 @@
 
 <!-- Resource Usage -->
 <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-12">
         <div class="health-card">
             <h5 class="mb-3"><i class="bi bi-cpu"></i> Resource Usage</h5>
             
-            <div class="gauge-container">
-                <div class="mb-3">
-                    <label class="form-label">CPU Usage</label>
-                    <div class="progress" style="height: 25px;">
-                        <div class="progress-bar bg-info" style="width: 35%">35%</div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Memory Usage</label>
-                    <div class="progress" style="height: 25px;">
-                        <div class="progress-bar bg-success" style="width: 42%">42%</div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Storage Usage</label>
-                    <div class="progress" style="height: 25px;">
-                        <div class="progress-bar bg-warning" style="width: {{ (health.database_size_mb / 100000 * 100)|min(100)|round }}%">
-                            {{ (health.database_size_mb / 100000 * 100)|min(100)|round }}%
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Storage Usage</label>
+                        {% set storage_pct = (health.database_size_mb / 100000 * 100) %}
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if storage_pct > 80 %}bg-danger{% elif storage_pct > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 style="width: {{ [storage_pct, 100]|min|round }}%">
+                                {{ [storage_pct, 100]|min|round }}%
+                            </div>
                         </div>
+                        <small class="text-muted">{{ health.database_size_mb }} MB / 100 GB</small>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="health-card">
-            <h5 class="mb-3"><i class="bi bi-graph-up"></i> Performance Trends</h5>
-            
-            <canvas id="performanceChart" style="max-height: 200px;"></canvas>
-            
-            <div class="row text-center mt-3">
-                <div class="col-6">
-                    <strong class="text-success">â†‘ 12%</strong>
-                    <br><small class="text-muted">Response Time</small>
-                </div>
-                <div class="col-6">
-                    <strong class="text-success">â†“ 8%</strong>
-                    <br><small class="text-muted">Error Rate</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="health-card">
-            <h5 class="mb-3"><i class="bi bi-tools"></i> Maintenance</h5>
-            
-            <div class="list-group">
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Database Optimization</span>
-                    <button class="btn btn-sm btn-outline-primary" onclick="optimizeDatabase()">
-                        <i class="bi bi-play"></i>
-                    </button>
+                
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Instance Utilization</label>
+                        {% set inst_pct = (health.instances.active / health.instances.total * 100) if health.instances.total > 0 else 0 %}
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-info" 
+                                 style="width: {{ [inst_pct, 100]|min|round }}%">
+                                {{ [inst_pct, 100]|min|round }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ health.instances.active }} / {{ health.instances.total }} active</small>
+                    </div>
                 </div>
                 
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Clear Cache</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="clearCache()">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-                
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Archive Old Logs</span>
-                    <button class="btn btn-sm btn-outline-warning" onclick="archiveLogs()">
-                        <i class="bi bi-archive"></i>
-                    </button>
-                </div>
-                
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Backup Database</span>
-                    <button class="btn btn-sm btn-outline-success" onclick="backupDatabase()">
-                        <i class="bi bi-download"></i>
-                    </button>
-                </div>
-                
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>Security Scan</span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="securityScan()">
-                        <i class="bi bi-shield"></i>
-                    </button>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">System Health</label>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {% if health.health_score >= 90 %}bg-success{% elif health.health_score >= 70 %}bg-info{% elif health.health_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ health.health_score }}%">
+                                {{ health.health_score }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ health.status|title }} status</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -630,19 +461,19 @@
                     <table class="table table-sm">
                         <tr>
                             <td><strong>Platform:</strong></td>
-                            <td>Gridline Services v2.0</td>
+                            <td>Gridline Services Platform</td>
                         </tr>
                         <tr>
                             <td><strong>Framework:</strong></td>
-                            <td>Flask 3.x / Python 3.11</td>
+                            <td>Flask / Python 3.13</td>
                         </tr>
                         <tr>
                             <td><strong>Database:</strong></td>
-                            <td>Azure SQL Database</td>
+                            <td>PostgreSQL</td>
                         </tr>
                         <tr>
-                            <td><strong>Hosting:</strong></td>
-                            <td>Azure App Service</td>
+                            <td><strong>Deployment:</strong></td>
+                            <td>Local Server</td>
                         </tr>
                     </table>
                 </div>
@@ -650,20 +481,20 @@
                 <div class="col-md-6">
                     <table class="table table-sm">
                         <tr>
-                            <td><strong>Last Restart:</strong></td>
-                            <td>{{ now().strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td><strong>Total Instances:</strong></td>
+                            <td>{{ health.instances.total }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Uptime:</strong></td>
-                            <td>99.97% (30 days)</td>
+                            <td><strong>Total Users:</strong></td>
+                            <td>{{ health.users.total }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Environment:</strong></td>
-                            <td>Production</td>
+                            <td><strong>Database Size:</strong></td>
+                            <td>{{ health.database_size_mb }} MB</td>
                         </tr>
                         <tr>
-                            <td><strong>Region:</strong></td>
-                            <td>US East</td>
+                            <td><strong>Health Score:</strong></td>
+                            <td><strong class="text-{{ 'success' if health.health_score >= 90 else 'warning' if health.health_score >= 70 else 'danger' }}">{{ health.health_score }}/100</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -671,87 +502,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<script>
-// Performance trend chart
-const ctx = document.getElementById('performanceChart').getContext('2d');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ['6h ago', '5h ago', '4h ago', '3h ago', '2h ago', '1h ago', 'Now'],
-        datasets: [{
-            label: 'Response Time (ms)',
-            data: [450, 420, 380, 390, 370, 350, 340],
-            borderColor: '#0d6efd',
-            tension: 0.4,
-            fill: false
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: false
-            }
-        }
-    }
-});
-
-// Maintenance actions
-function optimizeDatabase() {
-    if (confirm('Run database optimization? This may take several minutes.')) {
-        alert('Database optimization started. You will be notified when complete.');
-    }
-}
-
-function clearCache() {
-    if (confirm('Clear all system cache?')) {
-        alert('Cache cleared successfully.');
-    }
-}
-
-function archiveLogs() {
-    if (confirm('Archive audit logs older than 90 days?')) {
-        alert('Log archival started. This will run in the background.');
-    }
-}
-
-function backupDatabase() {
-    if (confirm('Create full database backup?')) {
-        alert('Backup started. Download link will be sent to your email.');
-    }
-}
-
-function securityScan() {
-    if (confirm('Run security vulnerability scan?')) {
-        alert('Security scan started. Results will be available in 15-30 minutes.');
-    }
-}
-
-function activateInstance(id) {
-    if (confirm('Activate instance #' + id + '?')) {
-        window.location.href = `/global/instances/${id}/activate`;
-    }
-}
-
-function viewAllEvents() {
-    window.location.href = '{{ url_for(" horizon.global_audits") }}';
-}
-
-// Auto-refresh every 60 seconds
-setTimeout(() => {
-    location.reload();
-}, 60000);
-</script>
 {% endblock %}

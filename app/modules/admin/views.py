@@ -517,28 +517,6 @@ def database_management():
                          table_info=table_info,
                          user_level=user_level)
 
-@admin_bp.route("/system")
-@login_required
-@require_admin_level("L3")
-def system_management():
-    """System management interface (L3+ only)."""
-    cu = current_user()
-    user_level = get_user_permission_level(cu)
-    
-    if user_level not in ["L3", "S1"]:
-        flash("You need L3 (App Developer) permissions or higher to access system management.", "danger")
-        return redirect(url_for("admin.dashboard"))
-    
-    # System information would go here
-    # This is where Azure VM, SSH, cert management would be integrated
-    
-    record_audit_log(cu, "view_system_management", "admin", "Accessed system management interface")
-    
-    return render_template("admin/system.html",
-                         active="admin",
-                         page="system",
-                         user_level=user_level)
-
 @admin_bp.route("/config", methods=["GET", "POST"])
 @login_required
 @require_admin_level("L2")

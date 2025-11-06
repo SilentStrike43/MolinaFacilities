@@ -11,6 +11,10 @@ import io
 from functools import wraps
 import bcrypt
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import (
     session,
     request, 
@@ -27,6 +31,7 @@ from flask import (
 from . import bp
 from app.core.database import get_db_connection
 from app.modules.auth.security import login_required, current_user
+from .audit import record_horizon_audit
 
 # Global Admin specific imports
 from .models import (
@@ -240,13 +245,12 @@ def instance_detail(instance_id: int):
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT 
+            SELECT
                 id, username, first_name, last_name, email,
-                permission_level, module_permissions, location,
-                created_at, last_login_at
+                permission_level, module_permissions,
+                is_active, created_at
             FROM users
             WHERE instance_id = %s
-            AND deleted_at IS NULL
             ORDER BY created_at DESC
         """, (instance_id,))
         users = cursor.fetchall()
@@ -276,189 +280,216 @@ def instance_detail(instance_id: int):
         recent_activity=recent_activity
     )
 
-
-@bp.route("/instances/create", methods=["GET", "POST"])
+@bp.route("/create-instance", methods=["GET", "POST"])
 @login_required
 @require_horizon
 def create_instance():
-    """Create new instance with L2 administrator."""
+    """Create new company instance."""
     cu = current_user()
     
     if request.method == "POST":
-        # Instance details
+        # Basic info
         name = request.form.get("name", "").strip()
-        subdomain = request.form.get("subdomain", "").strip()
+        display_name = request.form.get("display_name", "").strip() or name
+        description = request.form.get("description", "").strip()
+        
+        # Contact info
+        contact_name = request.form.get("contact_name", "").strip()
         contact_email = request.form.get("contact_email", "").strip()
         contact_phone = request.form.get("contact_phone", "").strip()
-        address = request.form.get("address", "").strip()
-        max_users = int(request.form.get("max_users", 100) or 100)
-        features = request.form.getlist("features")
         
-        # L2 Administrator details
-        admin_username = request.form.get("admin_username", "").strip()
-        admin_password = request.form.get("admin_password", "")
-        admin_email = request.form.get("admin_email", "").strip()
-        admin_first_name = request.form.get("admin_first_name", "").strip()
-        admin_last_name = request.form.get("admin_last_name", "").strip()
+        # Resources
+        max_users = int(request.form.get("max_users", 100))
+        storage_limit_gb = int(request.form.get("storage_limit_gb", 10))
+        subscription_tier = request.form.get("subscription_tier", "standard")
         
-        # Validation
-        errors = []
+        # Module Access - Get enabled modules
+        enabled_modules = []
+        if request.form.get("module_send"):
+            enabled_modules.append("send")
+        if request.form.get("module_inventory"):
+            enabled_modules.append("inventory")
+        if request.form.get("module_fulfillment"):
+            enabled_modules.append("fulfillment")
+        
+        # Ensure at least one module is enabled
+        if not enabled_modules:
+            flash("At least one module must be enabled.", "danger")
+            return redirect(url_for("horizon.create_instance"))
+        
+        # Future features
+        subdomain = request.form.get("subdomain", "").strip().lower()
+        custom_domain = request.form.get("custom_domain", "").strip().lower()
+        rate_limit_per_hour = int(request.form.get("rate_limit_per_hour", 1000))
+        allowed_ips = request.form.get("allowed_ips", "").strip()
+        require_2fa = bool(request.form.get("require_2fa"))
+        
+        # Status
+        is_active = bool(request.form.get("is_active"))
+        notes = request.form.get("notes", "").strip()
+        
+        # L2 Administrator setup
+        l2_setup_option = request.form.get("l2_setup_option", "skip")
         
         if not name:
-            errors.append("Instance name is required")
-        
-        if not contact_email:
-            errors.append("Contact email is required")
-        
-        if not admin_username:
-            errors.append("Administrator username is required")
-        
-        if not admin_password or len(admin_password) < 8:
-            errors.append("Administrator password must be at least 8 characters")
-        
-        if not admin_email:
-            errors.append("Administrator email is required")
-        
-        # Validate subdomain
-        if subdomain:
-            import re
-            if not re.match(r'^[a-z0-9-]+$', subdomain):
-                errors.append("Invalid subdomain format. Use only lowercase letters, numbers, and hyphens.")
-            else:
-                # Check if subdomain exists
-                existing = get_instance_by_subdomain(subdomain)
-                if existing:
-                    errors.append(f"Subdomain '{subdomain}' is already in use.")
-        
-        # Check if admin username already exists
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM users WHERE username = %s", (admin_username,))
-            if cursor.fetchone():
-                errors.append(f"Username '{admin_username}' already exists")
-            cursor.close()
-        
-        if errors:
-            for error in errors:
-                flash(error, "danger")
-            return render_template(
-                "horizon/create_instance.html",
-                active="global",
-                page="create_instance",
-                form_data=request.form
-            )
+            flash("Company name is required.", "danger")
+            return redirect(url_for("horizon.create_instance"))
         
         try:
-            # Create instance
-            instance_id = InstanceManager.create_instance(
-                name=name,
-                subdomain=subdomain or None,
-                contact_email=contact_email,
-                contact_phone=contact_phone or None,
-                address=address or None,
-                max_users=max_users,
-                features=features,
-                created_by=cu['id']
-            )
-            
-            # Create L2 administrator account
-            hashed_password = bcrypt.hashpw(
-                admin_password.encode('utf-8'), 
-                bcrypt.gensalt()
-            ).decode('utf-8')
-            
             with get_db_connection("core") as conn:
                 cursor = conn.cursor()
                 
-                # Determine module permissions based on features
-                module_permissions = []
-                if 'ledger' in features or 'ledger_enabled' in features:
-                    module_permissions.append('ledger')
-                if 'flow' in features or 'flow_enabled' in features:
-                    module_permissions.append('flow')
-                if 'fulfillment' in features or 'fulfillment_enabled' in features:
-                    module_permissions.append('fulfillment')
-                module_permissions.append('admin')  # Always give admin access
-                
+                # Create instance
                 cursor.execute("""
-                    INSERT INTO users (
-                        username, email, password_hash,
-                        first_name, last_name, 
-                        permission_level, module_permissions,
-                        instance_id, location, is_active,
-                        created_at, created_by
+                    INSERT INTO instances (
+                        name, display_name, description,
+                        contact_name, contact_email, contact_phone,
+                        max_users, storage_limit_gb, subscription_tier,
+                        subdomain, custom_domain, rate_limit_per_hour,
+                        allowed_ips, require_2fa, is_active, notes,
+                        enabled_modules
                     )
-                    VALUES (%s, %s, %s, %s, %s, 'L2', %s, %s, %s, true, CURRENT_TIMESTAMP, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
                 """, (
-                    admin_username,
-                    admin_email,
-                    hashed_password,
-                    admin_first_name,
-                    admin_last_name,
-                    json.dumps(module_permissions),
-                    instance_id,
-                    name,  # Use instance name as location
-                    cu['id']
+                    name, display_name, description,
+                    contact_name, contact_email, contact_phone,
+                    max_users, storage_limit_gb, subscription_tier,
+                    subdomain or None, custom_domain or None, rate_limit_per_hour,
+                    allowed_ips or None, require_2fa, is_active, notes,
+                    enabled_modules
                 ))
+                
+                instance_id = cursor.fetchone()['id']
+                
+                # Handle L2 Administrator Setup
+                from app.core.instance_access import grant_instance_access
+                
+                if l2_setup_option == "create_new":
+                    # Create new L2 user
+                    l2_username = request.form.get("l2_username", "").strip().lower()
+                    l2_password = request.form.get("l2_password", "").strip()
+                    l2_first_name = request.form.get("l2_first_name", "").strip()
+                    l2_last_name = request.form.get("l2_last_name", "").strip()
+                    l2_email = request.form.get("l2_email", "").strip()
+                    l2_phone = request.form.get("l2_phone", "").strip()
+                    
+                    if not l2_username or not l2_password:
+                        conn.rollback()
+                        flash("L2 username and password are required.", "danger")
+                        return redirect(url_for("horizon.create_instance"))
+                    
+                    # Check if username exists
+                    cursor.execute("SELECT id FROM users WHERE username = %s", (l2_username,))
+                    if cursor.fetchone():
+                        conn.rollback()
+                        flash(f"Username '{l2_username}' already exists.", "danger")
+                        return redirect(url_for("horizon.create_instance"))
+                    
+                    # Hash password
+                    import hashlib
+                    pw_hash = hashlib.sha256(l2_password.encode()).hexdigest()
+                    
+                    # Create L2 user
+                    cursor.execute("""
+                        INSERT INTO users (
+                            username, password_hash, permission_level,
+                            first_name, last_name, email, phone,
+                            instance_id, force_password_reset, is_active,
+                            created_by, created_at
+                        )
+                        VALUES (%s, %s, 'L2', %s, %s, %s, %s, %s, TRUE, TRUE, %s, CURRENT_TIMESTAMP)
+                        RETURNING id
+                    """, (
+                        l2_username, pw_hash, l2_first_name, l2_last_name,
+                        l2_email, l2_phone, instance_id, cu["id"]
+                    ))
+                    
+                    l2_user_id = cursor.fetchone()['id']
+                    
+                    # Grant access to this instance
+                    cursor.execute("""
+                        INSERT INTO user_instance_access (user_id, instance_id, granted_by)
+                        VALUES (%s, %s, %s)
+                    """, (l2_user_id, instance_id, cu["id"]))
+                    
+                    l2_info = f"Created new L2 user: {l2_username}"
+                    
+                elif l2_setup_option == "assign_existing":
+                    # Assign existing L2 users
+                    l2_user_ids = request.form.getlist('assign_l2_users[]')
+                    
+                    if not l2_user_ids:
+                        conn.rollback()
+                        flash("Please select at least one L2 user to assign.", "danger")
+                        return redirect(url_for("horizon.create_instance"))
+                    
+                    for l2_id in l2_user_ids:
+                        cursor.execute("""
+                            INSERT INTO user_instance_access (user_id, instance_id, granted_by)
+                            VALUES (%s, %s, %s)
+                        """, (int(l2_id), instance_id, cu["id"]))
+                    
+                    l2_info = f"Assigned {len(l2_user_ids)} existing L2 user(s)"
+                    
+                else:
+                    l2_info = "No L2 assigned (will be assigned later)"
                 
                 conn.commit()
                 cursor.close()
             
-            # Update instance settings
-            custom_settings = {
-                'branding': {
-                    'logo_url': request.form.get("logo_url", ""),
-                    'primary_color': request.form.get("primary_color", "#0d6efd"),
-                    'secondary_color': request.form.get("secondary_color", "#6c757d"),
-                    'custom_css': ''
-                },
-                'modules': {
-                    'ledger_enabled': 'ledger' in features,
-                    'flow_enabled': 'flow' in features,
-                    'fulfillment_enabled': 'fulfillment' in features
-                },
-                'features': {
-                    'sso_enabled': 'sso' in features,
-                    'api_access': 'api_access' in features,
-                    'custom_reports': 'custom_reports' in features,
-                    'mobile_app': 'mobile_app' in features
-                },
-                'limits': {
-                    'storage_mb': int(request.form.get("storage_limit", 10240) or 10240),
-                    'api_calls_per_day': 10000,
-                    'max_file_size_mb': 50
-                },
-                'security': {
-                    'force_2fa': 'force_2fa' in features,
-                    'password_expiry_days': int(request.form.get("password_expiry", 90) or 90),
-                    'session_timeout_minutes': int(request.form.get("session_timeout", 480) or 480),
-                    'ip_whitelist': []
-                }
-            }
+            # Record Horizon audit
+            modules_str = ", ".join(enabled_modules)
+            record_horizon_audit(
+                cu, 
+                "create_instance", 
+                "instances",
+                f"Created company instance: {name} (ID: {instance_id}) with modules: {modules_str}. {l2_info}",
+                target_instance_id=instance_id,
+                severity="info"
+            )
             
-            InstanceManager.update_instance(instance_id, {'settings': custom_settings})
-            
-            record_global_audit(cu, "create_instance", 
-                f"Created instance: {name} (ID: {instance_id}) with L2 admin: {admin_username}")
-            
-            flash(f"Instance '{name}' created successfully with administrator '{admin_username}'!", "success")
+            flash(f"✅ Company instance '{name}' created successfully!", "success")
             return redirect(url_for("horizon.instance_detail", instance_id=instance_id))
             
         except Exception as e:
-            flash(f"Error creating instance: {str(e)}", "danger")
-            return render_template(
-                "horizon/create_instance.html",
-                active="global",
-                page="create_instance",
-                form_data=request.form
+            logger.error(f"Error creating instance: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Audit the failed attempt
+            record_horizon_audit(
+                cu,
+                "create_instance_failed",
+                "instances",
+                f"Failed to create instance '{name}': {str(e)}",
+                severity="warning"
             )
+            
+            flash(f"❌ Error creating instance: {str(e)}", "danger")
+            return redirect(url_for("horizon.create_instance"))
     
-    # GET request
-    return render_template(
-        "horizon/create_instance.html",
-        active="global",
-        page="create_instance"
-    )
+    if request.method == "GET":
+        # Get existing L2 users for assignment option
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, username, first_name, last_name, email
+                FROM users
+                WHERE permission_level = 'L2'
+                AND deleted_at IS NULL
+                ORDER BY username
+            """)
+            existing_l2_users = cursor.fetchall()
+            cursor.close()
+        
+        return render_template(
+            "horizon/create_instance.html",
+            active="instances",
+            page="create_instance",
+            cu=cu,
+            existing_l2_users=existing_l2_users
+        )
 
 
 @bp.route("/instances/<int:instance_id>/edit", methods=["GET", "POST"])
@@ -873,15 +904,102 @@ def global_insights():
     if not date_to:
         date_to = datetime.now().strftime("%Y-%m-%d")
     
-    analytics = GlobalAnalytics()
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        # User Growth
+        cursor.execute("""
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as new_users
+            FROM users
+            WHERE created_at >= %s AND created_at <= %s
+            AND deleted_at IS NULL
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        """, (date_from, date_to))
+        user_growth = cursor.fetchall()
+        
+        # Activity by Module
+        cursor.execute("""
+            SELECT 
+                module,
+                COUNT(*) as count
+            FROM audit_logs
+            WHERE ts_utc >= %s AND ts_utc <= %s
+            GROUP BY module
+            ORDER BY count DESC
+        """, (date_from, date_to))
+        activity_by_module = cursor.fetchall()
+        
+        # Instance Comparison
+        cursor.execute("""
+            SELECT 
+                i.id,
+                i.name,
+                COUNT(DISTINCT u.id) as user_count,
+                COUNT(DISTINCT al.id) as activity_count
+            FROM instances i
+            LEFT JOIN users u ON i.id = u.instance_id AND u.deleted_at IS NULL
+            LEFT JOIN audit_logs al ON u.id = al.user_id 
+                AND al.ts_utc >= %s AND al.ts_utc <= %s
+            GROUP BY i.id, i.name
+            ORDER BY user_count DESC
+        """, (date_from, date_to))
+        instance_comparison = cursor.fetchall()
+        
+        # Peak Usage Times
+        cursor.execute("""
+            SELECT 
+                EXTRACT(HOUR FROM ts_utc) as hour,
+                COUNT(*) as activity
+            FROM audit_logs
+            WHERE ts_utc >= %s AND ts_utc <= %s
+            GROUP BY EXTRACT(HOUR FROM ts_utc)
+            ORDER BY hour
+        """, (date_from, date_to))
+        peak_usage_times = cursor.fetchall()
+        
+        # Module Adoption by Instance
+        cursor.execute("""
+            SELECT 
+                i.name as instance_name,
+                COALESCE(array_length(i.enabled_modules, 1), 0) as module_count,
+                i.enabled_modules
+            FROM instances i
+            WHERE i.is_active = TRUE
+            ORDER BY module_count DESC
+        """)
+        module_adoption = cursor.fetchall()
+
+        # Top Active Users
+        cursor.execute("""
+            SELECT 
+                u.username,
+                u.first_name,
+                u.last_name,
+                i.name as instance_name,
+                COUNT(al.id) as action_count
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            LEFT JOIN audit_logs al ON u.id = al.user_id 
+                AND al.ts_utc >= %s AND al.ts_utc <= %s
+            WHERE u.deleted_at IS NULL
+            GROUP BY u.id, u.username, u.first_name, u.last_name, i.name
+            ORDER BY action_count DESC
+            LIMIT 10
+        """, (date_from, date_to))
+        top_users = cursor.fetchall()
+        
+        cursor.close()
     
-    # Get insights data
     insights = {
-        'user_growth': analytics.get_user_growth(date_from, date_to),
-        'activity_by_module': analytics.get_activity_by_module(date_from, date_to),
-        'instance_comparison': analytics.get_instance_comparison(),
-        'peak_usage_times': analytics.get_peak_usage_times(date_from, date_to),
-        'module_adoption': analytics.get_module_adoption(),
+        'user_growth': user_growth,
+        'activity_by_module': activity_by_module,
+        'instance_comparison': instance_comparison,
+        'peak_usage_times': peak_usage_times,
+        'module_adoption': module_adoption,
+        'top_users': top_users
     }
     
     record_global_audit(cu, "view_global_insights", f"Viewed global insights: {date_from} to {date_to}")
@@ -901,32 +1019,42 @@ def global_insights():
 @login_required
 @require_horizon
 def global_audits():
-    """View global audit logs across all instances."""
+    """View Horizon platform audit logs."""
     cu = current_user()
     
-    # Get filters
+    # Get filter parameters
     filters = {
-        "instance_id": request.args.get("instance_id", ""),
-        "username": request.args.get("username", ""),
-        "action": request.args.get("action", ""),
-        "module": request.args.get("module", ""),
-        "date_from": request.args.get("date_from", ""),
-        "date_to": request.args.get("date_to", ""),
-        "permission_level": request.args.get("permission_level", "")
+        'username': request.args.get('username', ''),
+        'action': request.args.get('action', ''),
+        'module': request.args.get('module', ''),
+        'instance_id': request.args.get('instance_id', ''),
+        'permission_level': request.args.get('permission_level', ''),
+        'date_from': request.args.get('date_from', ''),
+        'date_to': request.args.get('date_to', '')
     }
     
     # Remove empty filters
     filters = {k: v for k, v in filters.items() if v}
     
-    # Build query
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         
+        # Build query
         query = """
             SELECT 
-                al.*,
+                al.id,
+                al.action,
+                al.username,
+                al.module,
+                al.details,
+                al.ts_utc,
+                al.permission_level,
+                al.ip_address,
+                al.user_agent,
                 u.instance_id,
-                i.name as instance_name
+                i.name as instance_name,
+                al.target_user_id,
+                al.target_username
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             LEFT JOIN instances i ON u.instance_id = i.id
@@ -934,62 +1062,80 @@ def global_audits():
         """
         params = []
         
-        if filters.get("instance_id"):
+        # Apply filters
+        if filters.get('instance_id'):
             query += " AND u.instance_id = %s"
-            params.append(int(filters["instance_id"]))
+            params.append(int(filters['instance_id']))
         
-        if filters.get("username"):
-            query += " AND al.username LIKE %s"
+        if filters.get('username'):
+            query += " AND al.username ILIKE %s"
             params.append(f"%{filters['username']}%")
         
-        if filters.get("action"):
-            query += " AND al.action LIKE %s"
-            params.append(f"%{filters['action']}%")
+        if filters.get('action'):
+            query += " AND al.action = %s"
+            params.append(filters['action'])
         
-        if filters.get("module"):
+        if filters.get('module'):
             query += " AND al.module = %s"
-            params.append(filters["module"])
+            params.append(filters['module'])
         
-        if filters.get("date_from"):
+        if filters.get('date_from'):
             query += " AND CAST(al.ts_utc AS DATE) >= %s"
-            params.append(filters["date_from"])
+            params.append(filters['date_from'])
         
-        if filters.get("date_to"):
+        if filters.get('date_to'):
             query += " AND CAST(al.ts_utc AS DATE) <= %s"
-            params.append(filters["date_to"])
+            params.append(filters['date_to'])
         
-        if filters.get("permission_level"):
+        if filters.get('permission_level'):
             query += " AND al.permission_level = %s"
-            params.append(filters["permission_level"])
+            params.append(filters['permission_level'])
         
         query += " ORDER BY al.ts_utc DESC LIMIT 500"
         
         cursor.execute(query, params)
         logs = cursor.fetchall()
         
-        # Get filter options
-        cursor.execute("SELECT id, name FROM instances ORDER BY name")
+        # Get unique instances for filter
+        cursor.execute("""
+            SELECT DISTINCT i.id, i.name
+            FROM instances i
+            INNER JOIN users u ON u.instance_id = i.id
+            ORDER BY i.name
+        """)
         instances = cursor.fetchall()
         
-        cursor.execute("SELECT DISTINCT module FROM audit_logs ORDER BY module")
-        modules = [row[0] for row in cursor.fetchall()]
+        # Get unique actions
+        cursor.execute("""
+            SELECT DISTINCT action 
+            FROM audit_logs 
+            WHERE action IS NOT NULL
+            ORDER BY action
+        """)
+        actions = [row['action'] for row in cursor.fetchall()]
         
-        cursor.execute("SELECT DISTINCT action FROM audit_logs ORDER BY action")
-        actions = [row[0] for row in cursor.fetchall()]
+        # Get unique modules
+        cursor.execute("""
+            SELECT DISTINCT module 
+            FROM audit_logs 
+            WHERE module IS NOT NULL
+            ORDER BY module
+        """)
+        modules = [row['module'] for row in cursor.fetchall()]
         
         cursor.close()
     
-    record_global_audit(cu, "view_global_audits", f"Viewed global audits with filters: {filters}")
+    record_global_audit(cu, "view_global_audits", f"Viewed global audit logs ({len(logs)} entries)")
     
     return render_template(
         "horizon/global_audits.html",
-        active="global",
-        page="audits",
+        active="audits",
+        cu=cu,
         logs=logs,
-        filters=filters,
         instances=instances,
+        actions=actions,
         modules=modules,
-        actions=actions
+        filters=filters
     )
 
 
@@ -1150,11 +1296,12 @@ def system_health():
         
         # Table sizes using PostgreSQL system catalogs
         cursor.execute("""
-            SELECT 
-                schemaname || '.' || tablename AS table_name,
+            SELECT
+                schemaname || '.' || relname AS table_name,
                 n_live_tup AS row_count
             FROM pg_stat_user_tables
             ORDER BY n_live_tup DESC
+            LIMIT 20
         """)
         table_stats = cursor.fetchall()
         
@@ -1170,6 +1317,214 @@ def system_health():
         table_stats=table_stats
     )
 
+@bp.route("/global-users")
+@login_required
+@require_horizon
+def global_users():
+    """Global user management - shows all users across all instances."""
+    cu = current_user()
+    
+    # Get search/filter parameters
+    search = request.args.get('search', '')
+    instance_filter = request.args.get('instance_id', type=int)
+    permission_filter = request.args.get('permission_level', '')
+    status_filter = request.args.get('status', '')  # 'active' or 'inactive'
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        # Get all instances for filter dropdown
+        cursor.execute("""
+            SELECT id, name, display_name, is_active
+            FROM instances
+            ORDER BY name
+        """)
+        instances = cursor.fetchall()
+        
+        # Build user query with filters
+        query = """
+            SELECT 
+                u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
+                u.permission_level, u.module_permissions, u.is_active,
+                u.created_at, u.last_login, u.instance_id,
+                i.name as instance_name, i.display_name as instance_display_name,
+                i.is_active as instance_active
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            WHERE u.deleted_at IS NULL
+        """
+        params = []
+        
+        # Apply filters
+        if search:
+            query += """ AND (
+                u.username ILIKE %s OR 
+                u.first_name ILIKE %s OR 
+                u.last_name ILIKE %s OR 
+                u.email ILIKE %s
+            )"""
+            search_term = f"%{search}%"
+            params.extend([search_term, search_term, search_term, search_term])
+        
+        if instance_filter:
+            query += " AND u.instance_id = %s"
+            params.append(instance_filter)
+        
+        if permission_filter:
+            query += " AND u.permission_level = %s"
+            params.append(permission_filter)
+        
+        if status_filter == 'active':
+            query += " AND u.is_active = TRUE"
+        elif status_filter == 'inactive':
+            query += " AND u.is_active = FALSE"
+        
+        query += " ORDER BY i.name, u.username"
+        
+        cursor.execute(query, params)
+        all_users = cursor.fetchall()
+        
+        # Get user statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_users,
+                COUNT(CASE WHEN permission_level = 'S1' THEN 1 END) as s1_count,
+                COUNT(CASE WHEN permission_level = 'L3' THEN 1 END) as l3_count,
+                COUNT(CASE WHEN permission_level = 'L2' THEN 1 END) as l2_count,
+                COUNT(CASE WHEN permission_level = 'L1' THEN 1 END) as l1_count,
+                COUNT(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 END) as module_count,
+                COUNT(CASE WHEN is_active = TRUE THEN 1 END) as active_count,
+                COUNT(CASE WHEN is_active = FALSE THEN 1 END) as inactive_count
+            FROM users
+            WHERE deleted_at IS NULL
+        """)
+        stats = cursor.fetchone()
+        
+        cursor.close()
+    
+    record_global_audit(cu, "view_global_users", f"Viewed global user list ({len(all_users)} users)")
+    
+    return render_template(
+        "horizon/global_users.html",
+        active="users",
+        page="global_users",
+        cu=cu,
+        instances=instances,
+        users=all_users,
+        stats=stats,
+        search=search,
+        instance_filter=instance_filter,
+        permission_filter=permission_filter,
+        status_filter=status_filter
+    )
+
+@bp.route("/global-users/export")
+@login_required
+@require_horizon
+def export_global_users():
+    """Export all users as CSV or JSON."""
+    cu = current_user()
+    
+    # Get same filters as global_users route
+    search = request.args.get('search', '')
+    instance_filter = request.args.get('instance_id', type=int)
+    permission_filter = request.args.get('permission_level', '')
+    status_filter = request.args.get('status', '')
+    export_format = request.args.get('export', 'csv')
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        
+        query = """
+            SELECT 
+                u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
+                u.permission_level, u.is_active, u.created_at, u.last_login,
+                i.name as instance_name
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            WHERE u.deleted_at IS NULL
+        """
+        params = []
+        
+        # Apply same filters
+        if search:
+            query += """ AND (
+                u.username ILIKE %s OR u.first_name ILIKE %s OR 
+                u.last_name ILIKE %s OR u.email ILIKE %s
+            )"""
+            search_term = f"%{search}%"
+            params.extend([search_term] * 4)
+        
+        if instance_filter:
+            query += " AND u.instance_id = %s"
+            params.append(instance_filter)
+        
+        if permission_filter:
+            query += " AND u.permission_level = %s"
+            params.append(permission_filter)
+        
+        if status_filter == 'active':
+            query += " AND u.is_active = TRUE"
+        elif status_filter == 'inactive':
+            query += " AND u.is_active = FALSE"
+        
+        query += " ORDER BY i.name, u.username"
+        
+        cursor.execute(query, params)
+        users = cursor.fetchall()
+        cursor.close()
+    
+    record_global_audit(cu, "export_global_users", 
+                       f"Exported {len(users)} users as {export_format}")
+    
+    if export_format == 'json':
+        users_data = [{
+            'id': u.id,
+            'username': u.username,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
+            'email': u.email,
+            'phone': u.phone,
+            'permission_level': u.permission_level or 'Module User',
+            'is_active': u.is_active,
+            'instance': u.instance_name,
+            'created_at': str(u.created_at),
+            'last_login': str(u.last_login) if u.last_login else None
+        } for u in users]
+        
+        return Response(
+            json.dumps(users_data, indent=2),
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment; filename=all_users_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'}
+        )
+    else:
+        # CSV export
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        writer.writerow(['Username', 'First Name', 'Last Name', 'Email', 'Phone', 
+                        'Permission Level', 'Status', 'Instance', 'Created', 'Last Login'])
+        
+        for u in users:
+            writer.writerow([
+                u.username, u.first_name, u.last_name, u.email or '', u.phone or '',
+                u.permission_level or 'Module User',
+                'Active' if u.is_active else 'Inactive',
+                u.instance_name,
+                str(u.created_at) if u.created_at else '',
+                str(u.last_login) if u.last_login else ''
+            ])
+        
+        output.seek(0)
+        mem = io.BytesIO(output.getvalue().encode("utf-8"))
+        mem.seek(0)
+        
+        return send_file(
+            mem,
+            mimetype="text/csv",
+            as_attachment=True,
+            download_name=f"all_users_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        )
 
 # ---------- API Endpoints ----------
 @bp.route("/api/instance/<int:instance_id>/stats")

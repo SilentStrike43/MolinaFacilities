@@ -67,30 +67,35 @@
                             <a href="{{ url_for('fulfillment.insights_export', order_number=order_number, date_from=date_from, date_to=date_to, requester_name=requester_name, page_count_min=page_count_min, page_count_max=page_count_max, completed_by=completed_by, location=location) }}" class="btn btn-success">
                                 <i class="bi bi-download"></i> Export CSV
                             </a>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+                                <i class="bi bi-download"></i> Selective Export
+                            </button>
                         </div>
                     </form>
                     
                     <!-- Statistics -->
                     <div class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-primary text-white">
-                                <div class="card-body">
+                                <div class="card-body text-center">
                                     <h3 class="mb-0">{{ total_orders }}</h3>
                                     <small>Total Orders</small>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-success text-white">
-                                <div class="card-body">
+                                <div class="card-body text-center">
                                     <h3 class="mb-0">{{ total_pages }}</h3>
                                     <small>Total Pages</small>
+                                    <hr class="my-2 bg-white">
+                                    <strong>Avg: {{ avg_pages }}</strong>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="card bg-info text-white">
-                                <div class="card-body">
+                                <div class="card-body text-center">
                                     <h3 class="mb-0">{{ avg_pages }}</h3>
                                     <small>Avg Pages/Order</small>
                                 </div>
@@ -99,10 +104,19 @@
                         <div class="col-md-3">
                             <div class="card bg-warning text-dark">
                                 <div class="card-body">
-                                    <h6 class="mb-2">By Location</h6>
+                                    <h6 class="mb-2"><strong>By Location</strong></h6>
                                     {% for loc, count in by_location.items() %}
-                                    <small>{{ loc }}: {{ count }}</small><br>
+                                    <small><strong>{{ loc }}:</strong> {{ count }} orders</small><br>
                                     {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h6 class="mb-2"><strong>Quick Stats</strong></h6>
+                                    <small><strong>Date Range:</strong> {{ date_from }} to {{ date_to }}</small><br>
+                                    <small><strong>Total Records:</strong> {{ total_orders }}</small>
                                 </div>
                             </div>
                         </div>
@@ -152,4 +166,104 @@
         </div>
     </div>
 </div>
+
+<!-- Selective Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-download"></i> Select Metrics to Export
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Choose which columns to include in your export:</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_order" value="order_number" checked>
+                    <label class="form-check-label" for="col_order">Order Number</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_timestamp" value="timestamp" checked>
+                    <label class="form-check-label" for="col_timestamp">Timestamp</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_requester" value="requester_name" checked>
+                    <label class="form-check-label" for="col_requester">Requester Name</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_pages" value="page_count" checked>
+                    <label class="form-check-label" for="col_pages">Page Count (with average)</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_completed" value="completed_by" checked>
+                    <label class="form-check-label" for="col_completed">Completed By</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_completed_at" value="completed_at">
+                    <label class="form-check-label" for="col_completed_at">Completed At</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="col_location" value="location">
+                    <label class="form-check-label" for="col_location">Location</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="exportSelective()">
+                    <i class="bi bi-download"></i> Export Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportSelective() {
+    // Get selected columns
+    const checkboxes = document.querySelectorAll('#exportModal .form-check-input:checked');
+    const columns = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (columns.length === 0) {
+        alert('Please select at least one column to export.');
+        return;
+    }
+    
+    // Get current filter values
+    const data = {
+        columns: columns,
+        date_from: '{{ date_from }}',
+        date_to: '{{ date_to }}',
+        location: '{{ location }}'
+    };
+    
+    // Send POST request
+    fetch('{{ url_for("fulfillment.insights_export_selective") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        // Download file
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fulfillment_selective_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        // Close modal
+        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        alert('Error exporting data. Please try again.');
+    });
+}
+</script>
+
 {% endblock %}

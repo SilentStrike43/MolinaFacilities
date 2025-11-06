@@ -423,6 +423,49 @@ def asset():
         edit=edit
     )
 
+@inventory_bp.route("/asset/<int:asset_id>/delete", methods=["POST"])
+@login_required
+@require_asset
+def delete_asset(asset_id: int):
+    """Delete asset (L1+ only)."""
+    cu = current_user()
+    
+    # Check if user is L1+
+    permission_level = cu.get('permission_level', '')
+    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+        return jsonify({"success": False, "error": "Only L1+ administrators can delete assets"}), 403
+    
+    try:
+        with get_db_connection("inventory") as conn:
+            cursor = conn.cursor()
+            
+            # Get asset info before deleting
+            cursor.execute("SELECT sku, product FROM assets WHERE id = %s", (asset_id,))
+            asset = cursor.fetchone()
+            
+            if not asset:
+                return jsonify({"success": False, "error": "Asset not found"}), 404
+            
+            # Soft delete - set status to 'deleted'
+            cursor.execute("""
+                UPDATE assets 
+                SET status = 'deleted',
+                    notes = CONCAT(notes, '\nDELETED BY: ', %s, ' ON: ', CURRENT_TIMESTAMP)
+                WHERE id = %s
+            """, (cu['username'], asset_id))
+            
+            conn.commit()
+            cursor.close()
+        
+        record_audit(cu, "delete_asset", "inventory", 
+                    f"Deleted asset #{asset_id}: {asset['sku']} - {asset['product']}")
+        
+        return jsonify({"success": True, "message": "Asset deleted successfully"})
+        
+    except Exception as e:
+        logger.error(f"Error deleting asset: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @inventory_bp.route("/asset/<int:aid>/edit")
 @login_required
 @require_asset

@@ -53,16 +53,34 @@ def create_request(data: dict, user_location: str = 'NY') -> int:
         cursor.close()
         return rid
 
-def update_status(request_id: int, status: str, archive: bool = False, staff_id: int = None, staff_name: str = None):
+def update_status(request_id: int, status: str, archive: bool = False, staff_id: int = None, staff_name: str = None, completed_by_id: int = None, completed_by_name: str = None):
     """Update request status in BOTH tables."""
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
         
         # Update fulfillment_requests
-        if archive:
+        if status == 'Completed':
+            # Auto-fill completed_by when marking as Completed
             cursor.execute("""
                 UPDATE fulfillment_requests 
-                SET status=%s, is_archived=1, assigned_staff_id=%s, assigned_staff_name=%s,
+                SET status=%s, is_archived=TRUE,
+                    completed_by_id=%s, completed_by_name=%s,
+                    completed_at=CURRENT_TIMESTAMP
+                WHERE id=%s
+            """, (status, completed_by_id, completed_by_name, request_id))
+            
+            # Also update service_requests
+            cursor.execute("""
+                UPDATE service_requests
+                SET status=%s, is_archived=TRUE, completed_at=CURRENT_TIMESTAMP
+                WHERE id=%s
+            """, (status, request_id))
+            
+        elif archive:
+            cursor.execute("""
+                UPDATE fulfillment_requests 
+                SET status=%s, is_archived=TRUE,
+                    assigned_staff_id=%s, assigned_staff_name=%s,
                     completed_at=CURRENT_TIMESTAMP
                 WHERE id=%s
             """, (status, staff_id, staff_name, request_id))
@@ -70,7 +88,7 @@ def update_status(request_id: int, status: str, archive: bool = False, staff_id:
             # Also update service_requests
             cursor.execute("""
                 UPDATE service_requests
-                SET status=%s, is_archived=1, completed_at=CURRENT_TIMESTAMP
+                SET status=%s, is_archived=TRUE, completed_at=CURRENT_TIMESTAMP
                 WHERE id=%s
             """, (status, request_id))
         else:
@@ -437,7 +455,14 @@ def queue():
         status = request.form.get("status") or "Received"
         cancellation_reason = request.form.get("cancellation_reason", "")
         
-        archive = (status == "Archive") or (status == "Cancelled") or (status == "Completed")
+        archive = (status == "Archive") or (status == "Cancelled")
+        
+        # Auto-fill completed_by when marking as Completed
+        completed_by_id = None
+        completed_by_name = None
+        if status == "Completed":
+            completed_by_id = u["id"]
+            completed_by_name = u["username"]
         
         # Store cancellation reason if cancelled
         if status == "Cancelled" and cancellation_reason:
@@ -456,7 +481,9 @@ def queue():
             status,
             archive=archive,
             staff_id=u["id"],
-            staff_name=u["username"]
+            staff_name=u["username"],
+            completed_by_id=completed_by_id,
+            completed_by_name=completed_by_name
         )
         
         action_detail = f"rid={rid}, status={status}"
@@ -797,7 +824,7 @@ def insights():
                 fr.requester_name,
                 fr.description,
                 fr.total_pages,
-                fr.assigned_staff_name,
+                fr.completed_by_name,
                 fr.completed_at,
                 sr.location
             FROM fulfillment_requests fr
@@ -1029,6 +1056,124 @@ def insights_export():
     mem.seek(0)
     
     filename = f"fulfillment_insights_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return send_file(
+        mem,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=filename
+    )
+
+@fulfillment_bp.route("/insights/export-selective", methods=["POST"])
+@login_required
+def insights_export_selective():
+    """Export selected metrics from fulfillment insights."""
+    import csv
+    import io
+    from flask import send_file
+    
+    cu = current_user()
+    
+    if not _can_view_fulfillment_insights(cu):
+        flash("You need M3C permissions or higher.", "danger")
+        return redirect(url_for("home.index"))
+    
+    # Get selected columns from POST
+    selected_columns = request.json.get('columns', [])
+    
+    # Get filter parameters
+    date_from = request.json.get('date_from', '')
+    date_to = request.json.get('date_to', '')
+    location = request.json.get('location', '')
+    
+    # Build query with selected columns
+    column_map = {
+        'order_number': 'fr.id',
+        'timestamp': 'fr.date_submitted',
+        'requester_name': 'fr.requester_name',
+        'page_count': 'fr.total_pages',
+        'completed_by': 'fr.completed_by_name',
+        'completed_at': 'fr.completed_at',
+        'location': 'sr.location'
+    }
+    
+    # Build SELECT clause
+    select_cols = []
+    header_names = []
+    for col in selected_columns:
+        if col in column_map:
+            select_cols.append(column_map[col])
+            header_names.append(col.replace('_', ' ').title())
+    
+    if not select_cols:
+        return jsonify({"error": "No columns selected"}), 400
+    
+    # Query data
+    with get_db_connection("fulfillment") as conn:
+        cursor = conn.cursor()
+        
+        query = f"""
+            SELECT {', '.join(select_cols)}
+            FROM fulfillment_requests fr
+            LEFT JOIN service_requests sr ON fr.id = sr.id
+            WHERE fr.is_archived = TRUE
+        """
+        params = []
+        
+        if date_from:
+            query += " AND DATE(fr.date_submitted) >= %s"
+            params.append(date_from)
+        
+        if date_to:
+            query += " AND DATE(fr.date_submitted) <= %s"
+            params.append(date_to)
+        
+        if location:
+            query += " AND sr.location = %s"
+            params.append(location)
+        
+        query += " ORDER BY fr.date_submitted DESC"
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        cursor.close()
+    
+    # Create CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(header_names)
+    
+    # Calculate averages for numeric columns
+    if 'page_count' in selected_columns and rows:
+        total_pages = sum(row[selected_columns.index('page_count')] or 0 for row in rows)
+        avg_pages = total_pages / len(rows) if rows else 0
+    else:
+        total_pages = 0
+        avg_pages = 0
+    
+    # Data rows
+    for row in rows:
+        writer.writerow(list(row))
+    
+    # Add summary row
+    if 'page_count' in selected_columns:
+        summary_row = [''] * len(selected_columns)
+        page_idx = selected_columns.index('page_count')
+        summary_row[page_idx] = f"TOTAL: {total_pages} (Avg: {avg_pages:.1f})"
+        writer.writerow([])
+        writer.writerow(summary_row)
+    
+    # Record export
+    record_audit(cu, "export_selective_fulfillment", "fulfillment", 
+                f"Exported {len(rows)} orders with columns: {', '.join(selected_columns)}")
+    
+    # Return CSV
+    output.seek(0)
+    mem = io.BytesIO(output.getvalue().encode("utf-8"))
+    mem.seek(0)
+    
+    filename = f"fulfillment_selective_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     return send_file(
         mem,
         mimetype="text/csv",

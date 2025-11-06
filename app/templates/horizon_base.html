@@ -3,246 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gridline Services{% endblock %}</title>
+    <title>{% block title %}Horizon - Gridline Services{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* ============================================================ */
-        /* GRIDLINE SERVICES - PLATFORM BRAND */
-        /* ============================================================ */
         :root {
-            /* Platform Core */
-            --gridline-primary: #0066cc;
-            --gridline-secondary: #00b4d8;
-            --gridline-dark: #1a1a2e;
-            --gridline-light: #f8f9fa;
+            /* Horizon Dark Theme */
+            --horizon-bg: linear-gradient(180deg, #1a1d2e 0%, #0f1419 100%);
+            --horizon-accent: #f59e0b;
+            --horizon-accent-dark: #d97706;
+            --horizon-text: #e5e7eb;
+            --horizon-text-muted: #9ca3af;
+            --horizon-hover: rgba(245, 158, 11, 0.15);
+            --horizon-active: rgba(245, 158, 11, 0.25);
             
-            /* Module-Specific Colors */
-            --horizon-color: #f59e0b;
-            --horizon-light: #fef3c7;
-            
-            --send-color: #3b82f6;
-            --send-light: #dbeafe;
-            
-            --inventory-color: #10b981;
-            --inventory-light: #d1fae5;
-            
-            --fulfillment-color: #8b5cf6;
-            --fulfillment-light: #ede9fe;
-            
-            /* Status Colors */
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
+            --sidebar-width: 280px;
         }
         
-        /* ============================================================ */
-        /* BODY & TYPOGRAPHY */
-        /* ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--gridline-light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f9fc;
+            color: #1a1d2e;
+            overflow-x: hidden;
         }
         
-        main {
-            flex: 1;
+        /* ============ HORIZON SIDEBAR ============ */
+        .horizon-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--horizon-bg);
+            color: var(--horizon-text);
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
         }
         
-        /* ============================================================ */
-        /* NAVIGATION BAR */
-        /* ============================================================ */
-        .navbar {
-            background: white !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 0.75rem 0;
+        .horizon-sidebar::-webkit-scrollbar {
+            width: 6px;
         }
         
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            letter-spacing: -0.5px;
-            color: var(--gridline-primary) !important;
+        .horizon-sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .horizon-sidebar::-webkit-scrollbar-thumb {
+            background: var(--horizon-accent);
+            border-radius: 3px;
+        }
+        
+        /* Brand */
+        .horizon-brand {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .horizon-brand-logo {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
+            gap: 0.875rem;
+            text-decoration: none;
+            color: var(--horizon-text);
         }
         
-        .navbar-brand:hover {
-            transform: scale(1.05);
+        .horizon-brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--horizon-accent), var(--horizon-accent-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
         }
         
-        .brand-icon {
-            font-size: 1.75rem;
-            filter: drop-shadow(0 2px 4px rgba(0,102,204,0.3));
-        }
-        
-        .app-name {
-            background: linear-gradient(135deg, var(--gridline-primary), var(--gridline-secondary));
+        .horizon-brand-text h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(135deg, #ffffff, var(--horizon-accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
         
-        /* ============================================================ */
-        /* NAV LINKS - Module Specific Colors */
-        /* ============================================================ */
-        .nav-link {
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem !important;
-            border-radius: 8px;
-            margin: 0 0.25rem;
-            color: #374151 !important;
-        }
-        
-        .nav-link:hover {
-            background-color: rgba(0, 102, 204, 0.1);
-            color: var(--gridline-primary) !important;
-            transform: translateY(-2px);
-        }
-        
-        .nav-link.active {
-            background-color: rgba(0, 102, 204, 0.1);
-            color: var(--gridline-primary) !important;
+        .horizon-brand-text p {
+            font-size: 0.75rem;
+            color: var(--horizon-accent);
+            margin: 0;
             font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
         
-        .nav-link i {
-            margin-right: 0.25rem;
-            font-size: 1.1rem;
-            vertical-align: middle;
+        /* Navigation */
+        .horizon-nav {
+            padding: 1rem 0;
         }
         
-        /* Horizon - Amber/Orange */
-        .nav-link.nav-horizon:hover,
-        .nav-link.nav-horizon.active {
-            background-color: var(--horizon-light);
-            color: var(--horizon-color) !important;
+        .horizon-nav-section {
+            padding: 0 1rem;
+            margin-bottom: 1.5rem;
         }
         
-        /* send - Blue */
-        .nav-link.nav-send:hover,
-        .nav-link.nav-send.active {
-            background-color: var(--send-light);
-            color: var(--send-color) !important;
+        .horizon-nav-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--horizon-text-muted);
+            margin-bottom: 0.75rem;
+            padding: 0 0.5rem;
         }
         
-        /* inventory - Green */
-        .nav-link.nav-inventory:hover,
-        .nav-link.nav-inventory.active {
-            background-color: var(--inventory-light);
-            color: var(--inventory-color) !important;
-        }
-        
-        /* Fulfillment - Purple */
-        .nav-link.nav-fulfillment:hover,
-        .nav-link.nav-fulfillment.active {
-            background-color: var(--fulfillment-light);
-            color: var(--fulfillment-color) !important;
-        }
-        
-        /* ============================================================ */
-        /* DROPDOWN MENUS */
-        /* ============================================================ */
-        .dropdown-menu {
-            border: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            border-radius: 12px;
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .dropdown-item {
+        .horizon-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--horizon-text);
+            text-decoration: none;
             border-radius: 8px;
-            padding: 0.625rem 1rem;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
+            font-size: 0.9375rem;
             font-weight: 500;
-            color: #374151;
+            position: relative;
+            margin-bottom: 0.25rem;
         }
         
-        .dropdown-item:hover {
-            background-color: rgba(0, 102, 204, 0.1);
-            color: var(--gridline-primary);
-            transform: translateX(4px);
+        .horizon-nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--horizon-accent);
+            transition: height 0.2s;
+            border-radius: 0 3px 3px 0;
         }
         
-        .dropdown-item i {
-            margin-right: 0.5rem;
-            width: 1.25rem;
+        .horizon-nav-link:hover {
+            background: var(--horizon-hover);
+            color: white;
+        }
+        
+        .horizon-nav-link.active {
+            background: var(--horizon-active);
+            color: white;
+        }
+        
+        .horizon-nav-link.active::before {
+            height: 70%;
+        }
+        
+        .horizon-nav-icon {
+            font-size: 1.125rem;
+            width: 24px;
             text-align: center;
         }
         
-        .dropdown-divider {
-            margin: 0.5rem 0;
-            border-color: #e5e7eb;
+        /* User Section */
+        .horizon-user {
+            padding: 1.5rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(245, 158, 11, 0.2);
         }
         
-        /* ============================================================ */
-        /* MODULE BADGES */
-        /* ============================================================ */
-        .module-badge {
-            display: inline-flex;
+        .horizon-user-info {
+            display: flex;
             align-items: center;
-            gap: 0.25rem;
-            padding: 0.125rem 0.625rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 8px;
+        }
+        
+        .horizon-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--horizon-accent), var(--horizon-accent-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+        
+        .horizon-user-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .horizon-user-name {
             font-weight: 600;
-            border: 1px solid;
+            font-size: 0.875rem;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .module-badge.horizon {
-            background-color: var(--horizon-light);
-            color: var(--horizon-color);
-            border-color: var(--horizon-color);
-        }
-        
-        .module-badge.send {
-            background-color: var(--send-light);
-            color: var(--send-color);
-            border-color: var(--send-color);
-        }
-        
-        .module-badge.inventory {
-            background-color: var(--inventory-light);
-            color: var(--inventory-color);
-            border-color: var(--inventory-color);
-        }
-        
-        .module-badge.fulfillment {
-            background-color: var(--fulfillment-light);
-            color: var(--fulfillment-color);
-            border-color: var(--fulfillment-color);
-        }
-        
-        /* ============================================================ */
-        /* USER BADGE */
-        /* ============================================================ */
-        .instance-badge {
-            background: linear-gradient(135deg, rgba(0, 102, 204, 0.1), rgba(0, 180, 216, 0.1));
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+        .horizon-user-role {
             font-size: 0.75rem;
+            color: var(--horizon-accent);
             font-weight: 600;
-            margin-left: 0.5rem;
-            color: var(--gridline-primary);
-            border: 1px solid rgba(0, 102, 204, 0.2);
         }
         
-        /* ============================================================ */
-        /* HORIZON STAT CARDS */
-        /* ============================================================ */
+        /* Main Content */
+        .horizon-main {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            background: #f8f9fc;
+        }
+        
+        .horizon-topbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .horizon-content {
+            padding: 2rem;
+        }
+        
+        /* Stat Cards */
         .stat-card {
             background: white;
             border-radius: 12px;
@@ -251,25 +252,25 @@
             transition: all 0.3s ease;
             margin-bottom: 1.5rem;
         }
-
+        
         .stat-card:hover {
             box-shadow: 0 4px 16px rgba(0,0,0,0.12);
             transform: translateY(-2px);
         }
-
+        
         .stat-card h3 {
             font-size: 2rem;
             font-weight: 700;
             margin: 0.5rem 0;
-            color: var(--gridline-dark);
+            color: #1a1d2e;
         }
-
+        
         .stat-card p {
             margin: 0;
             color: #6c757d;
             font-weight: 500;
         }
-
+        
         .stat-icon {
             width: 48px;
             height: 48px;
@@ -280,555 +281,147 @@
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
         }
-
-        .table-hover tbody tr {
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: rgba(0,102,204,0.05);
-            transform: scale(1.01);
-        }
-
-        /* ============================================================ */
-        /* CARDS */
-        /* ============================================================ */
-        .card {
-            border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
         
-        .card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-        }
-        
-        .card-header {
-            background: white;
-            border-bottom: 2px solid #f3f4f6;
-            border-radius: 12px 12px 0 0 !important;
-            padding: 1.25rem 1.5rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        /* Module-specific card headers */
-        .card-header.horizon {
-            border-bottom-color: var(--horizon-color);
-        }
-        
-        .card-header.send {
-            border-bottom-color: var(--send-color);
-        }
-        
-        .card-header.inventory {
-            border-bottom-color: var(--inventory-color);
-        }
-        
-        .card-header.fulfillment {
-            border-bottom-color: var(--fulfillment-color);
-        }
-        
-        /* ============================================================ */
-        /* BUTTONS */
-        /* ============================================================ */
-        .btn {
-            border-radius: 8px;
-            font-weight: 600;
-            padding: 0.625rem 1.25rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gridline-primary), var(--gridline-secondary));
-            border: none;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,102,204,0.3);
-        }
-        
-        .btn-horizon {
-            background: linear-gradient(135deg, var(--horizon-color), #d97706);
-            border: none;
-            color: white;
-        }
-        
-        .btn-horizon:hover {
-            background: linear-gradient(135deg, #d97706, #b45309);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245,158,11,0.3);
-        }
-        
-        .btn-send {
-            background: linear-gradient(135deg, var(--send-color), #2563eb);
-            border: none;
-            color: white;
-        }
-        
-        .btn-send:hover {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
-        }
-        
-        .btn-inventory {
-            background: linear-gradient(135deg, var(--inventory-color), #059669);
-            border: none;
-            color: white;
-        }
-        
-        .btn-inventory:hover {
-            background: linear-gradient(135deg, #059669, #047857);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
-        }
-        
-        .btn-fulfillment {
-            background: linear-gradient(135deg, var(--fulfillment-color), #7c3aed);
-            border: none;
-            color: white;
-        }
-        
-        .btn-fulfillment:hover {
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139,92,246,0.3);
-        }
-        
-        /* ============================================================ */
-        /* ALERTS */
-        /* ============================================================ */
-        .alert {
-            border: none;
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            font-weight: 500;
-        }
-        
-        .alert-success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        
-        .alert-danger {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .alert-warning {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .alert-info {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        
-        /* ============================================================ */
-        /* FOOTER */
-        /* ============================================================ */
-        footer {
-            background: white;
-            border-top: 2px solid #f3f4f6;
-            margin-top: auto;
-        }
-        
-        footer .footer-brand {
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--gridline-primary), var(--gridline-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .module-list {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .module-list .module-badge {
-            margin: 0;
-        }
-        
-        /* ============================================================ */
-        /* RESPONSIVE ADJUSTMENTS */
-        /* ============================================================ */
-        @media (max-width: 991px) {
-            .navbar-brand {
-                font-size: 1.25rem;
+        /* Responsive */
+        @media (max-width: 768px) {
+            .horizon-sidebar {
+                transform: translateX(-100%);
             }
             
-            .brand-icon {
-                font-size: 1.5rem;
+            .horizon-sidebar.show {
+                transform: translateX(0);
             }
             
-            .instance-badge {
-                display: block;
+            .horizon-main {
                 margin-left: 0;
-                margin-top: 0.25rem;
-                width: fit-content;
             }
-        }
-        
-        /* ============================================================ */
-        /* LOADING SPINNER */
-        /* ============================================================ */
-        .loading-spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid rgba(0,0,0,0.1);
-            border-radius: 50%;
-            border-top-color: var(--gridline-primary);
-            animation: spinner 0.6s linear infinite;
-        }
-        
-        @keyframes spinner {
-            to { transform: rotate(360deg); }
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-<!-- ============================================================ -->
-<!-- NAVIGATION -->
-<!-- ============================================================ -->
-<nav class="navbar navbar-expand-lg navbar-light sticky-top">
-    <div class="container-fluid">
-        <!-- Brand -->
-        <a class="navbar-brand" href="{{ url_for('home.index') }}">
-            <span class="brand-icon">💎</span>
-            <span class="app-name">Gridline Services</span>
-        </a>
-        
-        <!-- Mobile Toggle -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <!-- Navigation Links -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                {% if cu %}
-                    <!-- Home -->
-                    <li class="nav-item">
-                        <a class="nav-link {% if active == 'home' %}active{% endif %}" 
-                           href="{{ url_for('home.index') }}">
-                            <i class="bi bi-house-door-fill"></i> Home
-                        </a>
-                    </li>
-                    
-                    <!-- HORIZON (L3/S1 only) -->
-                    {% if cu.get('permission_level') in ['L3', 'S1'] %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle nav-horizon {% if active == 'horizon' %}active{% endif %}" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-sunrise"></i> Horizon
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.dashboard') }}">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.instance_management') }}">
-                                    <i class="bi bi-building"></i> Instances
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.instance_support') }}">
-                                    <i class="bi bi-headset"></i> Support
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.global_insights') }}">
-                                    <i class="bi bi-pie-chart"></i> Insights
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.global_audits') }}">
-                                    <i class="bi bi-clipboard-data"></i> Audits
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('horizon.system_health') }}">
-                                    <i class="bi bi-heart-pulse"></i> System Health
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    
-                    <!-- LEDGER (Send Module - Rebranded) -->
-                    {% if cu.get('can_send') or cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle nav-ledger {% if active == 'send' %}active{% endif %}" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-journal-text"></i> Ledger
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('send.index') }}">
-                                    <i class="bi bi-envelope-plus"></i> Check In
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('send.tracking') }}">
-                                    <i class="bi bi-search"></i> Tracking
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('send.insights') }}">
-                                    <i class="bi bi-bar-chart-line"></i> Reports
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    
-                    <!-- FLOW (Inventory Module - Rebranded) -->
-                    {% if cu.get('can_inventory') or cu.get('can_asset') or cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle nav-flow {% if active == 'inventory' %}active{% endif %}" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-boxes"></i> Flow
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('inventory.asset') }}">
-                                    <i class="bi bi-truck"></i> Delivery
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('asset_ledger.ledger_home') }}">
-                                    <i class="bi bi-search"></i> Look-up
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('inventory.insights') }}">
-                                    <i class="bi bi-folder2-open"></i> Dossier
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    
-                    <!-- FULFILLMENT (Print & Office Services) -->
-                    {% if cu.get('can_fulfillment_customer') or cu.get('can_fulfillment_service') or cu.get('can_fulfillment_manager') or cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle nav-fulfillment {% if active == 'fulfillment' %}active{% endif %}" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-printer"></i> Fulfillment
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('fulfillment.request_form') }}">
-                                    <i class="bi bi-plus-circle"></i> New Request
-                                </a>
-                            </li>
-                            {% if cu.get('can_fulfillment_service') or cu.get('can_fulfillment_manager') or cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('fulfillment.queue') }}">
-                                    <i class="bi bi-list-task"></i> Queue
-                                </a>
-                            </li>
-                            {% endif %}
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('fulfillment.archive') }}">
-                                    <i class="bi bi-archive"></i> Archive
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('fulfillment.insights') }}">
-                                    <i class="bi bi-graph-up"></i> Insights
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% endif %}
-                    
-                    <!-- ADMINISTRATION (L1/L2 for instance) -->
-                    {% if cu.get('can_admin_users') or cu.get('permission_level') in ['L1', 'L2'] %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {% if active == 'admin' or active == 'users' %}active{% endif %}" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-gear-fill"></i> Administration
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('users.user_list') }}">
-                                    <i class="bi bi-people"></i> Users
-                                </a>
-                            </li>
-                            {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('users.elevation_management') }}">
-                                    <i class="bi bi-shield-check"></i> Permissions
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
-                                    <i class="bi bi-speedometer2"></i> Dashboard
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ url_for('admin.audit_logs') }}">
-                                    <i class="bi bi-journal-text"></i> Audit Logs
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                    {% endif %}
-                {% endif %}
-            </ul>
-            
-            <!-- User Menu -->
-            {% if cu %}
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle"></i>
-                        <span class="instance-badge">
-                            {% if cu.get('permission_level') == 'S1' %}
-                                System
-                            {% elif cu.get('permission_level') == 'L3' %}
-                                App Operator
-                            {% elif cu.get('permission_level') == 'L2' %}
-                                Instance Admin
-                            {% elif cu.get('permission_level') == 'L1' %}
-                                Module Admin
-                            {% else %}
-                                Module User
-                            {% endif %}
-                            • Horizon
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                            <a class="dropdown-item" href="{{ url_for('users.profile') }}">
-                                <i class="bi bi-person"></i> Profile
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-            {% endif %}
+    <!-- Horizon Sidebar -->
+    <div class="horizon-sidebar">
+        <div class="horizon-brand">
+            <a href="{{ url_for('horizon.dashboard') }}" class="horizon-brand-logo">
+                <div class="horizon-brand-icon">
+                    🌅
+                </div>
+                <div class="horizon-brand-text">
+                    <h1>Horizon</h1>
+                    <p>Platform Control</p>
+                </div>
+            </a>
         </div>
-    </div>
-</nav>
-    
-    <!-- ============================================================ -->
-    <!-- FLASH MESSAGES -->
-    <!-- ============================================================ -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="container mt-3">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' or category == 'error' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        
+        <div class="horizon-nav">
+            <div class="horizon-nav-section">
+                <a href="{{ url_for('horizon.dashboard') }}" class="horizon-nav-link {{ 'active' if active=='dashboard' else '' }}">
+                    <i class="bi bi-speedometer2 horizon-nav-icon"></i>
+                    <span>Dashboard</span>
+                </a>
             </div>
-            {% endfor %}
+            
+            <div class="horizon-nav-section">
+                <div class="horizon-nav-title">Instance Management</div>
+                <a href="{{ url_for('horizon.instance_management') }}" class="horizon-nav-link {{ 'active' if active=='instances' else '' }}">
+                    <i class="bi bi-building horizon-nav-icon"></i>
+                    <span>Instances</span>
+                </a>
+                <a href="{{ url_for('horizon.create_instance') }}" class="horizon-nav-link {{ 'active' if active=='create-instance' else '' }}">
+                    <i class="bi bi-plus-circle horizon-nav-icon"></i>
+                    <span>Create Instance</span>
+                </a>
+                <a href="{{ url_for('horizon.instance_support') }}" class="horizon-nav-link {{ 'active' if active=='support' else '' }}">
+                    <i class="bi bi-headset horizon-nav-icon"></i>
+                    <span>Support Tools</span>
+                </a>
+            </div>
+            
+            <div class="horizon-nav-section">
+                <div class="horizon-nav-title">Analytics & Monitoring</div>
+                <a href="{{ url_for('horizon.global_insights') }}" class="horizon-nav-link {{ 'active' if active=='insights' else '' }}">
+                    <i class="bi bi-pie-chart horizon-nav-icon"></i>
+                    <span>Global Insights</span>
+                </a>
+                <a href="{{ url_for('horizon.global_audits') }}" class="horizon-nav-link {{ 'active' if active=='audits' else '' }}">
+                    <i class="bi bi-clipboard-data horizon-nav-icon"></i>
+                    <span>Audit Logs</span>
+                </a>
+                <a href="{{ url_for('horizon.system_health') }}" class="horizon-nav-link {{ 'active' if active=='health' else '' }}">
+                    <i class="bi bi-heart-pulse horizon-nav-icon"></i>
+                    <span>System Health</span>
+                </a>
+            </div>
+            
+            <div class="horizon-nav-section">
+                <div class="horizon-nav-title">Quick Access</div>
+                <a href="{{ url_for('home.index') }}" class="horizon-nav-link">
+                    <i class="bi bi-house-door horizon-nav-icon"></i>
+                    <span>Back to App</span>
+                </a>
+                <a href="{{ url_for('horizon.global_users') }}" class="horizon-nav-link">
+                    <i class="bi bi-people"></i>
+                    <span>Global Users</span>
+                </a>
+            </div>
         </div>
-        {% endif %}
-    {% endwith %}
-    
-    <!-- ============================================================ -->
-    <!-- MAIN CONTENT -->
-    <!-- ============================================================ -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-    
-    <!-- ============================================================ -->
-    <!-- FOOTER -->
-    <!-- ============================================================ -->
-    <footer class="mt-5 py-4">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <p class="mb-2">
-                        <span class="footer-brand">💎 Gridline Services</span>
-                        <span class="text-muted"> © 2025</span>
-                    </p>
-                    <div class="module-list">
-                        <span class="module-badge horizon">🌅 Horizon</span>
-                        <span class="module-badge send">📋 send</span>
-                        <span class="module-badge inventory">📦 inventory</span>
-                        <span class="module-badge fulfillment">🖨️ Fulfillment</span>
+        
+        {% if cu %}
+        <div class="horizon-user">
+            <div class="horizon-user-info">
+                <div class="horizon-user-avatar">
+                    {{ cu.username[0]|upper if cu.username else 'S' }}
+                </div>
+                <div class="horizon-user-details">
+                    <div class="horizon-user-name">{{ cu.username }}</div>
+                    <div class="horizon-user-role">
+                        {% if cu.permission_level == 'S1' %}System Admin
+                        {% elif cu.permission_level == 'L3' %}App Operator
+                        {% else %}Administrator{% endif %}
                     </div>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <p class="small text-muted mb-0">
-                        <i class="bi bi-shield-check text-success"></i> Enterprise-Grade •
-                        <i class="bi bi-diagram-3 text-info"></i> Multi-Tenant •
-                        <i class="bi bi-lightning text-warning"></i> Cloud-Native
-                    </p>
-                </div>
             </div>
         </div>
-    </footer>
+        {% endif %}
+    </div>
     
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Global JavaScript -->
-    <script>
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
-            alerts.forEach(function(alert) {
-                setTimeout(function() {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
-        });
+    <!-- Main Content -->
+    <div class="horizon-main">
+        <div class="horizon-topbar">
+            <div>
+                <h5 class="mb-0">{% block page_title %}Horizon{% endblock %}</h5>
+            </div>
+            <div>
+                {% if cu %}
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+                {% endif %}
+            </div>
+        </div>
         
-        // Add loading state to buttons on form submit
-        document.addEventListener('DOMContentLoaded', function() {
-            const forms = document.querySelectorAll('form');
-            forms.forEach(function(form) {
-                form.addEventListener('submit', function(e) {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    if (submitBtn && !submitBtn.classList.contains('no-loading')) {
-                        const originalText = submitBtn.innerHTML;
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
-                        
-                        // Restore button after 10 seconds as fallback
-                        setTimeout(function() {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalText;
-                        }, 10000);
-                    }
-                });
-            });
-        });
-    </script>
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="horizon-content">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="horizon-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

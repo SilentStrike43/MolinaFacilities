@@ -582,7 +582,7 @@ body.modal-open .user-card:hover {
             {% endif %}
         </div>
         {% if can_create %}
-        <a href="{{ url_for('users.create') }}" class="btn-header">
+        <a href="{{ url_for('users.create', instance_id=instance_id) }}" class="btn btn-primary">
             <i class="bi bi-person-plus"></i>
             Add First User
         </a>

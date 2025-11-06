@@ -281,55 +281,78 @@ def record_audit(user_data, action, module, details, target_user_id=None, target
 @users_bp.route("/")
 @login_required
 def user_list():
-    """Display user list with search and filtering."""
+    """List users for the specified instance."""
     cu = current_user()
-    if not can_view_users(cu):
-        flash("You don't have access to Users.", "danger")
-        return redirect(url_for("home.index"))
     
-    # Get query parameters
-    q = (request.args.get("q") or "").strip().lower()
-    include_inactive = bool(request.args.get("all"))
+    # Get instance_id from query parameter
+    instance_id = request.args.get('instance_id', type=int)
     
-    rows = list_users(include_system=False, include_deleted=include_inactive)
-    
-    # Filter and enhance user data
-    filtered = []
-    for row in rows:
-        # Convert pyodbc Row to dict properly
-        if hasattr(row, 'cursor_description'):
-            row_dict = dict(zip([col[0] for col in row.cursor_description], row))
+    # L3/S1 can view any instance, others can only view their own
+    if cu.get('permission_level') not in ['L3', 'S1']:
+        # L2 can view instances they have access to
+        if cu.get('permission_level') == 'L2':
+            from app.core.instance_access import user_can_access_instance
+            if instance_id and not user_can_access_instance(cu, instance_id):
+                flash("You don't have access to this instance.", "danger")
+                return redirect(url_for('home.index'))
         else:
-            row_dict = dict(row) if not isinstance(row, dict) else row
+            # L1 and below can only see their own instance
+            instance_id = cu.get('instance_id')
+    
+    # If no instance specified and user is L3/S1, show instance selector
+    if not instance_id and cu.get('permission_level') in ['L3', 'S1']:
+        flash("Please select an instance to view users.", "info")
+        return redirect(url_for('horizon.global_users'))
+    
+    if not instance_id:
+        flash("Instance not found.", "danger")
+        return redirect(url_for('home.index'))
+    
+    # Get instance info
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, name, display_name 
+            FROM instances 
+            WHERE id = %s
+        """, (instance_id,))
+        instance = cursor.fetchone()
         
-        # Add effective permissions
-        row_dict["effective_permissions"] = PermissionManager.get_effective_permissions(row_dict)
-        row_dict["permission_level_desc"] = PermissionManager.get_permission_description(
-            row_dict.get("permission_level", "")
-        )
+        if not instance:
+            flash("Instance not found.", "danger")
+            return redirect(url_for('home.index'))
         
-        # Search filter
-        if q:
-            searchable = " ".join([
-                str(row_dict.get("username", "")),
-                str(row_dict.get("first_name", "")),
-                str(row_dict.get("last_name", "")),
-                str(row_dict.get("email", "")),
-                str(row_dict.get("department", "")),
-                str(row_dict.get("id", ""))
-            ]).lower()
-            if q not in searchable:
-                continue
+        # Query users for THIS INSTANCE ONLY
+        show_inactive = request.args.get('show_inactive', 'false') == 'true'
         
-        filtered.append(row_dict)
+        if show_inactive:
+            cursor.execute("""
+                SELECT id, username, first_name, last_name, email, phone,
+                       permission_level, module_permissions, is_active,
+                       created_at, last_login, department, position
+                FROM users
+                WHERE instance_id = %s
+                ORDER BY username
+            """, (instance_id,))
+        else:
+            cursor.execute("""
+                SELECT id, username, first_name, last_name, email, phone,
+                       permission_level, module_permissions, is_active,
+                       created_at, last_login, department, position
+                FROM users
+                WHERE instance_id = %s AND deleted_at IS NULL
+                ORDER BY username
+            """, (instance_id,))
+        
+        users = cursor.fetchall()
+        cursor.close()
     
     return render_template("users/list.html",
-                         active="users", 
-                         page="list",
-                         rows=filtered, 
-                         q=q, 
-                         show_all=include_inactive,
-                         can_create=can_create_users(cu))
+                         active="users",
+                         users=users,
+                         instance=instance,
+                         instance_id=instance_id,
+                         show_inactive=show_inactive)
 
 @users_bp.route("/profile/<int:uid>")
 @login_required
@@ -522,33 +545,52 @@ def create():
         if request.form.get("perm_m3c"):
             module_perms.append("M3C")
         
-        # Get location (only admins can set to ALL)
-        location = request.form.get("location", "NY")
-        cu_level = get_user_permission_level(cu)
-        if location == "ALL" and cu_level not in ['L1', 'L2', 'L3', 'S1']:
-            location = "NY"
-        if location not in ['NY', 'CT', 'ALL']:
-            location = 'NY'
-        
-        data = {
-            "username": username,
-            "password": password,
-            "first_name": request.form.get("first_name", ""),
-            "last_name": request.form.get("last_name", ""),
-            "email": request.form.get("email", ""),
-            "phone": request.form.get("phone", ""),
-            "department": request.form.get("department", ""),
-            "position": request.form.get("position", ""),
-            "permission_level": "",  # Regular users start without admin level
-            "module_permissions": module_perms,
-            "location": location  # ADD THIS
-        }
-        
-        uid = create_user(data)
+        # Get instance_id from query param or current user
+        instance_id = request.args.get('instance_id', type=int)
+        if not instance_id:
+            if cu.get('permission_level') in ['L3', 'S1']:
+                flash("Please specify an instance.", "danger")
+                return redirect(url_for('horizon.global_users'))
+            else:
+                instance_id = cu.get('instance_id')
+
+        # Hash the password
+        import hashlib
+        pw_hash = hashlib.sha256(password.encode()).hexdigest()
+
+        # Create user directly with instance_id
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO users (
+                    username, password_hash, first_name, last_name,
+                    email, phone, department, position,
+                    permission_level, module_permissions, instance_id,
+                    is_active, created_at, created_by
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP, %s)
+                RETURNING id
+            """, (
+                username, pw_hash,
+                request.form.get("first_name", ""),
+                request.form.get("last_name", ""),
+                request.form.get("email", ""),
+                request.form.get("phone", ""),
+                request.form.get("department", ""),
+                request.form.get("position", ""),
+                "",  # permission_level
+                json.dumps(module_perms),
+                instance_id,
+                cu["id"]
+            ))
+            uid = cursor.fetchone()['id']
+            conn.commit()
+            cursor.close()
+
         record_audit(cu, "create_user", "users", 
-                    f"Created user {username} with permissions: {', '.join(module_perms)}, location: {location}")
+                    f"Created user {username} with permissions: {', '.join(module_perms)}")
         flash(f"User '{username}' created successfully.", "success")
-        return redirect(url_for("users.user_list"))
+        return redirect(url_for("users.user_list", instance_id=instance_id))
     
     # Check if current user can set ALL location
     cu_level = get_user_permission_level(cu)
@@ -562,7 +604,7 @@ def create():
 @users_bp.route("/edit/<int:uid>", methods=["GET","POST"])
 @login_required
 def edit_user(uid: int):
-    """Edit user (admin only, cannot edit users at same or higher level)."""
+    """Edit user (admin only)."""
     cu = current_user()
     
     try:
@@ -573,11 +615,24 @@ def edit_user(uid: int):
             return redirect(url_for("users.user_list"))
         
         # Convert to dict
-        target = dict(zip([col[0] for col in target.cursor_description], target)) if hasattr(target, 'cursor_description') else target
+        target = dict(target) if not isinstance(target, dict) else target
         
         if not can_modify_user(cu, target):
             flash("You cannot modify users at your level or higher.", "danger")
             return redirect(url_for("users.user_list"))
+        
+        # CRITICAL: Verify user belongs to accessible instance
+        if cu.get('permission_level') not in ['L3', 'S1']:
+            if cu.get('permission_level') == 'L2':
+                from app.core.instance_access import user_can_access_instance
+                if not user_can_access_instance(cu, target.get('instance_id')):
+                    flash("Access denied - user belongs to different instance.", "danger")
+                    return redirect(url_for('users.user_list', instance_id=cu.get('instance_id')))
+            else:
+                # L1 and below can only edit users in their own instance
+                if target.get('instance_id') != cu.get('instance_id'):
+                    flash("Access denied - user belongs to different instance.", "danger")
+                    return redirect(url_for('users.user_list', instance_id=cu.get('instance_id')))
         
         if request.method == "POST":
             try:
@@ -588,7 +643,6 @@ def edit_user(uid: int):
                 phone = request.form.get("phone", "")
                 department = request.form.get("department", "")
                 position = request.form.get("position", "")
-                location = request.form.get("location", "NY")
                 
                 # Get module permissions
                 module_perms = []
@@ -603,55 +657,73 @@ def edit_user(uid: int):
                 if request.form.get("perm_m3c"):
                     module_perms.append("M3C")
                 
-                # Validate location
-                cu_level = get_user_permission_level(cu)
-                if location == "ALL" and cu_level not in ['L1', 'L2', 'L3', 'S1']:
-                    location = "NY"
-                if location not in ['NY', 'CT', 'ALL']:
-                    location = 'NY'
-                
                 # Update database
                 with get_db_connection("core") as conn:
                     cursor = conn.cursor()
                     cursor.execute("""
                         UPDATE users 
                         SET first_name=%s, last_name=%s, email=%s, phone=%s, 
-                            department=%s, position=%s, location=%s, module_permissions=%s,
+                            department=%s, position=%s, module_permissions=%s,
                             last_modified_by=%s, last_modified_at=%s
                         WHERE id = %s
                     """, (first_name, last_name, email, phone, 
-                          department, position, location, json.dumps(module_perms),
+                          department, position, json.dumps(module_perms),
                           cu["id"], datetime.utcnow().isoformat() + "Z", uid))
+                    
+                    # Handle L2 multi-instance access
+                    if target.get('permission_level') == 'L2':
+                        from app.core.instance_access import sync_l2_instance_access
+                        
+                        instance_ids = request.form.getlist('instance_access[]')
+                        instance_ids = [int(i) for i in instance_ids if i]
+                        
+                        sync_l2_instance_access(uid, instance_ids, cu["id"])
+                    
                     conn.commit()
                     cursor.close()
                 
                 # Record audit
-                try:
-                    record_audit(cu, "update_user", "users", f"Updated user {target['username']}")
-                except Exception as audit_error:
-                    print(f"Audit log failed: {audit_error}")
+                record_audit(cu, "update_user", "users", f"Updated user {target['username']}")
                 
                 flash("User updated successfully.", "success")
                 return redirect(url_for("users.user_list"))
                 
             except Exception as e:
-                print(f"ERROR updating user: {e}")
+                logger.error(f"ERROR updating user: {e}")
                 import traceback
                 traceback.print_exc()
                 flash(f"Error updating user: {str(e)}", "danger")
         
-        # Parse existing permissions for display
+        # GET: Load data for form
         target["module_permissions_list"] = PermissionManager.parse_module_permissions(
             target.get("module_permissions", "[]")
         )
         
+        # Get all instances for L2 selection
+        all_instances = []
+        user_instance_ids = []
+        
+        if target.get('permission_level') == 'L2':
+            from app.core.instance_access import get_user_instances
+            
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, name, display_name FROM instances ORDER BY name")
+                all_instances = cursor.fetchall()
+                cursor.close()
+            
+            user_instances = get_user_instances(target)
+            user_instance_ids = [inst['id'] for inst in user_instances]
+        
         return render_template("users/edit.html",
                              active="users",
                              page="edit",
-                             user=target)
+                             user=target,
+                             all_instances=all_instances,
+                             user_instance_ids=user_instance_ids)
                              
     except Exception as e:
-        print(f"ERROR in edit_user route: {e}")
+        logger.error(f"ERROR in edit_user route: {e}")
         import traceback
         traceback.print_exc()
         flash(f"Error loading user: {str(e)}", "danger")

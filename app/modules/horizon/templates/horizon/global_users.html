@@ -1,0 +1,305 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Global Users{% endblock %}
+{% block page_title %}Global User Management{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Global Users</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- User Statistics -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ stats.total_users }}</h3>
+            <p class="mb-0">Total Users</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-danger">{{ stats.s1_count }}</h3>
+            <p class="mb-0">System Admins</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-warning">{{ stats.l3_count }}</h3>
+            <p class="mb-0">Platform Ops</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-info">{{ stats.l2_count }}</h3>
+            <p class="mb-0">Administrators</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ stats.l1_count }}</h3>
+            <p class="mb-0">Managers</p>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card text-center">
+            <h3 class="text-secondary">{{ stats.module_count }}</h3>
+            <p class="mb-0">Module Users</p>
+        </div>
+    </div>
+</div>
+
+<!-- Instance Quick Access -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-building"></i> Manage Users by Instance</h5>
+            <p class="text-muted">Select an instance to view and manage its users:</p>
+            
+            <div class="row">
+                {% for instance in instances %}
+                <div class="col-md-4 mb-3">
+                    <div class="card {% if not instance.is_active %}bg-light{% endif %}">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                {{ instance.name }}
+                                {% if not instance.is_active %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </h6>
+                            {% if instance.display_name and instance.display_name != instance.name %}
+                                <p class="card-text text-muted small mb-2">{{ instance.display_name }}</p>
+                            {% endif %}
+                            <a href="{{ url_for('users.user_list', instance_id=instance.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-people"></i> Manage Users
+                            </a>
+                            <a href="{{ url_for('horizon.instance_detail', instance_id=instance.id) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-info-circle"></i> Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orphaned Users Warning -->
+{% set orphaned_users = users|selectattr('instance_id', 'none')|list %}
+{% if orphaned_users|length > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Warning:</strong> {{ orphaned_users|length }} user(s) found without an assigned instance. 
+            These users may not be able to log in properly.
+            <button class="btn btn-sm btn-warning float-end" onclick="showOrphanedUsers()">
+                <i class="bi bi-eye"></i> View Orphaned Users
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- All Users Database -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-database"></i> 
+                    All Users Database ({{ users|length }} users)
+                </h5>
+                
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportUsers('csv')">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportUsers('json')">
+                        <i class="bi bi-file-earmark-code"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search and Filters -->
+            <form method="GET" class="mb-3">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" 
+                               class="form-control form-control-sm" 
+                               name="search" 
+                               placeholder="Search username, name, email..."
+                               value="{{ search }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" name="instance_id">
+                            <option value="">All Instances</option>
+                            {% for inst in instances %}
+                            <option value="{{ inst.id }}" {% if instance_filter == inst.id %}selected{% endif %}>
+                                {{ inst.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm" name="permission_level">
+                            <option value="">All Levels</option>
+                            <option value="S1" {% if permission_filter == 'S1' %}selected{% endif %}>S1 - System</option>
+                            <option value="L3" {% if permission_filter == 'L3' %}selected{% endif %}>L3 - Platform Ops</option>
+                            <option value="L2" {% if permission_filter == 'L2' %}selected{% endif %}>L2 - Admin</option>
+                            <option value="L1" {% if permission_filter == 'L1' %}selected{% endif %}>L1 - Manager</option>
+                            <option value="" {% if permission_filter == '' %}selected{% endif %}>Module User</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="">All Status</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                    </div>
+                </div>
+                
+                {% if search or instance_filter or permission_filter or status_filter %}
+                <div class="mt-2">
+                    <a href="{{ url_for('horizon.global_users') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+            
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-sm" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Instance</th>
+                            <th>Permission Level</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.username }}</strong>
+                                {% if user.permission_level == 'S1' %}
+                                    <i class="bi bi-shield-fill-check text-danger" title="System Admin"></i>
+                                {% elif user.permission_level == 'L3' %}
+                                    <i class="bi bi-gear-fill text-warning" title="Platform Ops"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td><small>{{ user.email or '-' }}</small></td>
+                            <td>
+                                {% if user.instance_id %}
+                                    <a href="{{ url_for('horizon.instance_detail', instance_id=user.instance_id) }}">
+                                        {{ user.instance_name or 'Unknown' }}
+                                    </a>
+                                    {% if not user.instance_active %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No Instance</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.permission_level == 'S1' %}
+                                    <span class="badge bg-danger">System Admin</span>
+                                {% elif user.permission_level == 'L3' %}
+                                    <span class="badge bg-warning">Platform Ops</span>
+                                {% elif user.permission_level == 'L2' %}
+                                    <span class="badge bg-info">Administrator</span>
+                                {% elif user.permission_level == 'L1' %}
+                                    <span class="badge bg-primary">Manager</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Module User</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.last_login %}
+                                    <small>{{ user.last_login.strftime('%Y-%m-%d') if user.last_login.__class__.__name__ != 'str' else user.last_login }}</small>
+                                {% else %}
+                                    <small class="text-muted">Never</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if user.instance_id %}
+                                        <a href="{{ url_for('users.view_profile', uid=user.id) }}" 
+                                        class="btn btn-outline-primary btn-sm" 
+                                        title="View Profile">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('horizon.instance_detail', instance_id=user.instance_id) }}" 
+                                        class="btn btn-outline-info btn-sm"
+                                        title="View Instance">
+                                            <i class="bi bi-building"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="assignInstance({{ user.id }})"
+                                                title="Assign to Instance">
+                                            <i class="bi bi-exclamation-triangle"></i> Assign
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if users|length == 0 %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No users found matching the current filters.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportUsers(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', format);
+    window.location.href = '{{ url_for("horizon.export_global_users") }}?' + params.toString();
+}
+function assignInstance(userId) {
+    alert('User ID ' + userId + ' has no instance assigned. This should be corrected in the database.');
+    // TODO: Implement instance assignment modal
+}
+</script>
+{% endblock %}
