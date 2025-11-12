@@ -1,194 +1,253 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 
-{% block title %}Service Queue - Fulfillment{% endblock %}
-{% block page_title %}Service Queue{% endblock %}
+{% block title %}Service Queue{% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <!-- Page Header Card (matching modern style) -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white border-bottom-0">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0">
-                        <i class="bi bi-list-check text-primary"></i> Service Queue
-                    </h5>
-                    {% if user_location %}
-                    <small class="text-muted">
-                        <i class="bi bi-geo-alt"></i> Filtered to: {{ user_location }}
-                    </small>
-                    {% endif %}
-                </div>
-                <div>
-                    <span class="badge bg-primary">{{ rows|length }} Active Requests</span>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            {% if rows %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Submitted</th>
-                            <th>Requester</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in rows %}
-                        <tr id="request-row-{{ row.id }}">
-                            <td><strong class="text-primary">#{{ row.id }}</strong></td>
-                            <td><small>{{ row.created_at.strftime('%Y-%m-%d %H:%M') if row.created_at else 'N/A' }}</small></td>
-                            <td>{{ row.requester_name }}</td>
-                            <td>
-                                <div style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {{ row.description }}
-                                </div>
-                            </td>
-                            <td>
-                                {% if row.status == 'Received' %}
-                                    <span class="badge bg-secondary">{{ row.status }}</span>
-                                {% elif row.status == 'Hold' %}
-                                    <span class="badge bg-warning text-dark">{{ row.status }}</span>
-                                {% elif row.status == 'In-Progress' %}
-                                    <span class="badge bg-info">{{ row.status }}</span>
-                                {% elif row.status == 'Suspended' %}
-                                    <span class="badge bg-danger">{{ row.status }}</span>
-                                {% elif row.status == 'Completed' %}
-                                    <span class="badge bg-success">{{ row.status }}</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">{{ row.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <select class="form-select form-select-sm status-selector me-2" 
-                                            data-request-id="{{ row.id }}"
-                                            data-current-status="{{ row.status }}"
-                                            style="width: 150px;">
-                                        {% for status in statuses %}
-                                        <option value="{{ status }}" {% if status == row.status %}selected{% endif %}>
-                                            {{ status }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <a href="{{ url_for('fulfillment.view_request', request_id=row.id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-inbox" style="font-size: 4rem; color: #d1d5db;"></i>
-                <h5 class="mt-3 text-muted">No requests in queue</h5>
-                <p class="text-muted">All requests have been processed or there are no new requests.</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Cancellation Modal -->
-<div class="modal fade" id="cancelModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Cancel Request
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="cancelForm" method="POST" action="{{ url_for('fulfillment.update_request_status') }}">
-                <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <strong>⚠️ WARNING:</strong> Cancelling this request will archive it without completion.
-                    </div>
-                    <input type="hidden" name="rid" id="cancel-request-id">
-                    <input type="hidden" name="status" value="Cancelled">
-                    
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Cancellation Reason:</strong></label>
-                        <textarea name="cancellation_reason" 
-                                  class="form-control" 
-                                  rows="4" 
-                                  required
-                                  placeholder="Explain why this request is being cancelled..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-circle"></i> Keep Request
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Cancel Request
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const statusSelectors = document.querySelectorAll('.status-selector');
-    
-    statusSelectors.forEach(selector => {
-        selector.addEventListener('change', function() {
-            const requestId = this.dataset.requestId;
-            const newStatus = this.value;
-            const oldStatus = this.dataset.currentStatus;
-            
-            // If changing to Cancelled, show modal
-            if (newStatus === 'Cancelled') {
-                const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
-                document.getElementById('cancel-request-id').value = requestId;
-                modal.show();
-                
-                // Reset selector if modal closed without submitting
-                document.getElementById('cancelModal').addEventListener('hidden.bs.modal', function() {
-                    if (selector.value === 'Cancelled') {
-                        selector.value = oldStatus;
-                    }
-                }, { once: true });
-                
-                return;
-            }
-            
-            // For other statuses, submit immediately
-            updateStatus(requestId, newStatus);
-        });
-    });
-    
-    function updateStatus(requestId, status) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url_for("fulfillment.update_request_status") }}';
-        
-        const ridInput = document.createElement('input');
-        ridInput.type = 'hidden';
-        ridInput.name = 'rid';
-        ridInput.value = requestId;
-        
-        const statusInput = document.createElement('input');
-        statusInput.type = 'hidden';
-        statusInput.name = 'status';
-        statusInput.value = status;
-        
-        form.appendChild(ridInput);
-        form.appendChild(statusInput);
-        document.body.appendChild(form);
-        form.submit();
+<style>
+    /* Use CSS variables for theme support */
+    .table td, .table th, h2, h5 {
+        color: var(--text-primary) !important;
     }
-});
-</script>
+    
+    /* Row color coding - keep these colorful */
+    tr.status-hold {
+        background-color: #ffc107 !important;
+    }
+    
+    tr.status-review {
+        background-color: #fff3cd !important;
+    }
+    
+    tr.status-completed {
+        background-color: #d1e7dd !important;
+    }
+    
+    /* Fix expanded details background */
+    .details-card {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .details-card th,
+    .details-card td,
+    .details-card h5 {
+        color: var(--text-primary) !important;
+    }
+    
+    .description-box {
+        background: var(--bg-tertiary) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+        /* FORCE TABLE TEXT TO BE VISIBLE */
+    .table tbody td,
+    .table tbody th,
+    table tbody td,
+    table tbody th {
+        color: #1a1d2e !important;
+        background: white !important;
+    }
+
+    .table tbody tr,
+    table tbody tr {
+        background: white !important;
+    }
+
+    .table tbody tr:hover,
+    table tbody tr:hover {
+        background: #f9fafb !important;
+    }
+
+    /* Make sure ALL text in tables is visible */
+    table td *,
+    table th *,
+    .table td *,
+    .table th * {
+        color: #1a1d2e !important;
+    }
+</style>
+
+<div class="container-fluid">
+    <h2>Service Queue</h2>
+    
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Request ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Customer</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr class="status-{{ request.status|lower|replace(' ', '-') }}">
+                <td><strong>#{{ request.id }}</strong></td>
+                <td>{{ request.request_type }}</td>
+                <td>
+                    <span class="badge bg-{{ 'warning' if request.status == 'Received' else ('info' if request.status == 'Hold' else ('warning' if request.status == 'Review' else 'success')) }}">
+                        {{ request.status }}
+                    </span>
+                </td>
+                <td>{{ request.submitted_at.strftime('%Y-%m-%d %H:%M') if request.submitted_at else 'N/A' }}</td>
+                <td>{{ request.customer_name or request.submitted_by }}</td>
+                <td>
+                    <!-- Expand/Collapse Button -->
+                    <button class="btn btn-sm btn-info" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#details-{{ request.id }}"
+                            aria-expanded="false">
+                        <i class="bi bi-eye"></i> Details
+                    </button>
+                </td>
+            </tr>
+            
+            <!-- EXPANDABLE DETAILS ROW -->
+            <tr class="collapse" id="details-{{ request.id }}">
+                <td colspan="6">
+                    <div class="card details-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Left Column: Request Details -->
+                                <div class="col-md-6">
+                                    <h5><i class="bi bi-info-circle"></i> Request Details</h5>
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <th>Created By:</th>
+                                            <td>{{ request.created_by_name or request.submitted_by }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th style="width: 150px;">Request ID:</th>
+                                            <td><strong>#{{ request.id }}</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Type:</th>
+                                            <td>{{ request.request_type }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Current Status:</th>
+                                            <td>
+                                                <span class="badge bg-{{ 'warning' if request.status == 'Received' else ('info' if request.status == 'Hold' else ('warning' if request.status == 'Review' else 'success')) }}">
+                                                    {{ request.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Page Count:</th>
+                                            <td><strong>{{ request.page_count or 0 }} pages</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Submitted:</th>
+                                            <td>{{ request.submitted_at.strftime('%Y-%m-%d %H:%M') if request.submitted_at else 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Submitted By:</th>
+                                            <td>{{ request.submitted_by }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                
+                                <!-- Right Column: Update Status -->
+                                <div class="col-md-6">
+                                    <h5><i class="bi bi-arrow-repeat"></i> Update Status</h5>
+                                    <form method="POST" action="{{ url_for('fulfillment.queue', instance_id=instance_id) }}" class="mt-3">
+                                        <input type="hidden" name="rid" value="{{ request.id }}">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Change Status:</strong></label>
+                                            <select name="status" class="form-select" required>
+                                                <option value="Received" {{ 'selected' if request.status == 'Received' else '' }}>Received</option>
+                                                <option value="Hold" {{ 'selected' if request.status == 'Hold' else '' }}>Hold</option>
+                                                <option value="Review" {{ 'selected' if request.status == 'Review' else '' }}>Review</option>
+                                                <option value="Completed" {{ 'selected' if request.status == 'Completed' else '' }}>Complete</option>
+                                                <option value="Archive" {{ 'selected' if request.status == 'Archive' else '' }}>Archive</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Notes (optional):</label>
+                                            <textarea name="notes" class="form-control" rows="3" placeholder="Add any notes about this status change..."></textarea>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-save"></i> Update Status
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5><i class="bi bi-file-text"></i> Description / Requirements</h5>
+                                    <div class="description-box">
+                                        {{ request.description or 'No description provided' }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Attachments / Files -->
+                            {% if request.files and request.files|length > 0 %}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5><i class="bi bi-paperclip"></i> Uploaded Files</h5>
+                                    <div class="list-group">
+                                        {% for file in request.files %}
+                                        <a href="{{ url_for('fulfillment.download_file', file_id=file.id, instance_id=instance_id) }}" 
+                                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                           target="_blank">
+                                            <span>
+                                                <i class="bi bi-file-pdf text-danger"></i>
+                                                <strong>{{ file.orig_name }}</strong>
+                                            </span>
+                                            <span class="badge bg-secondary">{{ (file.bytes / 1024) | round(1) }} KB</span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <p class="text-muted"><i class="bi bi-info-circle"></i> No files uploaded</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Internal Notes -->
+                            {% if request.notes %}
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5><i class="bi bi-sticky"></i> Internal Notes</h5>
+                                    <div class="alert alert-info">
+                                        {{ request.notes }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <i class="bi bi-inbox"></i> No requests in queue
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 {% endblock %}

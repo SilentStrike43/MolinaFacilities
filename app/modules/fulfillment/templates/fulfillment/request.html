@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -75,14 +79,15 @@
         font-size: 1.0625rem;
     }
     
-    /* Form Container */
+    /* Form Container - Theme-aware */
     .form-container {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
         padding: 3rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-lg);
         animation: fadeInUp 0.6s ease-out 0.1s;
         animation-fill-mode: both;
+        border: 1px solid var(--border-color);
     }
     
     .form-section {
@@ -189,7 +194,7 @@
         font-size: 1rem;
     }
     
-    /* File Upload */
+    /* File Upload - Theme-aware */
     .file-upload-wrapper {
         position: relative;
     }
@@ -197,9 +202,9 @@
     .file-upload-modern {
         width: 100%;
         padding: 2rem;
-        border: 2px dashed #d1d5db;
+        border: 2px dashed var(--border-color);
         border-radius: 0.875rem;
-        background: #f9fafb;
+        background: var(--bg-tertiary);
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -208,12 +213,12 @@
     
     .file-upload-modern:hover {
         border-color: #f59e0b;
-        background: #fffbeb;
+        background: var(--bg-hover);
     }
     
     .file-upload-modern.dragover {
         border-color: #f59e0b;
-        background: #fffbeb;
+        background: var(--bg-hover);
         border-style: solid;
     }
     

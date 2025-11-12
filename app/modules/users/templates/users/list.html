@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -9,7 +13,7 @@
         padding: 2rem;
     }
     
-    /* Page Header */
+    /* Page Header - Always gradient */
     .page-header {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1rem;
@@ -53,20 +57,23 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        text-decoration: none;
     }
     
     .btn-header:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: #008A93;
     }
     
-    /* Search and Filters */
+    /* Search and Filters - Theme-aware */
     .filters-section {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
         padding: 1.5rem;
         margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .search-bar {
@@ -78,10 +85,12 @@
     .search-input {
         flex: 1;
         padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.5rem;
         font-size: 1rem;
         transition: border-color 0.3s ease;
+        background: var(--bg-input);
+        color: var(--text-primary);
     }
     
     .search-input:focus {
@@ -110,6 +119,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        color: var(--text-primary);
     }
     
     /* Users Grid */
@@ -120,20 +130,21 @@
         margin-bottom: 2rem;
     }
     
-    /* User Card */
+    /* User Card - Theme-aware */
     .user-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
         padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        border: 1px solid var(--border-color);
     }
     
     .user-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-xl);
     }
     
     .user-card-header {
@@ -164,22 +175,22 @@
     .user-name {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
     
     .user-details {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--text-secondary);
     }
     
     .user-email {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--text-muted);
         margin-top: 0.25rem;
     }
     
-    /* Permission Level Badge */
+    /* Permission Level Badge - Keep colorful */
     .permission-badge {
         position: absolute;
         top: 1rem;
@@ -216,9 +227,9 @@
         color: white;
     }
     
-    /* Permissions Section */
+    /* Permissions Section - Theme-aware */
     .user-permissions {
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
         padding-top: 1rem;
         margin-top: 1rem;
     }
@@ -226,7 +237,7 @@
     .permissions-title {
         font-size: 0.875rem;
         font-weight: 600;
-        color: #6b7280;
+        color: var(--text-secondary);
         margin-bottom: 0.5rem;
     }
     
@@ -238,11 +249,11 @@
     
     .perm-tag {
         padding: 0.25rem 0.5rem;
-        background: #f3f4f6;
+        background: var(--bg-tertiary);
         border-radius: 0.25rem;
         font-size: 0.75rem;
-        color: #4b5563;
-        border: 1px solid #e5e7eb;
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
     }
     
     .perm-tag.admin {
@@ -257,14 +268,14 @@
         gap: 0.5rem;
         margin-top: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid var(--border-color);
     }
     
     .btn-user-action {
         flex: 1;
         padding: 0.5rem;
-        border: 1px solid #e5e7eb;
-        background: white;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
         border-radius: 0.375rem;
         font-size: 0.875rem;
         font-weight: 500;
@@ -275,11 +286,11 @@
         justify-content: center;
         gap: 0.5rem;
         text-decoration: none;
-        color: #4b5563;
+        color: var(--text-primary);
     }
     
     .btn-user-action:hover {
-        background: #f9fafb;
+        background: var(--bg-hover);
         border-color: #00A3AD;
         color: #00A3AD;
     }
@@ -294,7 +305,7 @@
         border-color: #dc2626;
     }
     
-    /* Status Indicators */
+    /* Status Indicators - Keep colorful */
     .status-indicator {
         display: inline-flex;
         align-items: center;
@@ -320,7 +331,7 @@
         color: #92400e;
     }
 
-        /* Fix modal flickering */
+    /* Fix modal flickering */
     .modal {
         z-index: 9999 !important;
     }
@@ -333,36 +344,38 @@
         animation: none !important;
     }
 
-/* Disable hover effects when modal is open */
-body.modal-open .user-card:hover {
-    transform: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
+    /* Disable hover effects when modal is open */
+    body.modal-open .user-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-md);
+    }
     
-    /* Empty State */
+    /* Empty State - Theme-aware */
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .empty-state-icon {
         font-size: 4rem;
-        color: #d1d5db;
+        color: var(--text-muted);
         margin-bottom: 1rem;
+        opacity: 0.5;
     }
     
     .empty-state-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
     .empty-state-text {
-        color: #6b7280;
+        color: var(--text-secondary);
         margin-bottom: 2rem;
     }
 </style>

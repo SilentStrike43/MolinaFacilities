@@ -1,0 +1,483 @@
+/*
+ * Gridline Services - Global Theme System
+ * Handles both Light (regular instances) and Dark (sandbox) themes
+ */
+
+/* ============================================
+   THEME VARIABLES - Switch based on data-theme
+   ============================================ */
+
+:root {
+    /* Light Theme (Default) */
+    --bg-primary: #f8f9fc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f3f4f6;
+    --bg-card: #ffffff;
+    --bg-hover: #f3f4f6;
+    --bg-input: #ffffff;
+    
+    --text-primary: #1a1d2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    --border-color: #e5e7eb;
+    --border-subtle: #f3f4f6;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme (Sandbox) */
+[data-theme="dark"] {
+    --bg-primary: #0f1419;
+    --bg-secondary: #1a1d2e;
+    --bg-tertiary: #2d3142;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-hover: rgba(255, 255, 255, 0.05);
+    --bg-input: rgba(255, 255, 255, 0.05);
+    
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    
+    /* Shadows for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+}
+
+/* ============================================
+   UNIVERSAL TEXT STYLING
+   ============================================ */
+
+body {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary) !important;
+}
+
+p, span, div, td, th, li, label {
+    color: var(--text-primary) !important;
+}
+
+.text-muted,
+small {
+    color: var(--text-muted) !important;
+}
+
+/* ============================================
+   CARDS & CONTAINERS
+   ============================================ */
+
+.card,
+.info-card,
+.module-card,
+.stat-card,
+.welcome-header,
+.filter-card,
+.chart-container,
+.content-card,
+.panel,
+.box {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dashboard welcome header - always gradient */
+.welcome-header {
+    background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%) !important;
+    color: white !important;
+}
+
+.welcome-header * {
+    color: white !important;
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+input,
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="password"],
+input[type="search"],
+textarea,
+select,
+.form-control,
+.form-select {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.form-select:focus {
+    background: var(--bg-input) !important;
+    border-color: #00A3AD !important;
+    box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+label,
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+}
+
+/* Dark theme specific form adjustments */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1) !important;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+table,
+.table {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+table thead,
+.table thead {
+    background: var(--bg-tertiary) !important;
+}
+
+table thead th,
+.table thead th,
+thead th {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+table tbody tr,
+.table tbody tr {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+table tbody td,
+table tbody th,
+.table tbody td,
+.table tbody th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+table tbody tr:hover,
+.table tbody tr:hover {
+    background: var(--bg-hover) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd),
+table.table-striped tbody tr:nth-of-type(odd) {
+    background: var(--bg-tertiary) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) td,
+table.table-striped tbody tr:nth-of-type(odd) td {
+    background: var(--bg-tertiary) !important;
+}
+
+/* ============================================
+   BUTTONS - Keep Colorful
+   ============================================ */
+
+.btn-primary {
+    background: linear-gradient(135deg, #00A3AD, #008A93) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 163, 173, 0.3) !important;
+    color: white !important;
+}
+
+.btn-secondary,
+.btn-outline-primary,
+.btn-outline-secondary {
+    background: rgba(0, 163, 173, 0.1) !important;
+    color: #00A3AD !important;
+    border: 1px solid rgba(0, 163, 173, 0.3) !important;
+}
+
+.btn-secondary:hover,
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+    background: rgba(0, 163, 173, 0.2) !important;
+    color: #00A3AD !important;
+}
+
+/* Sandbox specific button colors */
+[data-theme="dark"] .btn-primary {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+    color: #78350f !important;
+}
+
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .btn-outline-primary {
+    background: rgba(251, 191, 36, 0.1) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+/* ============================================
+   METRIC/STAT CARDS - Always Colorful
+   ============================================ */
+
+.metric-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+}
+
+.metric-card * {
+    color: #ffffff !important;
+}
+
+.metric-card.green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+}
+
+.metric-card.blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.metric-card.orange {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+}
+
+/* ============================================
+   BADGES - Keep Original Colors
+   ============================================ */
+
+.badge {
+    font-weight: 600 !important;
+}
+
+.badge-checkin,
+.action-badge.badge-checkin {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+.badge-checkout,
+.action-badge.badge-checkout {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+
+.badge-adjust,
+.action-badge.badge-adjust {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.alert {
+    border-radius: 0.75rem !important;
+    border: 1px solid !important;
+    padding: 1rem !important;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: #10b981 !important;
+}
+
+.alert-danger,
+.alert-error {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #ef4444 !important;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1) !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+    color: #f59e0b !important;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    color: #3b82f6 !important;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+
+a {
+    color: #00A3AD !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #008A93 !important;
+}
+
+[data-theme="dark"] a {
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] a:hover {
+    color: #f59e0b !important;
+}
+
+/* ============================================
+   DATE PICKER & SELECT DROPDOWNS
+   ============================================ */
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer !important;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) !important;
+}
+
+select option {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] select option {
+    background: #1a1d2e !important;
+    color: white !important;
+}
+
+/* ============================================
+   CHECKBOXES & RADIOS
+   ============================================ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: #00A3AD !important;
+    cursor: pointer !important;
+}
+
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="radio"] {
+    accent-color: #fbbf24 !important;
+}
+
+/* ============================================
+   EMPTY STATES & NO DATA
+   ============================================ */
+
+.empty-state,
+.no-data,
+.no-results {
+    background: var(--bg-card) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.empty-icon {
+    color: var(--text-muted) !important;
+}
+
+/* ============================================
+   DISABLED ELEMENTS
+   ============================================ */
+
+input:disabled,
+button:disabled,
+select:disabled,
+textarea:disabled,
+.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+/* ============================================
+   SCROLLBARS
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00A3AD;
+    border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #fbbf24;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    filter: brightness(1.2);
+}

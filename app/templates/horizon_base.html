@@ -130,16 +130,15 @@
         .horizon-nav-link {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: var(--horizon-text);
+            gap: 14px;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-size: 0.9375rem;
-            font-weight: 500;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
             position: relative;
-            margin-bottom: 0.25rem;
+            white-space: nowrap;  /* ← ADD THIS - prevents text wrapping */
         }
         
         .horizon-nav-link::before {
@@ -357,8 +356,8 @@
             
             <div class="horizon-nav-section">
                 <div class="horizon-nav-title">Quick Access</div>
-                <a href="{{ url_for('home.index') }}" class="horizon-nav-link">
-                    <i class="bi bi-house-door horizon-nav-icon"></i>
+                <a href="{{ url_for('horizon.back_to_app') }}" class="nav-link">
+                    <i class="nav-icon bi bi-box-arrow-left"></i>
                     <span>Back to App</span>
                 </a>
                 <a href="{{ url_for('horizon.global_users') }}" class="horizon-nav-link">

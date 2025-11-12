@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -13,7 +17,7 @@
         }
     }
     
-    /* Page Header */
+    /* Page Header - Always gradient */
     .page-header-card {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1.5rem;
@@ -55,6 +59,7 @@
         font-size: 2rem;
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
     }
     
     .page-header-text h2 {
@@ -62,22 +67,25 @@
         font-size: 2rem;
         font-weight: 800;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
     }
     
     .page-header-text p {
         margin: 0;
         opacity: 0.95;
         font-size: 1.0625rem;
+        color: white;
     }
     
-    /* Form Container */
+    /* Form Container - Theme-aware */
     .form-container {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
         padding: 3rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-lg);
         animation: fadeInUp 0.6s ease-out 0.1s;
         animation-fill-mode: both;
+        border: 1px solid var(--border-color);
     }
     
     .form-section {
@@ -94,7 +102,7 @@
         color: var(--text-primary);
         margin-bottom: 1.5rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--border-color);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -105,7 +113,7 @@
         font-size: 1.5rem;
     }
     
-    /* Form Groups */
+    /* Form Groups - Theme-aware */
     .form-group {
         margin-bottom: 1.75rem;
     }
@@ -127,11 +135,11 @@
     .form-control-modern {
         width: 100%;
         padding: 1rem 1.25rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.875rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--bg-input);
         color: var(--text-primary);
     }
     
@@ -139,7 +147,6 @@
         outline: none;
         border-color: #00A3AD;
         box-shadow: 0 0 0 4px rgba(0, 163, 173, 0.1);
-        background: #E6F7F8;
     }
     
     .form-control-modern::placeholder {
@@ -159,7 +166,7 @@
         font-size: 1rem;
     }
     
-    /* Package Type Radio Buttons */
+    /* Package Type Radio Buttons - Theme-aware */
     .package-types-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -183,13 +190,13 @@
         justify-content: center;
         gap: 0.625rem;
         padding: 1rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.875rem;
         font-weight: 700;
         font-size: 0.9375rem;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--bg-card);
         color: var(--text-primary);
     }
     
@@ -206,14 +213,14 @@
     
     .package-type-label:hover {
         border-color: #00A3AD;
-        background: #E6F7F8;
+        background: var(--bg-hover);
     }
     
     .package-type-option input[type="radio"]:checked + .package-type-label:hover {
         background: linear-gradient(135deg, #008A93 0%, #007A82 100%);
     }
     
-    /* Info Box */
+    /* Info Box - Always blue */
     .info-box {
         background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         border-left: 4px solid #3b82f6;
@@ -246,7 +253,7 @@
         color: #1e3a8a;
     }
     
-    /* Suggested IDs Display */
+    /* Suggested IDs Display - Theme-aware */
     .suggested-ids {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -255,10 +262,10 @@
     }
     
     .suggested-id-card {
-        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        background: var(--bg-tertiary);
         border-radius: 0.875rem;
         padding: 1.25rem;
-        border: 2px dashed #d1d5db;
+        border: 2px dashed var(--border-color);
     }
     
     .suggested-id-label {
@@ -277,7 +284,7 @@
         font-family: 'Courier New', monospace;
     }
     
-    /* Buttons */
+    /* Buttons - Keep colorful */
     .btn-submit-modern {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         color: white;
@@ -304,7 +311,7 @@
     }
     
     .btn-cancel-modern {
-        background: #f3f4f6;
+        background: var(--bg-tertiary);
         color: var(--text-primary);
         padding: 1.125rem 2.5rem;
         border: none;
@@ -320,7 +327,7 @@
     }
     
     .btn-cancel-modern:hover {
-        background: #e5e7eb;
+        background: var(--bg-hover);
     }
     
     .form-actions {
@@ -328,7 +335,7 @@
         gap: 1rem;
         justify-content: flex-end;
         padding-top: 2rem;
-        border-top: 2px solid #f3f4f6;
+        border-top: 2px solid var(--border-color);
     }
     
     /* Responsive */

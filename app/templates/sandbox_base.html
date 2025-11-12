@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sandbox - Gridline{% endblock %}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --bg-dark: #1a1d2e;
+            --bg-darker: #151823;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+            --accent: #fbbf24;
+            --accent-dark: #f59e0b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker) !important;
+            color: var(--text-light) !important;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .sandbox-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        /* ========== SIDEBAR ========== */
+        .sandbox-sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            max-width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1a1d2e 0%, #2d3142 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1000;
+            border-right: 1px solid var(--border-subtle);
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .brand-text {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .brand-text h1 {
+            font-size: 1.125rem;
+            font-weight: 800;
+            margin: 0;
+            color: white;
+        }
+        
+        .brand-text p {
+            font-size: 0.7rem;
+            margin: 0.25rem 0 0 0;
+            color: var(--accent);
+            font-weight: 700;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0.5rem;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            padding: 0 0.625rem;
+        }
+        
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-item {
+            margin-bottom: 2px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.625rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        
+        .nav-link:hover {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--text-light);
+        }
+        
+        .nav-link.active {
+            background: rgba(251, 191, 36, 0.15);
+            color: white;
+        }
+        
+        .nav-icon {
+            font-size: 1.125rem;
+            width: 20px;
+            min-width: 20px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        
+        .nav-link span {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .back-to-horizon {
+            padding: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+        
+        .btn-back {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: var(--accent);
+            border-radius: 0.625rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .btn-back:hover {
+            background: rgba(251, 191, 36, 0.15);
+            color: white;
+        }
+        
+        /* ========== MAIN CONTENT ========== */
+        .sandbox-main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - var(--sidebar-width));
+            background: var(--bg-darker) !important;
+        }
+        
+        .sandbox-topbar {
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .topbar-title h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-light) !important;
+        }
+        
+        .topbar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.875rem;
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .logout-btn {
+            padding: 0.625rem 1.25rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            border-radius: 0.625rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .sandbox-content {
+            flex: 1;
+            padding: 2rem;
+            background: var(--bg-darker) !important;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* ========== UNIVERSAL DARK THEME OVERRIDES ========== */
+        
+        /* ALL text elements */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, td, th, li,
+        .text, .title, .heading {
+            color: var(--text-light) !important;
+        }
+        
+        /* Text muted */
+        .text-muted,
+        small,
+        [class*="muted"] {
+            color: var(--text-muted) !important;
+        }
+        
+        /* ALL form inputs */
+        input,
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="time"],
+        input[type="password"],
+        input[type="search"],
+        textarea,
+        select,
+        .form-control,
+        .form-select {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: var(--text-light) !important;
+            border-radius: 0.625rem !important;
+            padding: 0.75rem !important;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus,
+        .form-control:focus,
+        .form-select:focus {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: var(--accent) !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1) !important;
+        }
+        
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4) !important;
+        }
+        
+        /* Labels */
+        label,
+        .form-label {
+            color: var(--text-light) !important;
+            font-weight: 500 !important;
+            margin-bottom: 0.5rem !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* ALL buttons */
+        button,
+        .btn,
+        [type="submit"],
+        [type="button"] {
+            color: #78350f !important;
+            border: none !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 0.625rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+        }
+        
+        /* Primary buttons */
+        .btn-primary,
+        button[type="submit"],
+        button.btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important;
+            color: #78350f !important;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3) !important;
+        }
+        
+        .btn-primary:hover,
+        button[type="submit"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4) !important;
+            color: #78350f !important;
+        }
+        
+        /* Secondary/Outline buttons */
+        .btn-secondary,
+        .btn-outline-primary,
+        .btn-outline-secondary {
+            background: rgba(251, 191, 36, 0.1) !important;
+            color: var(--accent) !important;
+            border: 1px solid rgba(251, 191, 36, 0.3) !important;
+        }
+        
+        .btn-secondary:hover,
+        .btn-outline-primary:hover,
+        .btn-outline-secondary:hover {
+            background: rgba(251, 191, 36, 0.2) !important;
+            color: var(--accent) !important;
+        }
+        
+        /* ALL containers, cards, boxes */
+        .card,
+        .box,
+        .content-card,
+        .stat-box,
+        .container,
+        .form-container,
+        .content-box,
+        .panel,
+        [class*="card"],
+        [class*="box"],
+        [class*="container"] {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: var(--text-light) !important;
+        }
+        
+        /* White backgrounds override */
+        .bg-white,
+        [style*="background: white"],
+        [style*="background: #fff"],
+        [style*="background-color: white"],
+        [style*="background-color: #fff"],
+        [style*="background-color: rgb(255, 255, 255)"] {
+            background: rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        /* Tables */
+        table,
+        .table {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        table th,
+        .table th,
+        thead th {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-light) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+        
+        table td,
+        .table td,
+        tbody td {
+            color: var(--text-light) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        table tbody tr:hover,
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        /* Alerts */
+        .alert {
+            border-radius: 0.625rem !important;
+            padding: 1rem !important;
+            margin-bottom: 1.5rem !important;
+            border: 1px solid !important;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+            color: #10b981 !important;
+        }
+        
+        .alert-danger,
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            color: #ef4444 !important;
+        }
+        
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1) !important;
+            border-color: rgba(245, 158, 11, 0.3) !important;
+            color: #f59e0b !important;
+        }
+        
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            color: #60a5fa !important;
+        }
+        
+        /* Badges - keep action badges their original colors */
+        .badge-checkin,
+        .action-badge.badge-checkin {
+            background: #d1fae5 !important;
+            color: #065f46 !important;
+        }
+        
+        .badge-checkout,
+        .action-badge.badge-checkout {
+            background: #fef3c7 !important;
+            color: #92400e !important;
+        }
+        
+        .badge-adjust,
+        .action-badge.badge-adjust {
+            background: #dbeafe !important;
+            color: #1e40af !important;
+        }
+        
+        /* Date picker */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) !important;
+            cursor: pointer !important;
+        }
+        
+        /* Checkboxes and radios */
+        input[type="checkbox"],
+        input[type="radio"] {
+            accent-color: var(--accent) !important;
+            cursor: pointer !important;
+        }
+        
+        /* Select dropdowns */
+        select option {
+            background: #1a1d2e !important;
+            color: white !important;
+        }
+        
+        /* Links */
+        a {
+            color: var(--accent) !important;
+            text-decoration: none !important;
+        }
+        
+        a:hover {
+            color: var(--accent-dark) !important;
+        }
+        
+        /* Bootstrap overrides */
+        .text-dark {
+            color: var(--text-light) !important;
+        }
+        
+        .border {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        /* Disabled elements */
+        input:disabled,
+        button:disabled,
+        select:disabled,
+        textarea:disabled {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+        }
+        
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="sandbox-wrapper">
+        <aside class="sandbox-sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">🧪</div>
+                <div class="brand-text">
+                    <h1>Gridline</h1>
+                    <p>SANDBOX MODE</p>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-label">CORE</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('home.index', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='home' else '' }}">
+                                <i class="nav-icon bi bi-house-door"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <span class="nav-section-label">LEDGER</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.index', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send' else '' }}">
+                                <i class="nav-icon bi bi-box-seam"></i>
+                                <span>Check In</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.tracking', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='tracking' else '' }}">
+                                <i class="nav-icon bi bi-geo-alt"></i>
+                                <span>Tracking</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.insights', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='insights' else '' }}">
+                                <i class="nav-icon bi bi-bar-chart-line"></i>
+                                <span>Insights</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <span class="nav-section-label">FLOW</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('inventory.asset', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='inventory' else '' }}">
+                                <i class="nav-icon bi bi-archive"></i>
+                                <span>Assets</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('inventory.ledger', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='ledger' else '' }}">
+                                <i class="nav-icon bi bi-journal-text"></i>
+                                <span>Ledger</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('inventory.insights', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='insights_inv' else '' }}">
+                                <i class="nav-icon bi bi-graph-up"></i>
+                                <span>Insights</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <span class="nav-section-label">FULFILLMENT</span>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="{{ url_for('fulfillment.request_form', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='fulfillment' else '' }}">
+                                <i class="nav-icon bi bi-file-earmark-text"></i>
+                                <span>New Request</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('fulfillment.queue', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='queue' else '' }}">
+                                <i class="nav-icon bi bi-list-check"></i>
+                                <span>Service Queue</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('fulfillment.archive', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='archive' else '' }}">
+                                <i class="nav-icon bi bi-archive"></i>
+                                <span>Archive</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('fulfillment.insights',instance_id=instance_id) }}" class="nav-link{{ 'active' if active=='insights' else ''}}">
+                                <i class="nav-icon bi bi-archive"></i>
+                                <span>Insights</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <div class="back-to-horizon">
+                <a href="{{ url_for('horizon.dashboard') }}" class="btn-back">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Horizon
+                </a>
+            </div>
+        </aside>
+        
+        <main class="sandbox-main">
+            <header class="sandbox-topbar">
+                <div class="topbar-title">
+                    <h2>
+                        {% block page_title %}Sandbox{% endblock %}
+                        <span class="topbar-badge">🧪 Testing Environment</span>
+                    </h2>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Logout
+                </a>
+            </header>
+            
+            <div class="sandbox-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block body %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

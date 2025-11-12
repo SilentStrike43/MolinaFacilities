@@ -133,6 +133,79 @@ def current_user():
     g._current_user_cache = user_dict
     return user_dict
 
+def get_user_instance_context(instance_id=None):
+    """
+    Get user's context for a specific instance.
+    For L3/S1 accessing sandbox, gives full permissions.
+    """
+    from app.core.database import get_db_connection
+    
+    user = current_user()
+    if not user:
+        return None
+    
+    print(f"🔐 GET CONTEXT: user={user.get('username')}, instance_id={instance_id}, perm={user.get('permission_level')}")
+    
+    if instance_id is not None:
+        # Check if this instance is the sandbox
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT is_sandbox, name, display_name 
+                    FROM instances 
+                    WHERE id = %s
+                """, (instance_id,))
+                inst = cursor.fetchone()
+                cursor.close()
+                
+                # If it's the sandbox and user is L3/S1, give full access
+                if inst and inst.get('is_sandbox'):
+                    perm_level = user.get('permission_level')
+                    if perm_level in ['L3', 'S1']:
+                        print(f"✅ Granting sandbox access to {perm_level} user")
+                        return {
+                            **user,
+                            'instance_id': instance_id,
+                            'instance_name': inst['name'] or 'Global Sandbox',
+                            'can_send': True,
+                            'can_inventory': True,
+                            'can_asset': True,
+                            'can_fulfillment_customer': True,
+                            'can_fulfillment_service': True,
+                            'can_fulfillment_manager': True,
+                        }
+                    else:
+                        print(f"❌ User {user.get('username')} cannot access sandbox (perm: {perm_level})")
+                        return None
+        except Exception as e:
+            print(f"❌ Error checking sandbox: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Regular instance access
+    if instance_id:
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT u.*, i.name as instance_name, i.display_name
+                    FROM users u
+                    JOIN instances i ON u.instance_id = i.id
+                    WHERE u.id = %s AND u.instance_id = %s
+                """, (user['id'], instance_id))
+                result = cursor.fetchone()
+                cursor.close()
+                
+                if result:
+                    return dict(result)
+        except Exception as e:
+            print(f"❌ Error getting instance context: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    return user
+
 # ------------------------------ capability logic -----------------------
 
 def _parse_caps(u: dict) -> dict:
@@ -394,7 +467,6 @@ def get_audit_logs(filters: dict = None, limit: int = 100):
         rows = cursor.fetchall()
         cursor.close()
         return [dict(row) for row in rows]
-
 
 def get_audit_statistics(days=30):
     """Get audit log statistics for dashboard."""

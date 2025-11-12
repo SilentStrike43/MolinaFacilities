@@ -1,0 +1,42 @@
+{% extends "sandbox_base.html" %}
+
+{% block title %}Sandbox Dashboard{% endblock %}
+{% block page_title %}Sandbox Dashboard{% endblock %}
+
+{% block body %}
+<div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; padding: 2rem; margin-bottom: 2rem;">
+    <h3 style="margin: 0 0 0.5rem 0; color: var(--accent);">
+        🧪 Welcome to the Global Sandbox
+    </h3>
+    <p style="margin: 0; color: var(--text-muted);">
+        All modules are enabled for testing. Changes made here do not affect production instances.
+    </p>
+</div>
+
+<div style="background: var(--bg-dark); border-radius: 1rem; padding: 2rem;">
+    <h4 style="margin: 0 0 1rem 0;">Available Modules</h4>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <!-- Ledger Module Card -->
+        <a href="{{ url_for('send.index', instance_id=instance_id) }}" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📦</div>
+            <h5 style="margin: 0 0 0.5rem 0; color: #60a5fa;">Ledger Module</h5>
+            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Package tracking and check-in</p>
+        </a>
+        
+        <!-- Flow Module Card -->
+        <a href="{{ url_for('inventory.asset', instance_id=instance_id) }}" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📊</div>
+            <h5 style="margin: 0 0 0.5rem 0; color: #34d399;">Flow Module</h5>
+            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Asset and inventory management</p>
+        </a>
+        
+        <!-- Fulfillment Module Card -->
+        <a href="{{ url_for('fulfillment.request_form', instance_id=instance_id) }}" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
+            <div style="font-size: 2rem; margin-bottom: 0.75rem;">✅</div>
+            <h5 style="margin: 0 0 0.5rem 0; color: #fbbf24;">Fulfillment Module</h5>
+            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Service requests and queue</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

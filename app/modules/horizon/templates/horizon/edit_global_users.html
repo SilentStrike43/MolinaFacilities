@@ -1,0 +1,170 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Edit User{% endblock %}
+{% block page_title %}Edit User: {{ user.username }}{% endblock %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('horizon.edit_global_user', user_id=user.id) }}">
+    
+    <!-- User Info (Read-Only) -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">User Information</h4>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                <small class="text-muted">Cannot be changed</small>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Current Instance</label>
+                <input type="text" class="form-control" 
+                       value="{{ user.instance_name or 'No Instance' }}" disabled>
+                <small class="text-muted">Use "Assign" button to change instance</small>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" 
+                       value="{{ user.first_name or '' }}">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" 
+                       value="{{ user.last_name or '' }}">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="{{ user.email or '' }}">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone" 
+                       value="{{ user.phone or '' }}">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Permission Level -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Permission Level</h4>
+        
+        <select class="form-select" id="permission_level" name="permission_level">
+            <option value="" {% if not user.permission_level %}selected{% endif %}>
+                Module User (No Admin Access)
+            </option>
+            <option value="L1" {% if user.permission_level == 'L1' %}selected{% endif %}>
+                L1 - Module Administrator
+            </option>
+            <option value="L2" {% if user.permission_level == 'L2' %}selected{% endif %}>
+                L2 - Systems Administrator
+            </option>
+            {% if cu.permission_level == 'S1' %}
+            <option value="L3" {% if user.permission_level == 'L3' %}selected{% endif %}>
+                L3 - App Operator
+            </option>
+            <option value="S1" {% if user.permission_level == 'S1' %}selected{% endif %}>
+                S1 - System Admin
+            </option>
+            {% endif %}
+        </select>
+    </div>
+    
+    <!-- Module Permissions -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Module Permissions</h4>
+        
+        {% set current_modules = user.module_permissions | from_json if user.module_permissions else [] %}
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m1" name="perm_m1"
+                           {% if 'M1' in current_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_m1">
+                        <strong>M1 - Ledger (Send)</strong>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m2" name="perm_m2"
+                           {% if 'M2' in current_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_m2">
+                        <strong>M2 - Flow (Inventory)</strong>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3a" name="perm_m3a"
+                           {% if 'M3A' in current_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_m3a">
+                        <strong>M3A - Fulfillment (Customer)</strong>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3b" name="perm_m3b"
+                           {% if 'M3B' in current_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_m3b">
+                        <strong>M3B - Fulfillment (Service)</strong>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3c" name="perm_m3c"
+                           {% if 'M3C' in current_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="perm_m3c">
+                        <strong>M3C - Fulfillment (Manager)</strong>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Account Status</h4>
+        
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                   {% if user.is_active %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">
+                <strong>Account Active</strong>
+                <br><small class="text-muted">User can log in and access modules</small>
+            </label>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Save Changes
+        </button>
+        <a href="{{ url_for('horizon.global_users') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </div>
+    
+</form>
+
+{% endblock %}

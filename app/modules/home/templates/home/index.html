@@ -10,7 +10,7 @@
         margin: 0 auto;
     }
     
-    /* Welcome Header */
+    /* Welcome Header - Always gradient */
     .welcome-header {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1.5rem;
@@ -48,12 +48,14 @@
         font-weight: 800;
         margin-bottom: 0.75rem;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
     }
     
     .welcome-subtitle {
         font-size: 1.25rem;
         opacity: 0.95;
         font-weight: 500;
+        color: white;
     }
     
     .user-level-badge {
@@ -65,13 +67,14 @@
         font-weight: 700;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
     }
     
-    /* Module Cards Grid */
+    /* Module Cards Grid - Theme-aware */
     .section-title {
         font-size: 1.75rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
@@ -86,10 +89,10 @@
     }
     
     .module-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.25rem;
         padding: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-md);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
         color: inherit;
@@ -116,7 +119,7 @@
     
     .module-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--shadow-xl);
         border-color: var(--module-color);
     }
     
@@ -151,12 +154,12 @@
     .module-name {
         font-size: 1.375rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.25rem;
     }
     
     .module-description {
-        color: #6b7280;
+        color: var(--text-secondary);
         font-size: 0.9375rem;
         line-height: 1.5;
     }
@@ -166,7 +169,7 @@
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         gap: 1rem;
         padding-top: 1rem;
-        border-top: 1px solid #f3f4f6;
+        border-top: 1px solid var(--border-color);
     }
     
     .metric-item {
@@ -182,45 +185,47 @@
     
     .metric-label {
         font-size: 0.8125rem;
-        color: #6b7280;
+        color: var(--text-secondary);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
     
-    /* No Permissions State */
+    /* No Permissions State - Theme-aware */
     .no-permissions {
         text-align: center;
         padding: 5rem 2rem;
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-md);
         max-width: 600px;
         margin: 0 auto;
+        border: 1px solid var(--border-color);
     }
     
     .no-permissions-icon {
         font-size: 5rem;
-        color: #d1d5db;
+        color: var(--text-muted);
         margin-bottom: 1.5rem;
+        opacity: 0.5;
     }
     
     .no-permissions-title {
         font-size: 2rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 1rem;
     }
     
     .no-permissions-text {
-        color: #6b7280;
+        color: var(--text-secondary);
         font-size: 1.125rem;
         line-height: 1.7;
         margin-bottom: 2rem;
     }
     
     .help-text {
-        color: #9ca3af;
+        color: var(--text-muted);
         font-size: 0.9375rem;
     }
     
@@ -235,6 +240,17 @@
         }
     }
 </style>
+
+<!-- Sandbox Indicator -->
+{% if is_sandbox %}
+<div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 1rem; padding: 1.5rem 2rem; margin-bottom: 2rem; color: #78350f; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);">
+    <div style="font-size: 2rem;">🧪</div>
+    <div>
+        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #78350f;">Global Sandbox Environment</h3>
+        <p style="margin: 0; font-size: 0.875rem; color: #92400e;">Development and testing environment - All modules enabled for L3/S1 users</p>
+    </div>
+</div>
+{% endif %}
 
 <div class="home-container">
     <!-- Welcome Header -->

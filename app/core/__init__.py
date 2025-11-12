@@ -4,8 +4,6 @@ Core utilities package.
 Import specific modules directly to avoid circular dependencies.
 """
 
-from .ui import inject_globals
-
 # Stub for backward compatibility
 def record_audit(user, action, source, details=""):
     """Deprecated - use admin module's record_audit instead"""

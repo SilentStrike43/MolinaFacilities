@@ -1832,3 +1832,105 @@ LINE 2:             SELECTaction, module, details, ts_utc
 LINE 4: ...     COALESCE(jsonb_array_length(i.enabled_modules::jsonb), ...
                                                              ^
 
+2025-11-10 11:09:47 | [33mWARNING[0m | app.core.database | get_db_connection:274 | Integrity error in core: update or delete on table "instances" violates foreign key constraint "horizon_audit_logs_target_instance_id_fkey" on table "horizon_audit_logs"
+DETAIL:  Key (id)=(3) is still referenced from table "horizon_audit_logs".
+
+2025-11-10 11:18:55 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in core: syntax error at or near "SELECTaction"
+LINE 2:             SELECTaction, module, details, ts_utc
+                    ^
+
+2025-11-10 13:21:53 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in inventory: syntax error at or near "30"
+LINE 9: ...     WHERE ts_utc >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+                                                                ^
+
+2025-11-10 16:58:00 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column "request_number" of relation "service_requests" does not exist
+LINE 3:                         request_number, title, description, ...
+                                ^
+
+2025-11-10 17:05:36 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column "is_archived" of relation "service_requests" does not exist
+LINE 5:                         status, is_archived, created_at
+                                        ^
+
+2025-11-10 17:13:19 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 361, in request_form
+    request_id = cursor.fetchone()[0]
+                 ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-10 17:32:45 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 340, in request_form
+    request_id = cursor.fetchone()[0]
+                 ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-10 17:41:01 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 343, in request_form
+    service_request_id = cursor.fetchone()[0]
+                         ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-10 17:49:34 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 349, in request_form
+    service_request_id = cursor.fetchone()[0]
+                         ~~~~~~~~~~~~~~~~~^^^
+KeyError: 0
+2025-11-11 08:59:34 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 357, in request_form
+    service_request_id = result[0]
+                         ~~~~~~^^^
+KeyError: 0
+2025-11-11 09:07:04 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column "requester_id" of relation "fulfillment_requests" does not exist
+LINE 3:                         service_request_id, requester_id, re...
+                                                    ^
+
+2025-11-11 09:10:47 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 0
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 159, in list_queue
+    'id': row[0],
+          ~~~^^^
+KeyError: 0
+2025-11-11 09:45:13 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: relation "fulfillment_files" does not exist
+LINE 3:                 FROM fulfillment_files
+                             ^
+
+2025-11-11 09:49:17 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column "assigned_staff_id" of relation "fulfillment_requests" does not exist
+LINE 3:                 SET status='Received', assigned_staff_id=1, ...
+                                               ^
+
+2025-11-11 10:05:56 | [31mERROR[0m | app.core.database | get_db_connection:284 | Programming error in fulfillment: column fr.options_json does not exist
+LINE 11:                 fr.options_json,
+                         ^
+
+2025-11-11 10:28:37 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 'is_archived'
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 992, in insights
+    completed_requests = sum(1 for row in rows if row['is_archived'])
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 992, in <genexpr>
+    completed_requests = sum(1 for row in rows if row['is_archived'])
+                                                  ~~~^^^^^^^^^^^^^^^
+KeyError: 'is_archived'
+2025-11-11 10:33:42 | [31mERROR[0m | app.core.database | get_db_connection:289 | Unexpected error in fulfillment: 'datetime.date' object has no attribute 'date'
+Traceback (most recent call last):
+  File "C:\GridlineService\app\core\database.py", line 269, in get_db_connection
+    yield conn
+  File "C:\GridlineService\app\modules\fulfillment\views.py", line 1019, in insights
+    date = row['date_submitted'].date() if row['date_submitted'] else None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'datetime.date' object has no attribute 'date'
+2025-11-11 12:35:17 | [31mERROR[0m | app.core.database | return_connection:159 | Error returning connection to pool: connection pool is closed

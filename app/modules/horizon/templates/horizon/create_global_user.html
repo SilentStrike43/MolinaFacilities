@@ -1,0 +1,201 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Create User{% endblock %}
+{% block page_title %}Create New User{% endblock %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('horizon.create_global_user') }}">
+    
+    <!-- Basic Information -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Basic Information</h4>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="username" class="form-label">Username *</label>
+                <input type="text" class="form-control" id="username" name="username" 
+                       required autocomplete="off">
+                <small class="text-muted">Lowercase only, no spaces</small>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="password" class="form-label">Password *</label>
+                <input type="password" class="form-control" id="password" name="password" 
+                       required autocomplete="new-password">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first_name" name="first_name">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="last_name" name="last_name">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instance Assignment -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Instance Assignment</h4>
+        <p class="text-muted mb-3" id="instance-help">
+            Select which instance this user belongs to
+        </p>
+        
+        <select class="form-select" id="instance_id" name="instance_id" required>
+            <option value="">-- Select Instance --</option>
+            {% for instance in instances %}
+            <option value="{{ instance.id }}" 
+                    {% if instance.is_sandbox %}data-sandbox="true"{% endif %}>
+                {{ instance.display_name or instance.name }}
+                {% if instance.is_sandbox %}(Global Sandbox){% endif %}
+            </option>
+            {% endfor %}
+        </select>
+        
+        <div id="l3-notice" class="alert alert-info mt-3" style="display: none;">
+            <i class="bi bi-info-circle"></i>
+            <strong>Note:</strong> L3/S1 users have global access. They will be assigned to Sandbox as a formality.
+        </div>
+    </div>
+    
+    <!-- Permission Level -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Permission Level</h4>
+        <p class="text-muted mb-3">Administrative access level (leave blank for module-only access)</p>
+        
+        <select class="form-select" id="permission_level" name="permission_level">
+            <option value="">Module User (No Admin Access)</option>
+            <option value="L1">L1 - Module Administrator</option>
+            <option value="L2">L2 - Systems Administrator</option>
+            {% if cu.permission_level == 'S1' %}
+            <option value="L3">L3 - App Operator</option>
+            <option value="S1">S1 - System Admin</option>
+            {% endif %}
+        </select>
+    </div>
+    
+    <!-- Module Permissions -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Module Permissions</h4>
+        <p class="text-muted mb-3">Select which modules this user can access</p>
+        
+        <div class="row">
+            <!-- Ledger (Send) Module -->
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m1" name="perm_m1">
+                    <label class="form-check-label" for="perm_m1">
+                        <strong>M1 - Ledger (Send)</strong>
+                        <br><small class="text-muted">Package tracking and shipping</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Flow (Inventory) Module -->
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m2" name="perm_m2">
+                    <label class="form-check-label" for="perm_m2">
+                        <strong>M2 - Flow (Inventory)</strong>
+                        <br><small class="text-muted">Asset and inventory management</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Fulfillment - Customer -->
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3a" name="perm_m3a">
+                    <label class="form-check-label" for="perm_m3a">
+                        <strong>M3A - Fulfillment (Customer)</strong>
+                        <br><small class="text-muted">Create and view own requests</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Fulfillment - Service -->
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3b" name="perm_m3b">
+                    <label class="form-check-label" for="perm_m3b">
+                        <strong>M3B - Fulfillment (Service)</strong>
+                        <br><small class="text-muted">Process service requests</small>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Fulfillment - Manager -->
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="perm_m3c" name="perm_m3c">
+                    <label class="form-check-label" for="perm_m3c">
+                        <strong>M3C - Fulfillment (Manager)</strong>
+                        <br><small class="text-muted">Full fulfillment access</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Create User
+        </button>
+        <a href="{{ url_for('horizon.global_users') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </div>
+    
+</form>
+
+<script>
+    document.getElementById('permission_level').addEventListener('change', function() {
+        const level = this.value;
+        const instanceDropdown = document.getElementById('instance_id');
+        const helpText = document.getElementById('instance-help');
+        const l3Notice = document.getElementById('l3-notice');
+        const sandboxOption = document.querySelector('option[data-sandbox="true"]');
+        
+        if (level === 'L3' || level === 'S1') {
+            // L3/S1 users - auto-select sandbox
+            l3Notice.style.display = 'block';
+            helpText.textContent = 'L3/S1 users are automatically assigned to Global Sandbox';
+            
+            if (sandboxOption) {
+                instanceDropdown.value = sandboxOption.value;
+                instanceDropdown.disabled = true;
+            }
+        } else {
+            // Regular users - require selection
+            l3Notice.style.display = 'none';
+            helpText.textContent = 'Select which instance this user belongs to';
+            instanceDropdown.disabled = false;
+            
+            if (level === '') {
+                instanceDropdown.value = '';
+            }
+        }
+    });
+    </script>
+
+{% endblock %}

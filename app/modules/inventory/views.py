@@ -8,13 +8,31 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from app.modules.auth.security import login_required, require_asset, current_user, record_audit
 from app.core.database import get_db_connection
 
-# Import the blueprint from __init__.py (DON'T create it here!)
 from . import bp
 
-# Create alias for compatibility with existing code
 inventory_bp = bp
 
 logger = logging.getLogger(__name__)
+
+# ========== HELPER FUNCTIONS ==========
+
+def get_instance_context():
+    """Get instance context for sandbox detection."""
+    cu = current_user()
+    instance_id = (
+        request.args.get('instance_id', type=int) or 
+        request.form.get('instance_id', type=int) or 
+        cu.get('instance_id')
+    )
+    is_sandbox = (instance_id == 4)
+    return instance_id, is_sandbox
+
+def redirect_with_instance(endpoint, **kwargs):
+    """Redirect preserving instance_id."""
+    instance_id, _ = get_instance_context()
+    if instance_id:
+        kwargs['instance_id'] = instance_id
+    return redirect(url_for(endpoint, **kwargs))
 
 # ---------- CATEGORY AND SKU SYSTEM ----------
 INVENTORY_CATEGORIES = {
@@ -166,7 +184,6 @@ def get_category_info(sku: str) -> dict:
     if not sku or len(sku) < 3:
         return {"category": "Unknown", "subcategory": "Unknown"}
     
-    # SKU format: XXX-NNNNNN (e.g., 101-000001)
     category_code = sku[:3]
     
     for cat_key, cat_data in INVENTORY_CATEGORIES.items():
@@ -184,7 +201,6 @@ def generate_next_sku(category_code: str) -> str:
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         
-        # Find highest SKU for this category
         prefix = category_code
         cursor.execute("""
             SELECT sku FROM assets 
@@ -196,8 +212,7 @@ def generate_next_sku(category_code: str) -> str:
         cursor.close()
         
         if result:
-            # Extract number and increment
-            last_sku = result['sku']  # ✅ FIXED: Use column name
+            last_sku = result['sku']
             try:
                 last_num = int(last_sku.split("-")[1])
                 next_num = last_num + 1
@@ -230,7 +245,6 @@ def create_asset(data: dict) -> int:
             data.get("status", "active")
         ))
         
-        # Get last inserted ID
         result = cursor.fetchone()
         asset_id = result['id']
         cursor.close()
@@ -251,7 +265,6 @@ def record_initial_checkin(asset_id: int, qty: int, username: str, note: str = "
 
 def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: str = ""):
     """Log asset movements to insights for reporting."""
-    # Get asset info
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM assets WHERE id=%s", (asset_id,))
@@ -261,9 +274,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
     if not asset:
         return
     
-    # Convert to dict
     asset_dict = dict(asset)
-    
     cat_info = get_category_info(asset_dict.get("sku", ""))
     
     with get_db_connection("inventory") as conn:
@@ -290,7 +301,7 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
         conn.commit()
         cursor.close()
 
-# ---------- Routes ----------
+# ---------- ROUTES ----------
 
 @bp.route("/asset", methods=["GET", "POST"])
 @login_required
@@ -298,16 +309,16 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
 def asset():
     """Asset Management - Add/Edit Assets with category-based SKU system."""
     cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
+    
     today = datetime.date.today().isoformat()
     flashmsg = None
     
     categories = get_all_categories_flat()
     
-    # Preview next SKU for default category
-    default_category = "101"  # Monitors
+    default_category = "101"
     next_sku_preview = generate_next_sku(default_category)
     
-    # Get existing assets for display
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         
@@ -331,7 +342,6 @@ def asset():
         rows = cursor.fetchall()
         cursor.close()
     
-   # Handle POST
     if request.method == "POST":
         mode = request.form.get("mode", "create")
         
@@ -400,7 +410,6 @@ def asset():
             record_audit(cu, "update_asset", "inventory", f"Updated asset #{asset_id}")
             flashmsg = (f"✅ Asset #{asset_id} updated successfully.", True)
 
-    # Check if editing
     edit_id = request.args.get("edit", type=int)
     edit = None
     if edit_id:
@@ -412,7 +421,7 @@ def asset():
 
     return render_template(
         "inventory/asset.html",
-        active="asset",
+        active="inventory",
         flashmsg=flashmsg,
         today=today,
         categories=categories,
@@ -420,7 +429,9 @@ def asset():
         rows=rows,
         q=q,
         status=status_filter,
-        edit=edit
+        edit=edit,
+        is_sandbox=is_sandbox,
+        instance_id=instance_id
     )
 
 @inventory_bp.route("/asset/<int:asset_id>/delete", methods=["POST"])
@@ -430,7 +441,6 @@ def delete_asset(asset_id: int):
     """Delete asset (L1+ only)."""
     cu = current_user()
     
-    # Check if user is L1+
     permission_level = cu.get('permission_level', '')
     if permission_level not in ['L1', 'L2', 'L3', 'S1']:
         return jsonify({"success": False, "error": "Only L1+ administrators can delete assets"}), 403
@@ -439,14 +449,12 @@ def delete_asset(asset_id: int):
         with get_db_connection("inventory") as conn:
             cursor = conn.cursor()
             
-            # Get asset info before deleting
             cursor.execute("SELECT sku, product FROM assets WHERE id = %s", (asset_id,))
             asset = cursor.fetchone()
             
             if not asset:
                 return jsonify({"success": False, "error": "Asset not found"}), 404
             
-            # Soft delete - set status to 'deleted'
             cursor.execute("""
                 UPDATE assets 
                 SET status = 'deleted',
@@ -470,6 +478,9 @@ def delete_asset(asset_id: int):
 @login_required
 @require_asset
 def asset_edit(aid: int):
+    instance_id, _ = get_instance_context()
+    if instance_id:
+        return redirect(url_for("inventory.asset", edit=aid, instance_id=instance_id))
     return redirect(url_for("inventory.asset", edit=aid))
 
 @inventory_bp.route("/api/next-sku/<category>")
@@ -489,60 +500,136 @@ def get_next_sku(category: str):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
 
-@inventory_bp.route("/insights")
+@bp.route("/insights")
 @login_required
 @require_asset
 def insights():
-    """Inventory Insights - Movement history and reports."""
-    f = {k:(request.args.get(k) or "").strip() for k in
-         ["q","inventory_id","product_name","manufacturer","item_type",
-          "submitter_name","date_from","date_to"]}
+    """Asset Analytics - Real insights with charts, trends, and alerts."""
+    cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
     
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         
-        sql = "SELECT* FROM inventory_reports WHERE 1=1"
-        params = []
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT asset_id) as unique_assets,
+                COUNT(*) as total_movements,
+                SUM(CASE WHEN action='CHECKIN' THEN qty ELSE 0 END) as total_checkins,
+                SUM(CASE WHEN action='CHECKOUT' THEN qty ELSE 0 END) as total_checkouts,
+                COUNT(DISTINCT username) as active_users
+            FROM asset_ledger
+            WHERE ts_utc >= CURRENT_DATE - INTERVAL '30 days'
+        """)
+        summary = cursor.fetchone()
         
-        if f["submitter_name"]:
-            sql += " AND submitter_name LIKE ?"
-            params.append(f"%{f['submitter_name']}%")
+        cursor.execute("""
+            SELECT 
+                DATE(ts_utc) as date,
+                SUM(CASE WHEN action='CHECKIN' THEN 1 ELSE 0 END) as checkins,
+                SUM(CASE WHEN action='CHECKOUT' THEN 1 ELSE 0 END) as checkouts,
+                SUM(CASE WHEN action='ADJUST' THEN 1 ELSE 0 END) as adjustments
+            FROM asset_ledger
+            WHERE ts_utc >= CURRENT_DATE - INTERVAL '14 days'
+            GROUP BY DATE(ts_utc)
+            ORDER BY date ASC
+        """)
+        activity_trend = cursor.fetchall()
         
-        if f["product_name"]:
-            sql += " AND product_name LIKE ?"
-            params.append(f"%{f['product_name']}%")
+        cursor.execute("""
+            SELECT 
+                a.sku,
+                a.product,
+                a.qty_on_hand,
+                COUNT(*) as total_movements,
+                SUM(CASE WHEN l.action='CHECKIN' THEN 1 ELSE 0 END) as checkins,
+                SUM(CASE WHEN l.action='CHECKOUT' THEN 1 ELSE 0 END) as checkouts
+            FROM asset_ledger l
+            JOIN assets a ON l.asset_id = a.id
+            WHERE l.ts_utc >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY a.id, a.sku, a.product, a.qty_on_hand
+            ORDER BY total_movements DESC
+            LIMIT 10
+        """)
+        top_assets = cursor.fetchall()
         
-        if f["manufacturer"]:
-            sql += " AND manufacturer LIKE ?"
-            params.append(f"%{f['manufacturer']}%")
+        cursor.execute("""
+            SELECT 
+                username,
+                COUNT(*) as total_actions,
+                SUM(CASE WHEN action='CHECKIN' THEN 1 ELSE 0 END) as checkins,
+                SUM(CASE WHEN action='CHECKOUT' THEN 1 ELSE 0 END) as checkouts,
+                MAX(ts_utc) as last_activity
+            FROM asset_ledger
+            WHERE ts_utc >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY username
+            ORDER BY total_actions DESC
+            LIMIT 10
+        """)
+        user_stats = cursor.fetchall()
         
-        if f["item_type"]:
-            sql += " AND item_type LIKE ?"
-            params.append(f"%{f['item_type']}%")
+        cursor.execute("""
+            SELECT 
+                sku,
+                product,
+                manufacturer,
+                location,
+                qty_on_hand
+            FROM assets
+            WHERE qty_on_hand <= 5 AND status = 'active'
+            ORDER BY qty_on_hand ASC
+            LIMIT 20
+        """)
+        low_stock = cursor.fetchall()
         
-        if f["inventory_id"]:
-            sql += " AND inventory_id = ?"
-            params.append(f["inventory_id"])
+        cursor.execute("""
+            SELECT 
+                LEFT(sku, 3) as category_code,
+                COUNT(*) as asset_count,
+                SUM(qty_on_hand) as total_quantity
+            FROM assets
+            WHERE status = 'active'
+            GROUP BY LEFT(sku, 3)
+            ORDER BY asset_count DESC
+        """)
+        category_breakdown = cursor.fetchall()
         
-        if f["q"]:
-            sql += " AND (notes LIKE ? OR product_name LIKE ? OR manufacturer LIKE ?)"
-            params.extend([f"%{f['q']}%"] * 3)
+        for cat in category_breakdown:
+            code = cat['category_code']
+            cat_info = get_category_info(f"{code}-000001")
+            cat['category_name'] = cat_info.get('category', 'Unknown')
         
-        if f["date_from"]:
-            sql += " AND DATE(ts_utc) >= ?"
-            params.append(f["date_from"])
+        cursor.execute("""
+            SELECT 
+                l.ts_utc as timestamp,
+                l.action,
+                l.qty,
+                l.username,
+                a.sku,
+                a.product
+            FROM asset_ledger l
+            JOIN assets a ON l.asset_id = a.id
+            WHERE l.ts_utc >= NOW() - INTERVAL '24 hours'
+            ORDER BY l.ts_utc DESC
+            LIMIT 15
+        """)
+        recent_activity = cursor.fetchall()
         
-        if f["date_to"]:
-            sql += " AND DATE(ts_utc) <= ?"
-            params.append(f["date_to"])
-        
-        sql += " ORDER BY ts_utc DESC LIMIT 2000"
-        
-        cursor.execute(sql, params)
-        rows = cursor.fetchall()
         cursor.close()
     
-    return render_template("inventory/insights.html", active="insights", tab="inventory", rows=rows, **f)
+    return render_template(
+        "inventory/insights.html",
+        active="insights_inv",
+        summary=summary,
+        activity_trend=activity_trend,
+        top_assets=top_assets,
+        user_stats=user_stats,
+        low_stock=low_stock,
+        category_breakdown=category_breakdown,
+        recent_activity=recent_activity,
+        is_sandbox=is_sandbox,
+        instance_id=instance_id
+    )
 
 @inventory_bp.route("/insights/export")
 @login_required
@@ -571,3 +658,292 @@ def insights_export():
     mem = io.BytesIO(out.getvalue().encode("utf-8"))
     mem.seek(0)
     return send_file(mem, mimetype="text/csv", as_attachment=True, download_name="insights_inventory.csv")
+
+@bp.route("/ledger")
+@login_required
+@require_asset
+def ledger():
+    """Asset Ledger - Track all asset movements (check-ins, check-outs, adjustments)."""
+    cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
+    
+    search = request.args.get('search', '').strip()
+    action_filter = request.args.get('action_filter', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        
+        sql = """
+            SELECT 
+                l.id,
+                l.asset_id,
+                l.action,
+                l.qty as quantity,
+                l.username as actor,
+                l.note as notes,
+                l.ts_utc as timestamp,
+                a.sku as inventory_id,
+                a.product as product_name,
+                a.manufacturer,
+                a.location,
+                a.qty_on_hand as current_quantity
+            FROM asset_ledger l
+            JOIN assets a ON l.asset_id = a.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if search:
+            sql += " AND (a.sku LIKE %s OR a.product LIKE %s OR l.username LIKE %s)"
+            search_term = f"%{search}%"
+            params.extend([search_term, search_term, search_term])
+        
+        if action_filter:
+            sql += " AND l.action = %s"
+            params.append(action_filter.upper())
+        
+        if date_from:
+            sql += " AND DATE(l.ts_utc) >= %s"
+            params.append(date_from)
+        
+        if date_to:
+            sql += " AND DATE(l.ts_utc) <= %s"
+            params.append(date_to)
+        
+        sql += " ORDER BY l.ts_utc DESC LIMIT 200"
+        
+        cursor.execute(sql, params)
+        ledger_entries = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT 
+                COUNT(CASE WHEN action = 'CHECKIN' AND DATE(ts_utc) = CURRENT_DATE THEN 1 END) as check_ins_today,
+                COUNT(CASE WHEN action = 'CHECKOUT' AND DATE(ts_utc) = CURRENT_DATE THEN 1 END) as check_outs_today,
+                COUNT(CASE WHEN action = 'ADJUST' AND DATE(ts_utc) = CURRENT_DATE THEN 1 END) as adjustments_today
+            FROM asset_ledger
+        """)
+        stats = cursor.fetchone()
+        
+        cursor.execute("""
+            SELECT id, sku as inventory_id, product as product_name 
+            FROM assets 
+            WHERE status = 'active'
+            ORDER BY sku
+        """)
+        assets = cursor.fetchall()
+        
+        cursor.close()
+    
+    return render_template(
+        "inventory/ledger.html",
+        active="ledger",
+        ledger_entries=ledger_entries,
+        stats=stats,
+        assets=assets,
+        is_sandbox=is_sandbox,
+        instance_id=instance_id
+    )
+
+@bp.route("/ledger/quick-entry", methods=["POST"])
+@login_required
+@require_asset
+def quick_ledger_entry():
+    """Quick add ledger entry from the ledger page."""
+    cu = current_user()
+    instance_id, _ = get_instance_context()
+    
+    asset_id = request.form.get("asset_id", type=int)
+    action = request.form.get("action", "").strip().upper()
+    quantity = request.form.get("quantity", type=int)
+    notes = request.form.get("notes", "").strip()
+    username = cu.get("username", "System")
+    
+    action_map = {
+        "CHECK_IN": "CHECKIN",
+        "CHECK_OUT": "CHECKOUT",
+        "ADJUST": "ADJUST"
+    }
+    action = action_map.get(action, action)
+    
+    if not asset_id or not action or not quantity:
+        flash("❌ Asset, action, and quantity are required.", "danger")
+        return redirect_with_instance('inventory.ledger')
+    
+    try:
+        with get_db_connection("inventory") as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT qty_on_hand, product, sku FROM assets WHERE id = %s", (asset_id,))
+            asset = cursor.fetchone()
+            
+            if not asset:
+                flash("❌ Asset not found.", "danger")
+                return redirect_with_instance('inventory.ledger')
+            
+            current_qty = asset['qty_on_hand']
+            
+            if action == 'CHECKIN':
+                new_qty = current_qty + quantity
+            elif action == 'CHECKOUT':
+                new_qty = current_qty - quantity
+                if new_qty < 0:
+                    flash("❌ Cannot check out more than available quantity.", "danger")
+                    return redirect_with_instance('inventory.ledger')
+            else:
+                new_qty = quantity
+            
+            cursor.execute("""
+                INSERT INTO asset_ledger (asset_id, action, qty, username, note, ts_utc)
+                VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            """, (asset_id, action, quantity, username, notes))
+            
+            cursor.execute("""
+                UPDATE assets 
+                SET qty_on_hand = %s 
+                WHERE id = %s
+            """, (new_qty, asset_id))
+            
+            conn.commit()
+            cursor.close()
+        
+        log_to_insights(asset_id, action, quantity, username, notes)
+        
+        record_audit(cu, "ledger_entry", "inventory", 
+                    f"{action} {quantity} units of {asset['product']} (SKU: {asset['sku']})")
+        
+        flash(f"✅ Ledger entry added! {action}: {quantity} units", "success")
+        
+    except Exception as e:
+        logger.error(f"Error adding ledger entry: {e}")
+        flash(f"❌ Error: {str(e)}", "danger")
+    
+    return redirect_with_instance('inventory.ledger')
+
+@bp.route("/ledger/export")
+@login_required
+@require_asset
+def export_ledger():
+    """Export ledger as CSV."""
+    import io
+    import csv
+    from flask import send_file
+    
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                l.ts_utc,
+                a.sku as inventory_id,
+                a.product as product_name,
+                a.manufacturer,
+                l.action,
+                l.qty as quantity,
+                l.username as actor,
+                l.note as notes
+            FROM asset_ledger l
+            JOIN assets a ON l.asset_id = a.id
+            ORDER BY l.ts_utc DESC
+        """)
+        rows = cursor.fetchall()
+        cursor.close()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Timestamp", "Inventory ID", "Product", "Manufacturer", "Action", "Quantity", "Actor", "Notes"])
+    
+    for row in rows:
+        writer.writerow([
+            row['ts_utc'],
+            row['inventory_id'],
+            row['product_name'],
+            row['manufacturer'],
+            row['action'],
+            row['quantity'],
+            row['actor'],
+            row['notes'] or ''
+        ])
+    
+    mem = io.BytesIO(output.getvalue().encode('utf-8'))
+    mem.seek(0)
+    
+    filename = f"asset_ledger_{datetime.date.today().isoformat()}.csv"
+    return send_file(mem, mimetype="text/csv", as_attachment=True, download_name=filename)
+
+@bp.route("/ledger/<int:entry_id>/delete", methods=["POST"])
+@login_required
+@require_asset
+def delete_ledger_entry(entry_id: int):
+    """Delete a ledger entry (L1+ only)."""
+    cu = current_user()
+    
+    permission_level = cu.get('permission_level', '')
+    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+        return jsonify({"success": False, "error": "Only L1+ administrators can delete ledger entries"}), 403
+    
+    try:
+        with get_db_connection("inventory") as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT l.*, a.sku, a.product 
+                FROM asset_ledger l
+                JOIN assets a ON l.asset_id = a.id
+                WHERE l.id = %s
+            """, (entry_id,))
+            entry = cursor.fetchone()
+            
+            if not entry:
+                return jsonify({"success": False, "error": "Entry not found"}), 404
+            
+            cursor.execute("DELETE FROM asset_ledger WHERE id = %s", (entry_id,))
+            
+            conn.commit()
+            cursor.close()
+        
+        record_audit(cu, "delete_ledger_entry", "inventory", 
+                    f"Deleted ledger entry #{entry_id} for {entry['product']}")
+        
+        return jsonify({"success": True, "message": "Ledger entry deleted successfully"})
+        
+    except Exception as e:
+        logger.error(f"Error deleting ledger entry: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@bp.route("/ledger/<int:entry_id>/edit", methods=["GET", "POST"])
+@login_required
+@require_asset
+def edit_ledger_entry(entry_id: int):
+    """Edit a ledger entry (L1+ only)."""
+    cu = current_user()
+    
+    permission_level = cu.get('permission_level', '')
+    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+        flash("Only L1+ administrators can edit ledger entries", "danger")
+        return redirect_with_instance('inventory.ledger')
+    
+    if request.method == "POST":
+        try:
+            notes = request.form.get("notes", "").strip()
+            
+            with get_db_connection("inventory") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE asset_ledger 
+                    SET note = %s 
+                    WHERE id = %s
+                """, (notes, entry_id))
+                conn.commit()
+                cursor.close()
+            
+            record_audit(cu, "edit_ledger_entry", "inventory", f"Edited ledger entry #{entry_id}")
+            flash("✅ Ledger entry updated successfully", "success")
+            
+        except Exception as e:
+            logger.error(f"Error editing ledger entry: {e}")
+            flash(f"❌ Error: {str(e)}", "danger")
+        
+        return redirect_with_instance('inventory.ledger')
+    
+    return redirect_with_instance('inventory.ledger')

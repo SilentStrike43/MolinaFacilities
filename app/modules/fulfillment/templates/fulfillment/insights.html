@@ -1,269 +1,279 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 
-{% block title %}Fulfillment Insights - Molina Facilities{% endblock %}
-
-{% block page_title %}Fulfillment Insights{% endblock %}
+{% block title %}Fulfillment Insights{% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
-                        <i class="bi bi-graph-up-arrow"></i> Fulfillment Order Insights
-                        <span class="badge bg-warning text-dark">M3C Only</span>
-                    </h5>
-                    
-                    <!-- Filter Form -->
-                    <form method="GET" class="row g-3 mb-4">
-                        <div class="col-md-2">
-                            <label class="form-label">Order Number</label>
-                            <input type="number" name="order_number" class="form-control" value="{{ order_number }}" placeholder="Order #">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Date From</label>
-                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Date To</label>
-                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Requester Name</label>
-                            <input type="text" name="requester_name" class="form-control" value="{{ requester_name }}" placeholder="Name...">
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Pages Min</label>
-                            <input type="number" name="page_count_min" class="form-control" value="{{ page_count_min }}" placeholder="0">
-                        </div>
-                        <div class="col-md-1">
-                            <label class="form-label">Pages Max</label>
-                            <input type="number" name="page_count_max" class="form-control" value="{{ page_count_max }}" placeholder="999">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Location</label>
-                            <select name="location" class="form-select" {% if user_location %}disabled{% endif %}>
-                                <option value="">All Locations</option>
-                                {% for loc in locations %}
-                                <option value="{{ loc }}" {% if location == loc or user_location == loc %}selected{% endif %}>{{ loc }}</option>
-                                {% endfor %}
-                            </select>
-                            {% if user_location %}
-                            <small class="text-muted">Filtered to: {{ user_location }}</small>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Completed By</label>
-                            <input type="text" name="completed_by" class="form-control" value="{{ completed_by }}" placeholder="Staff name...">
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-search"></i> Search
-                            </button>
-                            <a href="{{ url_for('fulfillment.insights') }}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Clear
-                            </a>
-                            <a href="{{ url_for('fulfillment.insights_export', order_number=order_number, date_from=date_from, date_to=date_to, requester_name=requester_name, page_count_min=page_count_min, page_count_max=page_count_max, completed_by=completed_by, location=location) }}" class="btn btn-success">
-                                <i class="bi bi-download"></i> Export CSV
-                            </a>
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportModal">
-                                <i class="bi bi-download"></i> Selective Export
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <!-- Statistics -->
-                    <div class="row mb-4">
-                        <div class="col-md-2">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h3 class="mb-0">{{ total_orders }}</h3>
-                                    <small>Total Orders</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h3 class="mb-0">{{ total_pages }}</h3>
-                                    <small>Total Pages</small>
-                                    <hr class="my-2 bg-white">
-                                    <strong>Avg: {{ avg_pages }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h3 class="mb-0">{{ avg_pages }}</h3>
-                                    <small>Avg Pages/Order</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-dark">
-                                <div class="card-body">
-                                    <h6 class="mb-2"><strong>By Location</strong></h6>
-                                    {% for loc, count in by_location.items() %}
-                                    <small><strong>{{ loc }}:</strong> {{ count }} orders</small><br>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card border-primary">
-                                <div class="card-body">
-                                    <h6 class="mb-2"><strong>Quick Stats</strong></h6>
-                                    <small><strong>Date Range:</strong> {{ date_from }} to {{ date_to }}</small><br>
-                                    <small><strong>Total Records:</strong> {{ total_orders }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Results Table -->
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Timestamp</th>
-                                    <th>Requester</th>
-                                    <th>Description</th>
-                                    <th>Pages</th>
-                                    <th>Completed By</th>
-                                    <th>Completed At</th>
-                                    <th>Location</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if results %}
-                                    {% for row in results %}
-                                    <tr>
-                                        <td><strong>#{{ row.order_number }}</strong></td>
-                                        <td>{{ row.timestamp }}</td>
-                                        <td>{{ row.requester_name }}</td>
-                                        <td>{{ row.description[:50] }}{% if row.description|length > 50 %}...{% endif %}</td>
-                                        <td><span class="badge bg-primary">{{ row.page_count }}</span></td>
-                                        <td>{{ row.completed_by }}</td>
-                                        <td>{{ row.completed_at }}</td>
-                                        <td><span class="badge bg-info">{{ row.location }}</span></td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">
-                                            No orders found for the selected filters.
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Selective Export Modal -->
-<div class="modal fade" id="exportModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-download"></i> Select Metrics to Export
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted">Choose which columns to include in your export:</p>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_order" value="order_number" checked>
-                    <label class="form-check-label" for="col_order">Order Number</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_timestamp" value="timestamp" checked>
-                    <label class="form-check-label" for="col_timestamp">Timestamp</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_requester" value="requester_name" checked>
-                    <label class="form-check-label" for="col_requester">Requester Name</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_pages" value="page_count" checked>
-                    <label class="form-check-label" for="col_pages">Page Count (with average)</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_completed" value="completed_by" checked>
-                    <label class="form-check-label" for="col_completed">Completed By</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_completed_at" value="completed_at">
-                    <label class="form-check-label" for="col_completed_at">Completed At</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="col_location" value="location">
-                    <label class="form-check-label" for="col_location">Location</label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="exportSelective()">
-                    <i class="bi bi-download"></i> Export Selected
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function exportSelective() {
-    // Get selected columns
-    const checkboxes = document.querySelectorAll('#exportModal .form-check-input:checked');
-    const columns = Array.from(checkboxes).map(cb => cb.value);
-    
-    if (columns.length === 0) {
-        alert('Please select at least one column to export.');
-        return;
+<style>
+    /* Use global CSS variables - no conditional styling needed! */
+    .insights-content .container-fluid {
+        background: transparent !important;
     }
     
-    // Get current filter values
-    const data = {
-        columns: columns,
-        date_from: '{{ date_from }}',
-        date_to: '{{ date_to }}',
-        location: '{{ location }}'
-    };
+    .insights-content .filter-card,
+    .insights-content .chart-container {
+        background: var(--bg-card);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
     
-    // Send POST request
-    fetch('{{ url_for("fulfillment.insights_export_selective") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        // Download file
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `fulfillment_selective_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        
-        // Close modal
-        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
-    })
-    .catch(error => {
-        console.error('Export error:', error);
-        alert('Error exporting data. Please try again.');
-    });
-}
-</script>
+    .insights-content h2,
+    .insights-content h3,
+    .insights-content h4,
+    .insights-content h5 {
+        color: var(--text-primary);
+    }
+    
+    .insights-content .filter-card label,
+    .insights-content .filter-card .form-label {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    /* Metric cards - always colorful with white text */
+    .insights-content .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #ffffff !important;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .insights-content .metric-card * {
+        color: #ffffff !important;
+    }
+    
+    .insights-content .metric-card.green {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    }
+    
+    .insights-content .metric-card.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+    }
+    
+    .insights-content .metric-card.orange {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+    }
+    
+    .insights-content .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .insights-content .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.95;
+        margin-top: 0.5rem;
+    }
+    
+    /* Badges - keep colored backgrounds */
+    .insights-content .badge {
+        color: #ffffff !important;
+        font-weight: 600;
+    }
+    
+    .insights-content .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000000 !important;
+    }
+    
+    .insights-content .text-end {
+        text-align: right !important;
+    }
 
+        /* FORCE TABLE TEXT TO BE VISIBLE */
+    .table tbody td,
+    .table tbody th,
+    table tbody td,
+    table tbody th {
+        color: #1a1d2e !important;
+        background: white !important;
+    }
+
+    .table tbody tr,
+    table tbody tr {
+        background: white !important;
+    }
+
+    .table tbody tr:hover,
+    table tbody tr:hover {
+        background: #f9fafb !important;
+    }
+
+    /* Make sure ALL text in tables is visible */
+    table td *,
+    table th *,
+    .table td *,
+    .table th * {
+        color: #1a1d2e !important;
+    }
+</style>
+
+<!-- WRAP ALL CONTENT IN insights-content div -->
+<div class="insights-content">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📊 Fulfillment Insights</h2>
+            <a href="{{ url_for('fulfillment.insights_export', date_from=date_from, date_to=date_to, status=status_filter, staff=staff_filter, instance_id=instance_id) }}" 
+               class="btn btn-success">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+        </div>
+        
+        <!-- FILTERS -->
+        <div class="filter-card">
+            <h5><i class="bi bi-funnel"></i> Filters</h5>
+            <form method="GET" action="{{ url_for('fulfillment.insights', instance_id=instance_id) }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Received" {{ 'selected' if status_filter == 'Received' else '' }}>Received</option>
+                        <option value="Hold" {{ 'selected' if status_filter == 'Hold' else '' }}>Hold</option>
+                        <option value="Review" {{ 'selected' if status_filter == 'Review' else '' }}>Review</option>
+                        <option value="Completed" {{ 'selected' if status_filter == 'Completed' else '' }}>Completed</option>
+                        <option value="Archive" {{ 'selected' if status_filter == 'Archive' else '' }}>Archive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Completed By (Staff)</label>
+                    <input type="text" name="staff" class="form-control" placeholder="Staff name..." value="{{ staff_filter }}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('fulfillment.insights', instance_id=instance_id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- KEY METRICS -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <p class="metric-value">{{ total_requests }}</p>
+                    <p class="metric-label">Total Requests</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card green">
+                    <p class="metric-value">{{ "{:,}".format(total_pages) }}</p>
+                    <p class="metric-label">Total Pages Printed</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card blue">
+                    <p class="metric-value">{{ avg_pages }}</p>
+                    <p class="metric-label">Avg Pages per Request</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card orange">
+                    <p class="metric-value">{{ completion_rate }}%</p>
+                    <p class="metric-label">Completion Rate</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STATUS BREAKDOWN -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="bi bi-pie-chart"></i> Status Breakdown</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in status_counts.items() %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ 'warning' if status == 'Received' else ('info' if status == 'Hold' else ('warning' if status == 'Review' else 'success')) }}">
+                                        {{ status }}
+                                    </span>
+                                </td>
+                                <td class="text-end">{{ count }}</td>
+                                <td class="text-end">{{ ((count / total_requests * 100) | round(1)) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="bi bi-person-check"></i> Staff Performance</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th class="text-end">Completed</th>
+                                <th class="text-end">Pages</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for staff, stats in staff_stats.items() %}
+                            <tr>
+                                <td>{{ staff }}</td>
+                                <td class="text-end">{{ stats.completed }}</td>
+                                <td class="text-end">{{ "{:,}".format(stats.pages) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No completed requests</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DAILY TRENDS -->
+        <div class="chart-container mt-4">
+            <h5><i class="bi bi-graph-up"></i> Daily Trends</h5>
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-end">Requests</th>
+                        <th class="text-end">Pages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for date, stats in daily_stats.items() %}
+                    <tr>
+                        <td>{{ date }}</td>
+                        <td class="text-end">{{ stats.requests }}</td>
+                        <td class="text-end">{{ "{:,}".format(stats.pages) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}

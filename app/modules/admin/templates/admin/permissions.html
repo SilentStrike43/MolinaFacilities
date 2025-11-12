@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -24,7 +28,7 @@
         }
     }
     
-    /* Page Header */
+    /* Page Header - Always gradient */
     .page-header-card {
         background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
         border-radius: 1.5rem;
@@ -81,7 +85,7 @@
         font-size: 1.0625rem;
     }
     
-    /* Info Box */
+    /* Info Box - Always yellow */
     .info-box {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-left: 4px solid #f59e0b;
@@ -116,19 +120,20 @@
         color: #78350f;
     }
     
-    /* Table Container */
+    /* Table Container - Theme-aware */
     .table-container {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-lg);
         overflow: hidden;
         animation: fadeInUp 0.6s ease-out 0.2s;
         animation-fill-mode: both;
+        border: 1px solid var(--border-color);
     }
     
     .table-header {
         padding: 2rem 2rem 1.5rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--border-color);
     }
     
     .table-header h3 {
@@ -144,7 +149,7 @@
         font-size: 0.9375rem;
     }
     
-    /* Modern Table */
+    /* Modern Table - Theme-aware */
     .table-modern {
         width: 100%;
         border-collapse: separate;
@@ -152,7 +157,7 @@
     }
     
     .table-modern thead {
-        background: #f9fafb;
+        background: var(--bg-tertiary);
     }
     
     .table-modern thead th {
@@ -163,7 +168,7 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--text-secondary);
-        border-bottom: 2px solid #e5e7eb;
+        border-bottom: 2px solid var(--border-color);
     }
     
     .table-modern thead th.text-center {
@@ -172,7 +177,7 @@
     
     .table-modern tbody tr {
         transition: all 0.2s ease;
-        border-bottom: 1px solid #f3f4f6;
+        border-bottom: 1px solid var(--border-subtle);
         animation: slideIn 0.4s ease-out;
         animation-fill-mode: both;
     }
@@ -184,7 +189,7 @@
     .table-modern tbody tr:nth-child(5) { animation-delay: 0.25s; }
     
     .table-modern tbody tr:hover {
-        background: #f9fafb;
+        background: var(--bg-hover);
     }
     
     .table-modern tbody td {
@@ -248,12 +253,13 @@
     .checkbox-modern {
         width: 24px;
         height: 24px;
-        border: 2px solid #d1d5db;
+        border: 2px solid var(--border-color);
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s ease;
         appearance: none;
         position: relative;
+        background: var(--bg-input);
     }
     
     .checkbox-modern:checked {
@@ -273,7 +279,7 @@
     }
     
     .checkbox-modern:hover {
-        border-color: #ef4444;
+        border-color: #00A3AD;
     }
     
     .btn-save {

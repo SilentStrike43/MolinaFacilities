@@ -78,22 +78,13 @@
         
         <div class="col-md-4 text-end">
             <div class="btn-group mb-2" role="group">
-                <a href="{{ url_for('horizon.edit_instance', instance_id=instance.id) }}" 
+                <a href="{{ url_for('horizon.instance_edit', instance_id=instance.id) }}" 
                    class="btn btn-outline-primary">
                     <i class="bi bi-pencil"></i> Edit
-                </a>
-                
-                {% if instance.is_active %}
-                <button class="btn btn-outline-warning" 
-                        onclick="deactivateInstance()">
-                    <i class="bi bi-pause-circle"></i> Deactivate
+                </a>             
+                <button class="btn btn-danger" onclick="confirmDelete({{ instance.id }}, '{{ instance.name }}')">
+                    <i class="bi bi-trash"></i> Delete Instance
                 </button>
-                {% else %}
-                <button class="btn btn-outline-success" 
-                        onclick="activateInstance()">
-                    <i class="bi bi-play-circle"></i> Activate
-                </button>
-                {% endif %}
             </div>
             
             <div>
@@ -422,35 +413,10 @@
             {% endif %}
             
             <div class="mt-3">
-                <a href="{{ url_for('horizon.edit_instance', instance_id=instance.id) }}" 
+                <a href="{{ url_for('horizon.instance_edit', instance_id=instance.id) }}" 
                    class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-gear"></i> Manage Modules
                 </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Deactivate Modal -->
-<div class="modal fade" id="deactivateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Deactivate Instance</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to deactivate <strong>{{ instance.name }}</strong>?</p>
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Warning:</strong> All users will lose access to this instance.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" onclick="confirmDeactivate()">
-                    <i class="bi bi-pause-circle"></i> Deactivate
-                </button>
             </div>
         </div>
     </div>
@@ -459,31 +425,36 @@
 
 {% block extra_js %}
 <script>
-function deactivateInstance() {
-    new bootstrap.Modal(document.getElementById('deactivateModal')).show();
-}
-
-function confirmDeactivate() {
-    if (confirm('Confirm deactivation of {{ instance.name }}?')) {
-        fetch('{{ url_for("horizon.deactivate_instance", instance_id=instance.id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                window.location.reload();
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            alert('Network error: ' + error);
-        });
+function confirmDelete(instanceId, instanceName) {
+    const reason = prompt(
+        `⚠️ WARNING: This will permanently delete "${instanceName}" and ALL associated data!\n\n` +
+        `Please enter a reason for deletion:`,
+        'No longer needed'
+    );
+    
+    if (!reason) return;
+    
+    if (!confirm(`Are you ABSOLUTELY SURE you want to delete "${instanceName}"?\n\nThis CANNOT be undone!`)) {
+        return;
     }
+    
+    fetch(`/horizon/instances/${instanceId}/delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+            window.location.href = '{{ url_for("horizon.instance_management") }}';
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error);
+    });
 }
 
 function activateInstance() {
@@ -511,7 +482,7 @@ function activateInstance() {
 
 function exportInstanceData() {
     if (confirm('Export all data for {{ instance.name }}? This may take a few moments.')) {
-        window.location.href = '{{ url_for("horizon.export_instance_data", instance_id=instance.id) }}';
+        window.location.href = '{{ url_for("horizon.export_instance", instance_id=instance.id) }}';
     }
 }
 

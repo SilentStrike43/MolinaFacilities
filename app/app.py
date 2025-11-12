@@ -17,9 +17,6 @@ from app.core.errors import register_error_handlers
 from app.modules.users.models import ensure_user_schema, ensure_first_sysadmin
 from app.modules.auth.security import current_user, login_required
 
-from app.core.ui import inject_globals
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -75,14 +72,19 @@ def create_app():
     register_error_handlers(app)
     
     # ==================== Context Processors ====================
-    app.context_processor(inject_globals)
-
     @app.context_processor
     def inject_user_context():
-        """Inject common user context into all templates."""
+        """Inject common user context AND sandbox detection into all templates."""
+        from flask import request
         from app.modules.auth.security import current_user
         from app.modules.users.permissions import PermissionManager
         from app.core.module_access import get_user_available_modules
+        from app.core.database import get_db_connection
+        import os
+        
+        # App version and branding
+        APP_VERSION = os.environ.get("APP_VERSION", "0.4.0")
+        BRAND_TEAL = os.environ.get("BRAND_TEAL", "#00A3AD")
         
         # Default Gridline Services branding
         default_settings = {
@@ -97,10 +99,34 @@ def create_app():
             'topbar_bg': '#ffffff'
         }
         
+        # DETECT SANDBOX MODE
+        instance_id = request.args.get('instance_id', type=int)
+        is_sandbox = False
+        sandbox_instance_name = None
+        
+        if instance_id:
+            try:
+                with get_db_connection("core") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT is_sandbox, name, display_name 
+                        FROM instances 
+                        WHERE id = %s
+                    """, (instance_id,))
+                    inst = cursor.fetchone()
+                    cursor.close()
+                    
+                    if inst and inst.get('is_sandbox'):
+                        is_sandbox = True
+                        sandbox_instance_name = inst.get('display_name') or inst.get('name')
+            except Exception as e:
+                logger.warning(f"Failed to check sandbox status: {e}")
+        
         cu = current_user()
         if not cu:
             return {
                 'cu': None,
+                'current_user': None,
                 'can_send': False,
                 'can_inventory': False,
                 'can_asset': False,
@@ -109,8 +135,10 @@ def create_app():
                 'can_fulfillment_manager': False,
                 'can_admin_users': False,
                 'elevated': False,
-                'instance_name': default_settings['instance_name'],
-                'instance_subtitle': default_settings['instance_subtitle'],
+                'is_sandbox': is_sandbox,
+                'instance_id': instance_id,
+                'instance_name': sandbox_instance_name if is_sandbox else default_settings['instance_name'],
+                'instance_subtitle': 'SANDBOX MODE' if is_sandbox else default_settings['instance_subtitle'],
                 'instance_logo': default_settings['logo_url'],
                 'instance_favicon': default_settings['favicon_url'],
                 'instance_colors': {
@@ -119,7 +147,9 @@ def create_app():
                     'sidebar_bg_start': default_settings['sidebar_bg_start'],
                     'sidebar_bg_end': default_settings['sidebar_bg_end'],
                     'topbar_bg': default_settings['topbar_bg']
-                }
+                },
+                'APP_VERSION': APP_VERSION,
+                'BRAND_TEAL': BRAND_TEAL
             }
         
         # Get effective permissions
@@ -127,11 +157,21 @@ def create_app():
         permission_level = cu.get('permission_level', '')
         is_elevated = permission_level in ['L1', 'L2', 'L3', 'S1']
         
-        # For now, just use default branding for all users
-        # Later we can add database lookup based on cu.get('instance_id')
+        # OVERRIDE PERMISSIONS FOR SANDBOX
+        if is_sandbox and permission_level in ['L3', 'S1']:
+            # L3/S1 users get full permissions in sandbox
+            effective_perms = {
+                'can_send': True,
+                'can_inventory': True,
+                'can_asset': True,
+                'can_fulfillment_customer': True,
+                'can_fulfillment_service': True,
+                'can_fulfillment_manager': True,
+            }
         
         return {
             'cu': cu,
+            'current_user': cu,
             'can_send': effective_perms.get('can_send', False) or is_elevated,
             'can_inventory': effective_perms.get('can_inventory', False) or is_elevated,
             'can_asset': effective_perms.get('can_asset', False) or is_elevated,
@@ -141,8 +181,10 @@ def create_app():
             'can_admin_users': is_elevated and permission_level in ['L1', 'L2', 'L3', 'S1'],
             'elevated': is_elevated,
             'available_modules': get_user_available_modules(cu) if cu else [],
-            'instance_name': default_settings['instance_name'],
-            'instance_subtitle': default_settings['instance_subtitle'],
+            'is_sandbox': is_sandbox,
+            'instance_id': instance_id,
+            'instance_name': sandbox_instance_name if is_sandbox else default_settings['instance_name'],
+            'instance_subtitle': 'SANDBOX MODE' if is_sandbox else default_settings['instance_subtitle'],
             'instance_logo': default_settings['logo_url'],
             'instance_favicon': default_settings['favicon_url'],
             'instance_colors': {
@@ -151,7 +193,9 @@ def create_app():
                 'sidebar_bg_start': default_settings['sidebar_bg_start'],
                 'sidebar_bg_end': default_settings['sidebar_bg_end'],
                 'topbar_bg': default_settings['topbar_bg']
-            }
+            },
+            'APP_VERSION': APP_VERSION,
+            'BRAND_TEAL': BRAND_TEAL
         }
     
     # ==================== Custom Jinja2 Filters ====================
@@ -201,10 +245,6 @@ def create_app():
         # Inventory module
         from app.modules.inventory import bp as inventory_bp
         app.register_blueprint(inventory_bp)
-        
-        # Asset Ledger module
-        from app.modules.inventory.ledger import bp as asset_ledger_bp
-        app.register_blueprint(asset_ledger_bp, url_prefix='/asset-ledger')
 
         # Horizon - Global Admin Module (L3/S1 only)
         from app.modules.horizon import bp as horizon_bp

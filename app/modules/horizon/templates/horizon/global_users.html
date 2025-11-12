@@ -13,6 +13,16 @@
 {% endblock %}
 
 {% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="bi bi-people"></i> All Users Database ({{ stats.total_users }} users)
+    </h2>
+    <a href="{{ url_for('horizon.create_global_user') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Create User
+    </a>
+</div>
+
 <!-- User Statistics -->
 <div class="row mb-4">
     <div class="col-md-2">
@@ -253,24 +263,31 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
-                                    {% if user.instance_id %}
-                                        <a href="{{ url_for('users.view_profile', uid=user.id) }}" 
-                                        class="btn btn-outline-primary btn-sm" 
-                                        title="View Profile">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('horizon.instance_detail', instance_id=user.instance_id) }}" 
-                                        class="btn btn-outline-info btn-sm"
-                                        title="View Instance">
-                                            <i class="bi bi-building"></i>
-                                        </a>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- View/Edit Button -->
+                                    <a href="{{ url_for('horizon.edit_global_user', user_id=user.id) }}" 
+                                    class="btn btn-info" title="Edit User">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    <!-- Assign Instance Button -->
+                                    <button class="btn btn-warning" 
+                                            onclick="showAssignModal({{ user.id }}, '{{ user.username }}')" 
+                                            title="Assign to Instance">
+                                        <i class="bi bi-building"></i>
+                                    </button>
+                                    
+                                    <!-- Delete Button (only if not S1) -->
+                                    {% if user.permission_level != 'S1' %}
+                                    <button class="btn btn-danger" 
+                                            onclick="deleteUser({{ user.id }}, '{{ user.username }}')" 
+                                            title="Delete User">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                     {% else %}
-                                        <button class="btn btn-outline-danger btn-sm" 
-                                                onclick="assignInstance({{ user.id }})"
-                                                title="Assign to Instance">
-                                            <i class="bi bi-exclamation-triangle"></i> Assign
-                                        </button>
+                                    <button class="btn btn-secondary" disabled title="Cannot delete System Admin">
+                                        <i class="bi bi-lock"></i>
+                                    </button>
                                     {% endif %}
                                 </div>
                             </td>
@@ -292,14 +309,47 @@
 
 {% block extra_js %}
 <script>
-function exportUsers(format) {
-    const params = new URLSearchParams(window.location.search);
-    params.set('export', format);
-    window.location.href = '{{ url_for("horizon.export_global_users") }}?' + params.toString();
+// Assign Instance Modal
+function showAssignModal(userId, username) {
+    const newInstanceId = prompt(`Reassign ${username} to which instance ID?`);
+    
+    if (!newInstanceId) return;
+    
+    fetch(`/horizon/global-users/${userId}/assign`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({instance_id: parseInt(newInstanceId)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.error);
+        }
+    });
 }
-function assignInstance(userId) {
-    alert('User ID ' + userId + ' has no instance assigned. This should be corrected in the database.');
-    // TODO: Implement instance assignment modal
+
+// Delete User
+function deleteUser(userId, username) {
+    if (!confirm(`⚠️ Delete user "${username}"?\n\nThis will:\n• Delete all their audit logs\n• Remove them permanently\n\nContinue?`)) {
+        return;
+    }
+    
+    fetch(`/horizon/global-users/${userId}/delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.error);
+        }
+    });
 }
 </script>
 {% endblock %}

@@ -90,7 +90,7 @@ def require_super_admin(f):
         
         # Check if user is S1 (System)
         if cu.get('permission_level') != 'S1':
-            flash("Access denied. System privileges required.", "danger")
+            flash("Access denied. System (S1) privileges required.", "danger")
             return redirect(url_for("horizon.dashboard"))
         
         return f(*args, **kwargs)
@@ -197,6 +197,45 @@ def dashboard():
         instance_stats=instance_stats
     )
 
+@bp.route("/back-to-app")
+@login_required
+@require_horizon
+def back_to_app():
+    """Smart redirect to sandbox or user's instance."""
+    from app.core.database import get_db_connection
+    
+    cu = current_user()
+    perm_level = cu.get('permission_level')
+    
+    print(f"🔙 BACK TO APP: user={cu.get('username')}, perm={perm_level}")
+    
+    # L3/S1 go to sandbox
+    if perm_level in ['L3', 'S1']:
+        try:
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT id FROM instances 
+                    WHERE is_sandbox = true 
+                    LIMIT 1
+                """)
+                sandbox = cursor.fetchone()
+                cursor.close()
+                
+                if sandbox:
+                    print(f"➡️ Sending to sandbox (ID: {sandbox['id']})")
+                    return redirect(url_for('home.index', instance_id=sandbox['id']))
+        except Exception as e:
+            print(f"❌ Error finding sandbox: {e}")
+    
+    # Others go to their assigned instance
+    instance_id = cu.get('instance_id')
+    if instance_id:
+        print(f"➡️ Sending to instance {instance_id}")
+        return redirect(url_for('home.index', instance_id=instance_id))
+    
+    flash('No instance assigned.', 'warning')
+    return redirect(url_for('horizon.dashboard'))
 
 # ---------- Instance Management ----------
 @bp.route("/instances")
@@ -491,11 +530,10 @@ def create_instance():
             existing_l2_users=existing_l2_users
         )
 
-
 @bp.route("/instances/<int:instance_id>/edit", methods=["GET", "POST"])
 @login_required
 @require_horizon
-def edit_instance(instance_id: int):
+def instance_edit(instance_id: int):
     """Edit instance details."""
     cu = current_user()
     
@@ -505,90 +543,202 @@ def edit_instance(instance_id: int):
         return redirect(url_for("horizon.instance_management"))
     
     if request.method == "POST":
-        updates = {
-            'name': request.form.get("name", "").strip(),
-            'subdomain': request.form.get("subdomain", "").strip(),
-            'contact_email': request.form.get("contact_email", "").strip(),
-            'contact_phone': request.form.get("contact_phone", "").strip(),
-            'address': request.form.get("address", "").strip(),
-            'max_users': int(request.form.get("max_users", 100) or 100),
-            'is_active': bool(request.form.get("is_active")),
-        }
-        
-        InstanceManager.update_instance(instance_id, updates)
-        
-        record_global_audit(cu, "update_instance", f"Updated instance: {updates['name']} (ID: {instance_id})")
-        
-        flash(f"Instance '{updates['name']}' updated successfully!", "success")
-        return redirect(url_for("horizon.instance_detail", instance_id=instance_id))
+        try:
+            # Collect enabled modules
+            enabled_modules = []
+            if request.form.get("module_send"):
+                enabled_modules.append("send")
+            if request.form.get("module_inventory"):
+                enabled_modules.append("inventory")
+            if request.form.get("module_fulfillment"):
+                enabled_modules.append("fulfillment")
+            
+            # Ensure at least one module is enabled
+            if not enabled_modules:
+                flash("At least one module must be enabled.", "danger")
+                return redirect(url_for("horizon.instance_edit", instance_id=instance_id))
+            
+            # Update instance
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE instances SET
+                        name = %s,
+                        display_name = %s,
+                        description = %s,
+                        subdomain = %s,
+                        contact_name = %s,
+                        contact_email = %s,
+                        contact_phone = %s,
+                        max_users = %s,
+                        storage_limit_gb = %s,
+                        subscription_tier = %s,
+                        enabled_modules = %s,
+                        is_active = %s,
+                        notes = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """, (
+                    request.form.get("name", "").strip(),
+                    request.form.get("display_name", "").strip() or None,
+                    request.form.get("description", "").strip() or None,
+                    request.form.get("subdomain", "").strip() or None,
+                    request.form.get("contact_name", "").strip() or None,
+                    request.form.get("contact_email", "").strip() or None,
+                    request.form.get("contact_phone", "").strip() or None,
+                    int(request.form.get("max_users", 100)),
+                    int(request.form.get("storage_limit_gb", 10)),
+                    request.form.get("subscription_tier", "standard"),
+                    enabled_modules,
+                    bool(request.form.get("is_active")),
+                    request.form.get("notes", "").strip() or None,
+                    instance_id
+                ))
+                conn.commit()
+                cursor.close()
+            
+            # Record audit
+            modules_str = ", ".join(enabled_modules)
+            record_horizon_audit(
+                cu, 
+                "update_instance", 
+                "instances",
+                f"Updated instance: {request.form.get('name')} (ID: {instance_id}). Modules: {modules_str}",
+                target_instance_id=instance_id,
+                severity="info"
+            )
+            
+            flash(f"✅ Instance '{request.form.get('name')}' updated successfully!", "success")
+            return redirect(url_for("horizon.instance_detail", instance_id=instance_id))
+            
+        except Exception as e:
+            logger.error(f"Error updating instance: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f"❌ Error updating instance: {str(e)}", "danger")
+            return redirect(url_for("horizon.instance_edit", instance_id=instance_id))
     
+    # GET request - show form
     return render_template(
-        "horizon/edit_instance.html",
+        "horizon/instance_edit.html",
         active="global",
         page="edit_instance",
         instance=instance
     )
 
-
 @bp.route("/instances/<int:instance_id>/delete", methods=["POST"])
 @login_required
-@require_super_admin  # Only S1 can delete
+@require_horizon
 def delete_instance(instance_id: int):
-    """Permanently delete an instance (S1 only)."""
+    """Permanently delete an instance and all its data."""
     cu = current_user()
-    
-    instance = get_instance_by_id(instance_id)
-    if not instance:
-        return jsonify({"success": False, "error": "Instance not found"}), 404
-    
-    # Confirm deletion with extra verification
-    confirmation_code = request.json.get("confirmation_code", "")
-    expected_code = f"DELETE-{instance['name'].upper()[:6]}-{instance_id}"
-    
-    if confirmation_code != expected_code:
-        return jsonify({
-            "success": False, 
-            "error": f"Invalid confirmation code. Expected: {expected_code}"
-        }), 400
     
     try:
-        success = InstanceManager.delete_instance(instance_id, cu['id'])
+        # Get instance
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, name, is_sandbox 
+                FROM instances 
+                WHERE id = %s
+            """, (instance_id,))
+            instance = cursor.fetchone()
+            cursor.close()
         
-        if success:
-            record_global_audit(cu, "delete_instance", 
-                f"PERMANENTLY DELETED instance: {instance['name']} (ID: {instance_id})")
-            
+        if not instance:
             return jsonify({
-                "success": True, 
-                "message": f"Instance '{instance['name']}' permanently deleted"
-            })
-        else:
-            return jsonify({"success": False, "error": "Failed to delete instance"}), 500
+                "success": False, 
+                "error": "Instance not found"
+            }), 404
+        
+        # Prevent deleting sandbox
+        if instance['is_sandbox']:
+            return jsonify({
+                "success": False, 
+                "error": "Cannot delete sandbox instance"
+            }), 403
+        
+        # Get deletion reason
+        reason = request.json.get("reason", "No reason provided")
+        
+        # DELETE EVERYTHING IN ORDER
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
             
+            # 1. Delete horizon audit logs that reference this instance
+            cursor.execute("""
+                DELETE FROM horizon_audit_logs 
+                WHERE target_instance_id = %s
+            """, (instance_id,))
+            deleted_horizon_audits = cursor.rowcount
+            
+            # 2. Delete user instance access records
+            cursor.execute("""
+                DELETE FROM user_instance_access 
+                WHERE instance_id = %s
+            """, (instance_id,))
+            deleted_access = cursor.rowcount
+            
+            # 3. Get user IDs for this instance (for deleting their audit logs)
+            cursor.execute("""
+                SELECT id FROM users WHERE instance_id = %s
+            """, (instance_id,))
+            user_ids = [row['id'] for row in cursor.fetchall()]
+            
+            # 4. Delete audit logs for users in this instance
+            if user_ids:
+                cursor.execute("""
+                    DELETE FROM audit_logs 
+                    WHERE user_id = ANY(%s)
+                """, (user_ids,))
+                deleted_audits = cursor.rowcount
+            else:
+                deleted_audits = 0
+            
+            # 5. Delete all users in this instance
+            cursor.execute("""
+                DELETE FROM users 
+                WHERE instance_id = %s
+            """, (instance_id,))
+            deleted_users = cursor.rowcount
+            
+            # 6. Finally, delete the instance itself
+            cursor.execute("""
+                DELETE FROM instances 
+                WHERE id = %s
+            """, (instance_id,))
+            
+            conn.commit()
+            cursor.close()
+        
+        # Record in Horizon audit (before deletion)
+        record_horizon_audit(
+            cu,
+            "delete_instance",
+            "instances",
+            f"DELETED instance: {instance['name']} (ID: {instance_id}). "
+            f"Removed: {deleted_users} users, {deleted_audits} audit logs, "
+            f"{deleted_horizon_audits} horizon audits, {deleted_access} access records. "
+            f"Reason: {reason}",
+            severity="critical"
+        )
+        
+        logger.warning(f"Instance {instance_id} ({instance['name']}) DELETED by {cu['username']}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Instance '{instance['name']}' and all associated data deleted. "
+                      f"({deleted_users} users, {deleted_audits + deleted_horizon_audits} audit logs)"
+        })
+        
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-@bp.route("/instances/<int:instance_id>/deactivate", methods=["POST"])
-@login_required
-@require_horizon
-def deactivate_instance(instance_id: int):
-    """Deactivate an instance."""
-    cu = current_user()
-    
-    instance = get_instance_by_id(instance_id)
-    if not instance:
-        return jsonify({"success": False, "error": "Instance not found"}), 404
-    
-    reason = request.json.get("reason", "")
-    
-    InstanceManager.deactivate_instance(instance_id, reason, cu['id'])
-    
-    record_global_audit(cu, "deactivate_instance", 
-                       f"Deactivated instance: {instance['name']} (ID: {instance_id}). Reason: {reason}")
-    
-    return jsonify({"success": True, "message": f"Instance '{instance['name']}' deactivated"})
-
+        logger.error(f"Error deleting instance {instance_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 @bp.route("/instances/<int:instance_id>/activate", methods=["POST"])
 @login_required
@@ -1279,6 +1429,298 @@ def export_audits():
             download_name=filename
         )
 
+# ========== GLOBAL USER MANAGEMENT ==========
+
+@bp.route("/global-users/create", methods=["GET", "POST"])
+@login_required
+@require_horizon
+def create_global_user():
+    """Create a new user and assign to an instance."""
+    cu = current_user()
+    
+    if request.method == "POST":
+        try:
+            username = request.form.get("username", "").strip().lower()
+            password = request.form.get("password", "").strip()
+            instance_id = request.form.get("instance_id", type=int)
+            
+            if not username or not password:
+                flash("Username and password are required.", "danger")
+                return redirect(url_for("horizon.create_global_user"))
+            
+            if not instance_id:
+                flash("Please select an instance.", "danger")
+                return redirect(url_for("horizon.create_global_user"))
+            
+            # Check if username exists
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+                if cursor.fetchone():
+                    flash(f"Username '{username}' already exists.", "danger")
+                    cursor.close()
+                    return redirect(url_for("horizon.create_global_user"))
+                
+                # Hash password
+                import hashlib
+                pw_hash = hashlib.sha256(password.encode()).hexdigest()
+                
+                # Get permission level and modules
+                permission_level = request.form.get("permission_level", "")
+                module_perms = []
+                if request.form.get("perm_m1"):
+                    module_perms.append("M1")
+                if request.form.get("perm_m2"):
+                    module_perms.append("M2")
+                if request.form.get("perm_m3a"):
+                    module_perms.append("M3A")
+                if request.form.get("perm_m3b"):
+                    module_perms.append("M3B")
+                if request.form.get("perm_m3c"):
+                    module_perms.append("M3C")
+                
+                # Create user
+                cursor.execute("""
+                    INSERT INTO users (
+                        username, password_hash, first_name, last_name,
+                        email, phone, instance_id, permission_level,
+                        module_permissions, is_active, created_by, created_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, %s, CURRENT_TIMESTAMP)
+                    RETURNING id
+                """, (
+                    username, pw_hash,
+                    request.form.get("first_name", ""),
+                    request.form.get("last_name", ""),
+                    request.form.get("email", ""),
+                    request.form.get("phone", ""),
+                    instance_id,
+                    permission_level,
+                    json.dumps(module_perms),
+                    cu["id"]
+                ))
+                user_id = cursor.fetchone()['id']
+                conn.commit()
+                cursor.close()
+            
+            record_horizon_audit(
+                cu, "create_user", "users",
+                f"Created user {username} (ID: {user_id}) in instance {instance_id}",
+                target_user_id=user_id,
+                severity="info"
+            )
+            
+            flash(f"✅ User '{username}' created successfully!", "success")
+            return redirect(url_for("horizon.global_users"))
+            
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
+            flash(f"❌ Error: {str(e)}", "danger")
+            return redirect(url_for("horizon.create_global_user"))
+    
+    # GET - show form
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, display_name FROM instances WHERE is_active = TRUE ORDER BY name")
+        instances = cursor.fetchall()
+        cursor.close()
+    
+    return render_template(
+        "horizon/create_global_user.html",
+        active="users",
+        instances=instances
+    )
+
+
+@bp.route("/global-users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+@require_horizon
+def edit_global_user(user_id: int):
+    """Edit a user from global panel."""
+    cu = current_user()
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT u.*, i.name as instance_name
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            WHERE u.id = %s
+        """, (user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+    
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("horizon.global_users"))
+    
+    if request.method == "POST":
+        try:
+            # Parse module permissions
+            module_perms = []
+            if request.form.get("perm_m1"):
+                module_perms.append("M1")
+            if request.form.get("perm_m2"):
+                module_perms.append("M2")
+            if request.form.get("perm_m3a"):
+                module_perms.append("M3A")
+            if request.form.get("perm_m3b"):
+                module_perms.append("M3B")
+            if request.form.get("perm_m3c"):
+                module_perms.append("M3C")
+            
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE users SET
+                        first_name = %s,
+                        last_name = %s,
+                        email = %s,
+                        phone = %s,
+                        permission_level = %s,
+                        module_permissions = %s,
+                        is_active = %s,
+                        last_modified_by = %s,
+                        last_modified_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """, (
+                    request.form.get("first_name", ""),
+                    request.form.get("last_name", ""),
+                    request.form.get("email", ""),
+                    request.form.get("phone", ""),
+                    request.form.get("permission_level", ""),
+                    json.dumps(module_perms),
+                    bool(request.form.get("is_active")),
+                    cu["id"],
+                    user_id
+                ))
+                conn.commit()
+                cursor.close()
+            
+            record_horizon_audit(
+                cu, "update_user", "users",
+                f"Updated user {user['username']} (ID: {user_id})",
+                target_user_id=user_id,
+                severity="info"
+            )
+            
+            flash("✅ User updated successfully!", "success")
+            return redirect(url_for("horizon.global_users"))
+            
+        except Exception as e:
+            logger.error(f"Error updating user: {e}")
+            flash(f"❌ Error: {str(e)}", "danger")
+    
+    # GET - show form
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, display_name FROM instances ORDER BY name")
+        instances = cursor.fetchall()
+        cursor.close()
+    
+    return render_template(
+        "horizon/edit_global_user.html",
+        active="users",
+        user=user,
+        instances=instances
+    )
+
+
+@bp.route("/global-users/<int:user_id>/assign", methods=["POST"])
+@login_required
+@require_horizon
+def assign_user_instance(user_id: int):
+    """Assign/reassign user to a different instance."""
+    cu = current_user()
+    
+    try:
+        new_instance_id = request.json.get("instance_id", type=int)
+        
+        if not new_instance_id:
+            return jsonify({"success": False, "error": "No instance specified"}), 400
+        
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            
+            # Get user info
+            cursor.execute("SELECT username, instance_id FROM users WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({"success": False, "error": "User not found"}), 404
+            
+            old_instance_id = user['instance_id']
+            
+            # Update instance
+            cursor.execute("""
+                UPDATE users 
+                SET instance_id = %s, last_modified_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (new_instance_id, user_id))
+            
+            conn.commit()
+            cursor.close()
+        
+        record_horizon_audit(
+            cu, "reassign_user_instance", "users",
+            f"Reassigned user {user['username']} from instance {old_instance_id} to {new_instance_id}",
+            target_user_id=user_id,
+            severity="info"
+        )
+        
+        return jsonify({"success": True, "message": "User reassigned successfully"})
+        
+    except Exception as e:
+        logger.error(f"Error reassigning user: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/global-users/<int:user_id>/delete", methods=["POST"])
+@login_required
+@require_horizon
+def delete_global_user(user_id: int):
+    """Delete a user from global panel."""
+    cu = current_user()
+    
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            
+            # Get user info
+            cursor.execute("""
+                SELECT username, permission_level 
+                FROM users 
+                WHERE id = %s
+            """, (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({"success": False, "error": "User not found"}), 404
+            
+            # Prevent deleting S1 users
+            if user['permission_level'] == 'S1':
+                return jsonify({"success": False, "error": "Cannot delete System Admin"}), 403
+            
+            # Delete user's audit logs
+            cursor.execute("DELETE FROM audit_logs WHERE user_id = %s", (user_id,))
+            
+            # Delete user
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            
+            conn.commit()
+            cursor.close()
+        
+        record_horizon_audit(
+            cu, "delete_user", "users",
+            f"Deleted user {user['username']} (ID: {user_id})",
+            severity="warning"
+        )
+        
+        return jsonify({"success": True, "message": f"User '{user['username']}' deleted"})
+        
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ---------- System Health ----------
 @bp.route("/system-health")

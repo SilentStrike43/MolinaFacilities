@@ -1,478 +1,435 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 
 {% block extra_css %}
 <style>
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .insights-wrapper {
+        width: 100%;
+        max-width: 100%;
     }
     
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    /* Premium Card Header */
-    .card-premium {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        margin-bottom: 2rem;
-        border: none;
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        animation: fadeInUp 0.5s ease-out;
-    }
-    
-    .card-premium-body {
-        padding: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .card-premium-icon {
-        width: 48px;
-        height: 48px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        backdrop-filter: blur(10px);
-    }
-    
-    .card-premium-text h2 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 1.5rem;
-    }
-    
-    .card-premium-text p {
-        margin: 0;
-        opacity: 0.9;
-        font-size: 0.9375rem;
-    }
-    
-    /* Filter Card */
-    .filter-card {
-        background: white;
-        border-radius: 1rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        animation: fadeInUp 0.6s ease-out 0.1s;
-        animation-fill-mode: both;
-    }
-    
-    .filter-grid {
+    .stat-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-box {
+        padding: 1.5rem;
+        border-radius: 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        transition: transform 0.2s;
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-2px);
+    }
+    
+    .content-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        border-radius: 1rem;
+        padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
     
-    .filter-group {
-        display: flex;
-        flex-direction: column;
+    .chart-container {
+        height: 300px;
+        margin-top: 1rem;
     }
     
-    .filter-label {
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: #1a1d2e;
-        margin-bottom: 0.5rem;
-    }
-    
-    .filter-input {
-        padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 0.5rem;
-        font-size: 0.9375rem;
-        transition: all 0.2s;
-        color: #1a1d2e;
-    }
-    
-    .filter-input:focus {
-        outline: none;
-        border-color: #00A3AD;
-        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
-    }
-    
-    .filter-actions {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-    
-    .btn-filter {
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.9375rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .btn-filter-primary {
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
-    }
-    
-    .btn-filter-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.4);
-        color: white;
-    }
-    
-    .btn-filter-secondary {
-        background: #f3f4f6;
-        color: #1a1d2e;
-    }
-    
-    .btn-filter-secondary:hover {
-        background: #e5e7eb;
-        color: #1a1d2e;
-    }
-    
-    /* Table Card */
-    .table-card {
-        background: white;
-        border-radius: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-        animation: fadeInUp 0.6s ease-out 0.2s;
-        animation-fill-mode: both;
-    }
-    
-    .table-header {
-        padding: 1.5rem;
-        border-bottom: 1px solid #f3f4f6;
+    .leaderboard-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-    }
-    
-    .table-title {
-        font-size: 1.125rem;
-        font-weight: 700;
-        color: #1a1d2e;
-        margin: 0;
-    }
-    
-    .table-badge {
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
-        padding: 0.375rem 0.75rem;
+        padding: 0.75rem;
+        background: var(--bg-tertiary);
         border-radius: 0.5rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-    
-    .table-container {
-        overflow-x: auto;
-    }
-    
-    .insights-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .insights-table thead th {
-        background: #f9fafb;
-        padding: 1rem 1.5rem;
-        text-align: left;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #6b7280;
-        white-space: nowrap;
-    }
-    
-    .insights-table tbody td {
-        padding: 1rem 1.5rem;
-        border-top: 1px solid #f3f4f6;
-        font-size: 0.9375rem;
-        color: #1a1d2e;
-    }
-    
-    .insights-table tbody tr {
-        transition: background 0.15s;
-        animation: slideIn 0.4s ease-out;
-        animation-fill-mode: both;
-    }
-    
-    .insights-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
-    .insights-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
-    .insights-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
-    .insights-table tbody tr:nth-child(4) { animation-delay: 0.2s; }
-    .insights-table tbody tr:nth-child(5) { animation-delay: 0.25s; }
-    
-    .insights-table tbody tr:hover {
-        background: #fafbfc;
-    }
-    
-    .sku-badge {
-        font-family: 'Courier New', monospace;
-        background: #f3f4f6;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #1a1d2e;
-    }
-    
-    .action-badge {
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.5rem;
-        font-size: 0.8125rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-    }
-    
-    .badge-checkin {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .badge-checkout {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-    }
-    
-    .badge-adjust {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-    }
-    
-    .badge-legacy {
-        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-        color: white;
-    }
-    
-    /* Empty State */
-    .empty-state {
-        padding: 4rem 2rem;
-        text-align: center;
-    }
-    
-    .empty-state-icon {
-        font-size: 4rem;
-        color: #d1d5db;
-        margin-bottom: 1rem;
-    }
-    
-    .empty-state-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1a1d2e;
         margin-bottom: 0.5rem;
     }
     
-    .empty-state-description {
-        font-size: 0.9375rem;
-        color: #6b7280;
+    .leaderboard-rank {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.875rem;
     }
     
-    /* Responsive */
-    @media (max-width: 768px) {
-        .filter-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .filter-actions {
-            flex-direction: column;
-        }
-        
-        .btn-filter {
-            width: 100%;
-            justify-content: center;
-        }
+    .rank-1 { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #78350f; }
+    .rank-2 { background: #e5e7eb; color: #374151; }
+    .rank-3 { background: #fed7aa; color: #92400e; }
+    
+    .alert-card {
+        padding: 0.875rem;
+        border-radius: 0.625rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        background: var(--bg-tertiary);
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .activity-badge {
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-checkin { background: #d1fae5; color: #065f46; }
+    .badge-checkout { background: #fef3c7; color: #92400e; }
+    .badge-adjust { background: #dbeafe; color: #1e40af; }
+    
+    .progress-bar {
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00A3AD, #008A93);
+        transition: width 0.3s;
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="card-premium">
-    <div class="card-premium-body">
-        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-            <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; backdrop-filter: blur(10px);">
-                <i class="bi bi-bar-chart-line"></i>
-            </div>
-            <div>
-                <h2 style="margin: 0; font-weight: 700; font-size: 1.5rem;">Inventory Insights</h2>
-                <p style="margin: 0; opacity: 0.9; font-size: 0.9375rem;">Track and analyze all inventory movements</p>
-            </div>
+<div class="insights-wrapper">
+
+<!-- Page Header -->
+<div style="background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%); border-radius: 1.5rem; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 8px 24px rgba(0, 163, 173, 0.3);">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div style="width: 64px; height: 64px; background: rgba(255, 255, 255, 0.2); border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; flex-shrink: 0;">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div>
+            <h2 style="margin: 0 0 0.5rem 0; color: white; font-size: 1.75rem; font-weight: 800;">Asset Insights</h2>
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">Analytics, trends, and actionable insights from the last 30 days</p>
         </div>
     </div>
 </div>
 
-<!-- Filters -->
-<div class="filter-card">
-    <form method="get" action="{{ url_for('inventory.insights') }}">
-        <div class="filter-grid">
-            <div class="filter-group">
-                <label class="filter-label">Search</label>
-                <input type="text" name="q" value="{{ q or '' }}" class="filter-input" placeholder="Search anything...">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">SKU / Inventory ID</label>
-                <input type="text" name="inventory_id" value="{{ inventory_id or '' }}" class="filter-input" placeholder="101-0000001">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">Product</label>
-                <input type="text" name="product_name" value="{{ product_name or '' }}" class="filter-input" placeholder="Product name">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">Manufacturer</label>
-                <input type="text" name="manufacturer" value="{{ manufacturer or '' }}" class="filter-input" placeholder="Manufacturer">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">Action Type</label>
-                <input type="text" name="item_type" value="{{ item_type or '' }}" class="filter-input" placeholder="CHECKIN, CHECKOUT...">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">Submitter</label>
-                <input type="text" name="submitter_name" value="{{ submitter_name or '' }}" class="filter-input" placeholder="Username">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">From Date</label>
-                <input type="date" name="date_from" value="{{ date_from or '' }}" class="filter-input">
-            </div>
-            
-            <div class="filter-group">
-                <label class="filter-label">To Date</label>
-                <input type="date" name="date_to" value="{{ date_to or '' }}" class="filter-input">
-            </div>
-        </div>
-        
-        <div class="filter-actions">
-            <button type="submit" class="btn-filter btn-filter-primary">
-                <i class="bi bi-search"></i>
-                Search
-            </button>
-            <a href="{{ url_for('inventory.insights') }}" class="btn-filter btn-filter-secondary">
-                <i class="bi bi-x-circle"></i>
-                Clear Filters
-            </a>
-            <a href="{{ url_for('inventory.insights_export', q=q or '', product_name=product_name or '', manufacturer=manufacturer or '', date_from=date_from or '', date_to=date_to or '') }}" 
-               class="btn-filter btn-filter-secondary" style="margin-left: auto;">
-                <i class="bi bi-download"></i>
-                Export CSV
-            </a>
-        </div>
-    </form>
+<!-- Summary Stats -->
+<div class="stat-grid">
+    <div class="stat-box">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📦</div>
+        <h3 style="font-size: 1.75rem; margin: 0.5rem 0;">{{ summary.unique_assets or 0 }}</h3>
+        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Active Assets</p>
+    </div>
+    <div class="stat-box">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔄</div>
+        <h3 style="font-size: 1.75rem; margin: 0.5rem 0;">{{ summary.total_movements or 0 }}</h3>
+        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Total Movements</p>
+    </div>
+    <div class="stat-box">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #10b981;">⬇️</div>
+        <h3 style="font-size: 1.75rem; margin: 0.5rem 0; color: #10b981;">{{ summary.total_checkins or 0 }}</h3>
+        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Items Checked In</p>
+    </div>
+    <div class="stat-box">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #f59e0b;">⬆️</div>
+        <h3 style="font-size: 1.75rem; margin: 0.5rem 0; color: #f59e0b;">{{ summary.total_checkouts or 0 }}</h3>
+        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Items Checked Out</p>
+    </div>
+    <div class="stat-box">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #3b82f6;">👥</div>
+        <h3 style="font-size: 1.75rem; margin: 0.5rem 0; color: #3b82f6;">{{ summary.active_users or 0 }}</h3>
+        <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Active Users</p>
+    </div>
 </div>
 
-<!-- Results Table -->
-<div class="table-card">
-    <div class="table-header">
-        <h3 class="table-title">Movement History</h3>
-        {% if rows %}
-        <span class="table-badge">{{ rows|length }} result(s)</span>
-        {% endif %}
+<!-- Charts Row -->
+<div class="row">
+    <!-- Activity Trend -->
+    <div class="col-md-8">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-graph-up"></i> Activity Trend (Last 14 Days)
+            </h5>
+            <div class="chart-container">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
     </div>
     
-    <div class="table-container">
-        <table class="insights-table">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>SKU / ID</th>
-                    <th>Product</th>
-                    <th>Manufacturer</th>
-                    <th>Action</th>
-                    <th>Submitter</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if not rows %}
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">
-                                <i class="bi bi-inbox"></i>
-                            </div>
-                            <div class="empty-state-title">No Results Found</div>
-                            <div class="empty-state-description">
-                                Try adjusting your filters or search terms to find what you're looking for.
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
-                {% for r in rows %}
-                <tr>
-                    <td style="font-size: 0.8125rem; color: var(--text-secondary); white-space: nowrap;">
-                        {{ r['ts_utc'] or r.ts_utc or 'N/A' }}
-                    </td>
-                    <td>
-                        <span class="sku-badge">{{ r['inventory_id'] or r.inv_id or r.inventory_id or 'N/A' }}</span>
-                    </td>
-                    <td style="font-weight: 500;">{{ r['product_name'] or r.product or r.product_name or '—' }}</td>
-                    <td>{{ r['manufacturer'] or r.manufacturer or '—' }}</td>
-                    <td>
-                        {% set action_type = (r['item_type'] or r.type or r.item_type or '').upper() %}
-                        {% if 'CHECKIN' in action_type or 'CHECK IN' in action_type %}
-                            <span class="action-badge badge-checkin">
-                                <i class="bi bi-arrow-down-circle"></i>
-                                Check In
-                            </span>
-                        {% elif 'CHECKOUT' in action_type or 'CHECK OUT' in action_type %}
-                            <span class="action-badge badge-checkout">
-                                <i class="bi bi-arrow-up-circle"></i>
-                                Check Out
-                            </span>
-                        {% elif 'ADJUST' in action_type %}
-                            <span class="action-badge badge-adjust">
-                                <i class="bi bi-pencil-square"></i>
-                                Adjust
-                            </span>
-                        {% else %}
-                            <span class="action-badge badge-legacy">
-                                {{ r['item_type'] or r.type or r.item_type or '—' }}
-                            </span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 0.75rem;">
-                                {{ (r['submitter_name'] or r.submitter or r.submitter_name or 'U')[0].upper() }}
-                            </div>
-                            <span>{{ r['submitter_name'] or r.submitter or r.submitter_name or '—' }}</span>
-                        </div>
-                    </td>
-                    <td style="color: var(--text-secondary); font-size: 0.875rem;">
-                        {{ r['notes'] or r.notes or '—' }}
-                    </td>
-                </tr>
+    <!-- Category Breakdown -->
+    <div class="col-md-4">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-pie-chart"></i> Category Breakdown
+            </h5>
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for cat in category_breakdown %}
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.875rem; font-weight: 600;">{{ cat.category_name }}</span>
+                        <span style="font-size: 0.875rem; color: #6b7280;">{{ cat.asset_count }} assets</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ (cat.asset_count / category_breakdown[0].asset_count * 100) if category_breakdown else 0 }}%"></div>
+                    </div>
+                </div>
                 {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
+            </div>
+        </div>
     </div>
 </div>
 
-{% if rows %}
-<div style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.875rem;">
-    Showing {{ rows|length }} result(s). Export to CSV for complete data.
+<!-- Analytics Row -->
+<div class="row">
+    <!-- Top Assets -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-trophy"></i> Most Active Assets
+            </h5>
+            {% if top_assets %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for asset in top_assets %}
+                <div class="leaderboard-item">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <div class="leaderboard-rank {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}" 
+                             style="{% if loop.index > 3 %}background: #f3f4f6; color: #6b7280;{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 0.875rem;">{{ asset.product }}</div>
+                            <div style="font-size: 0.75rem; color: #6b7280;">{{ asset.sku }} • Stock: {{ asset.qty_on_hand }}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; color: #00A3AD;">{{ asset.total_movements }}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">movements</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted" style="text-align: center; padding: 2rem;">No activity in the last 30 days</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- User Leaderboard -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-people"></i> User Activity Leaderboard
+            </h5>
+            {% if user_stats %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for user in user_stats %}
+                <div class="leaderboard-item">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <div class="leaderboard-rank {% if loop.index <= 3 %}rank-{{ loop.index }}{% endif %}" 
+                             style="{% if loop.index > 3 %}background: #f3f4f6; color: #6b7280;{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.875rem;">
+                                <i class="bi bi-person-circle"></i> {{ user.username }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: #6b7280;">
+                                {{ user.checkins }} in • {{ user.checkouts }} out
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; color: #00A3AD;">{{ user.total_actions }}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">actions</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted" style="text-align: center; padding: 2rem;">No user activity yet</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
-{% endif %}
 
+<!-- Alerts and Recent Activity -->
+<div class="row">
+    <!-- Low Stock Alerts -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-exclamation-triangle"></i> Low Stock Alerts
+            </h5>
+            {% if low_stock %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for item in low_stock %}
+                <div class="alert-card">
+                    <div class="alert-icon">
+                        <i class="bi bi-exclamation"></i>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 0.875rem;">{{ item.product }}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">{{ item.sku }} • {{ item.location }}</div>
+                    </div>
+                    <div style="font-weight: 700; font-size: 1.25rem; color: #ef4444;">
+                        {{ item.qty_on_hand }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted" style="text-align: center; padding: 2rem;">✅ All assets well-stocked!</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h5 style="margin-bottom: 1rem; font-size: 1.125rem;">
+                <i class="bi bi-clock-history"></i> Recent Activity (24h)
+            </h5>
+            {% if recent_activity %}
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for activity in recent_activity %}
+                <div class="activity-item">
+                    <span class="activity-badge badge-{{ activity.action.lower() }}">
+                        {{ activity.action }}
+                    </span>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.875rem; font-weight: 600;">{{ activity.product }}</div>
+                        <div style="font-size: 0.75rem; color: #6b7280;">
+                            {{ activity.username }} • {{ activity.qty }} units • {{ activity.timestamp.strftime('%H:%M') }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted" style="text-align: center; padding: 2rem;">No recent activity</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Detect theme from body attribute
+const isDark = document.body.dataset.theme === 'dark';
+const textColor = isDark ? 'rgba(255, 255, 255, 0.9)' : '#1a1d2e';
+const mutedColor = isDark ? 'rgba(255, 255, 255, 0.6)' : '#6b7280';
+const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#f3f4f6';
+
+// Activity Trend Chart
+const ctx = document.getElementById('activityChart');
+if (ctx) {
+    const trendData = {{ activity_trend | tojson }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: trendData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }),
+            datasets: [
+                {
+                    label: 'Check-Ins',
+                    data: trendData.map(d => d.checkins),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Check-Outs',
+                    data: trendData.map(d => d.checkouts),
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'Adjustments',
+                    data: trendData.map(d => d.adjustments),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: textColor,
+                        padding: 15,
+                        font: { size: 12, weight: '600' }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        color: mutedColor,
+                        precision: 0
+                    },
+                    grid: {
+                        color: gridColor
+                    }
+                },
+                x: {
+                    ticks: { 
+                        color: mutedColor
+                    },
+                    grid: {
+                        color: gridColor
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
 {% endblock %}

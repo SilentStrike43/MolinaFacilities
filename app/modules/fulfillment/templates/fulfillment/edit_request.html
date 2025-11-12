@@ -17,7 +17,7 @@
         }
     }
     
-    /* Page Header */
+    /* Page Header - Always gradient */
     .page-header-card {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         border-radius: 1.5rem;
@@ -74,14 +74,15 @@
         font-size: 1.0625rem;
     }
     
-    /* Form Container */
+    /* Form Container - Theme-aware */
     .form-container {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
         padding: 3rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-lg);
         animation: fadeInUp 0.6s ease-out 0.1s;
         animation-fill-mode: both;
+        border: 1px solid var(--border-color);
     }
     
     .form-section {
@@ -94,7 +95,7 @@
         color: var(--text-primary);
         margin-bottom: 1.5rem;
         padding-bottom: 0.75rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--border-color);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -105,7 +106,7 @@
         font-size: 1.5rem;
     }
     
-    /* Info Box */
+    /* Info Box - Always blue */
     .info-box {
         background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         border-left: 4px solid #3b82f6;
@@ -131,7 +132,7 @@
         color: #1e40af;
     }
     
-    /* Modern Form Controls */
+    /* Modern Form Controls - Theme-aware */
     .form-label-modern {
         display: block;
         font-weight: 700;
@@ -149,11 +150,11 @@
     .form-control-modern {
         width: 100%;
         padding: 1rem 1.25rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.875rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--bg-input);
         color: var(--text-primary);
     }
     
@@ -161,35 +162,27 @@
         outline: none;
         border-color: #f59e0b;
         box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
-        background: #fffbeb;
     }
     
     .form-select-modern {
         width: 100%;
         padding: 1rem 1.25rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.875rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--bg-input);
         color: var(--text-primary);
         cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-        background-position: right 1rem center;
-        background-repeat: no-repeat;
-        background-size: 1.25rem;
-        padding-right: 3rem;
     }
     
     .form-select-modern:focus {
         outline: none;
         border-color: #f59e0b;
         box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
-        background-color: #fffbeb;
     }
     
-    /* Buttons */
+    /* Buttons - Keep colorful */
     .btn-save-modern {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
@@ -212,7 +205,7 @@
     }
     
     .btn-cancel-modern {
-        background: #f3f4f6;
+        background: var(--bg-tertiary);
         color: var(--text-primary);
         padding: 1.125rem 2.5rem;
         border: none;
@@ -228,7 +221,7 @@
     }
     
     .btn-cancel-modern:hover {
-        background: #e5e7eb;
+        background: var(--bg-hover);
     }
     
     .form-actions {
@@ -236,11 +229,11 @@
         gap: 1rem;
         justify-content: flex-end;
         padding-top: 2rem;
-        border-top: 2px solid #f3f4f6;
+        border-top: 2px solid var(--border-color);
         margin-top: 2rem;
     }
     
-    /* Warning Box */
+    /* Warning Box - Always yellow */
     .warning-box {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-left: 4px solid #f59e0b;

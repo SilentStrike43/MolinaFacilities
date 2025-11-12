@@ -90,6 +90,7 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
         }
         
         /* Custom Scrollbar */
@@ -116,36 +117,77 @@
         .app-wrapper {
             display: flex;
             min-height: 100vh;
+            width: 100%;
+            position: relative;
         }
-        
-        /* ========== SIDEBAR ========== */
+
+        /* ========== SIDEBAR - FIXED ========== */
         .app-sidebar {
-            width: 260px;
-            background: var(--sidebar-bg);  /* ← Use dark gradient */
-            border-right: 1px solid rgba(255, 255, 255, 0.05);  /* ← Dark border */
+            width: 260px !important;
+            min-width: 260px !important;
+            max-width: 260px !important;
+            flex: 0 0 260px !important;
+            flex-shrink: 0 !important;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-subtle);
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             overflow-y: auto;
+            overflow-x: visible !important;
             z-index: 1000;
             transition: transform 0.3s ease;
-            color: var(--sidebar-text);  /* ← White text */
+            color: white !important;
+        }
+
+        /* Main Content Area */
+        .app-main {
+            flex: 1;
+            margin-left: 260px !important;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+            width: calc(100% - 260px) !important;
+        }
+
+        /* Content Area */
+        .app-content {
+            flex: 1;
+            padding: 32px;
+            max-width: 100%;
+            overflow-x: hidden;
         }
         
-        .app-sidebar.collapsed {
-            transform: translateX(-100%);
-        }
-        
-                /* Brand */
+        /* Brand */
         .sidebar-brand {
             padding: 28px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);  /* ← Dark border */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            background: var(--brand-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .brand-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .brand-content h1 {
@@ -153,12 +195,12 @@
             font-weight: 700;
             margin: 0;
             line-height: 1;
-            color: white;  /* ← White text instead of gradient */
+            color: white !important;
         }
 
         .brand-content p {
             font-size: 0.75rem;
-            color: var(--sidebar-text-muted);
+            color: var(--sidebar-text-muted) !important;
             margin: 4px 0 0 0;
         }
         
@@ -167,10 +209,13 @@
             flex: 1;
             padding: 20px 16px;
             overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
         }
         
         .nav-section {
             margin-bottom: 28px;
+            width: 100%;
         }
         
         .nav-section-label {
@@ -178,43 +223,63 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1.2px;
-            color: var(--text-secondary);
+            color: var(--sidebar-text-muted) !important;
             padding: 0 12px 10px;
             display: block;
+            white-space: nowrap;
         }
         
         .nav-list {
             list-style: none;
             padding: 0;
             margin: 0;
+            width: 100%;
         }
         
         .nav-item {
             margin-bottom: 4px;
+            width: 100%;
         }
         
         .nav-link {
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 14px;
             padding: 12px 16px;
-            color: var(--sidebar-text-muted);  /* ← Light gray text */
+            color: rgba(255, 255, 255, 0.8) !important;
             text-decoration: none;
             border-radius: 10px;
             transition: all 0.2s ease;
             font-size: 0.95rem;
             position: relative;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .nav-link span {
+            display: inline-block !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            white-space: nowrap;
+            overflow: visible !important;
         }
 
         .nav-link:hover {
             background: var(--sidebar-hover);
-            color: white;  /* ← White on hover */
+            color: white !important;
+        }
+
+        .nav-link:hover span {
+            color: white !important;
         }
 
         .nav-link.active {
             background: var(--sidebar-active);
-            color: white;  /* ← White when active */
+            color: white !important;
             font-weight: 500;
+        }
+
+        .nav-link.active span {
+            color: white !important;
         }
         
         .nav-link.active::before {
@@ -257,23 +322,28 @@
         .nav-icon {
             font-size: 1.3rem;
             width: 24px;
+            min-width: 24px;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: inherit !important;
         }
         
         /* User Section */
         .sidebar-user {
             padding: 16px 20px;
-            border-top: 1px solid var(--border-subtle);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
         
         .user-avatar {
             width: 42px;
             height: 42px;
+            min-width: 42px;
             border-radius: 10px;
             background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
             display: flex;
@@ -282,6 +352,7 @@
             font-weight: 600;
             font-size: 1.1rem;
             flex-shrink: 0;
+            color: white !important;
         }
         
         .user-details {
@@ -292,7 +363,7 @@
         .user-name {
             font-size: 0.9rem;
             font-weight: 500;
-            color: var(--text-primary);
+            color: white !important;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -300,7 +371,7 @@
         
         .user-role {
             font-size: 0.75rem;
-            color: var(--text-secondary);
+            color: var(--sidebar-text-muted) !important;
         }
         
         .user-actions {
@@ -314,7 +385,7 @@
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.05);
             border: none;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -324,21 +395,7 @@
         
         .user-action-btn:hover {
             background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-        }
-        
-        /* ========== MAIN CONTENT ========== */
-        .app-main {
-            flex: 1;
-            margin-left: 260px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
-        }
-        
-        .app-sidebar.collapsed ~ .app-main {
-            margin-left: 0;
+            color: white;
         }
         
         /* Top Bar */
@@ -428,12 +485,6 @@
         .logout-btn:hover {
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(239, 68, 68, 0.3);
-        }
-        
-        /* Content Area */
-        .app-content {
-            flex: 1;
-            padding: 32px;
         }
         
         /* ========== COMPONENTS ========== */
@@ -598,7 +649,7 @@
         }
         
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
             .app-sidebar {
                 transform: translateX(-100%);
             }
@@ -608,21 +659,48 @@
             }
             
             .app-main {
-                margin-left: 0;
+                margin-left: 0 !important;
+                width: 100% !important;
             }
             
             .app-content {
                 padding: 20px;
             }
         }
+
+        /* ========================================
+           FORCE SIDEBAR WIDTH - NUCLEAR OPTION
+           ======================================== */
+        
+        body.force-sidebar-width .app-sidebar,
+        body.force-sidebar-width aside.app-sidebar,
+        body.force-sidebar-width aside#appSidebar {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-width: 260px !important;
+            inline-size: 260px !important;
+            flex: 0 0 260px !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            flex-basis: 260px !important;
+            position: fixed !important;
+            left: 0 !important;
+            display: flex !important;
+        }
+        
+        body.force-sidebar-width .app-main,
+        body.force-sidebar-width main.app-main {
+            margin-left: 260px !important;
+            width: calc(100% - 260px) !important;
+        }
         
         {% block extra_css %}{% endblock %}
     </style>
 </head>
-<body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}">
-    <div class="app-wrapper">
+<body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}" class="force-sidebar-width">
+    <div class="app-wrapper" style="display: flex !important; width: 100% !important;">
         <!-- Sidebar -->
-        <aside class="app-sidebar" id="appSidebar">
+        <aside class="app-sidebar" id="appSidebar" style="width: 260px !important; min-width: 260px !important; max-width: 260px !important; flex: 0 0 260px !important; display: flex !important; position: fixed !important; left: 0 !important;">
             <!-- Brand -->
             <div class="sidebar-brand">
                 <div class="brand-icon">
@@ -630,7 +708,15 @@
                 </div>
                 <div class="brand-content">
                     <h1>Gridline</h1>
-                    <p>{{ cu.instance_name if cu and cu.get('instance_name') else 'Platform' }}</p>
+                    <p>
+                        {% if g.cu and g.cu.instance_id == 4 %}
+                            <span style="background: #fbbf24; color: #78350f; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">
+                                🧪 SANDBOX
+                            </span>
+                        {% else %}
+                            {{ g.cu.instance_name if g.cu and g.cu.get('instance_name') else 'Platform' }}
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             
@@ -690,7 +776,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('asset_ledger.ledger_home') }}" class="nav-link {{ 'active' if active=='ledger' else '' }}">
+                                <a href="{{ url_for('inventory.ledger') }}" class="nav-link {{ 'active' if active=='ledger' else '' }}">
                                     <i class="nav-icon bi bi-journal-text"></i>
                                     <span>Ledger</span>
                                 </a>
@@ -812,12 +898,11 @@
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
-            </div>
             {% endif %}
         </aside>
         
         <!-- Main Content -->
-        <main class="app-main">
+        <main class="app-main" style="margin-left: 260px !important; width: calc(100% - 260px) !important;">
             <!-- Top Bar -->
             <header class="app-topbar">
                 <div class="topbar-left">
@@ -859,13 +944,38 @@
         </main>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // FORCE sidebar width immediately
+        (function() {
+            const sidebar = document.getElementById('appSidebar');
+            if (sidebar) {
+                // Remove any classes that might be collapsing it
+                sidebar.classList.remove('collapsed', 'closed', 'hidden');
+                
+                // Force styles directly
+                const forceStyles = () => {
+                    sidebar.style.width = '260px';
+                    sidebar.style.minWidth = '260px';
+                    sidebar.style.maxWidth = '260px';
+                    sidebar.style.flex = '0 0 260px';
+                    sidebar.style.flexShrink = '0';
+                    sidebar.style.position = 'fixed';
+                    sidebar.style.left = '0';
+                    sidebar.style.display = 'flex';
+                };
+                
+                forceStyles();
+                setTimeout(forceStyles, 0);
+                setTimeout(forceStyles, 50);
+                setTimeout(forceStyles, 100);
+                setTimeout(forceStyles, 500);
+            }
+        })();
+        
         // Mobile sidebar toggle
         function toggleSidebar() {
             document.getElementById('appSidebar').classList.toggle('mobile-open');
         }
     </script>
-    {% block extra_js %}{% endblock %}
 </body>
 </html>

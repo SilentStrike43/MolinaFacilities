@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -120,13 +124,14 @@
     }
     
     .user-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1.5rem;
         padding: 2.5rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-lg);
         animation: slideIn 0.5s ease-out;
         animation-fill-mode: both;
         border-top: 4px solid #00A3AD;
+        border: 1px solid var(--border-color);
     }
     
     .user-card:nth-child(1) { animation-delay: 0.1s; }
@@ -240,10 +245,12 @@
     
     .form-input-modern {
         padding: 0.875rem 1.125rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.75rem;
         font-size: 0.9375rem;
         transition: all 0.2s ease;
+        background: var(--bg-input);
+        color: var(--text-primary);
     }
     
     .form-input-modern:focus {

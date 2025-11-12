@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 
 <style>
@@ -9,10 +13,11 @@
     }
     
     .create-card {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
         padding: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .form-section {
@@ -22,10 +27,10 @@
     .section-title {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e5e7eb;
+        border-bottom: 2px solid var(--border-color);
     }
     
     .form-group {
@@ -35,16 +40,18 @@
     .form-label {
         display: block;
         font-weight: 600;
-        color: #374151;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
     .form-control {
         width: 100%;
         padding: 0.75rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.5rem;
         font-size: 1rem;
+        background: var(--bg-input);
+        color: var(--text-primary);
     }
     
     .form-control:focus {
@@ -63,13 +70,14 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.75rem;
-        background: #f9fafb;
+        background: var(--bg-tertiary);
         border-radius: 0.5rem;
         cursor: pointer;
+        border: 1px solid var(--border-color);
     }
     
     .permission-checkbox:hover {
-        background: #f3f4f6;
+        background: var(--bg-hover);
     }
     
     .btn-save {
@@ -90,8 +98,8 @@
     
     .btn-cancel {
         padding: 1rem 2rem;
-        background: #e5e7eb;
-        color: #374151;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
         border: none;
         border-radius: 0.5rem;
         font-weight: 600;

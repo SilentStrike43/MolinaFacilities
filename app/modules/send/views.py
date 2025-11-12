@@ -20,7 +20,27 @@ from .providers import guess_carrier, normalize_scanned
 
 PACKAGE_TYPES = ["Box","Envelope","Packs","Tubes","Certified","Sensitive","Critical"]
 
-# ---------- Send (create package) ----------
+# ========== HELPER FUNCTIONS ==========
+
+def get_instance_context():
+    """Get instance context for sandbox detection."""
+    cu = current_user()
+    instance_id = (
+        request.args.get('instance_id', type=int) or 
+        request.form.get('instance_id', type=int) or 
+        cu.get('instance_id')
+    )
+    is_sandbox = (instance_id == 4)
+    return instance_id, is_sandbox
+
+def redirect_with_instance(endpoint, **kwargs):
+    """Redirect preserving instance_id."""
+    instance_id, _ = get_instance_context()
+    if instance_id:
+        kwargs['instance_id'] = instance_id
+    return redirect(url_for(endpoint, **kwargs))
+
+# ========== ROUTES ==========
 
 @bp.route("/next-id")
 @login_required
@@ -37,6 +57,10 @@ def get_next_id():
 def page():
     """Send package - Create shipping records."""
     ensure_schema()
+    
+    # Detect sandbox mode
+    instance_id, is_sandbox = get_instance_context()
+    
     today = datetime.date.today().isoformat()
     default_pkg_type = "Box"
     suggested_checkin = peek_next_checkin_id()
@@ -94,12 +118,12 @@ def page():
             # Show success message
             flash(f"✅ Package {package_id} created successfully!", "success")
             
-            # Redirect to clear form (POST-REDIRECT-GET pattern)
-            return redirect(url_for("send.index"))
+            # Redirect preserving instance_id
+            return redirect_with_instance("send.index")
             
         except Exception as e:
             flash(f"❌ Error creating package: {str(e)}", "danger")
-            return redirect(url_for("send.index"))
+            return redirect_with_instance("send.index")
     
     # GET request
     return render_template(
@@ -108,23 +132,29 @@ def page():
         today=today,
         suggested_checkin=suggested_checkin,
         suggested_package=suggested_package,
-        package_types=PACKAGE_TYPES
+        package_types=PACKAGE_TYPES,
+        is_sandbox=is_sandbox,
+        instance_id=instance_id
     )
 
 
-# ---------- Tracking ----------
 @bp.route("/tracking", methods=["GET","POST"])
 @login_required
 @require_cap("can_send")
 def tracking():
     """Track packages by tracking number."""
+    # Detect sandbox mode
+    instance_id, is_sandbox = get_instance_context()
+    
     ctx = {
-        "active": "send", 
+        "active": "tracking", 
         "page": "tracking",
         "result": None, 
         "error": None, 
         "external_url": None, 
-        "carrier": None
+        "carrier": None,
+        "is_sandbox": is_sandbox,
+        "instance_id": instance_id
     }
     
     if request.method == "POST":

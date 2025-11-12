@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block body %}
 <h5 class="mb-3">Asset — Add Item</h5>
 {% if flashmsg and flashmsg[0] %}

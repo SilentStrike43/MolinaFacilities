@@ -29,6 +29,7 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+.pdf
 
 # Uploads
 uploads/*
@@ -44,4 +45,4 @@ uploads/*
 
 # Azure
 .azure/
-.azure_backup/
+.azure_backup

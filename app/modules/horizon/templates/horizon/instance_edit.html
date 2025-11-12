@@ -1,0 +1,176 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Edit Instance{% endblock %}
+{% block page_title %}Edit Instance: {{ instance.name }}{% endblock %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('horizon.instance_edit', instance_id=instance.id) }}">
+    
+    <!-- Basic Information -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Basic Information</h4>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Instance Name *</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       value="{{ instance.name }}" required>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <label for="display_name" class="form-label">Display Name</label>
+                <input type="text" class="form-control" id="display_name" name="display_name" 
+                       value="{{ instance.display_name or '' }}" 
+                       placeholder="Leave blank to use Instance Name">
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" 
+                      rows="3">{{ instance.description or '' }}</textarea>
+        </div>
+        
+        <div class="mb-3">
+            <label for="subdomain" class="form-label">Subdomain</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="subdomain" name="subdomain" 
+                       value="{{ instance.subdomain or '' }}" 
+                       placeholder="company">
+                <span class="input-group-text">.gridline.services</span>
+            </div>
+            <small class="text-muted">Optional - for future custom domain support</small>
+        </div>
+    </div>
+    
+    <!-- Contact Information -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Contact Information</h4>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="contact_name" class="form-label">Contact Name</label>
+                <input type="text" class="form-control" id="contact_name" name="contact_name" 
+                       value="{{ instance.contact_name or '' }}">
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="contact_email" class="form-label">Contact Email</label>
+                <input type="email" class="form-control" id="contact_email" name="contact_email" 
+                       value="{{ instance.contact_email or '' }}">
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="contact_phone" class="form-label">Contact Phone</label>
+                <input type="tel" class="form-control" id="contact_phone" name="contact_phone" 
+                       value="{{ instance.contact_phone or '' }}">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resource Limits -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Resource Limits</h4>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="max_users" class="form-label">Max Users</label>
+                <input type="number" class="form-control" id="max_users" name="max_users" 
+                       value="{{ instance.max_users }}" min="1" required>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="storage_limit_gb" class="form-label">Storage Limit (GB)</label>
+                <input type="number" class="form-control" id="storage_limit_gb" name="storage_limit_gb" 
+                       value="{{ instance.storage_limit_gb }}" min="1" required>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="subscription_tier" class="form-label">Subscription Tier</label>
+                <select class="form-select" id="subscription_tier" name="subscription_tier">
+                    <option value="free" {% if instance.subscription_tier == 'free' %}selected{% endif %}>Free</option>
+                    <option value="standard" {% if instance.subscription_tier == 'standard' %}selected{% endif %}>Standard</option>
+                    <option value="professional" {% if instance.subscription_tier == 'professional' %}selected{% endif %}>Professional</option>
+                    <option value="enterprise" {% if instance.subscription_tier == 'enterprise' %}selected{% endif %}>Enterprise</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Module Access -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Module Access</h4>
+        <p class="text-muted mb-3">Select which modules this instance can access</p>
+        
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="module_send" name="module_send" value="send"
+                           {% if 'send' in instance.enabled_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="module_send">
+                        <strong>📦 Ledger Module</strong>
+                        <br><small class="text-muted">Package tracking and shipping</small>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="module_inventory" name="module_inventory" value="inventory"
+                           {% if 'inventory' in instance.enabled_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="module_inventory">
+                        <strong>📊 Flow Module</strong>
+                        <br><small class="text-muted">Asset and inventory management</small>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="module_fulfillment" name="module_fulfillment" value="fulfillment"
+                           {% if 'fulfillment' in instance.enabled_modules %}checked{% endif %}>
+                    <label class="form-check-label" for="module_fulfillment">
+                        <strong>✅ Fulfillment Module</strong>
+                        <br><small class="text-muted">Service requests and queue</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status & Notes -->
+    <div class="stat-card mb-4">
+        <h4 class="mb-3">Status & Notes</h4>
+        
+        <div class="mb-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                       {% if instance.is_active %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">
+                    <strong>Instance Active</strong>
+                    <br><small class="text-muted">Users can log in and access modules</small>
+                </label>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="notes" class="form-label">Internal Notes</label>
+            <textarea class="form-control" id="notes" name="notes" 
+                      rows="3" placeholder="Internal notes about this instance...">{{ instance.notes or '' }}</textarea>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Save Changes
+        </button>
+        <a href="{{ url_for('horizon.instance_detail', instance_id=instance.id) }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+    </div>
+    
+</form>
+
+{% endblock %}

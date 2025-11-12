@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 
 {% block body %}
 <style>
@@ -13,12 +17,12 @@
     .page-title {
         font-size: 2rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
     .page-subtitle {
-        color: #6b7280;
+        color: var(--text-secondary);
         font-size: 1rem;
     }
     
@@ -41,10 +45,11 @@
     }
     
     .users-table {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
         overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .table {

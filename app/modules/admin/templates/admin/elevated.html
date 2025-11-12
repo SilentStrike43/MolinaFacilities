@@ -1,16 +1,20 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
 {% block title %}Elevation Management{% endblock %}
 {% block content %}
 
 <style>
-    /* Elevation Management Styles */
+    /* Use CSS Variables for Theme Support */
     .elevation-container {
         max-width: 1400px;
         margin: 0 auto;
         padding: 2rem;
     }
     
-    /* Page Header */
+    /* Page Header - Always gradient */
     .page-header {
         background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
         border-radius: 1rem;
@@ -48,7 +52,7 @@
         font-weight: 600;
     }
     
-    /* Warning Box */
+    /* Warning Box - Always yellow/orange */
     .warning-box {
         background: linear-gradient(135deg, #fef3c7, #fed7aa);
         border: 2px solid #f59e0b;
@@ -81,21 +85,24 @@
         line-height: 1.5;
     }
     
-    /* Search Bar */
+    /* Search Bar - Theme-aware */
     .search-section {
-        background: white;
+        background: var(--bg-card);
         border-radius: 0.75rem;
         padding: 1.5rem;
         margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .search-input {
         width: 100%;
         padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.5rem;
         font-size: 1rem;
+        background: var(--bg-input);
+        color: var(--text-primary);
     }
     
     .search-input:focus {
@@ -103,24 +110,25 @@
         border-color: #7c3aed;
     }
     
-    /* Users Table */
+    /* Users Table - Theme-aware */
     .elevation-table {
-        background: white;
+        background: var(--bg-card);
         border-radius: 0.75rem;
         overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .table-header {
         padding: 1.5rem;
-        background: #f9fafb;
-        border-bottom: 2px solid #e5e7eb;
+        background: var(--bg-tertiary);
+        border-bottom: 2px solid var(--border-color);
     }
     
     .table-title {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
     }
     
     table {
@@ -129,7 +137,7 @@
     }
     
     thead {
-        background: #f9fafb;
+        background: var(--bg-tertiary);
     }
     
     th {
@@ -137,24 +145,24 @@
         padding: 1rem 1.5rem;
         font-size: 0.875rem;
         font-weight: 600;
-        color: #6b7280;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
     
     tbody tr {
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
         transition: background 0.2s ease;
     }
     
     tbody tr:hover {
-        background: #f9fafb;
+        background: var(--bg-hover);
     }
     
     td {
         padding: 1.25rem 1.5rem;
         font-size: 0.9375rem;
-        color: #1f2937;
+        color: var(--text-primary);
     }
     
     /* User Cell */
@@ -182,15 +190,15 @@
     
     .user-name {
         font-weight: 600;
-        color: #1f2937;
+        color: var(--text-primary);
     }
     
     .user-username {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--text-secondary);
     }
     
-    /* Level Badges */
+    /* Level Badges - Keep colorful */
     .level-badge {
         padding: 0.375rem 0.75rem;
         border-radius: 0.375rem;
@@ -224,7 +232,7 @@
         color: white;
     }
     
-    /* Action Buttons */
+    /* Action Buttons - Keep colorful */
     .action-buttons {
         display: flex;
         gap: 0.5rem;
@@ -272,7 +280,7 @@
         transform: none;
     }
     
-    /* Modal Dialog */
+    /* Modal Dialog - Theme-aware */
     .modal {
         display: none;
         position: fixed;
@@ -291,7 +299,7 @@
     }
     
     .modal-content {
-        background: white;
+        background: var(--bg-card);
         border-radius: 1rem;
         padding: 2rem;
         max-width: 500px;
@@ -299,6 +307,7 @@
         max-height: 90vh;
         overflow-y: auto;
         animation: modalSlideIn 0.3s ease;
+        border: 1px solid var(--border-color);
     }
     
     @keyframes modalSlideIn {
@@ -319,7 +328,7 @@
     .modal-title {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
     }
     
@@ -345,16 +354,18 @@
         display: block;
         font-size: 0.875rem;
         font-weight: 600;
-        color: #4b5563;
+        color: var(--text-secondary);
         margin-bottom: 0.5rem;
     }
     
     .form-select, .form-textarea {
         width: 100%;
         padding: 0.75rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid var(--border-color);
         border-radius: 0.5rem;
         font-size: 0.9375rem;
+        background: var(--bg-input);
+        color: var(--text-primary);
     }
     
     .form-select:focus, .form-textarea:focus {
@@ -378,12 +389,12 @@
     }
     
     .btn-modal.cancel {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
     }
     
     .btn-modal.cancel:hover {
-        background: #e5e7eb;
+        background: var(--bg-hover);
     }
     
     .btn-modal.confirm {

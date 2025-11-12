@@ -281,78 +281,78 @@ def record_audit(user_data, action, module, details, target_user_id=None, target
 @users_bp.route("/")
 @login_required
 def user_list():
-    """List users for the specified instance."""
+    """List users - L3/S1 can view any instance, others only their own."""
     cu = current_user()
-    
-    # Get instance_id from query parameter
     instance_id = request.args.get('instance_id', type=int)
     
-    # L3/S1 can view any instance, others can only view their own
-    if cu.get('permission_level') not in ['L3', 'S1']:
-        # L2 can view instances they have access to
+    # L3/S1 can view any instance
+    if cu.get('permission_level') in ['L3', 'S1']:
+        if not instance_id:
+            # Redirect to global users page for instance selection
+            return redirect(url_for('horizon.global_users'))
+    else:
+        # L2 must have access, L1 and below only see their own
         if cu.get('permission_level') == 'L2':
             from app.core.instance_access import user_can_access_instance
             if instance_id and not user_can_access_instance(cu, instance_id):
-                flash("You don't have access to this instance.", "danger")
-                return redirect(url_for('home.index'))
+                flash("Access denied to this instance.", "danger")
+                instance_id = cu.get('instance_id')
         else:
-            # L1 and below can only see their own instance
+            # Force to their own instance
             instance_id = cu.get('instance_id')
     
-    # If no instance specified and user is L3/S1, show instance selector
-    if not instance_id and cu.get('permission_level') in ['L3', 'S1']:
-        flash("Please select an instance to view users.", "info")
-        return redirect(url_for('horizon.global_users'))
-    
     if not instance_id:
-        flash("Instance not found.", "danger")
+        flash("No instance specified.", "danger")
         return redirect(url_for('home.index'))
     
-    # Get instance info
+    # Skip sandbox instance (no real users there)
+    if instance_id == 0:
+        flash("Sandbox instance has no assigned users.", "info")
+        return redirect(url_for('horizon.global_users'))
+    
+    # Get instance and users
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
+        
         cursor.execute("""
-            SELECT id, name, display_name 
-            FROM instances 
-            WHERE id = %s
+            SELECT id, name, display_name, is_active
+            FROM instances WHERE id = %s
         """, (instance_id,))
         instance = cursor.fetchone()
         
         if not instance:
             flash("Instance not found.", "danger")
-            return redirect(url_for('home.index'))
+            return redirect(url_for('horizon.dashboard'))
         
-        # Query users for THIS INSTANCE ONLY
-        show_inactive = request.args.get('show_inactive', 'false') == 'true'
+        # Get users for this instance
+        show_inactive = request.args.get('show_inactive') == 'true'
         
-        if show_inactive:
-            cursor.execute("""
-                SELECT id, username, first_name, last_name, email, phone,
-                       permission_level, module_permissions, is_active,
-                       created_at, last_login, department, position
-                FROM users
-                WHERE instance_id = %s
-                ORDER BY username
-            """, (instance_id,))
-        else:
-            cursor.execute("""
-                SELECT id, username, first_name, last_name, email, phone,
-                       permission_level, module_permissions, is_active,
-                       created_at, last_login, department, position
-                FROM users
-                WHERE instance_id = %s AND deleted_at IS NULL
-                ORDER BY username
-            """, (instance_id,))
+        query = """
+            SELECT id, username, first_name, last_name, email, phone,
+                   permission_level, module_permissions, is_active,
+                   created_at, last_login, department, position
+            FROM users
+            WHERE instance_id = %s
+        """
         
+        if not show_inactive:
+            query += " AND deleted_at IS NULL AND is_active = true"
+        
+        query += " ORDER BY username"
+        
+        cursor.execute(query, (instance_id,))
         users = cursor.fetchall()
         cursor.close()
     
-    return render_template("users/list.html",
-                         active="users",
-                         users=users,
-                         instance=instance,
-                         instance_id=instance_id,
-                         show_inactive=show_inactive)
+    return render_template(
+        "users/list.html",
+        active="users",
+        users=users,
+        instance=instance,
+        instance_id=instance_id,
+        show_inactive=show_inactive,
+        can_manage=cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1']
+    )
 
 @users_bp.route("/profile/<int:uid>")
 @login_required
