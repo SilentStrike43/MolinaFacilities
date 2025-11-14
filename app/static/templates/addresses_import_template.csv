@@ -1,0 +1,3 @@
+recipient_name,recipient_company,recipient_phone,recipient_email,address_line1,address_line2,city,state,zip_code,notes
+John Doe,Acme Corp,555-1234,john@acme.com,123 Main Street,Suite 100,New York,NY,10001,Regular customer
+Jane Smith,Tech Inc,555-5678,jane@tech.com,456 Broadway,,Los Angeles,CA,90001,VIP address

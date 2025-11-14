@@ -3,7 +3,7 @@
 {% else %}
     {% extends "base.html" %}
 {% endif %}
-{% block page_title %}Send Insights{% endblock %}
+
 {% block body %}
 
 <style>
@@ -12,21 +12,21 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
+    @keyframes countUp {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
     }
     
-    /* Page Header - Always gradient */
+    /* Page Header - Blue gradient */
     .page-header-card {
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         border-radius: 1.5rem;
         padding: 2.5rem 2rem;
         color: white;
         margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 163, 173, 0.3);
+        box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
         animation: fadeInUp 0.5s ease-out;
     }
     
@@ -77,255 +77,264 @@
         color: white;
     }
     
-    /* Filter Card - Theme-aware */
-    .filter-card {
-        background: var(--bg-card);
-        border-radius: 1.25rem;
-        padding: 2rem;
-        box-shadow: var(--shadow-md);
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
         margin-bottom: 2rem;
-        animation: fadeInUp 0.6s ease-out 0.1s;
-        animation-fill-mode: both;
-        border: 1px solid var(--border-color);
     }
     
-    .filter-form {
-        display: flex;
-        gap: 1rem;
-        align-items: flex-end;
-    }
-    
-    .filter-group {
-        flex: 1;
-    }
-    
-    .filter-label {
-        display: block;
-        font-weight: 700;
-        font-size: 0.875rem;
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
-    }
-    
-    .filter-input {
-        width: 100%;
-        padding: 0.875rem 1.125rem;
-        border: 2px solid var(--border-color);
-        border-radius: 0.75rem;
-        font-size: 0.9375rem;
-        transition: all 0.2s ease;
-        background: var(--bg-input);
-        color: var(--text-primary);
-    }
-    
-    .filter-input:focus {
-        outline: none;
-        border-color: #00A3AD;
-        box-shadow: 0 0 0 3px rgba(0, 163, 173, 0.1);
-    }
-    
-    /* Buttons - Keep colorful */
-    .btn-filter {
-        padding: 0.875rem 2rem;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        border: none;
-        border-radius: 0.75rem;
-        font-size: 0.9375rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.3);
-        white-space: nowrap;
-    }
-    
-    .btn-filter:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.4);
-    }
-    
-    .btn-export {
-        padding: 0.875rem 1.75rem;
-        background: var(--bg-card);
-        color: #00A3AD;
-        border: 2px solid #00A3AD;
-        border-radius: 0.75rem;
-        font-size: 0.9375rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .btn-export:hover {
-        background: var(--bg-hover);
-        color: #008A93;
-    }
-    
-    /* Table Container - Theme-aware */
-    .table-container {
+    .stat-card {
         background: var(--bg-card);
         border-radius: 1.5rem;
+        padding: 2rem;
         box-shadow: var(--shadow-lg);
-        overflow: hidden;
-        animation: fadeInUp 0.6s ease-out 0.2s;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out;
         animation-fill-mode: both;
-        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
     }
     
-    .table-header {
-        padding: 2rem 2rem 1.5rem;
-        border-bottom: 2px solid var(--border-color);
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        transition: width 0.3s ease;
     }
     
-    .table-header h3 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--text-primary);
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
     }
     
-    .table-header p {
-        margin: 0;
-        color: var(--text-secondary);
-        font-size: 0.9375rem;
-    }
-    
-    /* Modern Table - Theme-aware */
-    .table-modern {
+    .stat-card:hover::before {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+        opacity: 0.05;
     }
     
-    .table-modern thead {
-        background: var(--bg-tertiary);
+    .stat-card.primary::before { background: #3b82f6; }
+    .stat-card.success::before { background: #10b981; }
+    .stat-card.warning::before { background: #f59e0b; }
+    .stat-card.danger::before { background: #ef4444; }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
     }
     
-    .table-modern thead th {
-        padding: 1.25rem 1.5rem;
-        text-align: left;
-        font-size: 0.8125rem;
-        font-weight: 800;
+    .stat-title {
+        font-size: 0.875rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--text-secondary);
-        border-bottom: 2px solid var(--border-color);
     }
     
-    .table-modern tbody tr {
-        transition: all 0.2s ease;
-        border-bottom: 1px solid var(--border-subtle);
-        animation: slideIn 0.4s ease-out;
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stat-icon.primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .stat-icon.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-icon.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-icon.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        animation: countUp 0.8s ease-out;
+    }
+    
+    .stat-label {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+    
+    /* Charts Section */
+    .charts-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.7s ease-out 0.5s;
         animation-fill-mode: both;
     }
     
-    .table-modern tbody tr:nth-child(1) { animation-delay: 0.05s; }
-    .table-modern tbody tr:nth-child(2) { animation-delay: 0.1s; }
-    .table-modern tbody tr:nth-child(3) { animation-delay: 0.15s; }
-    .table-modern tbody tr:nth-child(4) { animation-delay: 0.2s; }
-    .table-modern tbody tr:nth-child(5) { animation-delay: 0.25s; }
-    
-    .table-modern tbody tr:hover {
-        background: var(--bg-hover);
-        transform: scale(1.002);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .table-modern tbody td {
-        padding: 1.5rem 1.5rem;
-        color: var(--text-primary);
-        font-size: 0.9375rem;
-    }
-    
-    .table-modern tbody tr:last-child {
-        border-bottom: none;
-    }
-    
-    /* Status Badge - Keep colorful */
-    .status-badge {
-        display: inline-flex;
+    .chart-header {
+        display: flex;
         align-items: center;
-        gap: 0.375rem;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .chart-title {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .chart-title i {
+        color: #3b82f6;
+    }
+    
+    .chart-badge {
         padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
         border-radius: 0.625rem;
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         font-weight: 700;
-        letter-spacing: 0.025em;
-        text-transform: uppercase;
     }
     
-    .status-completed {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
+    .chart-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border-radius: 0.875rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
     }
     
-    .status-queued {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
+    .chart-item:hover {
+        background: var(--bg-hover);
+        transform: translateX(4px);
     }
     
-    .status-failed {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
+    .chart-item:last-child {
+        margin-bottom: 0;
     }
     
-    .status-other {
-        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-        color: #374151;
+    .chart-item-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
     
-    /* Empty State - Theme-aware */
+    .chart-item-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+    
+    .chart-item-label {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .chart-item-value {
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    /* Status Colors */
+    .status-delivered { background: #10b981; border-left-color: #10b981; }
+    .status-in-transit { background: #3b82f6; border-left-color: #3b82f6; }
+    .status-out-for-delivery { background: #f59e0b; border-left-color: #f59e0b; }
+    .status-pre-transit { background: #8b5cf6; border-left-color: #8b5cf6; }
+    .status-exception { background: #ef4444; border-left-color: #ef4444; }
+    
+    /* Carrier Colors */
+    .carrier-usps { background: #3b82f6; border-left-color: #3b82f6; }
+    .carrier-fedex { background: #f59e0b; border-left-color: #f59e0b; }
+    .carrier-ups { background: #84cc16; border-left-color: #84cc16; }
+    .carrier-unknown { background: #6b7280; border-left-color: #6b7280; }
+    
     .empty-state {
-        text-align: center;
+        background: var(--bg-card);
+        border-radius: 1.5rem;
         padding: 4rem 2rem;
-        animation: fadeInUp 0.6s ease-out;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        border: 2px dashed var(--border-color);
     }
     
-    .empty-state-icon {
-        font-size: 5rem;
+    .empty-icon {
+        font-size: 4rem;
         color: var(--text-muted);
         margin-bottom: 1.5rem;
-        opacity: 0.5;
     }
     
-    .empty-state-title {
+    .empty-title {
         font-size: 1.5rem;
-        font-weight: 700;
+        font-weight: 800;
         color: var(--text-primary);
         margin-bottom: 0.75rem;
     }
     
-    .empty-state-text {
-        font-size: 1.0625rem;
+    .empty-text {
+        font-size: 1rem;
         color: var(--text-secondary);
-        max-width: 500px;
-        margin: 0 auto;
+        margin-bottom: 2rem;
     }
     
-    /* Utilities */
-    .text-truncate {
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .btn-primary {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
     }
     
-    .user-location-badge {
-        color: var(--text-secondary);
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+        color: white;
     }
     
-    /* Responsive */
     @media (max-width: 1024px) {
-        .table-modern {
-            font-size: 0.875rem;
-        }
-        
-        .text-truncate {
-            max-width: 150px;
+        .charts-section {
+            grid-template-columns: 1fr;
         }
     }
     
@@ -335,26 +344,12 @@
             text-align: center;
         }
         
-        .filter-card {
-            padding: 1.5rem;
+        .stats-grid {
+            grid-template-columns: 1fr;
         }
         
-        .filter-form {
-            flex-direction: column;
-        }
-        
-        .btn-filter,
-        .btn-export {
-            width: 100%;
-            justify-content: center;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-        }
-        
-        .table-modern {
-            min-width: 900px;
+        .chart-card {
+            padding: 2rem 1.5rem;
         }
     }
 </style>
@@ -363,212 +358,144 @@
 <div class="page-header-card">
     <div class="page-header-content">
         <div class="page-header-icon">
-            <i class="bi bi-bar-chart-line"></i>
+            <i class="bi bi-graph-up"></i>
         </div>
         <div class="page-header-text">
-            <h2>Send Insights</h2>
-            <p>View and analyze all shipping activity and package history</p>
+            <h2>Insights Dashboard</h2>
+            <p>Shipping analytics and performance metrics</p>
         </div>
     </div>
 </div>
 
-<!-- Filter Card -->
-<div class="filter-card">
-    <form method="get" action="{{ url_for('send.insights') }}" class="filter-form">
-        <div class="filter-group">
-            <label class="filter-label">Date From</label>
-            <input 
-                type="date" 
-                name="date_from" 
-                class="filter-input"
-                value="{{ date_from }}"
-            >
-        </div>
-        
-        <div class="filter-group">
-            <label class="filter-label">Date To</label>
-            <input 
-                type="date" 
-                name="date_to" 
-                class="filter-input"
-                value="{{ date_to }}"
-            >
-        </div>
-        
-        <div class="filter-group">
-            <label class="filter-label">Package Type</label>
-            <select name="item_type" class="filter-input">
-                <option value="">All Types</option>
-                {% for pt in package_types %}
-                <option value="{{ pt }}" {% if item_type == pt %}selected{% endif %}>{{ pt }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <div class="filter-group">
-            <label class="filter-label">Location</label>
-            <select name="location" class="filter-input" {% if user_location %}disabled{% endif %}>
-                <option value="">All Locations</option>
-                {% for loc in locations %}
-                <option value="{{ loc }}" {% if location_filter == loc or user_location == loc %}selected{% endif %}>{{ loc }}</option>
-                {% endfor %}
-            </select>
-            {% if user_location %}
-            <small class="text-muted">Filtered to: {{ user_location }}</small>
-            {% endif %}
-        </div>
-        
-        <div class="filter-group">
-            <label class="filter-label">Search</label>
-            <input 
-                type="text" 
-                name="q" 
-                class="filter-input"
-                value="{{ q or '' }}" 
-                placeholder="Tracking, recipient..."
-            >
-        </div>
-        
-        <button type="submit" class="btn-filter">
-            <i class="bi bi-search"></i>
-            Search
-        </button>
-        
-        <a 
-            href="{{ url_for('send.export') }}?q={{ q or '' }}&date_from={{ date_from }}&date_to={{ date_to }}&item_type={{ item_type }}&location={{ location_filter }}" 
-            class="btn-export"
-        >
-            <i class="bi bi-download"></i>
-            Export CSV
-        </a>
-    </form>
-</div>
+{% if total_packages > 0 %}
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h3 class="mb-0">{{ total_packages }}</h3>
-                <small>Total Packages</small>
+<!-- Key Stats -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-header">
+            <div class="stat-title">Total Packages</div>
+            <div class="stat-icon primary">
+                <i class="bi bi-box-seam"></i>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <h6 class="mb-2">By Type</h6>
-                {% for type, count in by_type.items() %}
-                <small>{{ type }}: {{ count }}</small><br>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h6 class="mb-2">By Location</h6>
-                {% for loc, count in by_location.items() %}
-                <small>{{ loc }}: {{ count }}</small><br>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Results Table -->
-<div class="table-container">
-    <div class="table-header">
-        <h3>Shipment Records</h3>
-        <p>Complete history of all package shipments and labels</p>
+        <div class="stat-value">{{ total_packages }}</div>
+        <div class="stat-label">All-time shipments</div>
     </div>
     
-    {% if rows %}
-    <table class="table-modern">
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>Check-In ID</th>
-                <th>Package ID</th>
-                <th>Recipient</th>
-                <th>Tracking</th>
-                <th>Status</th>
-                <th>Location</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in rows %}
-            <tr>
-                <td>
-                    <span style="color: var(--text-secondary); font-weight: 600;">
-                        <i class="bi bi-clock"></i>
-                        {{ r.ts_utc|format_datetime('%Y-%m-%d %H:%M') if r.ts_utc else '—' }}
-                    </span>
-                </td>
-                <td>
-                    <strong style="color: #00A3AD;">{{ r.checkin_id or '—' }}</strong>
-                </td>
-                <td>
-                    <span style="font-family: 'Courier New', monospace; font-weight: 600;">
-                        {{ r.package_id or '—' }}
-                    </span>
-                </td>
-                <td>
-                    <strong>{{ r.recipient_name or '—' }}</strong>
-                </td>
-                <td>
-                    <span style="font-family: 'Courier New', monospace; font-size: 0.875rem;">
-                        {{ r.tracking_number or '—' }}
-                    </span>
-                </td>
-                <td>
-                    {% if r.status == 'completed' %}
-                        <span class="status-badge status-completed">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Completed
-                        </span>
-                    {% elif r.status == 'queued' %}
-                        <span class="status-badge status-queued">
-                            <i class="bi bi-clock-fill"></i>
-                            Queued
-                        </span>
-                    {% elif r.status == 'failed' %}
-                        <span class="status-badge status-failed">
-                            <i class="bi bi-x-circle-fill"></i>
-                            Failed
-                        </span>
-                    {% else %}
-                        <span class="status-badge status-other">
-                            <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
-                            {{ r.status or 'Unknown' }}
-                        </span>
-                    {% endif %}
-                </td>
-                <td>
-                    <span class="user-location-badge" style="display: inline-flex;">
-                        <i class="bi bi-geo-alt-fill"></i>
-                        {{ r.location or 'NY' }}
-                    </span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-state-icon">
-            <i class="bi bi-inbox"></i>
+    <div class="stat-card success">
+        <div class="stat-header">
+            <div class="stat-title">Delivery Rate</div>
+            <div class="stat-icon success">
+                <i class="bi bi-check-circle"></i>
+            </div>
         </div>
-        <div class="empty-state-title">No Shipment Records</div>
-        <div class="empty-state-text">
-            {% if q %}
-                No results found for "{{ q }}". Try adjusting your search criteria.
-            {% else %}
-                No shipment records found. Start creating packages to see them here.
-            {% endif %}
-        </div>
+        <div class="stat-value">{{ delivery_rate }}%</div>
+        <div class="stat-label">Successfully delivered</div>
     </div>
-    {% endif %}
+    
+    <div class="stat-card warning">
+        <div class="stat-header">
+            <div class="stat-title">Recent Activity</div>
+            <div class="stat-icon warning">
+                <i class="bi bi-clock-history"></i>
+            </div>
+        </div>
+        <div class="stat-value">{{ recent_count }}</div>
+        <div class="stat-label">Last 7 days</div>
+    </div>
+    
+    <div class="stat-card danger">
+        <div class="stat-header">
+            <div class="stat-title">Active Carriers</div>
+            <div class="stat-icon danger">
+                <i class="bi bi-truck"></i>
+            </div>
+        </div>
+        <div class="stat-value">{{ by_carrier|length }}</div>
+        <div class="stat-label">Carriers in use</div>
+    </div>
 </div>
+
+<!-- Charts Section -->
+<div class="charts-section">
+    <!-- By Status Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="bi bi-pie-chart"></i>
+                Packages by Status
+            </div>
+            <div class="chart-badge">{{ by_status|length }} statuses</div>
+        </div>
+        
+        {% if by_status %}
+            {% for item in by_status %}
+            <div class="chart-item">
+                <div class="chart-item-left">
+                    <div class="chart-item-color status-{{ item.tracking_status|lower|replace('_', '-') }}"></div>
+                    <div class="chart-item-label">
+                        {{ item.tracking_status|replace('_', ' ')|title or 'Unknown' }}
+                    </div>
+                </div>
+                <div class="chart-item-value">{{ item.count }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                No status data available
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- By Carrier Chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="bi bi-bar-chart"></i>
+                Packages by Carrier
+            </div>
+            <div class="chart-badge">{{ by_carrier|length }} carriers</div>
+        </div>
+        
+        {% if by_carrier %}
+            {% for item in by_carrier %}
+            <div class="chart-item">
+                <div class="chart-item-left">
+                    <div class="chart-item-color carrier-{{ item.carrier|lower|replace(' ', '-') }}"></div>
+                    <div class="chart-item-label">
+                        {{ item.carrier or 'Unknown' }}
+                    </div>
+                </div>
+                <div class="chart-item-value">{{ item.count }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                No carrier data available
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+
+<!-- Empty State -->
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="bi bi-graph-up-arrow"></i>
+    </div>
+    <div class="empty-title">No Data Available Yet</div>
+    <div class="empty-text">
+        Start creating packages to see insights and analytics here.
+    </div>
+    <a href="{{ url_for('send.checkin', instance_id=instance_id) if is_sandbox else url_for('send.checkin') }}" class="btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        Create Your First Package
+    </a>
+</div>
+
+{% endif %}
 
 {% endblock %}

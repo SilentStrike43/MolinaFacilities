@@ -34,6 +34,28 @@ def ensure_schema():
             )
         """)
         
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS fedex_sync_log (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
+                hours_back INTEGER NOT NULL,
+                success BOOLEAN DEFAULT FALSE,
+                imported_count INTEGER DEFAULT 0,
+                skipped_count INTEGER DEFAULT 0,
+                error_message TEXT,
+                triggered_by INTEGER,
+                triggered_by_username TEXT,
+                triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_fedex_sync_log_triggered_at 
+            ON fedex_sync_log(triggered_at DESC);
+            
+            CREATE INDEX IF NOT EXISTS idx_fedex_sync_log_instance 
+            ON fedex_sync_log(instance_id);
+        """)
+        
         cursor.close()
 
 

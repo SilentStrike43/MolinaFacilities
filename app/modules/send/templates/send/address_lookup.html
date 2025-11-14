@@ -1,0 +1,622 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block body %}
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Page Header - Orange gradient */
+    .page-header-card {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(245, 158, 11, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+        color: white;
+    }
+    
+    /* Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .info-box-icon {
+        font-size: 1.5rem;
+        color: #1e40af;
+        flex-shrink: 0;
+    }
+    
+    .info-box-content {
+        flex: 1;
+    }
+    
+    .info-box-title {
+        font-weight: 700;
+        color: #1e40af;
+        margin-bottom: 0.375rem;
+    }
+    
+    .info-box-text {
+        font-size: 0.9375rem;
+        color: #1e3a8a;
+    }
+    
+    /* Form Container */
+    .form-container {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        margin-bottom: 2rem;
+        animation: fadeInUp 0.7s ease-out 0.2s;
+        animation-fill-mode: both;
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-title i {
+        color: #f59e0b;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+    }
+    
+    .form-label .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+    }
+    
+    .btn-primary {
+        padding: 1.125rem 3rem;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-secondary {
+        padding: 1.125rem 2.5rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+    }
+    
+    /* Alert */
+    .alert {
+        padding: 1.125rem 1.5rem;
+        border-radius: 0.875rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9375rem;
+        animation: fadeInUp 0.4s ease-out;
+        font-weight: 600;
+    }
+    
+    .alert i {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+    
+    /* Result Card */
+    .result-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        animation: fadeInUp 0.6s ease-out;
+        border: 1px solid var(--border-color);
+    }
+    
+    .result-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .result-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .result-icon.valid {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .result-icon.invalid {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .result-title h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .result-title p {
+        margin: 0;
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+    }
+    
+    .status-badge.valid {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .status-badge.likely-valid {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .status-badge.invalid {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    .address-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .address-box {
+        padding: 2rem;
+        border-radius: 0.875rem;
+        border: 2px solid var(--border-color);
+    }
+    
+    .address-box.original {
+        background: var(--bg-tertiary);
+    }
+    
+    .address-box.corrected {
+        background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+        border-color: #10b981;
+    }
+    
+    .address-box-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .address-box.corrected .address-box-title {
+        color: #065f46;
+    }
+    
+    .address-content {
+        font-size: 1rem;
+        color: var(--text-primary);
+        line-height: 1.7;
+        font-weight: 600;
+    }
+    
+    .warnings-section {
+        background: linear-gradient(135deg, #fef3c7 0%, #fef9e6 100%);
+        border-left: 4px solid #f59e0b;
+        border-radius: 0.875rem;
+        padding: 1.5rem;
+    }
+    
+    .warnings-title {
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .warning-item {
+        font-size: 0.9375rem;
+        color: #78350f;
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .warning-item i {
+        margin-top: 0.125rem;
+        flex-shrink: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .form-container {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .result-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .address-comparison {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-patch-check"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Address Lookup</h2>
+            <p>Validate and standardize shipping addresses using FedEx</p>
+        </div>
+    </div>
+</div>
+
+<!-- Info Box -->
+<div class="info-box">
+    <div class="info-box-icon">
+        <i class="bi bi-info-circle-fill"></i>
+    </div>
+    <div class="info-box-content">
+        <div class="info-box-title">🎯 Address Validation</div>
+        <div class="info-box-text">
+            Validate addresses before shipping to reduce delivery errors and ensure successful deliveries.
+        </div>
+    </div>
+</div>
+
+<!-- Validation Form -->
+<div class="form-container">
+    <h3 class="form-title">
+        <i class="bi bi-geo-alt"></i>
+        Enter Address to Validate
+    </h3>
+    
+    <form method="post">
+        <div class="form-group">
+            <label class="form-label">
+                Address Line 1
+                <span class="required">*</span>
+            </label>
+            <input 
+                type="text" 
+                class="form-control" 
+                name="AddressLine1"
+                placeholder="Street address"
+                required
+                autofocus
+            >
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Address Line 2</label>
+            <input 
+                type="text" 
+                class="form-control" 
+                name="AddressLine2"
+                placeholder="Apt, suite, unit, etc. (optional)"
+            >
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">
+                    City
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    name="City"
+                    placeholder="City"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    State
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    name="State"
+                    placeholder="State"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    ZIP Code
+                    <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    name="ZipCode"
+                    placeholder="ZIP"
+                    required
+                >
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{{ url_for('send.checkin') }}" class="btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back
+            </a>
+            <button type="submit" class="btn-primary">
+                <i class="bi bi-check-circle"></i>
+                Validate Address
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Error Alert -->
+{% if error %}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    <span>{{ error }}</span>
+</div>
+{% endif %}
+
+<!-- Validation Result -->
+{% if result %}
+<div class="result-card">
+    <div class="result-header">
+        <div class="result-icon {% if result.valid %}valid{% else %}invalid{% endif %}">
+            <i class="bi bi-{% if result.valid %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+        </div>
+        <div class="result-title">
+            <h3>{% if result.valid %}Address Valid{% else %}Address Issue Detected{% endif %}</h3>
+            <p>Validation completed using FedEx Address Validation</p>
+        </div>
+    </div>
+    
+    {% if result.classification %}
+    <div class="status-badge {% if result.classification == 'VALID' %}valid{% elif result.classification == 'LIKELY_VALID' %}likely-valid{% else %}invalid{% endif %}">
+        <i class="bi bi-shield-check"></i>
+        {{ result.classification|replace('_', ' ')|title }}
+    </div>
+    {% endif %}
+    
+    {% if result.corrected_address %}
+    <div class="address-comparison">
+        <div class="address-box original">
+            <div class="address-box-title">
+                <i class="bi bi-pencil"></i>
+                Original Address
+            </div>
+            <div class="address-content">
+                {{ request.form.get('AddressLine1') }}<br>
+                {% if request.form.get('AddressLine2') %}{{ request.form.get('AddressLine2') }}<br>{% endif %}
+                {{ request.form.get('City') }}, {{ request.form.get('State') }} {{ request.form.get('ZipCode') }}
+            </div>
+        </div>
+        
+        <div class="address-box corrected">
+            <div class="address-box-title">
+                <i class="bi bi-check-circle"></i>
+                Standardized Address
+            </div>
+            <div class="address-content">
+                {{ result.corrected_address.address_line1 }}<br>
+                {% if result.corrected_address.address_line2 %}{{ result.corrected_address.address_line2 }}<br>{% endif %}
+                {{ result.corrected_address.city }}, {{ result.corrected_address.state }} {{ result.corrected_address.zip_code }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if result.warnings %}
+    <div class="warnings-section">
+        <div class="warnings-title">
+            <i class="bi bi-exclamation-triangle"></i>
+            Validation Warnings
+        </div>
+        {% for warning in result.warnings %}
+        <div class="warning-item">
+            <i class="bi bi-dot"></i>
+            <span>{{ warning }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .page-header-card {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(249, 115, 22, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 2px solid var(--border-color);
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-sublabel {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+    
+    .action-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.7s ease-out 0.5s;
+        animation-fill-mode: both;
+    }
+    
+    .action-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .action-title i {
+        color: #f97316;
+    }
+    
+    .sync-form {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        margin-bottom: 0.625rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #f97316;
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+    }
+    
+    .btn-sync {
+        padding: 1.125rem 3rem;
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(249, 115, 22, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    .btn-sync:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(249, 115, 22, 0.4);
+    }
+    
+    .btn-sync:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-sync .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    .btn-sync.loading .spinner {
+        display: block;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .history-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.8s ease-out 0.6s;
+        animation-fill-mode: both;
+    }
+    
+    .history-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .history-title i {
+        color: #f97316;
+    }
+    
+    .history-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        background: var(--bg-tertiary);
+        border-radius: 0.875rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .history-item:hover {
+        background: var(--bg-hover);
+        transform: translateX(4px);
+    }
+    
+    .history-item.success { border-left-color: #10b981; }
+    .history-item.failed { border-left-color: #ef4444; }
+    
+    .history-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    
+    .history-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .history-icon.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .history-icon.failed { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    
+    .history-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+    
+    .history-time {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .history-details {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+    }
+    
+    .history-stats {
+        text-align: right;
+    }
+    
+    .history-count {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .history-label {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-arrow-repeat"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>FedEx Auto-Sync</h2>
+            <p>Automatically import shipments from your FedEx account</p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Syncs</div>
+        <div class="stat-value">{{ sync_stats.total_syncs }}</div>
+        <div class="stat-sublabel">All-time syncs</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value">{{ sync_stats.success_rate }}%</div>
+        <div class="stat-sublabel">{{ sync_stats.successful_syncs }} successful</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-label">Total Imported</div>
+        <div class="stat-value">{{ sync_stats.total_imported }}</div>
+        <div class="stat-sublabel">Packages from FedEx</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-label">Auto-Populated</div>
+        <div class="stat-value">{{ sync_stats.auto_populated_packages }}</div>
+        <div class="stat-sublabel">In database</div>
+    </div>
+</div>
+
+<!-- Manual Sync Action -->
+<div class="action-card">
+    <h3 class="action-title">
+        <i class="bi bi-play-circle"></i>
+        Trigger Manual Sync
+    </h3>
+    
+    <form method="post" class="sync-form" id="syncForm">
+        <input type="hidden" name="action" value="sync_now">
+        
+        <div class="form-group">
+            <label class="form-label">Hours Back</label>
+            <select name="hours_back" class="form-control">
+                <option value="1">Last 1 hour</option>
+                <option value="6">Last 6 hours</option>
+                <option value="12">Last 12 hours</option>
+                <option value="24" selected>Last 24 hours</option>
+                <option value="48">Last 48 hours</option>
+                <option value="72">Last 3 days</option>
+                <option value="168">Last 7 days</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn-sync" id="syncBtn">
+            <i class="bi bi-arrow-repeat"></i>
+            <span id="syncBtnText">Sync Now</span>
+            <div class="spinner"></div>
+        </button>
+    </form>
+    
+    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.75rem; font-size: 0.875rem; color: var(--text-secondary);">
+        <strong>Note:</strong> This will query FedEx for recent shipments and automatically create package records in the system.
+    </div>
+</div>
+
+<!-- Sync History -->
+<div class="history-card">
+    <h3 class="history-title">
+        <i class="bi bi-clock-history"></i>
+        Recent Sync History
+    </h3>
+    
+    {% if sync_history %}
+        {% for item in sync_history %}
+        <div class="history-item {% if item.success %}success{% else %}failed{% endif %}">
+            <div class="history-left">
+                <div class="history-icon {% if item.success %}success{% else %}failed{% endif %}">
+                    <i class="bi bi-{% if item.success %}check-circle{% else %}x-circle{% endif %}"></i>
+                </div>
+                <div class="history-info">
+                    <div class="history-time">
+                        {{ item.triggered_at.strftime('%Y-%m-%d %H:%M') if item.triggered_at else 'Unknown' }}
+                    </div>
+                    <div class="history-details">
+                        Synced last {{ item.hours_back }} hour{{ 's' if item.hours_back != 1 else '' }} 
+                        • By {{ item.triggered_by_username or 'System' }}
+                        {% if item.error_message %}<br><span style="color: #ef4444;">Error: {{ item.error_message }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="history-stats">
+                <div class="history-count">{{ item.imported_count }}</div>
+                <div class="history-label">Imported</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+        <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+        No sync history yet. Trigger your first sync above!
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('syncForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('syncBtn');
+    const btnText = document.getElementById('syncBtnText');
+    
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btnText.textContent = 'Syncing...';
+});
+</script>
+
+{% endblock %}

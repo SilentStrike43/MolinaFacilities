@@ -1,0 +1,3 @@
+tracking_number,carrier,recipient_name,recipient_company,recipient_address,package_type,weight,notes
+1Z999AA10123456784,UPS,John Doe,Acme Corp,"123 Main St, New York, NY 10001",Box,5.5,Urgent delivery
+7891234567890,FEDEX,Jane Smith,,"456 Broadway, Los Angeles, CA 90001",Envelope,0.5,Documents

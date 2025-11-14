@@ -31,14 +31,44 @@ def create_app():
     # ==================== Configuration ====================
     app.config.update(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-PLEASE-change-in-production-12345'),
-        SESSION_COOKIE_SECURE=False,  # Set to True only when using HTTPS
+        SESSION_COOKIE_SECURE=False,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=604800,  # 7 days in seconds
+        PERMANENT_SESSION_LIFETIME=604800,
         MAX_CONTENT_LENGTH=50 * 1024 * 1024,
         UPLOAD_FOLDER=os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'data', 'uploads')),
-        ENV=os.environ.get('FLASK_ENV', 'development'),  # ← Changed default to development
-        LOG_LEVEL=os.environ.get('LOG_LEVEL', 'INFO')
+        ENV=os.environ.get('FLASK_ENV', 'development'),
+        LOG_LEVEL=os.environ.get('LOG_LEVEL', 'INFO'),
+        
+        # ==================== CARRIER API CONFIG ====================
+        # USPS (OAuth 2.0)
+        USPS_CONSUMER_KEY=os.environ.get('USPS_CONSUMER_KEY'),
+        USPS_CONSUMER_SECRET=os.environ.get('USPS_CONSUMER_SECRET'),
+        USPS_API_URL=os.environ.get('USPS_API_URL', 'https://api.usps.com'),
+        
+        # UPS (OAuth 2.0)
+        UPS_CLIENT_ID=os.environ.get('UPS_CLIENT_ID'),
+        UPS_CLIENT_SECRET=os.environ.get('UPS_CLIENT_SECRET'),
+        UPS_ACCOUNT_NUMBER=os.environ.get('UPS_ACCOUNT_NUMBER'),
+        UPS_API_URL=os.environ.get('UPS_API_URL', 'https://onlinetools.ups.com/api'),
+        
+        # FedEx - Ship API (for auto-sync and address validation)
+        FEDEX_SHIP_API_KEY=os.environ.get('FEDEX_SHIP_API_KEY'),
+        FEDEX_SHIP_SECRET_KEY=os.environ.get('FEDEX_SHIP_SECRET_KEY'),
+        FEDEX_ACCOUNT_NUMBER=os.environ.get('FEDEX_ACCOUNT_NUMBER'),
+        
+        # FedEx - Track API (for tracking)
+        FEDEX_TRACK_API_KEY=os.environ.get('FEDEX_TRACK_API_KEY'),
+        FEDEX_TRACK_SECRET_KEY=os.environ.get('FEDEX_TRACK_SECRET_KEY'),
+        
+        # FedEx API URL
+        FEDEX_API_URL=os.environ.get('FEDEX_API_URL', 'https://apis.fedex.com'),
+        
+        # ==================== TRACKING SETTINGS ====================
+        TRACKING_UPDATE_INTERVAL=int(os.environ.get('TRACKING_UPDATE_INTERVAL', 4)),  # hours
+        TRACKING_CACHE_DURATION=int(os.environ.get('TRACKING_CACHE_DURATION', 30)),   # minutes
+        FEDEX_SYNC_ENABLED=os.environ.get('FEDEX_SYNC_ENABLED', 'false').lower() == 'true',
+        FEDEX_SYNC_INTERVAL=int(os.environ.get('FEDEX_SYNC_INTERVAL', 30)),  # minutes
     )
     
     logger.info("Application starting up...")
@@ -103,7 +133,15 @@ def create_app():
         instance_id = request.args.get('instance_id', type=int)
         is_sandbox = False
         sandbox_instance_name = None
-        
+
+        # For S1/L3 without explicit instance_id, assume Sandbox
+        cu = current_user()
+        if cu and not instance_id:
+            perm_level = cu.get('permission_level', '')
+            if perm_level in ['S1', 'L3']:
+                instance_id = 4  # Default to Sandbox
+                is_sandbox = True
+
         if instance_id:
             try:
                 with get_db_connection("core") as conn:
@@ -118,6 +156,8 @@ def create_app():
                     
                     if inst and inst.get('is_sandbox'):
                         is_sandbox = True
+                        sandbox_instance_name = inst.get('display_name') or inst.get('name')
+                    elif inst:
                         sandbox_instance_name = inst.get('display_name') or inst.get('name')
             except Exception as e:
                 logger.warning(f"Failed to check sandbox status: {e}")
@@ -198,6 +238,48 @@ def create_app():
             'BRAND_TEAL': BRAND_TEAL
         }
     
+    @app.before_request
+    def set_request_instance_context():
+        """Set instance context at start of every request"""
+        from app.core.instance_context import set_current_instance, clear_current_instance
+        from app.modules.auth.security import current_user
+        from flask import request
+        
+        # Clear any previous context
+        clear_current_instance()
+        
+        cu = current_user()
+        if not cu:
+            return
+        
+        # PRIORITY 1: Check URL for explicit instance_id (Sandbox mode)
+        instance_id = request.args.get('instance_id', type=int)
+        
+        # PRIORITY 2: For S1/L3 users without explicit instance_id, default to Sandbox
+        if not instance_id:
+            perm_level = cu.get('permission_level', '')
+            if perm_level in ['S1', 'L3']:
+                # S1/L3 default to Sandbox (instance_id=4)
+                instance_id = 4
+            else:
+                # Other users use their assigned instance
+                instance_id = cu.get('instance_id')
+        
+        # Set the context
+        if instance_id:
+            set_current_instance(instance_id)
+            logger.debug(f"✅ Request instance context: {instance_id}")
+        else:
+            logger.warning(f"⚠️ No instance context for user {cu.get('username')}")
+
+
+    @app.after_request  
+    def clear_request_instance_context(response):
+        """Clear instance context after request"""
+        from app.core.instance_context import clear_current_instance
+        clear_current_instance()
+        return response
+    
     # ==================== Custom Jinja2 Filters ====================
     @app.template_filter('format_datetime')
     def format_datetime_filter(value, format='%Y-%m-%d %H:%M'):
@@ -263,6 +345,15 @@ def create_app():
         logger.critical(f"Failed to register blueprints: {e}", exc_info=True)
         raise
     
+    # ==================== Initialize Background Scheduler ====================
+    try:
+        from app.scheduler import init_scheduler
+        init_scheduler(app)
+        logger.info("Background scheduler initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize scheduler: {e}")
+        # Don't crash the app if scheduler fails
+
     # ==================== Initialize Module Schemas ====================
     try:
         # Initialize all database schemas
@@ -301,6 +392,23 @@ def create_app():
         """Cleanup database connections on app shutdown."""
         from app.core.database import cleanup_all_pools
         cleanup_all_pools()
+    
+    # Setup signal handlers for graceful shutdown
+    def shutdown_handler(signum, frame):
+        logger.info("Application shutting down...")
+        # Clean up resources
+        try:
+            from app.core.database import cleanup_all_pools
+            cleanup_all_pools()
+            
+            # Shutdown scheduler
+            from app.scheduler import shutdown_scheduler
+            shutdown_scheduler()
+            
+            logger.info("Cleanup complete")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+        sys.exit(0)
     
     return app
 

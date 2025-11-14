@@ -348,6 +348,10 @@
                     <i class="bi bi-clipboard-data horizon-nav-icon"></i>
                     <span>Audit Logs</span>
                 </a>
+                <a href="{{ url_for('horizon.data_migrations') }}" class="horizon-nav-link {{ 'active' if active=='migrations' else '' }}">
+                    <i class="bi bi-database-fill-up"></i>
+                    <span>Data Migrations</span>
+                </a>
                 <a href="{{ url_for('horizon.system_health') }}" class="horizon-nav-link {{ 'active' if active=='health' else '' }}">
                     <i class="bi bi-heart-pulse horizon-nav-icon"></i>
                     <span>System Health</span>

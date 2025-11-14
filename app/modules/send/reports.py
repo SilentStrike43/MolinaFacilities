@@ -46,7 +46,8 @@ def reports():
                 notes,
                 checkin_id,
                 package_id,
-                checkin_date
+                checkin_date,
+                tracking_status
             FROM package_manifest
             WHERE DATE(checkin_date) >= %s 
             AND DATE(checkin_date) <= %s
@@ -63,7 +64,7 @@ def reports():
 
         # Apply search filter
         if q:
-            sql += " AND (tracking_number LIKE %s OR recipient_name LIKE %s OR package_type LIKE %s)"
+            sql += " AND (tracking_number ILIKE %s OR recipient_name ILIKE %s OR package_type ILIKE %s)"
             like = f"%{q}%"
             params.extend([like, like, like])
 
@@ -77,8 +78,16 @@ def reports():
         cursor.execute(sql, params)
         rows = cursor.fetchall()
         
-        # Convert to list of dicts
-        results = [dict(row) for row in rows]
+        # Convert to list of dicts with datetime formatting
+        results = []
+        for row in rows:
+            row_dict = dict(row)
+            # Format datetime fields as strings for template
+            if row_dict.get('ts_utc'):
+                row_dict['ts_utc'] = row_dict['ts_utc'].strftime('%Y-%m-%d %H:%M:%S')
+            if row_dict.get('checkin_date'):
+                row_dict['checkin_date'] = row_dict['checkin_date'].strftime('%Y-%m-%d')
+            results.append(row_dict)
         
         # Get unique package types for dropdown
         cursor.execute("SELECT DISTINCT package_type FROM package_manifest WHERE package_type IS NOT NULL ORDER BY package_type")
@@ -88,9 +97,54 @@ def reports():
         cursor.execute("SELECT DISTINCT location FROM package_manifest WHERE location IS NOT NULL ORDER BY location")
         locations = [r['location'] for r in cursor.fetchall()]
         
+        # ===== DASHBOARD METRICS =====
+        
+        # Total packages (all time)
+        cursor.execute("SELECT COUNT(*) as total FROM package_manifest")
+        total_packages_all_time = cursor.fetchone()['total']
+        
+        # Packages by status
+        cursor.execute("""
+            SELECT tracking_status, COUNT(*) as count
+            FROM package_manifest
+            WHERE tracking_status IS NOT NULL
+            GROUP BY tracking_status
+            ORDER BY count DESC
+        """)
+        by_status = [dict(r) for r in cursor.fetchall()]
+        
+        # Packages by carrier
+        cursor.execute("""
+            SELECT carrier, COUNT(*) as count
+            FROM package_manifest
+            WHERE carrier IS NOT NULL
+            GROUP BY carrier
+            ORDER BY count DESC
+        """)
+        by_carrier = [dict(r) for r in cursor.fetchall()]
+        
+        # Recent packages (last 7 days)
+        cursor.execute("""
+            SELECT COUNT(*) as count
+            FROM package_manifest
+            WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+        """)
+        recent_count = cursor.fetchone()['count']
+        
+        # Delivery rate
+        cursor.execute("""
+            SELECT 
+                COUNT(CASE WHEN tracking_status = 'DELIVERED' THEN 1 END) as delivered,
+                COUNT(*) as total
+            FROM package_manifest
+            WHERE tracking_number IS NOT NULL
+        """)
+        delivery_stats = cursor.fetchone()
+        delivery_rate = (delivery_stats['delivered'] / delivery_stats['total'] * 100) if delivery_stats['total'] > 0 else 0
+        
         cursor.close()
     
-    # Statistics
+    # Statistics for filtered results
     total_packages = len(results)
     by_type = {}
     by_location = {}
@@ -117,7 +171,13 @@ def reports():
         user_location=user_location if should_filter else None,
         total_packages=total_packages,
         by_type=by_type,
-        by_location=by_location
+        by_location=by_location,
+        # Dashboard metrics
+        total_packages_all_time=total_packages_all_time,
+        by_status=by_status,
+        by_carrier=by_carrier,
+        recent_count=recent_count,
+        delivery_rate=round(delivery_rate, 1)
     )
 
 @bp.get("/insights/export")
@@ -148,7 +208,10 @@ def export():
                 recipient_address,
                 tracking_number,
                 submitter_name,
-                location
+                location,
+                checkin_id,
+                package_id,
+                carrier
             FROM package_manifest
             WHERE 1=1
         """
@@ -171,7 +234,7 @@ def export():
             params.append(location_filter)
         
         if q:
-            sql += " AND (tracking_number LIKE %s OR recipient_name LIKE ? OR package_type LIKE ?)"
+            sql += " AND (tracking_number ILIKE %s OR recipient_name ILIKE %s OR package_type ILIKE %s)"
             like = f"%{q}%"
             params.extend([like, like, like])
         
@@ -185,41 +248,38 @@ def export():
         rows = cursor.fetchall()
         cursor.close()
     
-    # Create CSV with new metric format
+    # Create CSV
     buf = io.StringIO()
     w = csv.writer(buf)
     
-    # Header row with required metrics
+    # Header row
     w.writerow([
         "Timestamp",
+        "Check-in ID",
+        "Package ID",
         "Item Type",
         "Recipient Name",
         "Recipient Address",
         "Tracking Number",
+        "Carrier",
         "Submitted By",
         "Location of Origin"
     ])
     
     # Data rows
-    results = []
     for row in rows:
-        results.append({
-            'ts_utc': row['ts_utc'],
-            'checkin_id': row['checkin_id'],
-            'package_id': row['package_id'],
-            'tracking_number': row['tracking_number'],
-            'recipient_name': row['recipient_name'],
-            'recipient_address': row['recipient_address'],
-            'package_type': row['package_type'],
-            'carrier': row['carrier'],
-            'weight_oz': row['weight_oz'],
-            'length': row['length'],
-            'width': row['width'],
-            'height': row['height'],
-            'location': row['location'],
-            'submitter_name': row['submitter_name'],
-            'notes': row['notes']
-        })
+        w.writerow([
+            row['ts_utc'].strftime('%Y-%m-%d %H:%M:%S') if row['ts_utc'] else '',
+            row['checkin_id'],
+            row['package_id'],
+            row['package_type'],
+            row['recipient_name'],
+            row['recipient_address'],
+            row['tracking_number'],
+            row['carrier'],
+            row['submitter_name'],
+            row['location']
+        ])
     
     record_audit(cu, "export_send_insights", "send", f"Exported {len(rows)} send records")
     

@@ -3,6 +3,7 @@
 {% else %}
     {% extends "base.html" %}
 {% endif %}
+
 {% block body %}
 
 <style>
@@ -16,7 +17,7 @@
         50% { opacity: 0.7; }
     }
     
-    /* Page Header - Always green gradient */
+    /* Page Header - Green gradient */
     .page-header-card {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         border-radius: 1.5rem;
@@ -76,7 +77,7 @@
         color: white;
     }
     
-    /* Search Container - Theme-aware */
+    /* Search Container */
     .search-container {
         background: var(--bg-card);
         border-radius: 1.5rem;
@@ -128,18 +129,14 @@
         border-radius: 0.875rem;
         font-size: 1rem;
         transition: all 0.2s ease;
-        background: var(--bg-input);
+        background: var(--bg-secondary);
         color: var(--text-primary);
     }
     
     .search-input:focus {
         outline: none;
-        border-color: #00A3AD;
-        box-shadow: 0 0 0 4px rgba(0, 163, 173, 0.1);
-    }
-    
-    .search-input::placeholder {
-        color: var(--text-muted);
+        border-color: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
     }
     
     .btn-search {
@@ -171,11 +168,11 @@
     }
     
     .search-hint i {
-        color: #00A3AD;
+        color: #10b981;
     }
     
-    /* Alert - Keep colorful */
-    .alert-modern {
+    /* Alert */
+    .alert {
         padding: 1.125rem 1.5rem;
         border-radius: 0.875rem;
         margin-bottom: 2rem;
@@ -187,7 +184,7 @@
         font-weight: 600;
     }
     
-    .alert-modern i {
+    .alert i {
         font-size: 1.5rem;
         flex-shrink: 0;
     }
@@ -198,7 +195,7 @@
         border-left: 4px solid #ef4444;
     }
     
-    /* Result Card - Theme-aware */
+    /* Result Card */
     .result-card {
         background: var(--bg-card);
         border-radius: 1.5rem;
@@ -275,7 +272,7 @@
         color: white;
     }
     
-    /* Result Details - Theme-aware */
+    /* Result Details */
     .result-details {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -304,8 +301,23 @@
         font-weight: 700;
         color: var(--text-primary);
         word-break: break-word;
-        overflow-wrap: anywhere;
     }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .status-delivered { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; }
+    .status-in-transit { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e40af; }
+    .status-out-for-delivery { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
+    .status-exception { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
     
     .carrier-badge {
         display: inline-flex;
@@ -318,27 +330,88 @@
         font-size: 0.875rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.025em;
     }
     
-    /* JSON Display - Theme-aware */
-    .json-display {
-        background: var(--bg-code, #1f2937);
-        border-radius: 0.875rem;
-        padding: 1.5rem;
-        overflow-x: auto;
-        border: 1px solid var(--border-color);
+    /* Events Timeline */
+    .events-section {
+        margin-top: 3rem;
     }
     
-    .json-display pre {
-        margin: 0;
-        color: #10b981;
-        font-family: 'Courier New', monospace;
-        font-size: 0.875rem;
-        line-height: 1.6;
+    .events-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
     
-    /* Info Box - Always blue */
+    .timeline {
+        position: relative;
+        padding-left: 2.5rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.625rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -2rem;
+        top: 0.25rem;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 3px solid var(--bg-card);
+        box-shadow: 0 0 0 2px #10b981;
+    }
+    
+    .timeline-item:first-child::before {
+        background: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .timeline-content {
+        background: var(--bg-tertiary);
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        border-left: 3px solid #10b981;
+    }
+    
+    .timeline-date {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .timeline-description {
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-location {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+    
     .info-box {
         background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         border-left: 4px solid #3b82f6;
@@ -371,7 +444,6 @@
         color: #1e3a8a;
     }
     
-    /* Responsive */
     @media (max-width: 768px) {
         .page-header-content {
             flex-direction: column;
@@ -414,11 +486,11 @@
 <div class="page-header-card">
     <div class="page-header-content">
         <div class="page-header-icon">
-            <i class="bi bi-geo-alt"></i>
+            <i class="bi bi-search"></i>
         </div>
         <div class="page-header-text">
-            <h2>Track Package</h2>
-            <p>Enter a tracking number to locate your shipment</p>
+            <h2>Package Lookup</h2>
+            <p>Track any package from USPS, FedEx, or UPS</p>
         </div>
     </div>
 </div>
@@ -430,25 +502,27 @@
     </div>
     <div class="info-box-content">
         <div class="info-box-title">Supported Carriers</div>
-        <div class="info-box-text">We automatically detect tracking numbers from UPS, FedEx, USPS, DHL, and other major carriers.</div>
+        <div class="info-box-text">
+            We automatically detect and track packages from USPS, FedEx, UPS, and DHL.
+        </div>
     </div>
 </div>
 
 <!-- Search Container -->
 <div class="search-container">
     <h3 class="search-title">
-        <i class="bi bi-search"></i>
-        Search Tracking Number
+        <i class="bi bi-box-seam"></i>
+        Search by Tracking Number
     </h3>
     
     <form method="post" class="search-form">
         <div class="search-input-wrapper">
-            <i class="bi bi-box-seam search-icon"></i>
+            <i class="bi bi-upc-scan search-icon"></i>
             <input 
                 type="text" 
                 name="TrackingNumber" 
                 class="search-input"
-                placeholder="Enter tracking number (e.g., 1Z999AA10123456784, 123456789012)"
+                placeholder="Enter tracking number (e.g., 1Z999AA10123456784)"
                 required
                 autofocus
             >
@@ -461,13 +535,13 @@
     
     <div class="search-hint">
         <i class="bi bi-lightbulb"></i>
-        Enter your tracking number without spaces for best results
+        Enter tracking number without spaces for best results
     </div>
 </div>
 
 <!-- Error Alert -->
 {% if error %}
-<div class="alert-modern alert-danger">
+<div class="alert alert-danger">
     <i class="bi bi-exclamation-circle-fill"></i>
     <span>{{ error }}</span>
 </div>
@@ -479,7 +553,7 @@
     <div class="result-header">
         <div class="result-title-section">
             <div class="result-icon">
-                <i class="bi bi-{% if carrier|lower == 'ups' %}truck{% elif carrier|lower == 'fedex' %}airplane{% elif carrier|lower == 'usps' %}mailbox{% else %}box{% endif %}"></i>
+                <i class="bi bi-check-circle-fill"></i>
             </div>
             <div class="result-title-text">
                 <h3>Package Found</h3>
@@ -487,10 +561,10 @@
             </div>
         </div>
         
-        {% if external_url %}
-        <a href="{{ external_url }}" target="_blank" rel="noopener" class="btn-external">
+        {% if carrier_url %}
+        <a href="{{ carrier_url }}" target="_blank" rel="noopener" class="btn-external">
             <i class="bi bi-box-arrow-up-right"></i>
-            View on Carrier Site
+            View on {{ carrier }} Site
         </a>
         {% endif %}
     </div>
@@ -498,15 +572,17 @@
     <div class="result-details">
         <div class="detail-item">
             <div class="detail-label">Tracking Number</div>
-            <div class="detail-value">{{ result.tracking }}</div>
+            <div class="detail-value" style="font-family: 'Courier New', monospace;">
+                {{ result.tracking_number }}
+            </div>
         </div>
         
         <div class="detail-item">
             <div class="detail-label">Carrier</div>
             <div class="detail-value">
                 <span class="carrier-badge">
-                    <i class="bi bi-{% if carrier|lower == 'ups' %}truck{% elif carrier|lower == 'fedex' %}airplane{% elif carrier|lower == 'usps' %}mailbox{% else %}box{% endif %}"></i>
-                    {{ carrier or 'Unknown' }}
+                    <i class="bi bi-truck"></i>
+                    {{ result.carrier }}
                 </span>
             </div>
         </div>
@@ -514,28 +590,98 @@
         <div class="detail-item">
             <div class="detail-label">Status</div>
             <div class="detail-value">
-                {% if result.ok %}
-                    <span style="color: #10b981;">
+                {% if result.status == 'DELIVERED' %}
+                    <span class="status-badge status-delivered">
                         <i class="bi bi-check-circle-fill"></i>
-                        Valid
+                        Delivered
+                    </span>
+                {% elif result.status == 'OUT_FOR_DELIVERY' %}
+                    <span class="status-badge status-out-for-delivery">
+                        <i class="bi bi-truck"></i>
+                        Out for Delivery
+                    </span>
+                {% elif result.status == 'IN_TRANSIT' %}
+                    <span class="status-badge status-in-transit">
+                        <i class="bi bi-arrow-right-circle-fill"></i>
+                        In Transit
                     </span>
                 {% else %}
-                    <span style="color: #ef4444;">
-                        <i class="bi bi-x-circle-fill"></i>
-                        Invalid
+                    <span class="status-badge status-exception">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        {{ result.status|replace('_', ' ')|title }}
                     </span>
                 {% endif %}
             </div>
         </div>
+        
+        {% if result.estimated_delivery %}
+        <div class="detail-item">
+            <div class="detail-label">Estimated Delivery</div>
+            <div class="detail-value">
+                {{ result.estimated_delivery[:10] }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if result.delivered_to %}
+        <div class="detail-item">
+            <div class="detail-label">Delivered To</div>
+            <div class="detail-value">
+                {{ result.delivered_to }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if result.location %}
+        <div class="detail-item">
+            <div class="detail-label">Last Location</div>
+            <div class="detail-value">
+                {{ result.location }}
+            </div>
+        </div>
+        {% endif %}
     </div>
     
-    <!-- JSON Response -->
-    <div style="margin-top: 2rem;">
-        <div class="detail-label" style="margin-bottom: 1rem;">Raw Response Data</div>
-        <div class="json-display">
-            <pre>{{ result|tojson(indent=2) }}</pre>
+    {% if result.status_description %}
+    <div style="padding: 1.5rem; background: var(--bg-tertiary); border-radius: 0.875rem; margin-bottom: 2rem;">
+        <div class="detail-label" style="margin-bottom: 0.75rem;">Description</div>
+        <div style="color: var(--text-primary); font-size: 1rem;">
+            {{ result.status_description }}
         </div>
     </div>
+    {% endif %}
+    
+    <!-- Tracking Events Timeline -->
+    {% if result.events %}
+    <div class="events-section">
+        <div class="events-title">
+            <i class="bi bi-clock-history"></i>
+            Tracking History
+        </div>
+        
+        <div class="timeline">
+            {% for event in result.events %}
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-date">
+                        <i class="bi bi-calendar3"></i>
+                        {{ event.timestamp }}
+                    </div>
+                    <div class="timeline-description">
+                        {{ event.description }}
+                    </div>
+                    {% if event.location %}
+                    <div class="timeline-location">
+                        <i class="bi bi-geo-alt"></i>
+                        {{ event.location }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 

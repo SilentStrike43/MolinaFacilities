@@ -1,0 +1,726 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block body %}
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Page Header */
+    .page-header-card {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+        color: white;
+    }
+    
+    /* Form Styles */
+    .form-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .form-section:nth-child(2) { animation-delay: 0.1s; }
+    .form-section:nth-child(3) { animation-delay: 0.2s; }
+    .form-section:nth-child(4) { animation-delay: 0.3s; }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .section-header i {
+        font-size: 1.75rem;
+        color: #3b82f6;
+    }
+    
+    .section-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    label {
+        font-weight: 700;
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+    }
+    
+    .required {
+        color: #ef4444;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control {
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-control:disabled,
+    .form-control:read-only {
+        background: var(--bg-tertiary);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    select.form-control {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%233b82f6' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 3rem;
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+    }
+    
+    .form-text {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-color);
+        margin-top: 2rem;
+    }
+    
+    .btn-primary {
+        padding: 1rem 3rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-secondary {
+        padding: 1rem 2rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+    }
+    
+    @media (max-width: 768px) {
+        .form-section {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Package Check-In</h2>
+            <p>Log and track outgoing shipments</p>
+        </div>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="post">
+        <!-- Tracking Information -->
+        <div class="form-section">
+            <div class="section-header">
+                <i class="bi bi-upc-scan"></i>
+                <h3>Tracking Information</h3>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tracking_number">Tracking Number <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="tracking_number" 
+                        name="tracking_number" 
+                        class="form-control"
+                        placeholder="Enter tracking number"
+                        required
+                        autofocus
+                    >
+                    <small class="form-text">System will auto-track status updates</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="carrier">Carrier <span class="required">*</span></label>
+                    <select id="carrier" name="carrier" class="form-control" required>
+                        <option value="FEDEX" selected>FedEx</option>
+                        <option value="USPS">USPS</option>
+                        <option value="UPS">UPS</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <button type="button" class="btn-validate" onclick="validateTracking()">
+                        <i class="bi bi-search"></i>
+                        Validate & Auto-Fill from Tracking
+                    </button>
+                    <small class="form-text">Optional: Pre-fill recipient info from carrier</small>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        .btn-validate {
+            padding: 0.875rem 2rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-validate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-validate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #tracking-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        #tracking-status.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #059669;
+            display: block;
+        }
+
+        #tracking-status.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+            display: block;
+        }
+        </style>
+
+        <div id="tracking-status"></div>
+
+        <script>
+        async function validateTracking() {
+            const trackingNumber = document.getElementById('tracking_number').value.trim();
+            const carrier = document.getElementById('carrier').value;
+            const statusDiv = document.getElementById('tracking-status');
+            const btn = document.querySelector('.btn-validate');
+            
+            if (!trackingNumber) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ Please enter a tracking number first';
+                return;
+            }
+            
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Validating...';
+            statusDiv.className = '';
+            statusDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/send/api/validate-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tracking_number: trackingNumber,
+                        carrier: carrier
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'success';
+                    statusDiv.innerHTML = `
+                        ✅ <strong>Tracking Found!</strong><br>
+                        Status: ${data.status || 'N/A'}<br>
+                        ${data.recipient_name ? 'Recipient: ' + data.recipient_name : ''}
+                    `;
+                    
+                    // Auto-fill form fields
+                    if (data.recipient_name) {
+                        document.getElementById('recipient_name').value = data.recipient_name;
+                    }
+                    if (data.recipient_address) {
+                        // Try to parse address
+                        const parts = data.recipient_address.split(',');
+                        if (parts[0]) document.getElementById('address_line1').value = parts[0].trim();
+                        if (parts[1]) document.getElementById('city').value = parts[1].trim();
+                        if (parts[2]) document.getElementById('state').value = parts[2].trim();
+                        if (parts[3]) document.getElementById('postal_code').value = parts[3].trim();
+                    }
+                } else {
+                    statusDiv.className = 'error';
+                    statusDiv.innerHTML = `❌ ${data.error || 'Tracking validation failed'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ Error validating tracking number';
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-search"></i> Validate & Auto-Fill from Tracking';
+            }
+        }
+        </script>
+        
+        <!-- Recipient Information -->
+        <div class="form-section">
+            <div class="section-header">
+                <i class="bi bi-person"></i>
+                <h3>Recipient Information</h3>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="recipient_name">Recipient Name <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="recipient_name" 
+                        name="recipient_name" 
+                        class="form-control"
+                        placeholder="Full name"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipient_company">Company/Organization</label>
+                    <input 
+                        type="text" 
+                        id="recipient_company" 
+                        name="recipient_company" 
+                        class="form-control"
+                        placeholder="Optional"
+                    >
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="address_line1">Address Line 1 <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="address_line1" 
+                        name="address_line1" 
+                        class="form-control"
+                        placeholder="Street address"
+                        required
+                    >
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="address_line2">Address Line 2</label>
+                    <input 
+                        type="text" 
+                        id="address_line2" 
+                        name="address_line2" 
+                        class="form-control"
+                        placeholder="Apartment, suite, unit, etc. (optional)"
+                    >
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">City <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="city" 
+                        name="city" 
+                        class="form-control"
+                        placeholder="City"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">State/Province <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="state" 
+                        name="state" 
+                        class="form-control"
+                        placeholder="e.g., NY, CA"
+                        required
+                        maxlength="2"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="postal_code">Postal Code <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        id="postal_code" 
+                        name="postal_code" 
+                        class="form-control"
+                        placeholder="ZIP/Postal code"
+                        required
+                    >
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <select id="country" name="country" class="form-control">
+                        <option value="US" selected>United States</option>
+                        <option value="CA">Canada</option>
+                        <option value="MX">Mexico</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Package Information -->
+        <div class="form-section">
+            <div class="section-header">
+                <i class="bi bi-box-seam"></i>
+                <h3>Package Information</h3>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="package_type">Package Type <span class="required">*</span></label>
+                    <select id="package_type" name="package_type" class="form-control" required>
+                        <option value="">Select package type...</option>
+                        <option value="Envelope">Envelope</option>
+                        <option value="Pak">Pak</option>
+                        <option value="Box">Box</option>
+                        <option value="Tube">Tube</option>
+                        <option value="Package" selected>Package</option>
+                        <option value="Letter">Letter</option>
+                        <option value="Small Box">Small Box</option>
+                        <option value="Medium Box">Medium Box</option>
+                        <option value="Large Box">Large Box</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weight">Weight (oz)</label>
+                    <input 
+                        type="number" 
+                        id="weight" 
+                        name="weight" 
+                        class="form-control"
+                        placeholder="Optional"
+                        step="0.1"
+                        min="0"
+                    >
+                    <small class="form-text">Leave blank if unknown</small>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="checkin_date">Check-In Date</label>
+                    <input 
+                        type="date" 
+                        id="checkin_date" 
+                        name="checkin_date" 
+                        class="form-control"
+                        value="{{ today }}"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="shipping_method">Shipping Method</label>
+                    <select id="shipping_method" name="shipping_method" class="form-control">
+                        <option value="">Auto-detected from carrier...</option>
+                        <option value="Ground">Ground</option>
+                        <option value="Express">Express</option>
+                        <option value="Priority">Priority</option>
+                        <option value="Standard">Standard</option>
+                        <option value="2-Day">2-Day</option>
+                        <option value="Overnight">Overnight</option>
+                    </select>
+                    <small class="form-text">Will be determined by tracking if available</small>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label for="notes">Notes</label>
+                    <textarea 
+                        id="notes" 
+                        name="notes" 
+                        class="form-control"
+                        placeholder="Additional notes or special instructions (optional)"
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="form-section">
+            <div class="form-actions">
+                <a href="{{ url_for('send.manifest', instance_id=instance_id) if is_sandbox else url_for('send.manifest') }}" class="btn-secondary">
+                    <i class="bi bi-x-lg"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-check-lg"></i>
+                    Check In Package
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+
+// Auto-populate form from tracking number
+document.getElementById('tracking_number').addEventListener('blur', function() {
+    const trackingNumber = this.value.trim();
+    const carrier = document.getElementById('carrier').value;
+    
+    if (!trackingNumber) return;
+    
+    // Show loading indicator
+    const validateBtn = document.getElementById('validateTrackingBtn');
+    if (validateBtn) {
+        validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Validating...';
+        validateBtn.disabled = true;
+    }
+    
+    fetch('/send/api/validate-tracking', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            tracking_number: trackingNumber,
+            carrier: carrier
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Auto-fill form fields
+            const fields = data.data;
+            
+            if (fields.recipient_name) document.getElementById('recipient_name').value = fields.recipient_name;
+            if (fields.recipient_company) document.getElementById('recipient_company').value = fields.recipient_company;
+            if (fields.recipient_phone) document.getElementById('recipient_phone').value = fields.recipient_phone;
+            if (fields.recipient_address) document.getElementById('recipient_address').value = fields.recipient_address;
+            if (fields.recipient_city) document.getElementById('recipient_city').value = fields.recipient_city;
+            if (fields.recipient_state) document.getElementById('recipient_state').value = fields.recipient_state;
+            if (fields.recipient_zip) document.getElementById('recipient_zip').value = fields.recipient_zip;
+            if (fields.package_type) document.getElementById('package_type').value = fields.package_type;
+            if (fields.package_weight) document.getElementById('package_weight').value = fields.package_weight;
+            
+            // Show success message
+            showAlert('success', data.message + ' - Form auto-populated!');
+        } else {
+            showAlert('warning', data.error);
+        }
+        
+        // Reset button
+        if (validateBtn) {
+            validateBtn.innerHTML = '<i class="bi bi-check-circle"></i> Validate';
+            validateBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Validation error:', error);
+        showAlert('danger', 'Error validating tracking number');
+        
+        if (validateBtn) {
+            validateBtn.innerHTML = '<i class="bi bi-check-circle"></i> Validate';
+            validateBtn.disabled = false;
+        }
+    });
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid') || document.body;
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+</script>
+
+{% endblock %}

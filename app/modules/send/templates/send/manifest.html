@@ -1,0 +1,833 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block body %}
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Page Header - Indigo gradient */
+    .page-header-card {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+        color: white;
+    }
+    
+    /* Toolbar */
+    .toolbar {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .toolbar-row {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-wrapper {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.125rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 1rem 1.25rem 1rem 3.25rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .filter-select {
+        padding: 1rem 3rem 1rem 1.25rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236366f1' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        transition: all 0.2s ease;
+        min-width: 160px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .btn-refresh {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 0.9375rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    .btn-refresh:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+    }
+    
+    .results-summary {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        border-radius: 0.875rem;
+        color: #5b21b6;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Table Container */
+    .table-container {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        animation: fadeInUp 0.7s ease-out 0.2s;
+        animation-fill-mode: both;
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+    }
+    
+    thead th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    
+    tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    
+    tbody tr:hover {
+        background: var(--bg-hover);
+    }
+    
+    tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    tbody td {
+        padding: 1.25rem 1.5rem;
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        vertical-align: middle;
+    }
+    
+    .package-id {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: #6366f1;
+    }
+    
+    .tracking-number {
+        font-family: 'Courier New', monospace;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .tracking-number .copy-btn {
+        opacity: 0;
+        cursor: pointer;
+        color: #6366f1;
+        transition: opacity 0.2s;
+    }
+    
+    .tracking-number:hover .copy-btn {
+        opacity: 1;
+    }
+    
+    .recipient-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .recipient-name {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .recipient-company {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.625rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    
+    .status-badge i {
+        font-size: 0.875rem;
+    }
+    
+    .status-delivered {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .status-in-transit {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+    
+    .status-out-for-delivery {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .status-pre-transit {
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        color: #5b21b6;
+    }
+    
+    .status-exception {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    .status-unknown {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #374151;
+    }
+    
+    .carrier-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .date-info {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 0.625rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        white-space: nowrap;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .event-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        color: #5b21b6;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+    }
+    
+    .empty-state {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        border: 2px dashed var(--border-color);
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-text {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    
+    .btn-primary {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .btn-track {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    .btn-track:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-delete:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .toolbar-row {
+            flex-direction: column;
+        }
+        
+        .search-wrapper {
+            width: 100%;
+            min-width: auto;
+        }
+        
+        .filter-select {
+            width: 100%;
+        }
+        
+        .table-wrapper {
+            font-size: 0.875rem;
+        }
+        
+        thead th,
+        tbody td {
+            padding: 1rem 0.75rem;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-list-check"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Shipping Manifest</h2>
+            <p>Live view of all packages with real-time tracking</p>
+        </div>
+    </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <form method="get" class="toolbar-row">
+        <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input 
+                type="text" 
+                name="q" 
+                class="search-input"
+                placeholder="Search by tracking number, recipient, or package ID..."
+                value="{{ search_query }}"
+            >
+        </div>
+        
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Statuses</option>
+            <option value="PRE_TRANSIT" {% if status_filter == 'PRE_TRANSIT' %}selected{% endif %}>Pre-Transit</option>
+            <option value="IN_TRANSIT" {% if status_filter == 'IN_TRANSIT' %}selected{% endif %}>In Transit</option>
+            <option value="OUT_FOR_DELIVERY" {% if status_filter == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
+            <option value="DELIVERED" {% if status_filter == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+            <option value="EXCEPTION" {% if status_filter == 'EXCEPTION' %}selected{% endif %}>Exception</option>
+        </select>
+        
+        <select name="carrier" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Carriers</option>
+            <option value="USPS" {% if carrier_filter == 'USPS' %}selected{% endif %}>USPS</option>
+            <option value="FEDEX" {% if carrier_filter == 'FEDEX' %}selected{% endif %}>FedEx</option>
+            <option value="UPS" {% if carrier_filter == 'UPS' %}selected{% endif %}>UPS</option>
+        </select>
+        
+        <button type="submit" class="btn-refresh">
+            <i class="bi bi-arrow-clockwise"></i>
+            Refresh
+        </button>
+    </form>
+    
+    {% if packages %}
+    <div style="margin-top: 1rem;">
+        <div class="results-summary">
+            <i class="bi bi-info-circle"></i>
+            Showing {{ packages|length }} package{{ 's' if packages|length != 1 else '' }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Table -->
+{% if packages %}
+<div class="table-container">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Package ID</th>
+                    <th>Tracking Number</th>
+                    <th>Recipient</th>
+                    <th>Carrier</th>
+                    <th>Status</th>
+                    <th>Est. Delivery</th>
+                    <th>Events</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr>
+                    <td>
+                        <div class="package-id">{{ pkg.package_id }}</div>
+                    </td>
+                    <td>
+                        {% if pkg.tracking_number %}
+                        <div class="tracking-number">
+                            <span>{{ pkg.tracking_number }}</span>
+                            <i class="bi bi-clipboard copy-btn" onclick="copyTracking('{{ pkg.tracking_number }}')" title="Copy"></i>
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="recipient-info">
+                            <div class="recipient-name">{{ pkg.recipient_name }}</div>
+                            {% if pkg.recipient_company %}
+                            <div class="recipient-company">{{ pkg.recipient_company }}</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if pkg.carrier %}
+                        <span class="carrier-badge">
+                            <i class="bi bi-truck"></i>
+                            {{ pkg.carrier }}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pkg.tracking_status %}
+                            {% set status_class = pkg.tracking_status|lower|replace('_', '-') %}
+                            <span class="status-badge status-{{ status_class }}">
+                                {% if pkg.tracking_status == 'DELIVERED' %}
+                                    <i class="bi bi-check-circle-fill"></i>
+                                {% elif pkg.tracking_status == 'IN_TRANSIT' %}
+                                    <i class="bi bi-arrow-right-circle-fill"></i>
+                                {% elif pkg.tracking_status == 'OUT_FOR_DELIVERY' %}
+                                    <i class="bi bi-truck"></i>
+                                {% elif pkg.tracking_status == 'EXCEPTION' %}
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-circle"></i>
+                                {% endif %}
+                                {{ pkg.tracking_status|replace('_', ' ')|title }}
+                            </span>
+                        {% else %}
+                        <span class="status-badge status-unknown">
+                            <i class="bi bi-question-circle"></i>
+                            Unknown
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pkg.estimated_delivery_date %}
+                        <div class="date-info">
+                            <i class="bi bi-calendar-event"></i>
+                            {{ pkg.estimated_delivery_date.strftime('%Y-%m-%d') if pkg.estimated_delivery_date.strftime else pkg.estimated_delivery_date }}
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pkg.location %}
+                        <div class="date-info">
+                            <i class="bi bi-geo-alt"></i>
+                            {{ pkg.location }}
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pkg.event_count > 0 %}
+                        <span class="event-count">
+                            <i class="bi bi-clock-history"></i>
+                            {{ pkg.event_count }}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button 
+                                class="action-btn btn-track" 
+                                onclick="trackNow({{ pkg.id }})"
+                                id="track-btn-{{ pkg.id }}"
+                                title="Update tracking"
+                            >
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                            
+                            {% if cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
+                            <button 
+                                class="action-btn btn-delete" 
+                                onclick="deletePackage({{ pkg.id }}, '{{ pkg.package_id }}')"
+                                id="delete-btn-{{ pkg.id }}"
+                                title="Delete package"
+                            >
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="bi bi-inbox"></i>
+    </div>
+    <div class="empty-title">No Packages Found</div>
+    <div class="empty-text">
+        {% if search_query or status_filter or carrier_filter %}
+        No packages match your search criteria. Try adjusting your filters.
+        {% else %}
+        Your shipping manifest is empty. Create your first package to get started!
+        {% endif %}
+    </div>
+    <a href="{{ url_for('send.checkin', instance_id=instance_id) if is_sandbox else url_for('send.checkin') }}" class="btn-primary">
+        <i class="bi bi-plus-circle"></i>
+        Create Package
+    </a>
+</div>
+{% endif %}
+
+<script>
+function copyTracking(trackingNumber) {
+    navigator.clipboard.writeText(trackingNumber).then(() => {
+        alert('Tracking number copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+async function trackNow(packageId) {
+    if (!confirm('Update tracking information for this package?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/send/api/package/${packageId}/track-now`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Tracking updated successfully!');
+            location.reload();
+        } else {
+            alert('⚠️ ' + (result.error || 'Failed to update tracking'));
+        }
+    } catch (error) {
+        alert('❌ Error: ' + error.message);
+        console.error(error);
+    }
+}
+
+async function deletePackage(packageId, packageIdStr) {
+    // Confirm deletion
+    if (!confirm(`⚠️ Are you sure you want to delete package ${packageIdStr}?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    const btn = document.getElementById(`delete-btn-${packageId}`);
+    const originalHTML = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    
+    try {
+        const response = await fetch(`/send/api/package/${packageId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success
+            btn.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 0.75rem;
+                box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = '✅ Package deleted successfully';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+            
+            // Remove the row from table after 1 second
+            setTimeout(() => {
+                btn.closest('tr').style.transition = 'opacity 0.3s ease';
+                btn.closest('tr').style.opacity = '0';
+                setTimeout(() => {
+                    btn.closest('tr').remove();
+                    
+                    // Update results count
+                    const tbody = document.querySelector('tbody');
+                    if (tbody && tbody.children.length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }, 1000);
+        } else {
+            // Show error
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            
+            if (response.status === 403) {
+                alert('❌ Insufficient permissions. L1+ admin access required.');
+            } else {
+                alert('❌ Failed to delete package: ' + (result.error || 'Unknown error'));
+            }
+        }
+    } catch (error) {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        alert('❌ Error deleting package: ' + error.message);
+        console.error('Delete error:', error);
+    }
+}
+
+// Add slideIn animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+{% endblock %}

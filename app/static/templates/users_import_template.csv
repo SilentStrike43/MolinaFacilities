@@ -1,0 +1,3 @@
+username,password,email,first_name,last_name,phone,department,position,address
+jdoe,Password123,john.doe@company.com,John,Doe,555-1234,IT,Manager,123 Main St
+asmith,SecurePass456,alice.smith@company.com,Alice,Smith,555-5678,HR,Director,456 Oak Ave

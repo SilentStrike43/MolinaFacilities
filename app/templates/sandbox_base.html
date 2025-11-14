@@ -565,21 +565,45 @@
                     <span class="nav-section-label">LEDGER</span>
                     <ul class="nav-list">
                         <li class="nav-item">
-                            <a href="{{ url_for('send.index', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send' else '' }}">
+                            <a href="{{ url_for('send.checkin', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-checkin' else '' }}">
                                 <i class="nav-icon bi bi-box-seam"></i>
                                 <span>Check In</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ url_for('send.tracking', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='tracking' else '' }}">
-                                <i class="nav-icon bi bi-geo-alt"></i>
-                                <span>Tracking</span>
+                            <a href="{{ url_for('send.lookup', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-lookup' else '' }}">
+                                <i class="nav-icon bi bi-search"></i>
+                                <span>Package Lookup</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ url_for('send.insights', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='insights' else '' }}">
+                            <a href="{{ url_for('send.address_book', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-address-book' else '' }}">
+                                <i class="nav-icon bi bi-book"></i>
+                                <span>Address Book</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.insights', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-insights' else '' }}">
                                 <i class="nav-icon bi bi-bar-chart-line"></i>
                                 <span>Insights</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.manifest', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-manifest' else '' }}">
+                                <i class="nav-icon bi bi-list-check"></i>
+                                <span>Manifest</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.report', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-report' else '' }}">
+                                <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
+                                <span>Report</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('send.sync_admin', instance_id=instance_id) }}" class="nav-link {{ 'active' if active=='send-sync' else '' }}">
+                                <i class="nav-icon bi bi-arrow-repeat"></i>
+                                <span>FedEx Sync</span>
                             </a>
                         </li>
                     </ul>

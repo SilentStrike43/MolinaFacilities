@@ -1,0 +1,506 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Migration Preview - Horizon{% endblock %}
+{% block page_title %}Migration Preview{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.data_migrations') }}">Data Migrations</a></li>
+        <li class="breadcrumb-item active">Preview</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .validation-summary {
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .validation-summary.success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 1px solid #28a745;
+    }
+    
+    .validation-summary.warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffc107;
+    }
+    
+    .validation-summary.error {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border: 1px solid #dc3545;
+    }
+    
+    .preview-row {
+        border-left: 3px solid #0d6efd;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: white;
+        border-radius: 4px;
+    }
+    
+    .preview-row.invalid {
+        border-left-color: #dc3545;
+        background: #fff5f5;
+    }
+    
+    .preview-row.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .error-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #dc3545;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .warning-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #ffc107;
+        color: #000;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .field-value {
+        background: #f8f9fa;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Validation Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        {% if preview.invalid_count == 0 %}
+        <div class="validation-summary success">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill" style="font-size: 3rem; margin-right: 20px;"></i>
+                <div>
+                    <h4 class="mb-2">✅ Validation Successful!</h4>
+                    <p class="mb-0">
+                        All <strong>{{ preview.total_rows }}</strong> rows passed validation.
+                        {% if preview.warnings|length > 0 %}
+                        <br><small class="text-muted">{{ preview.warnings|length }} warnings - review before importing</small>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% elif preview.valid_count > 0 %}
+        <div class="validation-summary warning">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem; margin-right: 20px;"></i>
+                <div>
+                    <h4 class="mb-2">⚠️ Partial Validation</h4>
+                    <p class="mb-0">
+                        <strong>{{ preview.valid_count }}</strong> rows ready to import.
+                        <strong>{{ preview.invalid_count }}</strong> rows have errors and will be skipped.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="validation-summary error">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-x-circle-fill" style="font-size: 3rem; margin-right: 20px;"></i>
+                <div>
+                    <h4 class="mb-2">❌ Validation Failed</h4>
+                    <p class="mb-0">
+                        All <strong>{{ preview.total_rows }}</strong> rows have errors.
+                        Please fix the issues and try again.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-primary">{{ preview.total_rows }}</h3>
+            <p class="mb-0">Total Rows</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-success">{{ preview.valid_rows }}</h3>
+            <p class="mb-0">Valid Rows</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-danger">{{ preview.invalid_rows }}</h3>
+            <p class="mb-0">Invalid Rows</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <h3 class="text-warning">{{ preview.warnings|length }}</h3>
+            <p class="mb-0">Warnings</p>
+        </div>
+    </div>
+</div>
+
+<!-- Migration Details -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5 class="mb-3"><i class="bi bi-info-circle"></i> Migration Details</h5>
+            
+            <table class="table table-borderless">
+                <tr>
+                    <td style="width: 200px;"><strong>Target Instance:</strong></td>
+                    <td>{{ preview.instance_name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Migration Type:</strong></td>
+                    <td>
+                        <span class="badge bg-primary">
+                            {% if preview.migration_type == 'users' %}👥 User Accounts
+                            {% elif preview.migration_type == 'addresses' %}📬 Address Book
+                            {% elif preview.migration_type == 'inventory' %}📦 Inventory Assets
+                            {% elif preview.migration_type == 'packages' %}📮 Package Data
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Status:</strong></td>
+                    <td>
+                        {% if preview.invalid_count == 0 %}
+                            <span class="badge bg-success">Ready to Import</span>
+                        {% elif preview.valid_count > 0 %}
+                            <span class="badge bg-warning">Partial Import Available</span>
+                        {% else %}
+                            <span class="badge bg-danger">Cannot Import</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Errors Section -->
+{% if preview.errors|length > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5 class="mb-3 text-danger">
+                <i class="bi bi-exclamation-octagon"></i> 
+                Errors ({{ preview.errors|length }})
+            </h5>
+            
+            <div class="alert alert-danger">
+                <p class="mb-2"><strong>The following rows have errors and will NOT be imported:</strong></p>
+                <ul class="mb-0" style="max-height: 300px; overflow-y: auto;">
+                    {% for error in preview.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Warnings Section -->
+{% if preview.warnings|length > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5 class="mb-3 text-warning">
+                <i class="bi bi-exclamation-triangle"></i> 
+                Warnings ({{ preview.warnings|length }})
+            </h5>
+            
+            <div class="alert alert-warning">
+                <p class="mb-2"><strong>Review these warnings before importing:</strong></p>
+                <ul class="mb-0" style="max-height: 300px; overflow-y: auto;">
+                    {% for warning in preview.warnings %}
+                    <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Data Preview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <h5 class="mb-3">
+                <i class="bi bi-eye"></i> 
+                Data Preview (First 20 rows)
+            </h5>
+            
+            <div style="max-height: 600px; overflow-y: auto;">
+                {% for item in preview.preview_data %}
+                <div class="preview-row {% if item.get('errors') %}invalid{% elif item.get('warnings') %}warning{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            {% if preview.migration_type == 'users' %}
+                                <strong>{{ item.username }}</strong>
+                                {% if item.first_name or item.last_name %}
+                                    - {{ item.first_name }} {{ item.last_name }}
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">
+                                    {% if item.email %}<i class="bi bi-envelope"></i> {{ item.email }}{% endif %}
+                                    {% if item.phone %} | <i class="bi bi-telephone"></i> {{ item.phone }}{% endif %}
+                                </small>
+                                
+                            {% elif preview.migration_type == 'addresses' %}
+                                <strong>{{ item.recipient_name }}</strong>
+                                {% if item.recipient_company %}({{ item.recipient_company }}){% endif %}
+                                <br>
+                                <small class="text-muted">
+                                    {{ item.address_line1 }}
+                                    {% if item.address_line2 %}, {{ item.address_line2 }}{% endif %},
+                                    {{ item.city }}, {{ item.state }} {{ item.zip_code }}
+                                </small>
+                                {% if item.api_validated %}
+                                    <br><span class="badge bg-success"><i class="bi bi-check-circle"></i> FedEx Validated</span>
+                                {% endif %}
+                                
+                            {% elif preview.migration_type == 'inventory' %}
+                                <strong>{{ item.sku }}</strong> - {{ item.asset_name }}
+                                <br>
+                                <small class="text-muted">
+                                    <span class="badge bg-info">{{ item.category }}</span>
+                                    {% if item.manufacturer %} | {{ item.manufacturer }}{% endif %}
+                                    {% if item.model %} {{ item.model }}{% endif %}
+                                    {% if item.location %} | <i class="bi bi-geo-alt"></i> {{ item.location }}{% endif %}
+                                </small>
+                                
+                            {% elif preview.migration_type == 'packages' %}
+                                <strong>{{ item.tracking_number }}</strong>
+                                <span class="badge bg-secondary">{{ item.carrier }}</span>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> {{ item.recipient_name }}
+                                    {% if item.recipient_company %}({{ item.recipient_company }}){% endif %}
+                                </small>
+                            {% endif %}
+                            
+                            <!-- Errors -->
+                            {% if item.get('errors') %}
+                                <div class="mt-2">
+                                    {% for err in item.errors %}
+                                        <span class="error-badge"><i class="bi bi-x-circle"></i> {{ err }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Warnings -->
+                            {% if item.get('warnings') %}
+                                <div class="mt-2">
+                                    {% for warn in item.warnings %}
+                                        <span class="warning-badge"><i class="bi bi-exclamation-triangle"></i> {{ warn }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            {% if item.get('row') %}
+                                <small class="text-muted">Row {{ item.row }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if preview.total_rows > 20 %}
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Showing first 20 of {{ preview.total_rows }} rows
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row">
+    <div class="col-12">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-outline-secondary" onclick="cancelMigration()">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <a href="{{ url_for('horizon.data_migrations') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Upload Different File
+                    </a>
+                </div>
+                
+                <div>
+                    {% if preview.valid_rows > 0 %}
+                    <button class="btn btn-success btn-lg" onclick="executeMigration()">
+                        <i class="bi bi-check-circle"></i> 
+                        Import {{ preview.valid_rows }} Row{{ 's' if preview.valid_rows != 1 else '' }}
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary btn-lg" disabled>
+                        <i class="bi bi-x-circle"></i> Cannot Import - Fix Errors
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if preview.invalid_rows > 0 and preview.valid_rows > 0 %}
+            <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-info-circle"></i>
+                <strong>Note:</strong> Only {{ preview.valid_rows }} valid rows will be imported. 
+                {{ preview.invalid_rows }} invalid rows will be skipped.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Import Progress Modal -->
+<div class="modal fade" id="importProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-hourglass-split"></i> Importing Data...
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p id="importStatusText">Importing {{ preview.valid_rows }} rows...</p>
+                <p class="text-muted">Please do not close this window</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle-fill"></i> Import Complete!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="successDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('horizon.data_migrations') }}" class="btn btn-primary">
+                    Import More Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cancelMigration() {
+    if (confirm('Cancel this migration? All validation data will be lost.')) {
+        fetch('{{ url_for("horizon.cancel_migration") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(r => r.json())
+        .then(data => {
+            window.location.href = '{{ url_for("horizon.data_migrations") }}';
+        });
+    }
+}
+
+function executeMigration() {
+    const confirmMsg = `Import {{ preview.valid_rows }} row(s) into {{ preview.instance_name }}?\n\n` +
+                      `Migration Type: {{ preview.migration_type }}\n` +
+                      {% if preview.invalid_rows > 0 %}`Note: {{ preview.invalid_rows }} invalid rows will be skipped.\n\n` +{% endif %}
+                      `This action cannot be undone.`;
+    
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    // Show progress modal
+    const progressModal = new bootstrap.Modal(document.getElementById('importProgressModal'));
+    progressModal.show();
+    
+    // Execute import
+    fetch('{{ url_for("horizon.execute_migration") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        progressModal.hide();
+        
+        if (data.success) {
+            // Show success modal
+            document.getElementById('successDetails').innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-check-circle"></i> ${data.message}</h5>
+                    <p class="mb-0">
+                        <strong>Success:</strong> ${data.details.success_count} records<br>
+                        <strong>Failed:</strong> ${data.details.failed_count} records
+                    </p>
+                </div>
+                
+                ${data.details.details && data.details.details.length > 0 ? `
+                    <div class="mt-3">
+                        <strong>Details:</strong>
+                        <ul style="max-height: 300px; overflow-y: auto; font-size: 0.9rem;">
+                            ${data.details.details.map(d => `<li>${d}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            `;
+            
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        progressModal.hide();
+        alert('Import failed: ' + error);
+    });
+}
+</script>
+{% endblock %}

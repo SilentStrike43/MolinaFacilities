@@ -1,0 +1,712 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block body %}
+
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Page Header - Rose gradient */
+    .page-header-card {
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(244, 63, 94, 0.3);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+    
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .page-header-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+    
+    .page-header-text h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        color: white;
+    }
+    
+    .page-header-text p {
+        margin: 0;
+        opacity: 0.95;
+        font-size: 1.0625rem;
+        color: white;
+    }
+    
+    .btn-export {
+        padding: 1rem 2rem;
+        background: white;
+        color: #f43f5e;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        white-space: nowrap;
+    }
+    
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        color: #e11d48;
+    }
+    
+    /* Filters Card */
+    .filters-card {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.6s ease-out 0.1s;
+        animation-fill-mode: both;
+    }
+    
+    .filters-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .filters-title i {
+        color: #f43f5e;
+    }
+    
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+    }
+    
+    .filter-label {
+        font-weight: 700;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .filter-input,
+    .filter-select {
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: #f43f5e;
+        box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+    }
+    
+    .filter-select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23f43f5e' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 3rem;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--border-color);
+    }
+    
+    .btn-primary {
+        padding: 1rem 2.5rem;
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        color: white;
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(244, 63, 94, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(244, 63, 94, 0.4);
+    }
+    
+    .btn-secondary {
+        padding: 1rem 2rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: none;
+        border-radius: 0.875rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+    }
+    
+    /* Results Summary */
+    .results-summary {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        animation: fadeInUp 0.7s ease-out 0.2s;
+        animation-fill-mode: both;
+    }
+    
+    .summary-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .summary-text {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+    
+    .summary-count {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #f43f5e;
+    }
+    
+    /* Report Table */
+    .report-table {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        animation: fadeInUp 0.8s ease-out 0.3s;
+        animation-fill-mode: both;
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        color: white;
+    }
+    
+    thead th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    
+    tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    
+    tbody tr:hover {
+        background: var(--bg-hover);
+    }
+    
+    tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    tbody td {
+        padding: 1.25rem 1.5rem;
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        vertical-align: middle;
+    }
+    
+    .data-cell {
+        font-weight: 600;
+    }
+    
+    .data-cell.monospace {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: #f43f5e;
+    }
+    
+    .data-cell.secondary {
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.625rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    
+    .status-delivered {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+    }
+    
+    .status-in-transit {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+    
+    .status-out-for-delivery {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+    
+    .status-pre-transit {
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        color: #5b21b6;
+    }
+    
+    .status-exception {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+    }
+    
+    .empty-state {
+        background: var(--bg-card);
+        border-radius: 1.5rem;
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        border: 2px dashed var(--border-color);
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .empty-text {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .filters-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-header-content {
+            flex-direction: column;
+        }
+        
+        .page-header-left {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .filters-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-actions {
+            flex-direction: column;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .results-summary {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .table-wrapper {
+            font-size: 0.875rem;
+        }
+        
+        thead th,
+        tbody td {
+            padding: 1rem 0.75rem;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-left">
+            <div class="page-header-icon">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+            </div>
+            <div class="page-header-text">
+                <h2>Shipping Report</h2>
+                <p>Detailed analytics and exportable reports</p>
+            </div>
+        </div>
+        <button class="btn-export" onclick="exportReport()">
+            <i class="bi bi-download"></i>
+            Export CSV
+        </button>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-card">
+    <h3 class="filters-title">
+        <i class="bi bi-funnel"></i>
+        Report Filters
+    </h3>
+    
+    <form method="get">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Date From</label>
+                <input 
+                    type="date" 
+                    name="date_from" 
+                    class="filter-input"
+                    value="{{ date_from }}"
+                >
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Date To</label>
+                <input 
+                    type="date" 
+                    name="date_to" 
+                    class="filter-input"
+                    value="{{ date_to }}"
+                >
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Carrier</label>
+                <select name="carrier" class="filter-select">
+                    <option value="">All Carriers</option>
+                    <option value="USPS" {% if carrier_filter == 'USPS' %}selected{% endif %}>USPS</option>
+                    <option value="FEDEX" {% if carrier_filter == 'FEDEX' %}selected{% endif %}>FedEx</option>
+                    <option value="UPS" {% if carrier_filter == 'UPS' %}selected{% endif %}>UPS</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select name="status" class="filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="PRE_TRANSIT" {% if status_filter == 'PRE_TRANSIT' %}selected{% endif %}>Pre-Transit</option>
+                    <option value="IN_TRANSIT" {% if status_filter == 'IN_TRANSIT' %}selected{% endif %}>In Transit</option>
+                    <option value="OUT_FOR_DELIVERY" {% if status_filter == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
+                    <option value="DELIVERED" {% if status_filter == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+                    <option value="EXCEPTION" {% if status_filter == 'EXCEPTION' %}selected{% endif %}>Exception</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Location</label>
+                <select name="location" class="filter-select">
+                    <option value="">All Locations</option>
+                    <option value="New York" {% if location_filter == 'New York' %}selected{% endif %}>New York</option>
+                    <option value="Connecticut" {% if location_filter == 'Connecticut' %}selected{% endif %}>Connecticut</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Search</label>
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="filter-input"
+                    placeholder="Tracking or recipient..."
+                    value="{{ search_query }}"
+                >
+            </div>
+        </div>
+        
+        <div class="filter-actions">
+            <a href="{{ url_for('send.report', instance_id=instance_id) if is_sandbox else url_for('send.report') }}" class="btn-secondary">
+                <i class="bi bi-arrow-clockwise"></i>
+                Clear Filters
+            </a>
+            <button type="submit" class="btn-primary">
+                <i class="bi bi-search"></i>
+                Generate Report
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if results %}
+<!-- Results Summary -->
+<div class="results-summary">
+    <div class="summary-info">
+        <div class="summary-icon">
+            <i class="bi bi-file-text"></i>
+        </div>
+        <div class="summary-text">
+            Report generated for {{ date_from }} to {{ date_to }}
+        </div>
+    </div>
+    <div class="summary-count">{{ results|length }}</div>
+</div>
+
+<!-- Report Table -->
+<div class="report-table">
+    <div class="table-wrapper">
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>Check-in ID</th>
+                    <th>Package ID</th>
+                    <th>Tracking Number</th>
+                    <th>Carrier</th>
+                    <th>Recipient</th>
+                    <th>Company</th>
+                    <th>Address</th>
+                    <th>Package Type</th>
+                    <th>Status</th>
+                    <th>Est. Delivery</th>
+                    <th>Actual Delivery</th>
+                    <th>Submitter</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    <td>
+                        <span class="data-cell monospace">{{ row.checkin_id or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell monospace">{{ row.package_id or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.tracking_number or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell">{{ row.carrier or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell">{{ row.recipient_name }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.recipient_company or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.recipient_address or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell">{{ row.package_type or '—' }}</span>
+                    </td>
+                    <td>
+                        {% if row.tracking_status %}
+                            {% set status_class = row.tracking_status|lower|replace('_', '-') %}
+                            <span class="status-badge status-{{ status_class }}">
+                                {{ row.tracking_status|replace('_', ' ')|title }}
+                            </span>
+                        {% else %}
+                        <span class="data-cell secondary">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.estimated_delivery_date if row.estimated_delivery_date else '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.actual_delivery_date if row.actual_delivery_date else '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell">{{ row.location or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell">{{ row.submitter_name or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="data-cell secondary">{{ row.created_at if row.created_at else '—' }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="bi bi-file-earmark-x"></i>
+    </div>
+    <div class="empty-title">No Results Found</div>
+    <div class="empty-text">
+        No packages match your filter criteria. Try adjusting your date range or filters.
+    </div>
+    <a href="{{ url_for('send.report', instance_id=instance_id) if is_sandbox else url_for('send.report') }}" class="btn-secondary">
+        <i class="bi bi-arrow-clockwise"></i>
+        Reset Filters
+    </a>
+</div>
+{% endif %}
+
+<script>
+function exportReport() {
+    const table = document.getElementById('reportTable');
+    if (!table) {
+        alert('No data to export');
+        return;
+    }
+    
+    // Get table data
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = [];
+        const cols = rows[i].querySelectorAll('td, th');
+        
+        for (let j = 0; j < cols.length; j++) {
+            // Get text content and escape quotes
+            let data = cols[j].innerText.replace(/"/g, '""');
+            row.push('"' + data + '"');
+        }
+        
+        csv.push(row.join(','));
+    }
+    
+    // Create CSV file
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'shipping_report_' + new Date().toISOString().split('T')[0] + '.csv');
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+{% endblock %}

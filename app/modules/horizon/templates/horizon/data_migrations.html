@@ -1,0 +1,302 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Data Migrations - Horizon{% endblock %}
+{% block page_title %}Data Migrations{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Data Migrations</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Bulk Data Import:</strong> Upload CSV files to import users, addresses, inventory, or package data into instances.
+            All imports are validated before execution.
+        </div>
+    </div>
+</div>
+
+<!-- Upload Form -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="stat-card">
+            <h5 class="mb-4">
+                <i class="bi bi-cloud-upload"></i> Upload Migration Data
+            </h5>
+            
+            <form method="POST" enctype="multipart/form-data" id="migrationForm">
+                <!-- Instance Selection -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-building"></i> Target Instance *
+                    </label>
+                    <select class="form-select" name="instance_id" required>
+                        <option value="">-- Select Instance --</option>
+                        {% for inst in instances %}
+                        <option value="{{ inst.id }}">
+                            {{ inst.display_name or inst.name }}
+                            {% if inst.is_sandbox %}<span class="text-muted">(Sandbox)</span>{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Data will be imported into this instance</small>
+                </div>
+                
+                <!-- Migration Type -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-grid-3x3"></i> Migration Type *
+                    </label>
+                    <select class="form-select" name="migration_type" id="migrationType" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="users">👥 User Accounts</option>
+                        <option value="addresses">📬 Address Book</option>
+                        <option value="inventory">📦 Inventory Assets</option>
+                        <option value="packages">📮 Package/Mail Data</option>
+                    </select>
+                </div>
+                
+                <!-- CSV Template Downloads -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> CSV Templates
+                    </label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('static', filename='templates/users_import_template.csv') }}" 
+                           class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-download"></i> Users Template
+                        </a>
+                        <a href="{{ url_for('static', filename='templates/addresses_import_template.csv') }}" 
+                           class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-download"></i> Addresses Template
+                        </a>
+                        <a href="{{ url_for('static', filename='templates/inventory_import_template.csv') }}" 
+                           class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-download"></i> Inventory Template
+                        </a>
+                        <a href="{{ url_for('static', filename='templates/packages_import_template.csv') }}" 
+                           class="btn btn-sm btn-outline-primary" download>
+                            <i class="bi bi-download"></i> Packages Template
+                        </a>
+                    </div>
+                    <small class="text-muted">Download a template to see required fields</small>
+                </div>
+                
+                <!-- File Upload -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-file-earmark-arrow-up"></i> CSV File *
+                    </label>
+                    <input type="file" 
+                           class="form-control" 
+                           name="csv_file" 
+                           accept=".csv" 
+                           required
+                           id="csvFileInput">
+                    <small class="text-muted">Maximum 10,000 rows per import</small>
+                </div>
+                
+                <!-- Field Requirements by Type -->
+                <div id="fieldRequirements" class="alert alert-secondary" style="display: none;">
+                    <strong>Required Fields:</strong>
+                    <div id="requiredFieldsList"></div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle"></i> Validate & Preview
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Guidelines -->
+<div class="row mt-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="stat-card">
+            <h5 class="mb-3">
+                <i class="bi bi-book"></i> Import Guidelines
+            </h5>
+            
+            <div class="accordion" id="guidelinesAccordion">
+                <!-- Users Import -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#users-guide">
+                            👥 User Accounts Import
+                        </button>
+                    </h2>
+                    <div id="users-guide" class="accordion-collapse collapse" 
+                         data-bs-parent="#guidelinesAccordion">
+                        <div class="accordion-body">
+                            <p><strong>Required Fields:</strong></p>
+                            <ul>
+                                <li><code>username</code> - Unique, lowercase, 3+ characters</li>
+                                <li><code>password</code> - 8+ characters recommended</li>
+                                <li><code>email</code> - Valid email format</li>
+                            </ul>
+                            
+                            <p><strong>Optional Fields:</strong></p>
+                            <ul>
+                                <li><code>first_name</code>, <code>last_name</code></li>
+                                <li><code>phone</code>, <code>department</code>, <code>position</code></li>
+                                <li><code>address</code></li>
+                            </ul>
+                            
+                            <div class="alert alert-warning mb-0">
+                                <strong>Note:</strong> All imported users default to <strong>M3A (Fulfillment Customer)</strong> permission.
+                                L1/L2 admins can adjust permissions after import.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Addresses Import -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#addresses-guide">
+                            📬 Address Book Import
+                        </button>
+                    </h2>
+                    <div id="addresses-guide" class="accordion-collapse collapse" 
+                         data-bs-parent="#guidelinesAccordion">
+                        <div class="accordion-body">
+                            <p><strong>Required Fields:</strong></p>
+                            <ul>
+                                <li><code>recipient_name</code></li>
+                                <li><code>address_line1</code></li>
+                                <li><code>city</code></li>
+                                <li><code>state</code> - 2-letter code (e.g., NY)</li>
+                                <li><code>zip_code</code> - 5 or 10 digits</li>
+                            </ul>
+                            
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-check-circle"></i>
+                                <strong>FedEx Validation:</strong> Addresses are automatically validated using FedEx API when available.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Inventory Import -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#inventory-guide">
+                            📦 Inventory Assets Import
+                        </button>
+                    </h2>
+                    <div id="inventory-guide" class="accordion-collapse collapse" 
+                         data-bs-parent="#guidelinesAccordion">
+                        <div class="accordion-body">
+                            <p><strong>Required Fields:</strong></p>
+                            <ul>
+                                <li><code>sku</code> - Must be unique</li>
+                                <li><code>asset_name</code></li>
+                                <li><code>category</code></li>
+                            </ul>
+                            
+                            <p><strong>Optional Fields:</strong></p>
+                            <ul>
+                                <li><code>manufacturer</code>, <code>model</code>, <code>serial_number</code></li>
+                                <li><code>location</code></li>
+                                <li><code>status</code> - available, in_use, maintenance, retired</li>
+                                <li><code>purchase_date</code>, <code>purchase_price</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Packages Import -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#packages-guide">
+                            📮 Package/Mail Data Import
+                        </button>
+                    </h2>
+                    <div id="packages-guide" class="accordion-collapse collapse" 
+                         data-bs-parent="#guidelinesAccordion">
+                        <div class="accordion-body">
+                            <p><strong>Required Fields:</strong></p>
+                            <ul>
+                                <li><code>tracking_number</code></li>
+                                <li><code>carrier</code> - FEDEX, UPS, USPS, DHL, OTHER</li>
+                                <li><code>recipient_name</code></li>
+                                <li><code>recipient_address</code></li>
+                            </ul>
+                            
+                            <p><strong>Optional Fields:</strong></p>
+                            <ul>
+                                <li><code>package_type</code> - Box, Envelope, etc.</li>
+                                <li><code>weight</code> - In pounds</li>
+                                <li><code>recipient_company</code></li>
+                                <li><code>notes</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Show field requirements based on migration type
+document.getElementById('migrationType').addEventListener('change', function() {
+    const fieldReqs = document.getElementById('fieldRequirements');
+    const fieldsList = document.getElementById('requiredFieldsList');
+    
+    const requirements = {
+        'users': '<ul><li>username</li><li>password</li><li>email (recommended)</li></ul>',
+        'addresses': '<ul><li>recipient_name</li><li>address_line1</li><li>city</li><li>state</li><li>zip_code</li></ul>',
+        'inventory': '<ul><li>sku</li><li>asset_name</li><li>category</li></ul>',
+        'packages': '<ul><li>tracking_number</li><li>carrier</li><li>recipient_name</li><li>recipient_address</li></ul>'
+    };
+    
+    if (this.value && requirements[this.value]) {
+        fieldsList.innerHTML = requirements[this.value];
+        fieldReqs.style.display = 'block';
+    } else {
+        fieldReqs.style.display = 'none';
+    }
+});
+
+// File size validation
+document.getElementById('csvFileInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size exceeds 10MB limit. Please upload a smaller file.');
+            this.value = '';
+            return;
+        }
+        
+        // Check file extension
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            alert('Please upload a CSV file (.csv extension)');
+            this.value = '';
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}

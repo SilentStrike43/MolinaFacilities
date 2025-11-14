@@ -1,4 +1,9 @@
 # app/modules/fulfillment/views.py
+"""
+Fulfillment Module Views - Instance-Aware Edition
+Uses middleware-based instance context instead of manual instance_id handling
+"""
+
 import os
 import json
 import datetime
@@ -9,6 +14,8 @@ from werkzeug.utils import secure_filename
 from app.modules.auth.security import login_required, current_user, record_audit
 from app.modules.users.permissions import PermissionManager
 from app.core.database import get_db_connection
+from app.core.instance_queries import build_insert, build_select, build_update, add_instance_filter
+from app.core.instance_context import get_current_instance
 
 # module-local DB
 from app.modules.fulfillment.storage import ensure_schema
@@ -32,22 +39,18 @@ ensure_schema()
 # ========== HELPER FUNCTIONS ==========
 
 def get_instance_context():
-    """Get instance context for sandbox detection."""
-    cu = current_user()
-    instance_id = (
-        request.args.get('instance_id', type=int) or 
-        request.form.get('instance_id', type=int) or 
-        cu.get('instance_id')
-    )
-    is_sandbox = (instance_id == 4)
-    return instance_id, is_sandbox
+    """Get instance context from middleware (set automatically per request)."""
+    try:
+        instance_id = get_current_instance()
+        is_sandbox = (instance_id == 4)
+        return instance_id, is_sandbox
+    except RuntimeError:
+        # Fallback if middleware didn't set context
+        cu = current_user()
+        instance_id = cu.get('instance_id') if cu else None
+        is_sandbox = (instance_id == 4)
+        return instance_id, is_sandbox
 
-def redirect_with_instance(endpoint, **kwargs):
-    """Redirect preserving instance_id."""
-    instance_id, _ = get_instance_context()
-    if instance_id:
-        kwargs['instance_id'] = instance_id
-    return redirect(url_for(endpoint, **kwargs))
 
 def should_filter_by_instance(user):
     """
@@ -66,178 +69,20 @@ def should_filter_by_instance(user):
     if permission_level in ['L1', 'L2', 'L3', 'S1']:
         return (False, None)
     
-    # Regular users see only their instance
-    instance_id = user.get('instance_id')
-    return (True, instance_id)
+    # Regular users see only their instance (middleware already set it)
+    try:
+        instance_id = get_current_instance()
+        return (True, instance_id)
+    except RuntimeError:
+        instance_id = user.get('instance_id')
+        return (True, instance_id)
+
 
 # ---------- Database helpers ----------
 
-def update_status(request_id: int, status: str, archive: bool = False, staff_id: int = None, staff_name: str = None, completed_by_id: int = None, completed_by_name: str = None):
-    """Update request status in BOTH tables."""
-    with get_db_connection("fulfillment") as conn:
-        cursor = conn.cursor()
-        
-        # Update fulfillment_requests
-        if status == 'Completed':
-            cursor.execute("""
-                UPDATE fulfillment_requests 
-                SET status=%s, is_archived=TRUE,
-                    completed_by_id=%s, completed_by_name=%s,
-                    completed_at=CURRENT_TIMESTAMP
-                WHERE id=%s
-            """, (status, completed_by_id, completed_by_name, request_id))
-            
-            cursor.execute("""
-                UPDATE service_requests
-                SET status=%s, is_archived=TRUE, completed_at=CURRENT_TIMESTAMP
-                WHERE id=%s
-            """, (status, request_id))
-            
-        elif archive:
-            cursor.execute("""
-                UPDATE fulfillment_requests 
-                SET status=%s, is_archived=TRUE,
-                    assigned_staff_id=%s, assigned_staff_name=%s,
-                    completed_at=CURRENT_TIMESTAMP
-                WHERE id=%s
-            """, (status, staff_id, staff_name, request_id))
-            
-            cursor.execute("""
-                UPDATE service_requests
-                SET status=%s, is_archived=TRUE, completed_at=CURRENT_TIMESTAMP
-                WHERE id=%s
-            """, (status, request_id))
-        else:
-            cursor.execute("""
-                UPDATE fulfillment_requests 
-                SET status=%s, assigned_staff_id=%s, assigned_staff_name=%s
-                WHERE id=%s
-            """, (status, staff_id, staff_name, request_id))
-            
-            cursor.execute("""
-                UPDATE service_requests
-                SET status=%s, assigned_to=%s
-                WHERE id=%s
-            """, (status, staff_id, request_id))
-        
-        conn.commit()
-        cursor.close()
-
-def list_queue(instance_id=None):
-    """List non-archived requests, optionally filtered by instance."""
-    with get_db_connection("fulfillment") as conn:
-        cursor = conn.cursor()
-        
-        query = """
-            SELECT 
-                fr.id,
-                sr.created_at,
-                sr.requester_name,
-                sr.description,
-                sr.instance_id,
-                fr.status,
-                fr.is_archived,
-                fr.total_pages,
-                fr.options_json,
-                fr.notes,
-                fr.created_by_id,
-                fr.created_by_name
-            FROM fulfillment_requests fr
-            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
-            WHERE fr.is_archived = FALSE
-        """
-        params = []
-        
-        if instance_id is not None:
-            query += " AND sr.instance_id = %s"
-            params.append(instance_id)
-        
-        query += " ORDER BY sr.created_at DESC"
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        
-        result = []
-        for row in rows:
-            result.append({
-                'id': row['id'],
-                'created_at': row['created_at'],
-                'requester_name': row['requester_name'],
-                'description': row['description'],
-                'instance_id': row['instance_id'],
-                'status': row['status'] or 'Received',
-                'is_archived': row['is_archived'],
-                'total_pages': row['total_pages'] or 0,
-                'options_json': row['options_json'],
-                'notes': row['notes'],
-                'created_by_id': row['created_by_id'],
-                'created_by_name': row['created_by_name']
-            })
-        
-        cursor.close()
-        return result
-
-def list_archive(instance_id=None):
-    """List archived requests, optionally filtered by instance."""
-    with get_db_connection("fulfillment") as conn:
-        cursor = conn.cursor()
-        
-        query = """
-            SELECT 
-                fr.id,
-                sr.created_at,
-                sr.requester_name,
-                sr.description,
-                sr.instance_id,
-                fr.status,
-                fr.completed_at,
-                fr.is_archived,
-                fr.total_pages,
-                fr.options_json,
-                fr.notes,
-                fr.created_by_id,
-                fr.created_by_name,
-                fr.completed_by_id,
-                fr.completed_by_name
-            FROM fulfillment_requests fr
-            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
-            WHERE fr.is_archived = TRUE
-        """
-        params = []
-        
-        if instance_id is not None:
-            query += " AND sr.instance_id = %s"
-            params.append(instance_id)
-        
-        query += " ORDER BY fr.completed_at DESC, sr.created_at DESC"
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        
-        result = []
-        for row in rows:
-            result.append({
-                'id': row['id'],
-                'created_at': row['created_at'],
-                'requester_name': row['requester_name'],
-                'description': row['description'],
-                'instance_id': row['instance_id'],
-                'status': row['status'] or 'Completed',
-                'completed_at': row['completed_at'],
-                'is_archived': row['is_archived'],
-                'total_pages': row['total_pages'] or 0,
-                'options_json': row['options_json'],
-                'notes': row['notes'],
-                'created_by_id': row['created_by_id'],
-                'created_by_name': row['created_by_name'],
-                'completed_by_id': row['completed_by_id'],
-                'completed_by_name': row['completed_by_name']
-            })
-        
-        cursor.close()
-        return result
-
-def update_status(request_id: int, status: str, archive: bool = False, staff_id: int = None, staff_name: str = None, completed_by_id: int = None, completed_by_name: str = None):
+def update_status(request_id: int, status: str, archive: bool = False, 
+                 staff_id: int = None, staff_name: str = None, 
+                 completed_by_id: int = None, completed_by_name: str = None):
     """Update request status in BOTH tables."""
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
@@ -283,6 +128,127 @@ def update_status(request_id: int, status: str, archive: bool = False, staff_id:
         conn.commit()
         cursor.close()
 
+
+def list_queue(filter_by_instance=False, instance_id=None):
+    """List non-archived requests, optionally filtered by instance."""
+    with get_db_connection("fulfillment") as conn:
+        cursor = conn.cursor()
+        
+        base_where = "fr.is_archived = FALSE"
+        params = []
+        
+        # Apply instance filter if needed
+        if filter_by_instance and instance_id is not None:
+            base_where += " AND sr.instance_id = %s"
+            params.append(instance_id)
+        
+        query = f"""
+            SELECT 
+                fr.id,
+                sr.created_at,
+                sr.requester_name,
+                sr.description,
+                sr.instance_id,
+                fr.status,
+                fr.is_archived,
+                fr.total_pages,
+                fr.options_json,
+                fr.notes,
+                fr.created_by_id,
+                fr.created_by_name
+            FROM fulfillment_requests fr
+            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
+            WHERE {base_where}
+            ORDER BY sr.created_at DESC
+        """
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        result = []
+        for row in rows:
+            result.append({
+                'id': row['id'],
+                'created_at': row['created_at'],
+                'requester_name': row['requester_name'],
+                'description': row['description'],
+                'instance_id': row['instance_id'],
+                'status': row['status'] or 'Received',
+                'is_archived': row['is_archived'],
+                'total_pages': row['total_pages'] or 0,
+                'options_json': row['options_json'],
+                'notes': row['notes'],
+                'created_by_id': row['created_by_id'],
+                'created_by_name': row['created_by_name']
+            })
+        
+        cursor.close()
+        return result
+
+
+def list_archive(filter_by_instance=False, instance_id=None):
+    """List archived requests, optionally filtered by instance."""
+    with get_db_connection("fulfillment") as conn:
+        cursor = conn.cursor()
+        
+        base_where = "fr.is_archived = TRUE"
+        params = []
+        
+        # Apply instance filter if needed
+        if filter_by_instance and instance_id is not None:
+            base_where += " AND sr.instance_id = %s"
+            params.append(instance_id)
+        
+        query = f"""
+            SELECT 
+                fr.id,
+                sr.created_at,
+                sr.requester_name,
+                sr.description,
+                sr.instance_id,
+                fr.status,
+                fr.completed_at,
+                fr.is_archived,
+                fr.total_pages,
+                fr.options_json,
+                fr.notes,
+                fr.created_by_id,
+                fr.created_by_name,
+                fr.completed_by_id,
+                fr.completed_by_name
+            FROM fulfillment_requests fr
+            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
+            WHERE {base_where}
+            ORDER BY fr.completed_at DESC, sr.created_at DESC
+        """
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        result = []
+        for row in rows:
+            result.append({
+                'id': row['id'],
+                'created_at': row['created_at'],
+                'requester_name': row['requester_name'],
+                'description': row['description'],
+                'instance_id': row['instance_id'],
+                'status': row['status'] or 'Completed',
+                'completed_at': row['completed_at'],
+                'is_archived': row['is_archived'],
+                'total_pages': row['total_pages'] or 0,
+                'options_json': row['options_json'],
+                'notes': row['notes'],
+                'created_by_id': row['created_by_id'],
+                'created_by_name': row['created_by_name'],
+                'completed_by_id': row['completed_by_id'],
+                'completed_by_name': row['completed_by_name']
+            })
+        
+        cursor.close()
+        return result
+
+
 def get_request(request_id: int):
     """Get a single request."""
     with get_db_connection("fulfillment") as conn:
@@ -291,6 +257,7 @@ def get_request(request_id: int):
         row = cursor.fetchone()
         cursor.close()
         return row
+
 
 def list_files(request_id: int):
     """List files for a request."""
@@ -304,6 +271,7 @@ def list_files(request_id: int):
         rows = cursor.fetchall()
         cursor.close()
         return rows
+
 
 # ---------- Permission helpers ----------
 
@@ -319,6 +287,7 @@ def _user_can_staff(u) -> bool:
     effective_perms = PermissionManager.get_effective_permissions(u)
     return effective_perms.get('can_fulfillment_service') or effective_perms.get('can_fulfillment_manager')
 
+
 def _user_can_customer(u) -> bool:
     """Check if user has M3A (Customer), M3B (Service), or M3C (Manager) permissions."""
     if not u:
@@ -333,6 +302,7 @@ def _user_can_customer(u) -> bool:
             effective_perms.get('can_fulfillment_service') or 
             effective_perms.get('can_fulfillment_manager'))
 
+
 def _require_staff():
     """Require M3B or M3C permissions."""
     u = current_user()
@@ -341,6 +311,7 @@ def _require_staff():
         return None
     return u
 
+
 def _require_customer():
     """Require M3A, M3B, or M3C permissions."""
     u = current_user()
@@ -348,6 +319,7 @@ def _require_customer():
         flash("Fulfillment access required. You need M3A (Customer), M3B (Service), or M3C (Manager) permissions.", "danger")
         return None
     return u
+
 
 # ---------- ROUTES ----------
 
@@ -363,10 +335,10 @@ def request_form():
             effective_perms.get("can_fulfillment_service") or 
             effective_perms.get("can_fulfillment_manager")):
         flash("You don't have access to Fulfillment.", "danger")
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     if request.method == "POST":
-    # Get form data
+        # Get form data
         requester_name = f"{cu.get('first_name', '')} {cu.get('last_name', '')}".strip()
         if not requester_name:
             requester_name = cu.get('username', 'Unknown')
@@ -386,46 +358,42 @@ def request_form():
         
         if not description:
             flash("Description is required.", "danger")
-            return redirect_with_instance("fulfillment.request_form")
-        
-        # Get instance_id
-        user_instance_id = cu.get('instance_id')
-        if user_instance_id is None:
-            context_instance_id, _ = get_instance_context()
-            user_instance_id = context_instance_id if context_instance_id else 1
+            return redirect(url_for("fulfillment.request_form"))
         
         try:
             with get_db_connection("fulfillment") as conn:
                 cursor = conn.cursor()
                 
-                # STEP 1: Insert into service_requests
-                cursor.execute("""
-                    INSERT INTO service_requests (
-                        title, description, request_type, 
-                        requester_id, requester_name, 
-                        instance_id,
-                        status, is_archived, created_at
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
-                    RETURNING id
-                """, (
+                # STEP 1: Insert into service_requests (instance_id added automatically)
+                sr_columns = [
+                    'title', 'description', 'request_type',
+                    'requester_id', 'requester_name',
+                    'status', 'is_archived', 'created_at'
+                ]
+                
+                sr_values = [
                     description[:100],
                     description,
                     'fulfillment',
                     cu['id'],
                     requester_name,
-                    user_instance_id,
                     'pending',
-                    False
-                ))
+                    False,
+                    datetime.datetime.now()
+                ]
                 
+                # build_insert automatically adds instance_id
+                sql, params = build_insert('service_requests', sr_columns, sr_values)
+                sql += " RETURNING id"
+                
+                cursor.execute(sql, params)
                 result = cursor.fetchone()
                 service_request_id = result['id'] if result else None
+                
                 if not service_request_id:
                     raise Exception("No ID returned from service_requests insert")
                 
-                # STEP 2: Insert into fulfillment_requests with created_by
-                import json
+                # STEP 2: Insert into fulfillment_requests
                 cursor.execute("""
                     INSERT INTO fulfillment_requests (
                         service_request_id, description, 
@@ -442,12 +410,13 @@ def request_form():
                     'Received',
                     False,
                     json.dumps(print_options),
-                    cu['id'],              # created_by_id
-                    cu['username']         # created_by_name
+                    cu['id'],
+                    cu['username']
                 ))
                 
                 result = cursor.fetchone()
                 fulfillment_id = result['id'] if result else None
+                
                 if not fulfillment_id:
                     raise Exception("No ID returned from fulfillment_requests insert")
                 
@@ -492,7 +461,7 @@ def request_form():
                         f"Created request #{fulfillment_id}: {description[:50]}")
             
             flash(f"Request #{fulfillment_id} submitted successfully!", "success")
-            return redirect_with_instance("fulfillment.queue")
+            return redirect(url_for("fulfillment.queue"))
             
         except Exception as e:
             error_msg = str(e)
@@ -505,15 +474,8 @@ def request_form():
             import traceback
             traceback.print_exc()
             
-            # Show user-friendly error
-            if "does not exist" in error_msg:
-                flash(f"Database schema error: {error_msg}", "danger")
-            elif "violates" in error_msg:
-                flash(f"Data validation error: {error_msg}", "danger")
-            else:
-                flash(f"Error creating request: {error_type}: {error_msg}", "danger")
-            
-            return redirect_with_instance("fulfillment.request_form")
+            flash(f"Error creating request: {error_type}: {error_msg}", "danger")
+            return redirect(url_for("fulfillment.request_form"))
     
     # GET request - show form
     return render_template(
@@ -525,12 +487,14 @@ def request_form():
         instance_id=instance_id
     )
 
+
 @fulfillment_bp.route("/queue", methods=["GET","POST"])
 @login_required
 def queue():
+    """Fulfillment queue - view and manage requests."""
     u = _require_staff()
     if not u: 
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
 
     instance_id, is_sandbox = get_instance_context()
 
@@ -575,12 +539,15 @@ def queue():
         record_audit(u, "update_status", "fulfillment", action_detail)
         
         flash(f"Request #{rid} updated to {status}.", "success")
-        return redirect_with_instance("fulfillment.queue")
+        return redirect(url_for("fulfillment.queue"))
 
     # GET request handling
     should_filter, filter_instance_id = should_filter_by_instance(u)
     
-    rows = list_queue(filter_instance_id if should_filter else None)
+    rows = list_queue(
+        filter_by_instance=should_filter,
+        instance_id=filter_instance_id
+    )
     
     # Map field names to match template expectations
     requests = []
@@ -597,7 +564,6 @@ def queue():
             cursor.close()
         
         # Parse print options
-        import json
         print_options = {}
         if row.get('options_json'):
             try:
@@ -625,16 +591,15 @@ def queue():
             'created_by_name': row.get('created_by_name')
         })
     
-    print(f"📊 Passing {len(requests)} requests to template")
-    
     return render_template("fulfillment/queue.html", 
                            active="fulfillment", 
                            page="queue",
-                           requests=requests,  # Changed from 'rows' to 'requests'
+                           requests=requests,
                            statuses=STATUS_CHOICES,
                            user_instance=filter_instance_id if should_filter else "All",
                            is_sandbox=is_sandbox,
                            instance_id=instance_id)
+
 
 @fulfillment_bp.route("/download/<int:file_id>")
 @login_required
@@ -655,7 +620,7 @@ def download_file(file_id: int):
     
     if not row:
         flash("File not found.", "danger")
-        return redirect_with_instance("fulfillment.queue")
+        return redirect(url_for("fulfillment.queue"))
     
     orig_name = row['orig_name']
     stored_name = row['stored_name']
@@ -665,12 +630,13 @@ def download_file(file_id: int):
     
     if not os.path.exists(file_path):
         flash("File not found on server.", "danger")
-        return redirect_with_instance("fulfillment.queue")
+        return redirect(url_for("fulfillment.queue"))
     
     record_audit(cu, "download_fulfillment_file", "fulfillment", 
                 f"Downloaded file: {orig_name}")
     
     return send_file(file_path, as_attachment=True, download_name=orig_name)
+
 
 @fulfillment_bp.route("/request/<int:request_id>")
 @login_required
@@ -684,7 +650,7 @@ def view_request(request_id: int):
             effective_perms.get("can_fulfillment_service") or 
             effective_perms.get("can_fulfillment_manager")):
         flash("You don't have access to Fulfillment.", "danger")
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
@@ -696,35 +662,16 @@ def view_request(request_id: int):
                 sr.created_at as sr_created_at,
                 sr.completed_at as sr_completed_at
             FROM fulfillment_requests fr
-            LEFT JOIN service_requests sr ON fr.id = sr.id
+            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
             WHERE fr.id = %s
         """, (request_id,))
         
         row = cursor.fetchone()
         if not row:
             flash("Request not found.", "warning")
-            return redirect_with_instance("fulfillment.queue")
+            return redirect(url_for("fulfillment.queue"))
         
-        request_data = {
-            'id': row[0],
-            'requester_id': row[1],
-            'requester_name': row[2],
-            'description': row[3],
-            'date_submitted': row[4],
-            'date_due': row[5],
-            'total_pages': row[6],
-            'status': row[7],
-            'assigned_staff_id': row[8],
-            'assigned_staff_name': row[9],
-            'options_json': row[10],
-            'notes': row[11],
-            'is_archived': row[12],
-            'completed_at': row[13],
-            'ts_utc': row[14],
-            'instance_id': row[15],
-            'created_at': row[16],
-            'sr_completed_at': row[17]
-        }
+        request_data = dict(row)
         
         cursor.execute("""
             SELECT id, orig_name, ext, bytes, ts_utc
@@ -749,6 +696,7 @@ def view_request(request_id: int):
         instance_id=instance_id
     )
 
+
 @fulfillment_bp.route("/request/<int:request_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_request(request_id: int):
@@ -758,7 +706,7 @@ def edit_request(request_id: int):
     
     if not _user_can_staff(cu):
         flash("You need M3B (Service) or M3C (Manager) permissions to edit requests.", "danger")
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
@@ -772,7 +720,7 @@ def edit_request(request_id: int):
             
             if not description:
                 flash("Description is required.", "danger")
-                return redirect_with_instance("fulfillment.edit_request", request_id=request_id)
+                return redirect(url_for("fulfillment.edit_request", request_id=request_id))
             
             cursor.execute("""
                 UPDATE fulfillment_requests
@@ -791,7 +739,7 @@ def edit_request(request_id: int):
                 SET description = %s,
                     status = %s,
                     assigned_to = %s
-                WHERE id = %s
+                WHERE id = (SELECT service_request_id FROM fulfillment_requests WHERE id = %s)
             """, (description, status, cu['id'], request_id))
             
             conn.commit()
@@ -801,7 +749,7 @@ def edit_request(request_id: int):
                         f"Edited request #{request_id}")
             
             flash(f"Request #{request_id} updated successfully.", "success")
-            return redirect_with_instance("fulfillment.view_request", request_id=request_id)
+            return redirect(url_for("fulfillment.view_request", request_id=request_id))
         
         cursor.execute("""
             SELECT 
@@ -809,35 +757,16 @@ def edit_request(request_id: int):
                 sr.instance_id,
                 sr.created_at as sr_created_at
             FROM fulfillment_requests fr
-            LEFT JOIN service_requests sr ON fr.id = sr.id
+            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
             WHERE fr.id = %s
         """, (request_id,))
         
         row = cursor.fetchone()
         if not row:
             flash("Request not found.", "warning")
-            return redirect_with_instance("fulfillment.queue")
+            return redirect(url_for("fulfillment.queue"))
         
-        request_data = {
-            'id': row[0],
-            'requester_id': row[1],
-            'requester_name': row[2],
-            'description': row[3],
-            'date_submitted': row[4],
-            'date_due': row[5],
-            'total_pages': row[6],
-            'status': row[7],
-            'assigned_staff_id': row[8],
-            'assigned_staff_name': row[9],
-            'options_json': row[10],
-            'notes': row[11],
-            'is_archived': row[12],
-            'completed_at': row[13],
-            'ts_utc': row[14],
-            'instance_id': row[15],
-            'created_at': row[16]
-        }
-        
+        request_data = dict(row)
         cursor.close()
     
     return render_template(
@@ -850,22 +779,46 @@ def edit_request(request_id: int):
         instance_id=instance_id
     )
 
+
 @fulfillment_bp.route("/archive")
 @login_required
 def archive():
+    """View archived fulfillment requests."""
     u = _require_staff()
     if not u: 
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     instance_id, is_sandbox = get_instance_context()
     
     should_filter, filter_instance_id = should_filter_by_instance(u)
     
-    rows = list_archive(filter_instance_id if should_filter else None)
+    rows = list_archive(
+        filter_by_instance=should_filter,
+        instance_id=filter_instance_id
+    )
     
     # Map field names to match template expectations
     archived_requests = []
     for row in rows:
+        # Get files for this request
+        with get_db_connection("fulfillment") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, orig_name, stored_name, ext, bytes
+                FROM fulfillment_files
+                WHERE request_id = %s AND ok = TRUE
+            """, (row['id'],))
+            files = cursor.fetchall()
+            cursor.close()
+        
+        # Parse print options
+        print_options = {}
+        if row.get('options_json'):
+            try:
+                print_options = json.loads(row['options_json'])
+            except:
+                print_options = {}
+        
         archived_requests.append({
             'id': row['id'],
             'request_type': 'Fulfillment',
@@ -889,15 +842,14 @@ def archive():
             'completed_by_name': row.get('completed_by_name')
         })
     
-    print(f"📊 Passing {len(archived_requests)} archived requests to template")
-    
     return render_template("fulfillment/archive.html", 
                            active="fulfillment", 
                            page="archive", 
-                           archived_requests=archived_requests,  # Changed from 'rows'
+                           archived_requests=archived_requests,
                            user_instance=filter_instance_id if should_filter else "All",
                            is_sandbox=is_sandbox,
                            instance_id=instance_id)
+
 
 def _can_view_fulfillment_insights(user):
     """Check if user can view fulfillment insights (M3C or admin)."""
@@ -917,6 +869,7 @@ def _can_view_fulfillment_insights(user):
     
     return False
 
+
 @fulfillment_bp.route("/insights")
 @login_required
 def insights():
@@ -927,7 +880,7 @@ def insights():
     # Check permissions - only M3B (Service) and M3C (Manager) can access
     if not _user_can_staff(cu):
         flash("You need staff permissions to access Fulfillment Insights.", "danger")
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     # Get filter parameters
     date_from = request.args.get("date_from", "")
@@ -947,8 +900,28 @@ def insights():
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
         
-        # Build base query - INCLUDE is_archived
-        query = """
+        # Build base query with instance filter
+        base_conditions = [
+            "DATE(fr.date_submitted) >= %s",
+            "DATE(fr.date_submitted) <= %s"
+        ]
+        params = [date_from, date_to]
+        
+        if should_filter and filter_instance_id:
+            base_conditions.append("sr.instance_id = %s")
+            params.append(filter_instance_id)
+        
+        if status_filter:
+            base_conditions.append("fr.status = %s")
+            params.append(status_filter)
+        
+        if staff_filter:
+            base_conditions.append("fr.completed_by_name ILIKE %s")
+            params.append(f"%{staff_filter}%")
+        
+        where_clause = " AND ".join(base_conditions)
+        
+        query = f"""
             SELECT 
                 fr.id,
                 fr.status,
@@ -962,27 +935,9 @@ def insights():
                 sr.instance_id
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
-            WHERE DATE(fr.date_submitted) >= %s 
-            AND DATE(fr.date_submitted) <= %s
+            WHERE {where_clause}
+            ORDER BY fr.date_submitted DESC
         """
-        params = [date_from, date_to]
-        
-        # Instance filtering
-        if should_filter and filter_instance_id:
-            query += " AND sr.instance_id = %s"
-            params.append(filter_instance_id)
-        
-        # Status filter
-        if status_filter:
-            query += " AND fr.status = %s"
-            params.append(status_filter)
-        
-        # Staff filter (completed by)
-        if staff_filter:
-            query += " AND fr.completed_by_name ILIKE %s"
-            params.append(f"%{staff_filter}%")
-        
-        query += " ORDER BY fr.date_submitted DESC"
         
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -1054,6 +1009,7 @@ def insights():
         instance_id=instance_id
     )
 
+
 @fulfillment_bp.route("/insights/export")
 @login_required
 def insights_export():
@@ -1062,7 +1018,7 @@ def insights_export():
     
     if not _user_can_staff(cu):
         flash("You need staff permissions to export insights.", "danger")
-        return redirect_with_instance("home.index")
+        return redirect(url_for("home.index"))
     
     import csv
     import io
@@ -1077,7 +1033,32 @@ def insights_export():
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
         
-        query = """
+        base_conditions = ["1=1"]
+        params = []
+        
+        if date_from:
+            base_conditions.append("DATE(fr.date_submitted) >= %s")
+            params.append(date_from)
+        
+        if date_to:
+            base_conditions.append("DATE(fr.date_submitted) <= %s")
+            params.append(date_to)
+        
+        if should_filter and filter_instance_id:
+            base_conditions.append("sr.instance_id = %s")
+            params.append(filter_instance_id)
+        
+        if status_filter:
+            base_conditions.append("fr.status = %s")
+            params.append(status_filter)
+        
+        if staff_filter:
+            base_conditions.append("fr.completed_by_name ILIKE %s")
+            params.append(f"%{staff_filter}%")
+        
+        where_clause = " AND ".join(base_conditions)
+        
+        query = f"""
             SELECT 
                 fr.id,
                 fr.status,
@@ -1090,31 +1071,9 @@ def insights_export():
                 sr.description
             FROM fulfillment_requests fr
             LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
-            WHERE 1=1
+            WHERE {where_clause}
+            ORDER BY fr.date_submitted DESC
         """
-        params = []
-        
-        if date_from:
-            query += " AND DATE(fr.date_submitted) >= %s"
-            params.append(date_from)
-        
-        if date_to:
-            query += " AND DATE(fr.date_submitted) <= %s"
-            params.append(date_to)
-        
-        if should_filter and filter_instance_id:
-            query += " AND sr.instance_id = %s"
-            params.append(filter_instance_id)
-        
-        if status_filter:
-            query += " AND fr.status = %s"
-            params.append(status_filter)
-        
-        if staff_filter:
-            query += " AND fr.completed_by_name ILIKE %s"
-            params.append(f"%{staff_filter}%")
-        
-        query += " ORDER BY fr.date_submitted DESC"
         
         cursor.execute(query, params)
         rows = cursor.fetchall()

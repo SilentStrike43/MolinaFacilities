@@ -1,0 +1,3 @@
+sku,asset_name,category,manufacturer,model,serial_number,location,status,purchase_date,purchase_price,notes
+DESK-001,Office Desk,Furniture,IKEA,BEKANT,SN123456,Office A,available,2024-01-15,299.99,Black finish
+CHAIR-001,Office Chair,Furniture,Herman Miller,Aeron,SN789012,Office A,in_use,2024-01-15,1200.00,Size B
