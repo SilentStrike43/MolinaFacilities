@@ -1,706 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gridline Services{% endblock %}</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
+    <!-- ✅ CORE INTERFACE CSS - Using Blueprint -->
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/themes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/typography.css') }}">
+    <link rel="stylesheet" href="{{ url_for('interface.static', filename='css/utilities.css') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Module-specific CSS -->
+    {% block extra_css %}{% endblock %}
+    
     <style>
+        /* Instance-specific branding */
         :root {
-            /* DYNAMIC BRANDING - Injected per instance */
-            --brand-primary: {{ primary_color|default('#FF8C42') }};
-            --brand-secondary: {{ secondary_color|default('#FFD700') }};
-            --brand-primary-dark: {{ primary_color_dark|default('#E67800') }};
-            --brand-primary-light: {{ primary_color_light|default('#FFAB6B') }};
-            --brand-primary-pale: {{ primary_color_pale|default('#FFF4E6') }};
-            
-            /* MODULE-SPECIFIC COLORS */
-            --ledger-primary: #3b82f6;
-            --ledger-secondary: #2563eb;
-            --flow-primary: #10b981;
-            --flow-secondary: #059669;
-            --fulfillment-primary: #f59e0b;
-            --fulfillment-secondary: #d97706;
-            
-            /* DEFAULT MODULE COLOR (fallback) */
-            --current-module: var(--brand-primary);
-            
-            /* LIGHT THEME FOR CONTENT AREA */
-            --bg-primary: #f8f9fc;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f3f4f6;
-            --bg-card: #ffffff;
-            --bg-hover: #f3f4f6;
-            
-            --text-primary: #1a1d2e;
-            --text-secondary: #6b7280;
-            --text-muted: #9ca3af;
-            
-            --border-color: #e5e7eb;
-            --border-subtle: #f3f4f6;
-            
-            /* Sidebar - DARK */
-            --sidebar-width: 260px;
-            --sidebar-bg: linear-gradient(180deg, #1a1d2e 0%, #2d3142 100%);
-            --sidebar-text: #ffffff;
-            --sidebar-text-muted: rgba(255, 255, 255, 0.6);
-            --sidebar-hover: rgba(0, 163, 173, 0.12);
-            --sidebar-active: rgba(0, 163, 173, 0.2);
-            
-            /* Gradients */
-            --primary-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
-            
-            /* Shadows - for light theme */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            
-            /* Border Radius */
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-        }
-        
-        /* Module-Specific Themes */
-        body[data-module="ledger"] {
-            --current-module: var(--ledger-primary);
-        }
-        
-        body[data-module="flow"] {
-            --current-module: var(--flow-primary);
-        }
-        
-        body[data-module="fulfillment"] {
-            --current-module: var(--fulfillment-primary);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--current-module);
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--current-module);
-            filter: brightness(1.2);
-        }
-        
-        /* Layout */
-        .app-wrapper {
-            display: flex;
-            min-height: 100vh;
-            width: 100%;
-            position: relative;
-        }
-
-        /* ========== SIDEBAR - FIXED ========== */
-        .app-sidebar {
-            width: 260px !important;
-            min-width: 260px !important;
-            max-width: 260px !important;
-            flex: 0 0 260px !important;
-            flex-shrink: 0 !important;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-subtle);
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            display: flex !important;
-            flex-direction: column;
-            overflow-y: auto;
-            overflow-x: visible !important;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-            color: white !important;
-        }
-
-        /* Main Content Area */
-        .app-main {
-            flex: 1;
-            margin-left: 260px !important;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
-            width: calc(100% - 260px) !important;
-        }
-
-        /* Content Area */
-        .app-content {
-            flex: 1;
-            padding: 32px;
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-        
-        /* Brand */
-        .sidebar-brand {
-            padding: 28px 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .brand-icon {
-            width: 42px;
-            height: 42px;
-            flex-shrink: 0;
-            background: var(--brand-primary);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
-        }
-
-        .brand-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .brand-content h1 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin: 0;
-            line-height: 1;
-            color: white !important;
-        }
-
-        .brand-content p {
-            font-size: 0.75rem;
-            color: var(--sidebar-text-muted) !important;
-            margin: 4px 0 0 0;
-        }
-        
-        /* Navigation */
-        .sidebar-nav {
-            flex: 1;
-            padding: 20px 16px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            width: 100%;
-        }
-        
-        .nav-section {
-            margin-bottom: 28px;
-            width: 100%;
-        }
-        
-        .nav-section-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--sidebar-text-muted) !important;
-            padding: 0 12px 10px;
-            display: block;
-            white-space: nowrap;
-        }
-        
-        .nav-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-        }
-        
-        .nav-item {
-            margin-bottom: 4px;
-            width: 100%;
-        }
-        
-        .nav-link {
-            display: flex !important;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            color: rgba(255, 255, 255, 0.8) !important;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-            position: relative;
-            white-space: nowrap;
-            width: 100%;
-        }
-
-        .nav-link span {
-            display: inline-block !important;
-            color: rgba(255, 255, 255, 0.8) !important;
-            white-space: nowrap;
-            overflow: visible !important;
-        }
-
-        .nav-link:hover {
-            background: var(--sidebar-hover);
-            color: white !important;
-        }
-
-        .nav-link:hover span {
-            color: white !important;
-        }
-
-        .nav-link.active {
-            background: var(--sidebar-active);
-            color: white !important;
-            font-weight: 500;
-        }
-
-        .nav-link.active span {
-            color: white !important;
-        }
-        
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 65%;
-            background: var(--brand-primary);
-            border-radius: 0 3px 3px 0;
-        }
-        
-        /* Module-Specific Nav Colors */
-        .nav-link[data-module="ledger"].active {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
-        }
-        
-        .nav-link[data-module="ledger"].active::before {
-            background: var(--ledger-primary);
-        }
-        
-        .nav-link[data-module="flow"].active {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-        }
-        
-        .nav-link[data-module="flow"].active::before {
-            background: var(--flow-primary);
-        }
-        
-        .nav-link[data-module="fulfillment"].active {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-        }
-        
-        .nav-link[data-module="fulfillment"].active::before {
-            background: var(--fulfillment-primary);
-        }
-        
-        .nav-icon {
-            font-size: 1.3rem;
-            width: 24px;
-            min-width: 24px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: inherit !important;
-        }
-        
-        /* User Section */
-        .sidebar-user {
-            padding: 16px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-        
-        .user-avatar {
-            width: 42px;
-            height: 42px;
-            min-width: 42px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-            color: white !important;
-        }
-        
-        .user-details {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .user-name {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: white !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .user-role {
-            font-size: 0.75rem;
-            color: var(--sidebar-text-muted) !important;
-        }
-        
-        .user-actions {
-            display: flex;
-            gap: 6px;
-        }
-        
-        .user-action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .user-action-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+            {% if primary_color %}
+            --brand-primary: {{ primary_color }};
+            {% endif %}
+            {% if secondary_color %}
+            --brand-secondary: {{ secondary_color }};
+            {% endif %}
         }
         
         /* Top Bar */
         .app-topbar {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 20px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
+            background: var(--bg-secondary) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            padding: 1.25rem 2rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: var(--z-topbar) !important;
         }
         
         .topbar-left {
-            flex: 1;
-        }
-        
-        .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin: 0 0 4px 0;
-            color: var(--text-primary);
+            flex: 1 !important;
         }
         
         .breadcrumb-nav {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            font-size: 0.85rem !important;
+            color: var(--text-secondary) !important;
+            margin-top: 0.25rem !important;
         }
         
         .breadcrumb-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.2s;
+            color: var(--text-secondary) !important;
+            text-decoration: none !important;
+            transition: color 0.2s !important;
         }
         
         .breadcrumb-link:hover {
-            color: var(--current-module);
+            color: var(--current-module) !important;
         }
         
         .topbar-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
+            display: flex !important;
+            gap: 0.75rem !important;
+            align-items: center !important;
         }
         
         .topbar-btn {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1.2rem;
+            width: 42px !important;
+            height: 42px !important;
+            border-radius: 10px !important;
+            background: var(--bg-tertiary) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-secondary) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            font-size: 1.2rem !important;
         }
         
         .topbar-btn:hover {
-            background: rgba(255, 140, 66, 0.1);
-            color: var(--brand-primary);
+            background: var(--bg-hover) !important;
+            color: var(--current-module) !important;
+            border-color: var(--current-module) !important;
         }
         
         .logout-btn {
-            padding: 8px 20px;
-            border-radius: 10px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 0.5rem 1.25rem !important;
+            border-radius: 0.625rem !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+            border: 1px solid rgba(239, 68, 68, 0.2) !important;
+            color: #ef4444 !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.2s !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            text-decoration: none !important;
         }
         
         .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.15) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
         }
-        
-        /* ========== COMPONENTS ========== */
-        
-        /* Stat Cards */
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--current-module), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .stat-card:hover {
-            border-color: rgba(255, 140, 66, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-        
-        .stat-card:hover::before {
-            opacity: 1;
-        }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 16px;
-        }
-        
-        .stat-card[data-module="ledger"] .stat-icon {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--ledger-primary);
-        }
-        
-        .stat-card[data-module="flow"] .stat-icon {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--flow-primary);
-        }
-        
-        .stat-card[data-module="fulfillment"] .stat-icon {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--fulfillment-primary);
-        }
-        
-        .stat-card h3 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin: 0 0 4px 0;
-        }
-        
-        .stat-card p {
-            color: var(--text-secondary);
-            margin: 0;
-            font-size: 0.9rem;
-        }
-        
-        /* Flash Messages */
-        .alert {
-            border-radius: 12px;
-            border: 1px solid;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.25);
-            color: #10b981;
-        }
-        
-        .alert-danger, .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.25);
-            color: #ef4444;
-        }
-        
-        .alert-warning {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.25);
-            color: #f59e0b;
-        }
-        
-        .alert-info {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: rgba(59, 130, 246, 0.25);
-            color: #3b82f6;
-        }
-        
-        /* Tables */
-        .table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        
-        .table thead th {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-        
-        .table tbody tr {
-            transition: background 0.2s;
-        }
-        
-        .table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        
-        .table tbody td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-subtle);
-            color: var(--text-primary);
-        }
-        
-        /* Buttons */
-        .btn-primary {
-            padding: 12px 24px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--brand-primary), #ffd700);
-            border: none;
-            color: #1a1d2e;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 140, 66, 0.3);
-        }
-        
-        /* Responsive */
-        @media (max-width: 480px) {
-            .app-sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .app-sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .app-main {
-                margin-left: 0 !important;
-                width: 100% !important;
-            }
-            
-            .app-content {
-                padding: 20px;
-            }
-        }
-
-        /* ========================================
-           FORCE SIDEBAR WIDTH - NUCLEAR OPTION
-           ======================================== */
-        
-        body.force-sidebar-width .app-sidebar,
-        body.force-sidebar-width aside.app-sidebar,
-        body.force-sidebar-width aside#appSidebar {
-            width: 260px !important;
-            min-width: 260px !important;
-            max-width: 260px !important;
-            inline-size: 260px !important;
-            flex: 0 0 260px !important;
-            flex-shrink: 0 !important;
-            flex-grow: 0 !important;
-            flex-basis: 260px !important;
-            position: fixed !important;
-            left: 0 !important;
-            display: flex !important;
-        }
-        
-        body.force-sidebar-width .app-main,
-        body.force-sidebar-width main.app-main {
-            margin-left: 260px !important;
-            width: calc(100% - 260px) !important;
-        }
-        
-        {% block extra_css %}{% endblock %}
     </style>
 </head>
-<body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}" class="force-sidebar-width">
-    <div class="app-wrapper" style="display: flex !important; width: 100% !important;">
+<body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}">
+    <div class="app-wrapper">
         <!-- Sidebar -->
-        <aside class="app-sidebar" id="appSidebar" style="width: 260px !important; min-width: 260px !important; max-width: 260px !important; flex: 0 0 260px !important; display: flex !important; position: fixed !important; left: 0 !important;">
+        <aside class="app-sidebar">
             <!-- Brand -->
             <div class="sidebar-brand">
                 <div class="brand-icon">
@@ -708,15 +129,7 @@
                 </div>
                 <div class="brand-content">
                     <h1>Gridline</h1>
-                    <p>
-                        {% if g.cu and g.cu.instance_id == 4 %}
-                            <span style="background: #fbbf24; color: #78350f; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">
-                                🧪 SANDBOX
-                            </span>
-                        {% else %}
-                            {{ g.cu.instance_name if g.cu and g.cu.get('instance_name') else 'Platform' }}
-                        {% endif %}
-                    </p>
+                    <p>{{ g.cu.instance_name if g.cu and g.cu.get('instance_name') else 'Platform' }}</p>
                 </div>
             </div>
             
@@ -735,115 +148,108 @@
                     </ul>
                 </div>
                 
-                <!-- Modules -->
+                <!-- Modules (conditional based on permissions) -->
                 {% if cu %}
-                    <!-- Ledger Section (Send Module with new name) -->
+                    <!-- Ledger -->
                     {% if can_send or elevated %}
                     <div class="nav-section">
                         <span class="nav-section-label">LEDGER</span>
                         <ul class="nav-list">
                             <li class="nav-item">
-                                <a href="{{ url_for('send.checkin') }}" class="nav-link {{ 'active' if active=='send-checkin' else '' }}">
+                                <a href="{{ url_for('send.checkin', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-checkin' else '' }}">
                                     <i class="nav-icon bi bi-box-seam"></i>
                                     <span>Check In</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.lookup') }}" class="nav-link {{ 'active' if active=='send-lookup' else '' }}">
+                                <a href="{{ url_for('send.lookup', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-lookup' else '' }}">
                                     <i class="nav-icon bi bi-search"></i>
                                     <span>Package Lookup</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.address_book') }}" class="nav-link {{ 'active' if active=='send-address-book' else '' }}">
+                                <a href="{{ url_for('send.address_book', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-address-book' else '' }}">
                                     <i class="nav-icon bi bi-book"></i>
                                     <span>Address Book</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.insights') }}" class="nav-link {{ 'active' if active=='send-insights' else '' }}">
+                                <a href="{{ url_for('send.insights', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-insights' else '' }}">
                                     <i class="nav-icon bi bi-bar-chart-line"></i>
                                     <span>Insights</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.manifest') }}" class="nav-link {{ 'active' if active=='send-manifest' else '' }}">
+                                <a href="{{ url_for('send.manifest', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-manifest' else '' }}">
                                     <i class="nav-icon bi bi-list-check"></i>
                                     <span>Manifest</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.report') }}" class="nav-link {{ 'active' if active=='send-report' else '' }}">
+                                <a href="{{ url_for('send.report', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='send-report' else '' }}">
                                     <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
                                     <span>Report</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ url_for('send.sync_admin') }}" class="nav-link {{ 'active' if active=='send-sync' else '' }}">
-                                    <i class="nav-icon bi bi-arrow-repeat"></i>
-                                    <span>FedEx Sync</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                     {% endif %}
 
-                    <!-- FLOW SECTION -->
+                    <!-- Flow -->
                     {% if can_inventory or can_asset or elevated %}
                     <div class="nav-section">
                         <span class="nav-section-label">FLOW</span>
                         <ul class="nav-list">
                             <li class="nav-item">
-                                <a href="{{ url_for('inventory.asset') }}" class="nav-link {{ 'active' if active=='inventory' else '' }}">
+                                <a href="{{ url_for('inventory.asset', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='inventory' else '' }}">
                                     <i class="nav-icon bi bi-archive"></i>
                                     <span>Assets</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('inventory.ledger') }}" class="nav-link {{ 'active' if active=='ledger' else '' }}">
+                                <a href="{{ url_for('inventory.ledger', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='ledger' else '' }}">
                                     <i class="nav-icon bi bi-journal-text"></i>
                                     <span>Ledger</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ url_for('inventory.insights') }}" class="nav-link {{ 'active' if active=='insights' else '' }}">
-                                    <i class="nav-icon bi bi-graph-up"></i>
-                                    <span>Insights</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                     {% endif %}
 
-                    <!-- FULFILLMENT SECTION -->
+                    <!-- Fulfillment -->
                     {% if can_fulfillment_customer or can_fulfillment_service or can_fulfillment_manager or elevated %}
                     <div class="nav-section">
                         <span class="nav-section-label">FULFILLMENT</span>
                         <ul class="nav-list">
                             <li class="nav-item">
-                                <a href="{{ url_for('fulfillment.request_form') }}" class="nav-link {{ 'active' if active=='fulfillment' else '' }}">
+                                <a href="{{ url_for('fulfillment.request_form', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='fulfillment' else '' }}">
                                     <i class="nav-icon bi bi-file-earmark-text"></i>
                                     <span>New Request</span>
                                 </a>
                             </li>
                             {% if can_fulfillment_service or can_fulfillment_manager or elevated %}
                             <li class="nav-item">
-                                <a href="{{ url_for('fulfillment.queue') }}" class="nav-link {{ 'active' if active=='queue' else '' }}">
+                                <a href="{{ url_for('fulfillment.queue', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='queue' else '' }}">
                                     <i class="nav-icon bi bi-list-check"></i>
                                     <span>Service Queue</span>
                                 </a>
                             </li>
                             {% endif %}
                             <li class="nav-item">
-                                <a href="{{ url_for('fulfillment.archive') }}" class="nav-link {{ 'active' if active=='archive' else '' }}">
+                                <a href="{{ url_for('fulfillment.archive', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                   class="nav-link {{ 'active' if active=='archive' else '' }}">
                                     <i class="nav-icon bi bi-archive"></i>
                                     <span>Archive</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ url_for('fulfillment.insights') }}" class="nav-link {{ 'active' if active=='fulfillment-insights' else '' }}">
-                                    <i class="nav-icon bi bi-bar-chart-line"></i>
-                                    <span>Insights</span>
                                 </a>
                             </li>
                         </ul>
@@ -857,7 +263,7 @@
                     <span class="nav-section-label">Administration</span>
                     <ul class="nav-list">
                         <li class="nav-item">
-                            <a href="{{ url_for('users.user_list', instance_id=cu.instance_id) }}" 
+                            <a href="{{ url_for('users.user_list', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
                                class="nav-link {{ 'active' if active=='users' else '' }}">
                                 <i class="nav-icon bi bi-people"></i>
                                 <span>Users</span>
@@ -865,20 +271,13 @@
                         </li>
                         {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
                         <li class="nav-item">
-                            <a href="{{ url_for('users.elevation_management') }}" 
+                            <a href="{{ url_for('users.elevation_management', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
                                class="nav-link {{ 'active' if active=='elevation' else '' }}">
                                 <i class="nav-icon bi bi-shield-check"></i>
                                 <span>Permissions</span>
                             </a>
                         </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a href="{{ url_for('admin.audit_logs') }}" 
-                               class="nav-link {{ 'active' if active=='audits' else '' }}">
-                                <i class="nav-icon bi bi-clock-history"></i>
-                                <span>Audit Logs</span>
-                            </a>
-                        </li>
                     </ul>
                 </div>
                 {% endif %}
@@ -900,10 +299,10 @@
                 {% endif %}
             </nav>
             
-            <!-- User -->
+            <!-- User Badge -->
             {% if cu %}
             <div class="sidebar-user">
-                <div class="user-avatar">{{ cu.username[0].upper() }}</div>
+                <div class="user-avatar">{{ cu.username[0].upper() if cu.username else 'U' }}</div>
                 <div class="user-details">
                     <div class="user-name">{{ cu.username }}</div>
                     <div class="user-role">
@@ -922,11 +321,12 @@
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
+            </div>
             {% endif %}
         </aside>
         
         <!-- Main Content -->
-        <main class="app-main" style="margin-left: 260px !important; width: calc(100% - 260px) !important;">
+        <main class="app-main">
             <!-- Top Bar -->
             <header class="app-topbar">
                 <div class="topbar-left">
@@ -938,6 +338,10 @@
                     </nav>
                 </div>
                 <div class="topbar-actions">
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="topbar-btn" title="Toggle theme">
+                        <i id="theme-icon" class="bi bi-moon-stars-fill"></i>
+                    </button>
                     <button class="topbar-btn" title="Settings" onclick="window.location.href='{{ url_for('users.profile') }}'">
                         <i class="bi bi-gear"></i>
                     </button>
@@ -968,38 +372,9 @@
         </main>
     </div>
     
-    <script>
-        // FORCE sidebar width immediately
-        (function() {
-            const sidebar = document.getElementById('appSidebar');
-            if (sidebar) {
-                // Remove any classes that might be collapsing it
-                sidebar.classList.remove('collapsed', 'closed', 'hidden');
-                
-                // Force styles directly
-                const forceStyles = () => {
-                    sidebar.style.width = '260px';
-                    sidebar.style.minWidth = '260px';
-                    sidebar.style.maxWidth = '260px';
-                    sidebar.style.flex = '0 0 260px';
-                    sidebar.style.flexShrink = '0';
-                    sidebar.style.position = 'fixed';
-                    sidebar.style.left = '0';
-                    sidebar.style.display = 'flex';
-                };
-                
-                forceStyles();
-                setTimeout(forceStyles, 0);
-                setTimeout(forceStyles, 50);
-                setTimeout(forceStyles, 100);
-                setTimeout(forceStyles, 500);
-            }
-        })();
-        
-        // Mobile sidebar toggle
-        function toggleSidebar() {
-            document.getElementById('appSidebar').classList.toggle('mobile-open');
-        }
-    </script>
+<!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='interface/js/theme-toggle.js') }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

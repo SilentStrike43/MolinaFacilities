@@ -59,7 +59,7 @@ def get_instance_context():
 @login_required
 @require_cap("can_send")
 def checkin():
-    """Package check-in form"""
+    """Package check-in form with tracking auto-populate and address book integration"""
     cu = current_user()
     instance_id, is_sandbox = get_instance_context()
     
@@ -73,6 +73,8 @@ def checkin():
             # Recipient info
             recipient_name = request.form.get('recipient_name', '').strip()
             recipient_company = request.form.get('recipient_company', '').strip()
+            recipient_phone = request.form.get('recipient_phone', '').strip()
+            recipient_email = request.form.get('recipient_email', '').strip()
             
             # Build full address from form fields
             address_line1 = request.form.get('address_line1', '').strip()
@@ -82,7 +84,7 @@ def checkin():
             postal_code = request.form.get('postal_code', '').strip()
             country = request.form.get('country', 'US').strip()
             
-            # Combine address into single field
+            # Combine address into single field for storage
             address_parts = [p for p in [address_line1, address_line2, city, state, postal_code, country] if p]
             recipient_address = ', '.join(address_parts)
             
@@ -110,90 +112,156 @@ def checkin():
             checkin_id = f"CHK{int(time.time())}"
             package_id = f"PKG{int(time.time())}"
             
-            # Try to track the package
+            # ============================================
+            # NEW: Address Book Integration
+            # ============================================
+            address_book_id = None
+            auto_add_address = request.form.get('auto_add_address', 'on')  # Checkbox default ON
+            
+            if auto_add_address == 'on':
+                # Try to find or create address book entry
+                address_service = AddressBookService(instance_id)
+                
+                recipient_data = {
+                    'recipient_name': recipient_name,
+                    'recipient_company': recipient_company,
+                    'recipient_phone': recipient_phone,
+                    'recipient_email': recipient_email,
+                    'address_line1': address_line1,
+                    'address_line2': address_line2,
+                    'city': city,
+                    'state': state,
+                    'zip_code': postal_code,
+                    'country': country
+                }
+                
+                address_book_id = address_service.find_or_create(recipient_data, cu['id'])
+                
+                if address_book_id:
+                    logger.info(f"Package linked to address book entry: {address_book_id}")
+            
+            # ============================================
+            # Track the package for status
+            # ============================================
             tracking_status = None
             status_description = None
             estimated_delivery = None
-            actual_delivery = None
-
+            
             try:
-                if carrier == 'FEDEX':
-                    from app.services.tracking.fedex import FedExTracker
-                    tracker = FedExTracker(current_app.config)
-                    result = tracker.track(tracking_number)
-                    
-                    if result.success:
-                        tracking_status = result.status
-                        status_description = result.status_description
-                        estimated_delivery = result.estimated_delivery
-                        actual_delivery = result.actual_delivery
-                    else:
-                        logger.warning(f"Tracking failed: {result.error_message}")
-                        flash(f'⚠️ Package logged but tracking failed: {result.error_message}', 'warning')
-                        
+                tracker = TrackingService(current_app.config)
+                result = tracker.track(tracking_number, carrier)
+                
+                if result.success:
+                    tracking_status = result.status
+                    status_description = result.status_description
+                    estimated_delivery = result.estimated_delivery
+                    logger.info(f"Initial tracking status: {tracking_status}")
             except Exception as e:
-                logger.error(f"Tracking error for {tracking_number}: {e}", exc_info=True)
-                flash(f'⚠️ Package logged but tracking unavailable', 'warning')
+                logger.warning(f"Initial tracking failed: {e}")
+                # Continue anyway - tracking will retry later
             
-            # Convert weight from oz to lbs
-            weight_lbs = None
-            if weight:
-                try:
-                    weight_lbs = float(weight) / 16.0
-                except:
-                    pass
-            
-            # Insert into database using instance-aware helper
+            # ============================================
+            # Insert into package manifest
+            # ============================================
             with get_db_connection("send") as conn:
                 cursor = conn.cursor()
                 
-                # Define columns (instance_id will be added automatically)
-                columns = [
-                    'checkin_id', 'package_id', 'tracking_number', 'carrier',
-                    'package_type', 'recipient_name', 'recipient_company',
-                    'recipient_address', 'package_weight_lbs', 'tracking_status',
-                    'tracking_status_description', 'estimated_delivery_date',
-                    'delivery_location', 'location', 'submitter_name', 'notes',
-                    'auto_populated', 'checkin_date', 'created_at', 'ts_utc',
-                    'last_tracked_at'
-                ]
-                
-                values = [
-                    checkin_id, package_id, tracking_number, carrier,
-                    package_type, recipient_name, recipient_company,
-                    recipient_address, weight_lbs, tracking_status,
-                    status_description, estimated_delivery, None, location,
-                    cu.get('username'), notes, False, datetime.now().date(),
-                    datetime.now(), datetime.now(),
-                    datetime.now() if tracking_status else None
-                ]
-                
-                # build_insert automatically adds instance_id
-                sql, params = build_insert('package_manifest', columns, values)
-                cursor.execute(sql, params)
+                cursor.execute("""
+                    INSERT INTO package_manifest (
+                        instance_id,
+                        created_by,
+                        created_at,
+                        tracking_number,
+                        carrier,
+                        recipient,
+                        recipient_name,
+                        recipient_dept,
+                        recipient_address,
+                        sender,
+                        submitter_name,
+                        package_type,
+                        num_pieces,
+                        location,
+                        status,
+                        notes,
+                        checkin_id,
+                        package_id,
+                        checkin_date,
+                        received_at,
+                        received_by,
+                        address_book_id,
+                        tracking_status,
+                        tracking_status_description,
+                        estimated_delivery_date
+                    ) VALUES (
+                        %s, %s, CURRENT_TIMESTAMP,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, CURRENT_DATE, CURRENT_TIMESTAMP, %s,
+                        %s, %s, %s, %s
+                    )
+                """, (
+                    instance_id,
+                    cu['id'],
+                    tracking_number,
+                    carrier,
+                    recipient_name,  # recipient field (backward compat)
+                    recipient_name,
+                    recipient_company,
+                    recipient_address,
+                    'Warehouse',  # sender
+                    cu.get('full_name', cu.get('username', 'Unknown')),
+                    package_type,
+                    1,  # num_pieces
+                    location,
+                    'received',
+                    notes,
+                    checkin_id,
+                    package_id,
+                    cu.get('username', 'System'),
+                    address_book_id,  # Link to address book
+                    tracking_status,
+                    status_description,
+                    estimated_delivery
+                ))
                 
                 conn.commit()
                 cursor.close()
             
-            # Log audit
-            record_audit(cu, "package_checkin", "send", f"Checked in package {tracking_number}")
+            # Record audit
+            audit_details = f"Checked in package {package_id} - Tracking: {tracking_number}, Carrier: {carrier}, Recipient: {recipient_name}"
+            if address_book_id:
+                audit_details += f" [Address Book: {address_book_id}]"
             
-            flash(f'✅ Package {tracking_number} checked in successfully!', 'success')
-            return redirect(url_for('send.manifest'))
+            record_audit(cu, "checkin_package", "send", audit_details)
+            
+            # Success message
+            flash_msg = f'✅ Package {package_id} checked in successfully!'
+            if address_book_id:
+                flash_msg += ' Address saved to book.'
+            if tracking_status:
+                flash_msg += f' Status: {tracking_status}'
+            
+            flash(flash_msg, 'success')
+            logger.info(f"Package checked in: {package_id} by {cu.get('username')}")
+            
+            return redirect(url_for('send.ledger'))
             
         except Exception as e:
-            logger.error(f"Error creating package: {e}", exc_info=True)
-            flash(f'❌ Error creating package: {e}', 'error')
+            logger.error(f"Checkin error: {e}", exc_info=True)
+            flash(f'Error checking in package: {str(e)}', 'error')
             return redirect(url_for('send.checkin'))
-    
-    # GET - show form
-    return render_template(
-        "send/checkin.html",
-        active="send-checkin",
-        is_sandbox=is_sandbox,
-        instance_id=instance_id if is_sandbox else None,
-        today=date.today().isoformat()
-    )
+        
+    # GET request - show form
+    # Get next IDs for display based on default/first package type
+    default_package_type = PACKAGE_TYPES[0] if PACKAGE_TYPES else 'Box'
+    next_checkin = peek_next_checkin_id()
+    next_package = peek_next_package_id(default_package_type)
+
+    return render_template('send/checkin.html',
+                        next_checkin_id=next_checkin,
+                        next_package_id=next_package,
+                        package_types=PACKAGE_TYPES,
+                        user=cu)
 
 
 # ========== ROUTE 2: PACKAGE LOOKUP ==========

@@ -1,0 +1,83 @@
+/* ==========================================
+   CORE LAYOUT & RESET
+   ========================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    line-height: 1.6 !important;
+    overflow-x: hidden !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--current-module);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    filter: brightness(1.2);
+}
+
+/* App Wrapper */
+.app-wrapper,
+.sandbox-wrapper {
+    display: flex !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Main Content */
+.app-main,
+.sandbox-main {
+    flex: 1 !important;
+    margin-left: var(--sidebar-width) !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: calc(100% - var(--sidebar-width)) !important;
+}
+
+.app-content,
+.sandbox-content {
+    flex: 1 !important;
+    padding: 2rem !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-sidebar,
+    .sandbox-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .app-sidebar.mobile-open,
+    .sandbox-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .app-main,
+    .sandbox-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}

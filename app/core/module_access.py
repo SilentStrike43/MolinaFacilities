@@ -103,7 +103,7 @@ def user_has_module_access(user_data, module_code):
         return False
     
     # Check user's individual permissions
-    from app.modules.users.permissions import PermissionManager
+    from app.core.permissions import PermissionManager
     effective_perms = PermissionManager.get_effective_permissions(user_data)
     
     # Map module codes to permission keys

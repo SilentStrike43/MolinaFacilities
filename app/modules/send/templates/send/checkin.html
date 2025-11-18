@@ -628,6 +628,49 @@
             </div>
         </div>
         
+        <!-- Auto-Add to Address Book Option -->
+        <div class="form-section">
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label class="checkbox-label">
+                        <input 
+                            type="checkbox" 
+                            name="auto_add_address" 
+                            id="auto_add_address" 
+                            value="on"
+                            checked
+                        >
+                        <span>Automatically save recipient to Address Book</span>
+                    </label>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i> 
+                        Saves time on repeat shipments. Existing addresses will be updated with latest info.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        .checkbox-label span {
+            color: #1e293b;
+        }
+        </style>
+
         <!-- Form Actions -->
         <div class="form-section">
             <div class="form-actions">
@@ -646,80 +689,211 @@
 
 <script>
 
-// Auto-populate form from tracking number
-document.getElementById('tracking_number').addEventListener('blur', function() {
-    const trackingNumber = this.value.trim();
+// ============================================
+// TRACKING VALIDATION & AUTO-POPULATE
+// ============================================
+async function validateTracking() {
+    const trackingNumber = document.getElementById('tracking_number').value.trim();
     const carrier = document.getElementById('carrier').value;
+    const statusDiv = document.getElementById('tracking-status');
+    const btn = document.querySelector('.btn-validate');
     
-    if (!trackingNumber) return;
-    
-    // Show loading indicator
-    const validateBtn = document.getElementById('validateTrackingBtn');
-    if (validateBtn) {
-        validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Validating...';
-        validateBtn.disabled = true;
+    if (!trackingNumber) {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = '❌ Please enter a tracking number first';
+        statusDiv.style.display = 'block';
+        return;
     }
     
-    fetch('/send/api/validate-tracking', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            tracking_number: trackingNumber,
-            carrier: carrier
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Validating...';
+    statusDiv.className = '';
+    statusDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/send/api/validate-tracking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tracking_number: trackingNumber,
+                carrier: carrier
+            })
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
-            // Auto-fill form fields
-            const fields = data.data;
+            // Show success status
+            statusDiv.className = 'success';
             
-            if (fields.recipient_name) document.getElementById('recipient_name').value = fields.recipient_name;
-            if (fields.recipient_company) document.getElementById('recipient_company').value = fields.recipient_company;
-            if (fields.recipient_phone) document.getElementById('recipient_phone').value = fields.recipient_phone;
-            if (fields.recipient_address) document.getElementById('recipient_address').value = fields.recipient_address;
-            if (fields.recipient_city) document.getElementById('recipient_city').value = fields.recipient_city;
-            if (fields.recipient_state) document.getElementById('recipient_state').value = fields.recipient_state;
-            if (fields.recipient_zip) document.getElementById('recipient_zip').value = fields.recipient_zip;
-            if (fields.package_type) document.getElementById('package_type').value = fields.package_type;
-            if (fields.package_weight) document.getElementById('package_weight').value = fields.package_weight;
+            let statusHTML = `✅ <strong>${data.message}</strong><br>`;
             
-            // Show success message
-            showAlert('success', data.message + ' - Form auto-populated!');
+            if (data.data.status_description) {
+                statusHTML += `Status: ${data.data.status_description}<br>`;
+            }
+            
+            if (data.data.estimated_delivery) {
+                statusHTML += `Est. Delivery: ${data.data.estimated_delivery}<br>`;
+            }
+            
+            if (data.data.limited_data) {
+                statusHTML += `<small>⚠️ ${data.data.note}</small>`;
+            }
+            
+            statusDiv.innerHTML = statusHTML;
+            statusDiv.style.display = 'block';
+            
+            // Auto-fill available fields
+            const formData = data.data;
+            
+            if (formData.recipient_name) {
+                document.getElementById('recipient_name').value = formData.recipient_name;
+            }
+            
+            if (formData.recipient_company) {
+                document.getElementById('recipient_company').value = formData.recipient_company;
+            }
+            
+            if (formData.recipient_phone) {
+                document.getElementById('recipient_phone').value = formData.recipient_phone;
+            }
+            
+            if (formData.recipient_email) {
+                document.getElementById('recipient_email').value = formData.recipient_email;
+            }
+            
+            // Address fields
+            if (formData.address_line1) {
+                document.getElementById('address_line1').value = formData.address_line1;
+            }
+            
+            if (formData.address_line2) {
+                document.getElementById('address_line2').value = formData.address_line2;
+            }
+            
+            if (formData.recipient_city || formData.city) {
+                document.getElementById('city').value = formData.recipient_city || formData.city;
+            }
+            
+            if (formData.recipient_state || formData.state) {
+                document.getElementById('state').value = formData.recipient_state || formData.state;
+            }
+            
+            if (formData.recipient_zip || formData.zip_code) {
+                document.getElementById('postal_code').value = formData.recipient_zip || formData.zip_code;
+            }
+            
+            // Package details
+            if (formData.package_type) {
+                document.getElementById('package_type').value = formData.package_type;
+            }
+            
+            if (formData.package_weight) {
+                document.getElementById('weight').value = formData.package_weight;
+            }
+            
+            // Show tracking events if available
+            if (data.tracking_events && data.tracking_events.length > 0) {
+                let eventsHTML = '<div style="margin-top: 1rem; font-size: 0.875rem;"><strong>Recent Events:</strong><ul style="margin: 0.5rem 0;">';
+                data.tracking_events.forEach(event => {
+                    eventsHTML += `<li>${event.date}: ${event.status} - ${event.location}</li>`;
+                });
+                eventsHTML += '</ul></div>';
+                statusDiv.innerHTML += eventsHTML;
+            }
+            
+            // Focus on first empty required field
+            focusNextEmptyField();
+            
         } else {
-            showAlert('warning', data.error);
+            statusDiv.className = 'error';
+            statusDiv.innerHTML = `❌ ${data.error || 'Tracking validation failed'}`;
+            statusDiv.style.display = 'block';
         }
         
-        // Reset button
-        if (validateBtn) {
-            validateBtn.innerHTML = '<i class="bi bi-check-circle"></i> Validate';
-            validateBtn.disabled = false;
-        }
-    })
-    .catch(error => {
+    } catch (error) {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = '❌ Error validating tracking number. Please try again.';
+        statusDiv.style.display = 'block';
         console.error('Validation error:', error);
-        showAlert('danger', 'Error validating tracking number');
-        
-        if (validateBtn) {
-            validateBtn.innerHTML = '<i class="bi bi-check-circle"></i> Validate';
-            validateBtn.disabled = false;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search"></i> Validate & Auto-Fill from Tracking';
+    }
+}
+
+// Helper function to focus next empty required field
+function focusNextEmptyField() {
+    const requiredFields = [
+        'recipient_name',
+        'address_line1',
+        'city',
+        'state',
+        'postal_code'
+    ];
+    
+    for (const fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (field && !field.value.trim()) {
+            field.focus();
+            return;
         }
-    });
+    }
+}
+
+// ============================================
+// FORM VALIDATION BEFORE SUBMIT
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('checkin-form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Validate required fields
+            const trackingNumber = document.getElementById('tracking_number').value.trim();
+            const recipientName = document.getElementById('recipient_name').value.trim();
+            const addressLine1 = document.getElementById('address_line1').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const state = document.getElementById('state').value.trim();
+            const postalCode = document.getElementById('postal_code').value.trim();
+            
+            if (!trackingNumber || !recipientName || !addressLine1 || !city || !state || !postalCode) {
+                e.preventDefault();
+                alert('Please fill in all required fields before submitting.');
+                return false;
+            }
+            
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+            }
+        });
+    }
 });
 
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+// ============================================
+// AUTO-DETECT CARRIER FROM TRACKING NUMBER
+// ============================================
+document.getElementById('tracking_number').addEventListener('input', function() {
+    const tracking = this.value.trim();
+    const carrierSelect = document.getElementById('carrier');
     
-    const container = document.querySelector('.container-fluid') || document.body;
-    container.insertBefore(alertDiv, container.firstChild);
+    if (tracking.length < 10) return;
     
-    setTimeout(() => alertDiv.remove(), 5000);
-}
+    // Simple carrier detection (you have CarrierDetector utility)
+    if (tracking.length === 12 && /^\d+$/.test(tracking)) {
+        carrierSelect.value = 'FEDEX';
+    } else if (tracking.length === 22 && /^\d+$/.test(tracking)) {
+        carrierSelect.value = 'USPS';
+    } else if (tracking.startsWith('1Z')) {
+        carrierSelect.value = 'UPS';
+    }
+});
 
 </script>
 

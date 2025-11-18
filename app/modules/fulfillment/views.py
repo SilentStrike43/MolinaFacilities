@@ -12,7 +12,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 
 from app.modules.auth.security import login_required, current_user, record_audit
-from app.modules.users.permissions import PermissionManager
+from app.core.permissions import PermissionManager
 from app.core.database import get_db_connection
 from app.core.instance_queries import build_insert, build_select, build_update, add_instance_filter
 from app.core.instance_context import get_current_instance

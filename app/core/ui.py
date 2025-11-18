@@ -7,7 +7,7 @@ import os
 import json
 from flask import g
 
-from app.modules.users.permissions import PermissionManager
+from app.core.permissions import PermissionManager
 
 APP_VERSION = os.environ.get("APP_VERSION", "0.4.0")
 BRAND_TEAL = os.environ.get("BRAND_TEAL", "#00A3AD")

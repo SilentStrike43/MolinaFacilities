@@ -86,7 +86,20 @@
                     <i class="bi bi-trash"></i> Delete Instance
                 </button>
             </div>
-            
+            <!-- Add to the action buttons section -->
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('horizon.switch_instance', instance_id=instance.id) }}" 
+                class="btn btn-lg btn-primary">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Enter This Instance
+                </a>
+                
+                <a href="{{ url_for('horizon.edit_instance', instance_id=instance.id) }}" 
+                class="btn btn-lg btn-outline-secondary">
+                    <i class="bi bi-pencil"></i>
+                    Edit Settings
+                </a>
+            </div>
             <div>
                 <button class="btn btn-outline-secondary btn-sm" onclick="exportInstanceData()">
                     <i class="bi bi-download"></i> Export Data

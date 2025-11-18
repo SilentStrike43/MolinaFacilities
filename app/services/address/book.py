@@ -347,6 +347,111 @@ class AddressBookService:
             logger.error(f"Delete address error: {str(e)}")
             return False
     
+    def find_or_create(self, recipient_data: Dict, created_by: int) -> Optional[int]:
+        """
+        Find existing address or create new one
+        Used for auto-adding addresses from tracking data
+        
+        Args:
+            recipient_data: Recipient information from form/tracking
+            created_by: User ID creating the entry
+            
+        Returns:
+            Address ID (existing or newly created)
+        """
+        try:
+            # Extract key fields for matching
+            recipient_name = recipient_data.get('recipient_name', '').strip()
+            address_line1 = recipient_data.get('address_line1', '').strip()
+            zip_code = recipient_data.get('zip_code', '').strip()
+            
+            if not recipient_name or not address_line1:
+                logger.warning("Insufficient data to find/create address")
+                return None
+            
+            with get_db_connection("send") as conn:
+                cursor = conn.cursor()
+                
+                # Check if address already exists (match on name + address + zip)
+                cursor.execute("""
+                    SELECT id, use_count
+                    FROM address_book
+                    WHERE instance_id = %s
+                    AND is_active = TRUE
+                    AND recipient_name ILIKE %s
+                    AND address_line1 ILIKE %s
+                    AND zip_code = %s
+                    LIMIT 1
+                """, (self.instance_id, recipient_name, address_line1, zip_code))
+                
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Address exists - increment usage and return ID
+                    address_id = existing['id']
+                    cursor.execute("""
+                        UPDATE address_book
+                        SET 
+                            use_count = use_count + 1,
+                            last_used_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (address_id,))
+                    conn.commit()
+                    cursor.close()
+                    
+                    logger.info(f"Found existing address: {address_id}, incremented usage")
+                    return address_id
+                
+                else:
+                    # Address doesn't exist - create new entry
+                    cursor.execute("""
+                        INSERT INTO address_book (
+                            instance_id,
+                            recipient_name,
+                            recipient_company,
+                            recipient_phone,
+                            recipient_email,
+                            address_line1,
+                            address_line2,
+                            city,
+                            state,
+                            zip_code,
+                            country,
+                            notes,
+                            use_count,
+                            last_used_at,
+                            created_by,
+                            created_at
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, CURRENT_TIMESTAMP, %s, CURRENT_TIMESTAMP
+                        ) RETURNING id
+                    """, (
+                        self.instance_id,
+                        recipient_data.get('recipient_name'),
+                        recipient_data.get('recipient_company'),
+                        recipient_data.get('recipient_phone'),
+                        recipient_data.get('recipient_email'),
+                        recipient_data.get('address_line1'),
+                        recipient_data.get('address_line2'),
+                        recipient_data.get('city'),
+                        recipient_data.get('state'),
+                        recipient_data.get('zip_code'),
+                        recipient_data.get('country', 'USA'),
+                        'Auto-added from package checkin',
+                        created_by
+                    ))
+                    
+                    new_id = cursor.fetchone()['id']
+                    conn.commit()
+                    cursor.close()
+                    
+                    logger.info(f"Created new address book entry: {new_id}")
+                    return new_id
+                    
+        except Exception as e:
+            logger.error(f"Find or create address error: {str(e)}")
+            return None
+
     def increment_usage(self, address_id: int):
         """
         Increment usage counter when address is used

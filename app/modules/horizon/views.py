@@ -198,6 +198,7 @@ def dashboard():
         "horizon/dashboard.html",
         active="global",
         page="dashboard",
+        instances=instances,  # ✅ ADD THIS LINE
         total_users=total_users,
         active_instances=active_instances,
         total_instances=total_instances,
@@ -281,6 +282,92 @@ def instance_management():
         instances=enhanced_instances
     )
 
+@bp.route("/switch-instance/<int:instance_id>")
+@login_required
+@require_horizon
+def switch_instance(instance_id):
+    """
+    Switch to a specific instance context
+    Allows L3/S1 users to access instance modules
+    """
+    cu = current_user()
+    
+    # Verify instance exists
+    instance = get_instance_by_id(instance_id)
+    if not instance:
+        flash("Instance not found", "error")
+        return redirect(url_for('horizon.index'))
+    
+    if not instance['is_active']:
+        flash(f"Cannot switch to inactive instance: {instance['display_name']}", "warning")
+        return redirect(url_for('horizon.instances'))
+    
+    # Store in session
+    session['active_instance_id'] = instance_id
+    session['active_instance_name'] = instance.get('display_name') or instance['name']
+    
+    # Record audit
+    record_horizon_audit(
+        cu, 
+        "switch_instance",
+        "instances",  # ✅ ADD category parameter
+        f"Switched to instance: {instance['display_name']} (ID: {instance_id})",
+        target_instance_id=instance_id,  # ✅ ADD optional parameter
+        severity="info"
+    )
+    
+    flash(f"✅ Switched to instance: {instance['display_name']}", "success")
+    logger.info(f"User {cu['username']} switched to instance {instance_id}")
+    
+    # Redirect to home page of that instance WITH instance_id in URL
+    return redirect(url_for('home.index', instance_id=instance_id))
+
+
+@bp.route("/exit-instance")
+@login_required
+@require_horizon
+def exit_instance():
+    """
+    Exit instance context and return to Horizon
+    """
+    cu = current_user()
+    
+    # Get current instance before clearing
+    current_instance = session.get('active_instance_name', 'Unknown')
+    
+    # Clear session
+    session.pop('active_instance_id', None)
+    session.pop('active_instance_name', None)
+    
+    # Record audit
+    record_horizon_audit(
+        cu, 
+        "exit_instance",
+        "instances",  # ✅ ADD category parameter
+        f"Exited instance: {current_instance}",
+        severity="info"
+    )
+    
+    flash(f"✅ Exited instance mode. Back to Horizon.", "info")
+    
+    return redirect(url_for('horizon.index'))
+
+
+@bp.route("/api/current-instance")
+@login_required
+@require_horizon
+def api_current_instance():
+    """
+    API: Get currently active instance for L3/S1 user
+    """
+    instance_id = session.get('active_instance_id')
+    instance_name = session.get('active_instance_name')
+    
+    return jsonify({
+        'active': instance_id is not None,
+        'instance_id': instance_id,
+        'instance_name': instance_name
+    })
 
 @bp.route("/instances/<int:instance_id>")
 @login_required

@@ -121,10 +121,18 @@
     <div class="create-card">
         <form method="POST">
             <!-- Account Information -->
-            <div class="form-section">
-                <div class="section-title">
-                    <i class="bi bi-person-badge"></i> Account Information
+            <div class="create-container">
+                <h1 class="mb-4">Create New User</h1>
+                
+                {% if instance %}
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-building"></i>
+                    <strong>Creating user for:</strong> {{ instance.display_name or instance.name }}
+                    <span class="badge bg-primary ms-2">Instance ID: {{ instance_id }}</span>
                 </div>
+                {% endif %}
+                
+                <div class="create-card">
                 
                 <div class="form-group">
                     <label class="form-label">
@@ -223,7 +231,7 @@
                 <button type="submit" class="btn-save">
                     <i class="bi bi-check-circle"></i> Create User
                 </button>
-                <a href="{{ url_for('users.user_list') }}" class="btn-cancel">Cancel</a>
+                <a href="{{ url_for('users.user_list', instance_id=instance_id) }}" class="btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

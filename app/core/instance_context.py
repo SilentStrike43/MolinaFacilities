@@ -2,7 +2,7 @@
 Instance Context Management
 Ensures all requests are scoped to a specific instance
 """
-
+from flask import g, session
 from contextvars import ContextVar
 from functools import wraps
 import logging
@@ -19,11 +19,46 @@ def set_current_instance(instance_id: int):
     logger.debug(f"Instance context set: {instance_id}")
 
 
-def get_current_instance() -> int:
-    """Get the current instance ID - raises if not set"""
-    instance_id = _current_instance_id.get()
-    if instance_id is None:
-        raise RuntimeError("No instance context! Must call set_current_instance() first")
+def get_current_instance():
+    """
+    Get current instance ID from context.
+    
+    For L3/S1 users: Check session for manually selected instance
+    For L2 users: Use their assigned instance
+    For L1 and below: Use their single instance
+    """
+    # Check if already set in g (from middleware)
+    if hasattr(g, 'instance_id'):
+        return g.instance_id
+    
+    # Get current user
+    from app.modules.auth.security import current_user
+    cu = current_user()
+    
+    if not cu:
+        raise RuntimeError("No user context - instance_id cannot be determined")
+    
+    permission_level = cu.get('permission_level', '')
+    
+    # L3/S1: Check session for selected instance
+    if permission_level in ['L3', 'S1']:
+        from flask import session
+        selected_instance = session.get('active_instance_id')
+        
+        if selected_instance:
+            g.instance_id = selected_instance
+            return selected_instance
+        
+        # No instance selected - they're in Horizon mode
+        # Return None or raise error depending on context
+        raise RuntimeError("L3/S1 user must select an instance first")
+    
+    # L2/L1: Use their assigned instance
+    instance_id = cu.get('instance_id')
+    if not instance_id:
+        raise RuntimeError(f"User {cu.get('username')} has no instance_id")
+    
+    g.instance_id = instance_id
     return instance_id
 
 

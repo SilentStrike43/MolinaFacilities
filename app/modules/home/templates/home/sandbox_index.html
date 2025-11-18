@@ -3,40 +3,242 @@
 {% block title %}Sandbox Dashboard{% endblock %}
 {% block page_title %}Sandbox Dashboard{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ========== SANDBOX DASHBOARD COMPONENTS ========== */
+    
+    /* Welcome Banner */
+    .sandbox-welcome {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+        border: 2px solid rgba(251, 191, 36, 0.3);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sandbox-welcome::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .welcome-title {
+        margin: 0 0 0.75rem 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #fbbf24;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .welcome-text {
+        margin: 0;
+        font-size: 1.0625rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    
+    /* Modules Section */
+    .modules-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .modules-header {
+        margin: 0 0 2rem 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    /* Modules Grid */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    /* Module Card Base */
+    .module-card {
+        display: block;
+        border-radius: 1rem;
+        padding: 2rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .module-card:hover::before {
+        opacity: 1;
+    }
+    
+    .module-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .module-title {
+        margin: 0 0 0.625rem 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+    
+    .module-description {
+        margin: 0;
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+    
+    /* Ledger Module - Blue Theme */
+    .module-card.ledger {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    
+    .module-card.ledger::before {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+    }
+    
+    .module-card.ledger:hover {
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+    }
+    
+    .module-card.ledger .module-title {
+        color: #60a5fa;
+    }
+    
+    /* Flow Module - Green Theme */
+    .module-card.flow {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    
+    .module-card.flow::before {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    
+    .module-card.flow:hover {
+        border-color: rgba(16, 185, 129, 0.5);
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.25);
+    }
+    
+    .module-card.flow .module-title {
+        color: #34d399;
+    }
+    
+    /* Fulfillment Module - Amber Theme */
+    .module-card.fulfillment {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.08) 100%);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+    
+    .module-card.fulfillment::before {
+        background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .module-card.fulfillment:hover {
+        border-color: rgba(245, 158, 11, 0.5);
+        box-shadow: 0 12px 40px rgba(245, 158, 11, 0.25);
+    }
+    
+    .module-card.fulfillment .module-title {
+        color: #fbbf24;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modules-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .sandbox-welcome {
+            padding: 2rem;
+        }
+        
+        .modules-section {
+            padding: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block body %}
-<div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; padding: 2rem; margin-bottom: 2rem;">
-    <h3 style="margin: 0 0 0.5rem 0; color: var(--accent);">
-        🧪 Welcome to the Global Sandbox
-    </h3>
-    <p style="margin: 0; color: var(--text-muted);">
-        All modules are enabled for testing. Changes made here do not affect production instances.
-    </p>
+
+<!-- Welcome Banner -->
+<div class="sandbox-welcome">
+    <div class="welcome-content">
+        <h3 class="welcome-title">
+            🧪 Welcome to the Global Sandbox
+        </h3>
+        <p class="welcome-text">
+            All modules are enabled for testing. Changes made here do not affect production instances.
+        </p>
+    </div>
 </div>
 
-<div style="background: var(--bg-dark); border-radius: 1rem; padding: 2rem;">
-    <h4 style="margin: 0 0 1rem 0;">Available Modules</h4>
+<!-- Modules Section -->
+<div class="modules-section">
+    <h4 class="modules-header">Available Modules</h4>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+    <div class="modules-grid">
         <!-- Ledger Module Card -->
-        <a href="{{ url_for('send.checkin', instance_id=instance_id) }}" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
-            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📦</div>
-            <h5 style="margin: 0 0 0.5rem 0; color: #60a5fa;">Ledger Module</h5>
-            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Package tracking and check-in</p>
+        <a href="{{ url_for('send.checkin', instance_id=instance_id) }}" class="module-card ledger">
+            <div class="module-icon">📦</div>
+            <h5 class="module-title">Ledger Module</h5>
+            <p class="module-description">Package tracking and check-in</p>
         </a>
         
         <!-- Flow Module Card -->
-        <a href="{{ url_for('inventory.asset', instance_id=instance_id) }}" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
-            <div style="font-size: 2rem; margin-bottom: 0.75rem;">📊</div>
-            <h5 style="margin: 0 0 0.5rem 0; color: #34d399;">Flow Module</h5>
-            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Asset and inventory management</p>
+        <a href="{{ url_for('inventory.asset', instance_id=instance_id) }}" class="module-card flow">
+            <div class="module-icon">📊</div>
+            <h5 class="module-title">Flow Module</h5>
+            <p class="module-description">Asset and inventory management</p>
         </a>
         
         <!-- Fulfillment Module Card -->
-        <a href="{{ url_for('fulfillment.request_form', instance_id=instance_id) }}" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.75rem; padding: 1.5rem; text-decoration: none; color: inherit; transition: all 0.2s;">
-            <div style="font-size: 2rem; margin-bottom: 0.75rem;">✅</div>
-            <h5 style="margin: 0 0 0.5rem 0; color: #fbbf24;">Fulfillment Module</h5>
-            <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Service requests and queue</p>
+        <a href="{{ url_for('fulfillment.request_form', instance_id=instance_id) }}" class="module-card fulfillment">
+            <div class="module-icon">✅</div>
+            <h5 class="module-title">Fulfillment Module</h5>
+            <p class="module-description">Service requests and queue</p>
         </a>
     </div>
 </div>
+
 {% endblock %}

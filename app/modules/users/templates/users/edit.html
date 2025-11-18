@@ -278,7 +278,7 @@
                 <button type="submit" class="btn-save">
                     <i class="bi bi-check-circle"></i> Save Changes
                 </button>
-                <a href="{{ url_for('users.user_list') }}" class="btn-cancel">Cancel</a>
+                <a href="{{ url_for('users.user_list', instance_id=user.instance_id) }}" class="btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

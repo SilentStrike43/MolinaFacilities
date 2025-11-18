@@ -24,7 +24,7 @@ from app.modules.auth.security import (
     login_required,
     current_user,
 )
-from app.modules.users.permissions import PermissionManager, PermissionLevel
+from app.core.permissions import PermissionManager, PermissionLevel
 
 users_bp = Blueprint("users", __name__, url_prefix="/users", template_folder="templates")
 bp = users_bp
@@ -318,98 +318,175 @@ def user_list():
     List users - Instance-aware:
     - L1: Only see users in their own instance
     - L2: See users in instances they have access to
-    - L3/S1: Should use Horizon global users instead
+    - L3/S1: Can view specific instances when switched
     """
-    cu = current_user()
-    instance_id = request.args.get('instance_id', type=int)
+    from flask import session
+    from app.core.database import get_db_connection
     
+    cu = current_user()
     user_level = get_user_permission_level(cu)
     
-    # L3/S1 should use Horizon
-    if user_level in ['L3', 'S1']:
+    # Get instance context from URL, session, or user assignment
+    instance_id = (
+        request.args.get('instance_id', type=int) or 
+        session.get('active_instance_id') or
+        cu.get('instance_id')
+    )
+    
+    logger.info(f"🔍 user_list: user={cu.get('username')}, level={user_level}, instance_id={instance_id}")
+    
+    # L3/S1 redirect ONLY if no instance context
+    if user_level in ['L3', 'S1'] and not instance_id:
         flash("Please use Horizon Global Users for cross-instance user management.", "info")
         return redirect(url_for('horizon.global_users'))
     
     # L2 must have access to the requested instance
     if user_level == 'L2':
-        from app.core.instance_access import user_can_access_instance
+        accessible = get_accessible_instances(cu)
         
         if instance_id:
-            if not user_can_access_instance(cu, instance_id):
+            # Verify L2 has access to this specific instance
+            if not any(i['id'] == instance_id for i in accessible):
                 flash("Access denied to this instance.", "danger")
-                instance_id = None
-        
-        # If no instance specified, show their accessible instances
-        if not instance_id:
-            accessible = get_accessible_instances(cu)
+                return redirect(url_for('users.user_list'))
+        else:
+            # No instance specified - show instance selector
             if len(accessible) == 1:
+                # Only one instance - go directly to it
                 instance_id = accessible[0]['id']
             else:
+                # Multiple instances - show selector with user counts
+                instance_stats = []
+                for inst in accessible:
+                    with get_db_connection("core") as conn:
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            SELECT COUNT(*) as count 
+                            FROM users 
+                            WHERE instance_id = %s 
+                            AND deleted_at IS NULL
+                            AND permission_level NOT IN ('L3', 'S1')
+                        """, (inst['id'],))
+                        count = cursor.fetchone()['count']
+                        cursor.close()
+                    
+                    instance_stats.append({
+                        'instance': inst,
+                        'user_count': count
+                    })
+                
                 return render_template(
                     "users/select_instance.html",
                     active="users",
-                    instances=accessible
+                    instances=instance_stats
                 )
     
-    # L1 - force to their own instance
-    if user_level == 'L1':
+    # L1 - force to own instance
+    elif user_level == 'L1':
         instance_id = cu.get('instance_id')
         if not instance_id:
             flash("No instance assigned.", "danger")
             return redirect(url_for('home.index'))
     
     # Regular users without admin permissions
-    if not user_level:
+    elif not user_level:
         instance_id = cu.get('instance_id')
         if not instance_id:
             flash("No instance assigned.", "danger")
             return redirect(url_for('home.index'))
     
-    # Get instance info
+        # At this point, instance_id MUST be set
+    if not instance_id:
+        flash("No instance context available.", "danger")
+        return redirect(url_for('home.index'))
+
+    # Get instance info and users - SINGLE DATABASE CONNECTION BLOCK
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         
+        # Get instance details
         cursor.execute("""
             SELECT id, name, display_name, is_active
-            FROM instances WHERE id = %s
+            FROM instances 
+            WHERE id = %s
         """, (instance_id,))
         instance = cursor.fetchone()
         
         if not instance:
             flash("Instance not found.", "danger")
+            cursor.close()
             return redirect(url_for('home.index'))
         
         # Get users for this instance
         show_inactive = request.args.get('show_inactive') == 'true'
         
+        # ✅ DEFINE params FIRST
+        params = [instance_id, instance_id]
+        
+        # Query includes:
+        # 1. Users whose home instance is this one
+        # 2. L2 users who have multi-instance access to this instance
         query = """
-            SELECT id, username, first_name, last_name, email, phone,
-                   permission_level, module_permissions, is_active,
-                   created_at, last_login, department, position
-            FROM users
-            WHERE instance_id = %s
+            SELECT DISTINCT u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
+                u.permission_level, u.module_permissions, u.is_active,
+                u.created_at, u.last_login, u.department, u.position
+            FROM users u
+            WHERE u.permission_level NOT IN ('L3', 'S1')
+            AND (
+                u.instance_id = %s
+                OR (
+                    u.permission_level = 'L2'
+                    AND EXISTS (
+                        SELECT 1 FROM user_instance_access uia
+                        WHERE uia.user_id = u.id
+                        AND uia.instance_id = %s
+                    )
+                )
+            )
         """
-        params = [instance_id]
         
         if not show_inactive:
-            query += " AND deleted_at IS NULL AND is_active = true"
+            query += " AND u.deleted_at IS NULL AND u.is_active = true"
         
-        query += " ORDER BY username"
+        query += " ORDER BY u.username"
         
-        cursor.execute(query, params)
+        logger.info(f"🔍 Executing query for instance {instance_id}")
+        cursor.execute(query, params)  # ✅ Now params is defined
         users = cursor.fetchall()
         cursor.close()
-    
+
+    # ✅ Process users to add display info
+    processed_users = []
+    for u in users:
+        user_dict = dict(u)
+        
+        # Add permission description
+        perm_level = user_dict.get('permission_level') or ''
+        user_dict['permission_level_desc'] = PermissionManager.get_permission_description(perm_level)
+        
+        # Add effective permissions
+        user_dict['effective_permissions'] = PermissionManager.get_effective_permissions(user_dict)
+        
+        processed_users.append(user_dict)
+
+    logger.info(f"📋 User List: Found {len(processed_users)} users for instance {instance_id} ({instance['name']})")
+    for u in processed_users:
+        logger.info(f"   - {u['username']} ({u.get('permission_level') or 'Module User'})")
+
     return render_template(
         "users/list.html",
         active="users",
-        users=users,
+        rows=processed_users,
         instance=instance,
         instance_id=instance_id,
         show_inactive=show_inactive,
-        can_manage=user_level in ['L1', 'L2']
+        can_manage=user_level in ['L1', 'L2', 'L3', 'S1'],
+        can_create=can_create_users(cu),
+        q=request.args.get('q', ''),
+        show_all=show_inactive,
+        cu=cu,
+        is_sandbox=(instance.get('is_sandbox', False) if instance else False)
     )
-
 
 @users_bp.route("/profile/<int:uid>")
 @login_required
@@ -483,6 +560,10 @@ def view_profile(uid: int):
     # Record profile view
     record_audit(cu, "view_user_profile", "users", f"Viewed profile of {target['username']}")
     
+    # Determine if this user belongs to sandbox instance
+    target_instance_id = target.get('instance_id')
+    is_sandbox_mode = (target_instance_id == 4)  # Assuming instance 4 is sandbox
+
     return render_template(
         "users/profile_view.html",
         active="users",
@@ -494,7 +575,8 @@ def view_profile(uid: int):
         module_perms_list=module_perms_list,
         recent_actions=recent_actions,
         elevation_history=elevation_history,
-        is_own_profile=(uid == cu['id'])
+        is_own_profile=(uid == cu['id']),
+        is_sandbox=is_sandbox_mode
     )
 
 
@@ -522,11 +604,15 @@ def profile():
         deletion_request = cursor.fetchone()
         cursor.close()
     
+    # Check if user belongs to sandbox
+    is_sandbox_mode = (cu.get('instance_id') == 4)
+
     return render_template("users/profile.html",
-                         active="users",
-                         page="profile",
-                         user=user_data,
-                         deletion_request=deletion_request)
+                        active="users",
+                        page="profile",
+                        user=user_data,
+                        deletion_request=deletion_request,
+                        is_sandbox=is_sandbox_mode)
 
 
 @users_bp.route("/profile/edit", methods=["GET", "POST"])
@@ -587,6 +673,9 @@ def request_deletion():
 @login_required
 def create():
     """Create new user (L1+ only) - instance-aware."""
+    from flask import session
+    from app.core.database import get_db_connection
+    
     cu = current_user()
     
     if not can_create_users(cu):
@@ -595,13 +684,22 @@ def create():
     
     user_level = get_user_permission_level(cu)
     
+    # ✅ Get instance_id from URL or session
+    instance_id = (
+        request.args.get('instance_id', type=int) or 
+        session.get('active_instance_id') or
+        cu.get('instance_id')
+    )
+    
+    logger.info(f"🔍 create_user: user={cu.get('username')}, level={user_level}, instance_id={instance_id}")
+    
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         
         if not username or not password:
             flash("Username and password are required.", "danger")
-            return redirect(url_for("users.create"))
+            return redirect(url_for("users.create", instance_id=instance_id))
         
         # Check if username exists
         with get_db_connection("core") as conn:
@@ -612,7 +710,7 @@ def create():
         
         if existing:
             flash("Username already exists.", "danger")
-            return redirect(url_for("users.create"))
+            return redirect(url_for("users.create", instance_id=instance_id))
         
         # Collect module permissions
         module_perms = []
@@ -627,10 +725,7 @@ def create():
         if request.form.get("perm_m3c"):
             module_perms.append("M3C")
         
-        # Determine instance_id
-        instance_id = request.args.get('instance_id', type=int)
-        
-        # Validate instance access
+        # Validate instance access based on user level
         if user_level == 'L1':
             # L1 can only create users in their own instance
             instance_id = cu.get('instance_id')
@@ -638,16 +733,17 @@ def create():
             # L2 must have access to the target instance
             if not instance_id:
                 flash("Please specify an instance.", "danger")
-                return redirect(url_for('users.create'))
+                return redirect(url_for('users.user_list'))
             
             from app.core.instance_access import user_can_access_instance
             if not user_can_access_instance(cu, instance_id):
                 flash("Access denied to this instance.", "danger")
                 return redirect(url_for('users.user_list'))
         elif user_level in ['L3', 'S1']:
-            # L3/S1 should use Horizon
-            flash("Please use Horizon to create users across instances.", "info")
-            return redirect(url_for('horizon.create_global_user'))
+            # L3/S1 should use Horizon for global user creation
+            if not instance_id:
+                flash("Please use Horizon to create users across instances.", "info")
+                return redirect(url_for('horizon.create_global_user'))
         
         if not instance_id:
             flash("No instance specified.", "danger")
@@ -687,17 +783,33 @@ def create():
             cursor.close()
 
         record_audit(cu, "create_user", "users", 
-                    f"Created user {username} with permissions: {', '.join(module_perms)}")
+                    f"Created user {username} in instance {instance_id} with permissions: {', '.join(module_perms)}")
         
+        logger.info(f"✅ Created user: {username} (ID: {uid}) in instance {instance_id}")
         flash(f"User '{username}' created successfully.", "success")
         return redirect(url_for("users.user_list", instance_id=instance_id))
     
     # GET - show form
     accessible_instances = get_accessible_instances(cu)
     
+    # Get instance info for display
+    instance = None
+    if instance_id:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, name, display_name 
+                FROM instances 
+                WHERE id = %s
+            """, (instance_id,))
+            instance = cursor.fetchone()
+            cursor.close()
+    
     return render_template("users/create.html",
                          active="users",
                          page="create",
+                         instance_id=instance_id,
+                         instance=instance,
                          instances=accessible_instances)
 
 
@@ -832,6 +944,9 @@ def edit_user(uid: int):
 @login_required
 def elevation_management():
     """Elevation management page (L2+ only)."""
+    from flask import session
+    from app.core.database import get_db_connection
+    
     cu = current_user()
     cu_level = get_user_permission_level(cu)
     
@@ -839,71 +954,74 @@ def elevation_management():
         flash("You need L2 (Systems Administrator) permissions or higher to access elevation management.", "danger")
         return redirect(url_for("users.user_list"))
     
-    # Get instance filter
-    instance_id = request.args.get('instance_id', type=int)
+    # Get instance context
+    instance_id = (
+        request.args.get('instance_id', type=int) or 
+        session.get('active_instance_id') or
+        cu.get('instance_id')
+    )
     
-    # Determine which instance to show
-    if cu_level == 'L2':
-        accessible = get_accessible_instances(cu)
-        if not instance_id and len(accessible) > 0:
-            instance_id = accessible[0]['id']
-    
-    # Get all users for the instance (or all if L3/S1)
-    if cu_level in ['L3', 'S1']:
-        rows = list_users(instance_id=instance_id, include_system=False, include_deleted=False)
-    else:
-        rows = list_users(instance_id=instance_id, include_system=False, include_deleted=False)
-    
-    # Filter to show only users this admin can manage
-    users = []
-    for row in rows:
-        row_dict = row_to_dict(row)
-        
-        row_dict["current_level"] = get_user_permission_level(row_dict) or "None"
-        row_dict["level_description"] = PermissionManager.get_permission_description(row_dict["current_level"])
-        
-        # Determine what levels this admin can elevate this user to
-        available_elevations = []
-        blocked_elevations = []
-
-        all_levels = [
-            ("L1", "Module Administrator"),
-            ("L2", "Systems Administrator"), 
-            ("L3", "App Operator"),
-            ("S1", "System")
-        ]
-
-        for level, desc in all_levels:
-            if PermissionManager.can_elevate_to(cu_level, level):
-                available_elevations.append({
-                    "level": level,
-                    "description": desc
-                })
-            else:
-                # Show why it's blocked
-                if level == cu_level:
-                    reason = "Cannot elevate to your own level"
-                elif level == "S1":
-                    reason = "Only S1 can create S1 users"
-                else:
-                    reason = "Level above your permissions"
-                
-                blocked_elevations.append({
-                    "level": level,
-                    "description": desc,
-                    "reason": reason
-                })
-
-        row_dict["available_elevations"] = available_elevations
-        row_dict["blocked_elevations"] = blocked_elevations
-                    
-        row_dict["available_elevations"] = available_elevations
-        row_dict["can_demote"] = can_modify_user(cu, row_dict)
-                    
-        users.append(row_dict)
+    logger.info(f"🔍 elevation_management: user={cu.get('username')}, level={cu_level}, instance_id={instance_id}")
     
     # Get accessible instances for dropdown
     accessible_instances = get_accessible_instances(cu)
+    
+    # Get users for the instance
+    users = []  # ✅ Initialize empty list
+    
+    if instance_id:
+        # Get users from this specific instance
+        rows = list_users(instance_id=instance_id, include_system=False, include_deleted=False)
+        
+        # Filter out L3/S1 users from instance views
+        rows = [row for row in rows if row_to_dict(row).get('permission_level') not in ['L3', 'S1']]
+        
+        # Process each user
+        for row in rows:
+            row_dict = row_to_dict(row)
+            
+            row_dict["current_level"] = get_user_permission_level(row_dict) or "None"
+            row_dict["level_description"] = PermissionManager.get_permission_description(row_dict["current_level"])
+            
+            # Determine what levels this admin can elevate this user to
+            available_elevations = []
+            blocked_elevations = []
+
+            all_levels = [
+                ("L1", "Module Administrator"),
+                ("L2", "Systems Administrator"), 
+                ("L3", "App Operator"),
+                ("S1", "System")
+            ]
+
+            for level, desc in all_levels:
+                if PermissionManager.can_elevate_to(cu_level, level):
+                    available_elevations.append({
+                        "level": level,
+                        "description": desc
+                    })
+                else:
+                    # Show why it's blocked
+                    if level == cu_level:
+                        reason = "Cannot elevate to your own level"
+                    elif level == "S1":
+                        reason = "Only S1 can create S1 users"
+                    else:
+                        reason = "Level above your permissions"
+                    
+                    blocked_elevations.append({
+                        "level": level,
+                        "description": desc,
+                        "reason": reason
+                    })
+
+            row_dict["available_elevations"] = available_elevations
+            row_dict["blocked_elevations"] = blocked_elevations
+            row_dict["can_demote"] = can_modify_user(cu, row_dict)
+            
+            users.append(row_dict)
+    
+    logger.info(f"📋 Elevation Management: Found {len(users)} users for instance {instance_id}")
     
     return render_template("users/elevation.html",
                          active="users",
@@ -912,6 +1030,8 @@ def elevation_management():
                          current_user_level=cu_level,
                          instances=accessible_instances,
                          current_instance_id=instance_id)
+    
+
 
 
 @users_bp.route("/elevate/<int:uid>", methods=["POST"])

@@ -17,7 +17,7 @@ from app.modules.auth.security import (
 )
 
 from app.modules.users.models import get_user_by_id
-from app.modules.users.permissions import PermissionManager, PermissionLevel
+from app.core.permissions import PermissionManager, PermissionLevel
 from app.core.database import get_db_connection
 from app.core.instance_context import get_current_instance
 

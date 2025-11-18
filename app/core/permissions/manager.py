@@ -1,4 +1,4 @@
-# app/modules/users/permissions.py
+# app/core/permissions/manager.py
 """
 Permission System with Hierarchical Levels
 M1-M3: Module-level permissions
@@ -7,8 +7,11 @@ S1: System-level permissions
 """
 
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from enum import Enum
+
+# Import constants from our module
+from .constants import PERMISSION_DESCRIPTIONS, PERMISSION_SCOPES, PERMISSION_HIERARCHY
 
 class PermissionLevel(Enum):
     """Permission levels in hierarchical order"""
@@ -148,52 +151,70 @@ class PermissionManager:
         return target_level in elevation_rules[actor_level]
     
     @staticmethod
-    def can_elevate_to(actor_level: str, target_level: str) -> bool:
+    def can_modify_user(actor_level: str, target_level: str) -> bool:
         """
-        Check if actor can elevate users to target_level.
-        CRITICAL: Admins CANNOT elevate to their own level.
+        Check if actor can modify target user.
         
-        Args:
-            actor_level: Permission level of the user performing elevation (L1/L2/L3/S1)
-            target_level: Permission level to elevate to
-        
-        Returns:
-            bool: True if elevation is allowed
-        
-        Examples:
-            - L1 can only grant module permissions (cannot create other L1s)
-            - L2 can elevate to L1 (but not L2)
-            - L3 can elevate to L1 or L2 (but not L3)
-            - S1 can elevate to any level (including S1)
+        Rules:
+        - Can modify users at strictly lower levels
+        - Cannot modify users at same or higher level
+        - S1 can modify anyone
         """
-        if not actor_level or not target_level:
+        if not actor_level:
             return False
         
-        # Define level hierarchy
-        level_hierarchy = {
-            "": 0,        # Module user (no admin level)
-            "L1": 1,      # Module Administrator
-            "L2": 2,      # Systems Administrator
-            "L3": 3,      # App Operator
-            "S1": 4       # System
-        }
-        
-        actor_rank = level_hierarchy.get(actor_level, 0)
-        target_rank = level_hierarchy.get(target_level, 0)
-        
-        # Special case: S1 can elevate anyone to any level (including S1)
+        # S1 can modify anyone
         if actor_level == "S1":
             return True
         
-        # CRITICAL RULE: Cannot elevate to own level or higher
-        # L1 cannot create L1 (can only grant module permissions)
-        # L2 cannot create L2 (can only create L1)
-        # L3 cannot create L3 (can only create L1 or L2)
-        if target_rank >= actor_rank:
+        # Get hierarchy ranks
+        hierarchy = {
+            "": 0,
+            "M1": 1, "M2": 1, "M3A": 1, "M3B": 1, "M3C": 2,
+            "L1": 10,
+            "L2": 20,
+            "L3": 30,
+            "S1": 100
+        }
+        
+        actor_rank = hierarchy.get(actor_level, 0)
+        target_rank = hierarchy.get(target_level or "", 0)
+        
+        # Can only modify users at strictly lower rank
+        return actor_rank > target_rank
+    
+    @staticmethod
+    def can_elevate_to(actor_level: str, target_level: str) -> bool:
+        """
+        Check if actor can elevate someone to target level.
+        
+        Rules:
+        - Can elevate to strictly lower levels only
+        - Cannot elevate to own level or higher
+        - S1 can elevate to anything
+        """
+        if not actor_level:
             return False
         
-        # Can elevate to any level strictly below actor's level
-        return target_rank < actor_rank
+        # S1 can elevate anyone to anything
+        if actor_level == "S1":
+            return True
+        
+        # Get hierarchy ranks
+        hierarchy = {
+            "": 0,
+            "M1": 1, "M2": 1, "M3A": 1, "M3B": 1, "M3C": 2,
+            "L1": 10,
+            "L2": 20,
+            "L3": 30,
+            "S1": 100
+        }
+        
+        actor_rank = hierarchy.get(actor_level, 0)
+        target_rank = hierarchy.get(target_level, 100)
+        
+        # Can only elevate to strictly lower rank than yourself
+        return actor_rank > target_rank
     
     @staticmethod
     def can_access_horizon(level: str) -> bool:

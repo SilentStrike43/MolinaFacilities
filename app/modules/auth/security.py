@@ -120,7 +120,7 @@ def current_user():
     
     # Add effective permissions
     try:
-        from app.modules.users.permissions import PermissionManager
+        from app.core.permissions import PermissionManager
         user_dict['effective_permissions'] = PermissionManager.get_effective_permissions(user_dict)
         user_dict['permission_level_desc'] = PermissionManager.get_permission_description(
             user_dict.get('permission_level', '')
@@ -240,7 +240,7 @@ def _parse_caps(u: dict) -> dict:
     
     # NEW: Use PermissionManager for comprehensive permission checking
     try:
-        from app.modules.users.permissions import PermissionManager
+        from app.core.permissions import PermissionManager
         
         # Get effective permissions using PermissionManager
         effective_perms = PermissionManager.get_effective_permissions(u)

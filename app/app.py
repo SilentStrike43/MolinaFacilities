@@ -107,11 +107,34 @@ def create_app():
         """Inject common user context AND sandbox detection into all templates."""
         from flask import request
         from app.modules.auth.security import current_user
-        from app.modules.users.permissions import PermissionManager
+        from app.core.permissions import PermissionManager
         from app.core.module_access import get_user_available_modules
         from app.core.database import get_db_connection
         import os
+        from app.core.instance_access import get_user_instances
+    
+        cu = current_user()
+    
+        context = {
+            'user': cu,
+            'is_sandbox': False,
+            'accessible_instances': []
+        }
         
+        if cu:
+            # Add accessible instances for L3/S1 users
+            if cu.get('permission_level') in ['L3', 'S1']:
+                context['accessible_instances'] = get_user_instances(cu)
+            
+            # Check if in sandbox instance
+            try:
+                from app.core.instance_context import get_current_instance
+                current_instance_id = get_current_instance()
+                context['is_sandbox'] = (current_instance_id == 4)
+            except RuntimeError:
+                # Not in any instance (Horizon mode)
+                pass
+
         # App version and branding
         APP_VERSION = os.environ.get("APP_VERSION", "0.4.0")
         BRAND_TEAL = os.environ.get("BRAND_TEAL", "#00A3AD")
@@ -238,12 +261,22 @@ def create_app():
             'BRAND_TEAL': BRAND_TEAL
         }
     
+    @app.context_processor
+    def utility_processor():
+        """Add utility functions to all templates"""
+        def get_instance_id():
+            """Get current instance ID from session or user"""
+            from flask import session, g
+            return session.get('active_instance_id') or (g.cu.instance_id if hasattr(g, 'cu') and g.cu else None)
+        
+        return dict(get_instance_id=get_instance_id)
+    
     @app.before_request
     def set_request_instance_context():
         """Set instance context at start of every request"""
         from app.core.instance_context import set_current_instance, clear_current_instance
         from app.modules.auth.security import current_user
-        from flask import request
+        from flask import request, session
         
         # Clear any previous context
         clear_current_instance()
@@ -252,23 +285,32 @@ def create_app():
         if not cu:
             return
         
-        # PRIORITY 1: Check URL for explicit instance_id (Sandbox mode)
+        # PRIORITY 1: Check URL query params for explicit instance_id
         instance_id = request.args.get('instance_id', type=int)
         
-        # PRIORITY 2: For S1/L3 users without explicit instance_id, default to Sandbox
+        # PRIORITY 2: Check session for persisted instance_id (for POST/redirects)
+        if not instance_id and 'active_instance_id' in session:
+            instance_id = session.get('active_instance_id')
+            logger.debug(f"📦 Using session instance_id: {instance_id}")
+        
+        # PRIORITY 3: For S1/L3 users without explicit instance_id, default to Sandbox
         if not instance_id:
             perm_level = cu.get('permission_level', '')
             if perm_level in ['S1', 'L3']:
                 # S1/L3 default to Sandbox (instance_id=4)
                 instance_id = 4
+                logger.debug(f"🧪 Defaulting S1/L3 to Sandbox: {instance_id}")
             else:
                 # Other users use their assigned instance
                 instance_id = cu.get('instance_id')
+                logger.debug(f"👤 Using user's assigned instance: {instance_id}")
         
         # Set the context
         if instance_id:
             set_current_instance(instance_id)
-            logger.debug(f"✅ Request instance context: {instance_id}")
+            # PERSIST to session for subsequent requests
+            session['active_instance_id'] = instance_id
+            logger.debug(f"✅ Request instance context set: {instance_id}")
         else:
             logger.warning(f"⚠️ No instance context for user {cu.get('username')}")
 
@@ -300,6 +342,10 @@ def create_app():
     
     # ==================== Register Blueprints ====================
     try:
+        # CSS Blueprint (PRIORITY ZERO)
+        from app.core.interface import interface_bp
+        app.register_blueprint(interface_bp)
+
         # Home module (PRIORITY ONE - must be first)
         from app.modules.home.views import bp as home_bp
         app.register_blueprint(home_bp)

@@ -308,14 +308,17 @@ def track_package_now(package_id):
 
 @bp.route("/api/validate-tracking", methods=["POST"])
 @require_cap("can_send")
-def validate_tracking():
+def api_validate_tracking():
     """
-    Validate tracking number and return info
+    Validate tracking number and return full shipment data for auto-population
     
     POST /send/api/validate-tracking
     Body: {"tracking_number": "...", "carrier": "FEDEX"}
+    
+    Returns: Full recipient and package data
     """
     try:
+        cu = current_user()
         data = request.get_json()
         tracking_number = data.get('tracking_number', '').strip()
         carrier = data.get('carrier', 'FEDEX').upper()
@@ -323,42 +326,93 @@ def validate_tracking():
         if not tracking_number:
             return jsonify({'success': False, 'error': 'Tracking number required'}), 400
         
-        # Track the package
-        if carrier == 'FEDEX':
-            from app.services.tracking.fedex import FedExTracker
-            from flask import current_app
-            tracker = FedExTracker(current_app.config)
-        elif carrier == 'USPS':
-            from app.services.tracking.usps import USPSCarrier
-            from flask import current_app
-            tracker = USPSCarrier(current_app.config)
-        elif carrier == 'UPS':
-            from app.services.tracking.ups import UPSCarrier
-            from flask import current_app
-            tracker = UPSCarrier(current_app.config)
-        else:
-            return jsonify({'success': False, 'error': 'Unsupported carrier'}), 400
-        
-        result = tracker.track(tracking_number)
-        
-        if result.success:
-            return jsonify({
-                'success': True,
-                'status': result.status,
-                'status_description': result.status_description,
-                'recipient_name': None,  # FedEx API doesn't return recipient name
-                'recipient_address': result.actual_delivery,
-                'estimated_delivery': result.estimated_delivery.isoformat() if result.estimated_delivery else None
-            }), 200
-        else:
+        # Only support FedEx for now (expand later for USPS/UPS)
+        if carrier != 'FEDEX':
             return jsonify({
                 'success': False,
-                'error': result.error_message or 'Tracking failed'
+                'error': f'Auto-populate only supported for FedEx currently. Please enter details manually for {carrier}.'
+            }), 400
+        
+        # Track the package using FedEx API
+        tracker = TrackingService(current_app.config)
+        result = tracker.track(tracking_number, 'FEDEX')
+        
+        if not result.success:
+            return jsonify({
+                'success': False,
+                'error': result.error or 'Could not retrieve tracking information. Please enter details manually.'
             }), 200
+        
+        # Extract available data from tracking result
+        # Note: FedEx Tracking API has limited recipient info for privacy
+        # Full details only available through Ship API if you created the label
+        populated_data = {
+            # Basic tracking info
+            'carrier': 'FEDEX',
+            'tracking_number': tracking_number,
+            'status': result.status,
+            'status_description': result.status_description,
             
+            # Delivery info (if available)
+            'estimated_delivery': result.estimated_delivery.strftime('%Y-%m-%d') if result.estimated_delivery else None,
+            'actual_delivery': result.actual_delivery,
+            
+            # Location info from tracking
+            'origin': result.origin,
+            'destination': result.destination,
+            
+            # Package details (if available in events)
+            'package_type': 'Box',  # Default, tracking API doesn't provide this
+            'service_type': result.service_type or 'Standard',
+            
+            # Recipient info (limited from tracking API)
+            # FedEx protects recipient PII in tracking responses
+            'recipient_city': result.destination.split(',')[0] if result.destination and ',' in result.destination else '',
+            'recipient_state': result.destination.split(',')[1].strip() if result.destination and ',' in result.destination else '',
+            
+            # Note for user
+            'limited_data': True,
+            'note': 'FedEx tracking provides limited recipient details for privacy. Please complete remaining fields.'
+        }
+        
+        # Log successful validation
+        record_audit(cu, "validate_tracking_success", "send", 
+                    f"Retrieved tracking data for {tracking_number}")
+        
+        # Log to API calls table
+        try:
+            with get_db_connection("send") as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO carrier_api_calls (
+                        tracking_number, carrier, success, 
+                        response_data, called_by, called_at
+                    ) VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                """, (
+                    tracking_number, 
+                    'FEDEX', 
+                    True,
+                    result.to_dict().__str__(),
+                    cu['id']
+                ))
+                conn.commit()
+                cursor.close()
+        except Exception as e:
+            logger.warning(f"Failed to log API call: {e}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'✓ Tracking validated - Status: {result.status}',
+            'data': populated_data,
+            'tracking_events': result.events[:3] if result.events else []  # Show recent events
+        }), 200
+        
     except Exception as e:
         logger.error(f"Tracking validation error: {e}", exc_info=True)
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': 'Error retrieving tracking information. Please try again or enter details manually.'
+        }), 500
 
 @bp.route("/api/package/<int:package_id>", methods=["GET"])
 @require_cap("can_send")

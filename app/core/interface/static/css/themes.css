@@ -1,0 +1,109 @@
+/* ==========================================
+   THEME VARIABLES - LIGHT & DARK
+   ========================================== */
+
+:root {
+    /* DYNAMIC BRANDING */
+    --brand-primary: #FF8C42;
+    --brand-secondary: #FFD700;
+    --brand-primary-dark: #E67800;
+    --brand-primary-light: #FFAB6B;
+    --brand-primary-pale: #FFF4E6;
+    
+    /* MODULE COLORS */
+    --ledger-primary: #3b82f6;
+    --ledger-secondary: #2563eb;
+    --flow-primary: #10b981;
+    --flow-secondary: #059669;
+    --fulfillment-primary: #f59e0b;
+    --fulfillment-secondary: #d97706;
+    
+    /* LAYOUT */
+    --sidebar-width: 260px;
+    --topbar-height: 72px;
+    
+    /* SPACING */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    
+    /* RADIUS */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    
+    /* Z-INDEX */
+    --z-sidebar: 1000;
+    --z-topbar: 100;
+    --z-modal: 2000;
+}
+
+/* ========== LIGHT THEME (Default) ========== */
+[data-theme="light"] {
+    --bg-primary: #f8f9fc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f3f4f6;
+    --bg-card: #ffffff;
+    --bg-hover: #f3f4f6;
+    --bg-input: #ffffff;
+    
+    --text-primary: #1a1d2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    --border-color: #e5e7eb;
+    --border-subtle: #f3f4f6;
+    
+    /* Sidebar - Dark in light theme */
+    --sidebar-bg: linear-gradient(180deg, #1a1d2e 0%, #2d3142 100%);
+    --sidebar-text: #ffffff;
+    --sidebar-text-muted: rgba(255, 255, 255, 0.6);
+    --sidebar-hover: rgba(0, 163, 173, 0.12);
+    --sidebar-active: rgba(0, 163, 173, 0.2);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== DARK THEME ========== */
+[data-theme="dark"] {
+    --bg-primary: #151823;
+    --bg-secondary: #1a1d2e;
+    --bg-tertiary: #2d3142;
+    --bg-card: rgba(255, 255, 255, 0.03);
+    --bg-hover: rgba(255, 255, 255, 0.05);
+    --bg-input: rgba(255, 255, 255, 0.05);
+    
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    
+    /* Sidebar */
+    --sidebar-bg: linear-gradient(180deg, #1a1d2e 0%, #2d3142 100%);
+    --sidebar-text: #ffffff;
+    --sidebar-text-muted: rgba(255, 255, 255, 0.6);
+    --sidebar-hover: rgba(251, 191, 36, 0.12);
+    --sidebar-active: rgba(251, 191, 36, 0.2);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Module-specific overrides */
+body[data-module="ledger"] { --current-module: var(--ledger-primary); }
+body[data-module="flow"] { --current-module: var(--flow-primary); }
+body[data-module="fulfillment"] { --current-module: var(--fulfillment-primary); }
+body[data-module="default"] { --current-module: var(--brand-primary); }

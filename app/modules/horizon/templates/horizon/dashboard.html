@@ -110,6 +110,76 @@
     </div>
 </div>
 
+<!-- Quick Instance Access -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4><i class="bi bi-lightning-charge-fill text-warning"></i> Quick Instance Access</h4>
+                <a href="{{ url_for('horizon.instance_management') }}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            
+            {% if instance_stats and instance_stats|length > 0 %}
+            <div class="row g-3">
+                {% for item in instance_stats[:6] %}
+                <div class="col-md-4">
+                    <div class="instance-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ item.instance.display_name or item.instance.name }}</h6>
+                                <small class="text-muted">{{ item.stats.user_count or 0 }} users</small>
+                            </div>
+                            {% if item.instance.is_sandbox %}
+                            <span class="badge bg-warning text-dark">Sandbox</span>
+                            {% elif item.instance.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('horizon.switch_instance', instance_id=item.instance.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                Enter Instance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="text-muted mt-3">No instances created yet</p>
+                <a href="{{ url_for('horizon.create_instance') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create First Instance
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.instance-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.instance-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+</style>
+
+<!-- Users by Permission Level (existing section continues here) -->
+
 <!-- Instance Overview -->
 <div class="row mt-4">
     <div class="col-12">

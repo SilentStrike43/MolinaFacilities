@@ -257,9 +257,11 @@
     }
     
     .perm-tag.admin {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fcd34d;
+        background: #f59e0b;  /* ✅ Solid orange - like warning alerts */
+        color: #ffffff;       /* ✅ White text on orange */
+        border: 1px solid #d97706;
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
     }
     
     /* User Actions */
@@ -390,15 +392,15 @@
             </div>
             <div class="header-actions">
                 {% if can_create %}
-                <a href="{{ url_for('users.create') }}" class="btn-header">
+                <a href="{{ url_for('users.create', instance_id=instance_id) }}" class="btn-header">
                     <i class="bi bi-person-plus"></i>
                     Add User
                 </a>
                 {% endif %}
                 {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
-                <a href="{{ url_for('users.elevation_management') }}" class="btn-header">
-                    <i class="bi bi-shield-check"></i>
-                    Elevation Management
+                <a href="{{ url_for('users.elevation_management', instance_id=instance_id) }}" 
+                class="btn btn-primary">
+                    <i class="bi bi-shield"></i> Elevation Management
                 </a>
                 {% endif %}
             </div>
@@ -435,15 +437,9 @@
         <div class="user-card">
             <!-- Permission Level Badge -->
             {% if user.permission_level %}
-                {% if user.permission_level == 'S1' %}
-                <span class="permission-badge s1">System</span>
-                {% elif user.permission_level == 'L3' %}
-                <span class="permission-badge l3">App Dev</span>
-                {% elif user.permission_level == 'L2' %}
-                <span class="permission-badge l2">Sys Admin</span>
-                {% elif user.permission_level == 'L1' %}
-                <span class="permission-badge l1">Module Admin</span>
-                {% endif %}
+                <span class="permission-badge {{ user.permission_level.lower() }}">
+                    {{ user.permission_level }}  <!-- ✅ Shows "L2", "L3", "S1", "L1" -->
+                </span>
             {% else %}
                 <span class="permission-badge module">Module User</span>
             {% endif %}
