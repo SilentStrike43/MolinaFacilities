@@ -12,11 +12,30 @@
 </nav>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('interface.static', filename='css/permission_badges.css') }}">
+<style>
+    /* Keep minimal styling - just for badges */
+    .instance-badge-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 0.125rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>
-        <i class="bi bi-people"></i> All Users Database ({{ stats.total_users }} users)
+        <i class="bi bi-people"></i> All Users Database ({{ users|length }} users)
     </h2>
     <a href="{{ url_for('horizon.create_global_user') }}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Create User
@@ -27,7 +46,7 @@
 <div class="row mb-4">
     <div class="col-md-2">
         <div class="stat-card text-center">
-            <h3 class="text-primary">{{ stats.total_users }}</h3>
+            <h3 class="text-primary">{{ stats.s1_count + stats.l3_count + stats.l2_count + stats.l1_count + stats.module_count }}</h3>
             <p class="mb-0">Total Users</p>
         </div>
     </div>
@@ -40,19 +59,19 @@
     <div class="col-md-2">
         <div class="stat-card text-center">
             <h3 class="text-warning">{{ stats.l3_count }}</h3>
-            <p class="mb-0">Platform Ops</p>
+            <p class="mb-0">App Operators</p>
         </div>
     </div>
     <div class="col-md-2">
         <div class="stat-card text-center">
             <h3 class="text-info">{{ stats.l2_count }}</h3>
-            <p class="mb-0">Administrators</p>
+            <p class="mb-0">Instance Admins</p>
         </div>
     </div>
     <div class="col-md-2">
         <div class="stat-card text-center">
             <h3 class="text-primary">{{ stats.l1_count }}</h3>
-            <p class="mb-0">Managers</p>
+            <p class="mb-0">Module Admins</p>
         </div>
     </div>
     <div class="col-md-2">
@@ -62,61 +81,6 @@
         </div>
     </div>
 </div>
-
-<!-- Instance Quick Access -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="stat-card">
-            <h5 class="mb-3"><i class="bi bi-building"></i> Manage Users by Instance</h5>
-            <p class="text-muted">Select an instance to view and manage its users:</p>
-            
-            <div class="row">
-                {% for instance in instances %}
-                <div class="col-md-4 mb-3">
-                    <div class="card {% if not instance.is_active %}bg-light{% endif %}">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                {{ instance.name }}
-                                {% if not instance.is_active %}
-                                    <span class="badge bg-secondary">Inactive</span>
-                                {% endif %}
-                            </h6>
-                            {% if instance.display_name and instance.display_name != instance.name %}
-                                <p class="card-text text-muted small mb-2">{{ instance.display_name }}</p>
-                            {% endif %}
-                            <a href="{{ url_for('users.user_list', instance_id=instance.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="bi bi-people"></i> Manage Users
-                            </a>
-                            <a href="{{ url_for('horizon.instance_detail', instance_id=instance.id) }}" 
-                               class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-info-circle"></i> Details
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Orphaned Users Warning -->
-{% set orphaned_users = users|selectattr('instance_id', 'none')|list %}
-{% if orphaned_users|length > 0 %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>Warning:</strong> {{ orphaned_users|length }} user(s) found without an assigned instance. 
-            These users may not be able to log in properly.
-            <button class="btn btn-sm btn-warning float-end" onclick="showOrphanedUsers()">
-                <i class="bi bi-eye"></i> View Orphaned Users
-            </button>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <!-- All Users Database -->
 <div class="row mb-4">
@@ -129,12 +93,12 @@
                 </h5>
                 
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportUsers('csv')">
+                    <a href="{{ url_for('horizon.export_users_csv') }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="exportUsers('json')">
+                    </a>
+                    <a href="{{ url_for('horizon.export_users_json') }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-file-earmark-code"></i> Export JSON
-                    </button>
+                    </a>
                 </div>
             </div>
             
@@ -144,30 +108,30 @@
                     <div class="col-md-3">
                         <input type="text" 
                                class="form-control form-control-sm" 
-                               name="search" 
+                               name="q" 
                                placeholder="Search username, name, email..."
                                value="{{ search }}">
                     </div>
                     
                     <div class="col-md-3">
-                        <select class="form-select form-select-sm" name="instance_id">
+                        <select class="form-select form-select-sm" name="instance">
                             <option value="">All Instances</option>
                             {% for inst in instances %}
                             <option value="{{ inst.id }}" {% if instance_filter == inst.id %}selected{% endif %}>
-                                {{ inst.name }}
+                                {{ inst.display_name or inst.name }}
                             </option>
                             {% endfor %}
                         </select>
                     </div>
                     
                     <div class="col-md-2">
-                        <select class="form-select form-select-sm" name="permission_level">
-                            <option value="">All Levels</option>
-                            <option value="S1" {% if permission_filter == 'S1' %}selected{% endif %}>S1 - System</option>
-                            <option value="L3" {% if permission_filter == 'L3' %}selected{% endif %}>L3 - Platform Ops</option>
-                            <option value="L2" {% if permission_filter == 'L2' %}selected{% endif %}>L2 - Admin</option>
-                            <option value="L1" {% if permission_filter == 'L1' %}selected{% endif %}>L1 - Manager</option>
-                            <option value="" {% if permission_filter == '' %}selected{% endif %}>Module User</option>
+                        <select class="form-select form-select-sm" name="permission">
+                            <option value="">All Permissions</option>
+                            <option value="S1" {% if permission_filter == 'S1' %}selected{% endif %}>System (S1)</option>
+                            <option value="L3" {% if permission_filter == 'L3' %}selected{% endif %}>App Operator (L3)</option>
+                            <option value="L2" {% if permission_filter == 'L2' %}selected{% endif %}>Instance Admin (L2)</option>
+                            <option value="L1" {% if permission_filter == 'L1' %}selected{% endif %}>Module Admin (L1)</option>
+                            <option value="module" {% if permission_filter == 'module' %}selected{% endif %}>Module User</option>
                         </select>
                     </div>
                     
@@ -218,36 +182,49 @@
                                 {% if user.permission_level == 'S1' %}
                                     <i class="bi bi-shield-fill-check text-danger" title="System Admin"></i>
                                 {% elif user.permission_level == 'L3' %}
-                                    <i class="bi bi-gear-fill text-warning" title="Platform Ops"></i>
+                                    <i class="bi bi-gear-fill text-warning" title="App Operator"></i>
                                 {% endif %}
                             </td>
                             <td>{{ user.first_name }} {{ user.last_name }}</td>
                             <td><small>{{ user.email or '-' }}</small></td>
+                            
+                            <!-- Instance Column -->
                             <td>
-                                {% if user.instance_id %}
-                                    <a href="{{ url_for('horizon.instance_detail', instance_id=user.instance_id) }}">
-                                        {{ user.instance_name or 'Unknown' }}
-                                    </a>
-                                    {% if not user.instance_active %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    {% endif %}
+                                {% if user.permission_level == 'L2' and user.accessible_instances %}
+                                    <!-- L2 users: Show all accessible instances as badges -->
+                                    {% for inst in user.accessible_instances %}
+                                    <span class="instance-badge-sm">
+                                        {% if inst.is_sandbox %}🧪{% else %}🏢{% endif %}
+                                        {{ inst.display_name or inst.name }}
+                                    </span>
+                                    {% endfor %}
+                                {% elif user.instance_name %}
+                                    <!-- All other users: Show home instance as badge -->
+                                    <span class="instance-badge-sm">
+                                        {% if user.instance_name == 'sandbox' or 'test' in user.instance_name.lower() %}🧪{% else %}🏢{% endif %}
+                                        {{ user.instance_display_name or user.instance_name }}
+                                    </span>
                                 {% else %}
                                     <span class="text-muted">No Instance</span>
                                 {% endif %}
                             </td>
+                            
+                            <!-- Permission Level -->
                             <td>
                                 {% if user.permission_level == 'S1' %}
                                     <span class="badge bg-danger">System Admin</span>
                                 {% elif user.permission_level == 'L3' %}
-                                    <span class="badge bg-warning">Platform Ops</span>
+                                    <span class="badge bg-warning">App Operator</span>
                                 {% elif user.permission_level == 'L2' %}
-                                    <span class="badge bg-info">Administrator</span>
+                                    <span class="badge bg-info">Instance Admin</span>
                                 {% elif user.permission_level == 'L1' %}
-                                    <span class="badge bg-primary">Manager</span>
+                                    <span class="badge bg-primary">Module Admin</span>
                                 {% else %}
                                     <span class="badge bg-secondary">Module User</span>
                                 {% endif %}
                             </td>
+                            
+                            <!-- Status -->
                             <td>
                                 {% if user.is_active %}
                                     <span class="badge bg-success">Active</span>
@@ -255,101 +232,76 @@
                                     <span class="badge bg-secondary">Inactive</span>
                                 {% endif %}
                             </td>
+                            
+                            <!-- Last Login -->
                             <td>
                                 {% if user.last_login %}
-                                    <small>{{ user.last_login.strftime('%Y-%m-%d') if user.last_login.__class__.__name__ != 'str' else user.last_login }}</small>
+                                    {{ user.last_login.strftime('%Y-%m-%d') }}
                                 {% else %}
-                                    <small class="text-muted">Never</small>
+                                    <span class="text-muted">Never</span>
                                 {% endif %}
                             </td>
+                            
+                            <!-- Actions -->
                             <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <!-- View/Edit Button -->
-                                    <a href="{{ url_for('horizon.edit_global_user', user_id=user.id) }}" 
-                                    class="btn btn-info" title="Edit User">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    
-                                    <!-- Assign Instance Button -->
-                                    <button class="btn btn-warning" 
-                                            onclick="showAssignModal({{ user.id }}, '{{ user.username }}')" 
-                                            title="Assign to Instance">
-                                        <i class="bi bi-building"></i>
-                                    </button>
-                                    
-                                    <!-- Delete Button (only if not S1) -->
-                                    {% if user.permission_level != 'S1' %}
-                                    <button class="btn btn-danger" 
-                                            onclick="deleteUser({{ user.id }}, '{{ user.username }}')" 
-                                            title="Delete User">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    {% else %}
-                                    <button class="btn btn-secondary" disabled title="Cannot delete System Admin">
-                                        <i class="bi bi-lock"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
+                                <a href="{{ url_for('users.edit_user', uid=user.id, instance_id=user.instance_id) }}" 
+                                   class="btn btn-sm btn-primary" 
+                                   title="Edit User">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                
+                                <a href="{{ url_for('users.edit_permissions', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-success" 
+                                   title="Edit Permissions">
+                                    <i class="bi bi-shield-check"></i>
+                                </a>
+                                
+                                {% if user.username not in ['AppAdmin', 'system'] %}
+                                <button onclick="confirmDelete({{ user.id }}, '{{ user.username }}')" 
+                                        class="btn btn-sm btn-danger" 
+                                        title="Delete User">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            
-            {% if users|length == 0 %}
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> No users found matching the current filters.
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete user <strong id="deleteUsername"></strong>?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="" id="deleteForm">
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Assign Instance Modal
-function showAssignModal(userId, username) {
-    const newInstanceId = prompt(`Reassign ${username} to which instance ID?`);
-    
-    if (!newInstanceId) return;
-    
-    fetch(`/horizon/global-users/${userId}/assign`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({instance_id: parseInt(newInstanceId)})
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ ' + data.message);
-            location.reload();
-        } else {
-            alert('❌ ' + data.error);
-        }
-    });
-}
-
-// Delete User
-function deleteUser(userId, username) {
-    if (!confirm(`⚠️ Delete user "${username}"?\n\nThis will:\n• Delete all their audit logs\n• Remove them permanently\n\nContinue?`)) {
-        return;
-    }
-    
-    fetch(`/horizon/global-users/${userId}/delete`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ ' + data.message);
-            location.reload();
-        } else {
-            alert('❌ ' + data.error);
-        }
-    });
+function confirmDelete(userId, username) {
+    document.getElementById('deleteUsername').textContent = username;
+    document.getElementById('deleteForm').action = `/users/delete/${userId}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 </script>
 {% endblock %}

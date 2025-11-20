@@ -488,3 +488,92 @@ class AddressBookService:
             List of addresses sorted by usage
         """
         return self.get_all(sort_by='usage', limit=limit)
+    
+    def bulk_import(self, csv_data: List[Dict], created_by: int) -> Dict[str, int]:
+        """
+        Bulk import addresses from CSV
+        
+        Args:
+            csv_data: List of address dictionaries from CSV
+            created_by: User ID importing the data
+            
+        Returns:
+            {'imported': count, 'skipped': count, 'errors': count}
+        """
+        stats = {'imported': 0, 'skipped': 0, 'errors': 0}
+        
+        try:
+            with get_db_connection("send") as conn:
+                cursor = conn.cursor()
+                
+                for row in csv_data:
+                    try:
+                        # Validate required fields
+                        recipient_name = row.get('recipient_name', '').strip()
+                        address_line1 = row.get('address_line1', '').strip()
+                        city = row.get('city', '').strip()
+                        state = row.get('state', '').strip()
+                        zip_code = row.get('zip_code', '').strip()
+                        
+                        if not recipient_name or not address_line1 or not city or not state:
+                            stats['skipped'] += 1
+                            logger.warning(f"Skipped row: missing required fields")
+                            continue
+                        
+                        # Check if address already exists
+                        cursor.execute("""
+                            SELECT id FROM address_book
+                            WHERE instance_id = %s
+                            AND recipient_name ILIKE %s
+                            AND address_line1 ILIKE %s
+                            AND zip_code = %s
+                            AND is_active = TRUE
+                        """, (self.instance_id, recipient_name, address_line1, zip_code))
+                        
+                        if cursor.fetchone():
+                            stats['skipped'] += 1
+                            logger.debug(f"Skipped duplicate: {recipient_name}")
+                            continue
+                        
+                        # Insert new address
+                        cursor.execute("""
+                            INSERT INTO address_book (
+                                instance_id, recipient_name, recipient_company,
+                                recipient_phone, recipient_email, address_line1,
+                                address_line2, city, state, zip_code, country,
+                                notes, created_by, created_at, updated_at
+                            ) VALUES (
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            )
+                        """, (
+                            self.instance_id,
+                            recipient_name,
+                            row.get('recipient_company', '').strip(),
+                            row.get('recipient_phone', '').strip(),
+                            row.get('recipient_email', '').strip(),
+                            address_line1,
+                            row.get('address_line2', '').strip(),
+                            city,
+                            state,
+                            zip_code,
+                            row.get('country', 'USA').strip(),
+                            'Imported from CSV',
+                            created_by
+                        ))
+                        
+                        stats['imported'] += 1
+                        
+                    except Exception as e:
+                        logger.error(f"Error importing row: {e}")
+                        stats['errors'] += 1
+                
+                conn.commit()
+                cursor.close()
+                
+                logger.info(f"CSV import complete: {stats}")
+                
+        except Exception as e:
+            logger.error(f"Bulk import error: {e}", exc_info=True)
+            stats['errors'] = len(csv_data)
+        
+        return stats

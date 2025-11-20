@@ -4,7 +4,7 @@ import csv
 import io
 import datetime
 from . import bp
-from app.modules.auth.security import require_cap, current_user, record_audit, should_filter_by_location
+from app.modules.auth.security import require_cap, current_user, record_audit
 from app.core.database import get_db_connection
 
 @bp.route("/insights", endpoint="insights")
@@ -25,9 +25,6 @@ def reports():
         date_from = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
     if not date_to:
         date_to = datetime.date.today().isoformat()
-    
-    # Check if user should be filtered by location
-    should_filter, user_location = should_filter_by_location(cu)
     
     # Build query with PostgreSQL
     with get_db_connection("send") as conn:
@@ -53,14 +50,6 @@ def reports():
             AND DATE(checkin_date) <= %s
         """
         params = [date_from, date_to]
-
-        # Apply location filter if user is restricted
-        if should_filter and user_location:
-            sql += " AND location = %s"
-            params.append(user_location)
-        elif location_filter:
-            sql += " AND location = %s"
-            params.append(location_filter)
 
         # Apply search filter
         if q:
@@ -168,7 +157,6 @@ def reports():
         location_filter=location_filter,
         package_types=package_types,
         locations=locations,
-        user_location=user_location if should_filter else None,
         total_packages=total_packages,
         by_type=by_type,
         by_location=by_location,
@@ -192,9 +180,6 @@ def export():
     date_to = request.args.get("date_to", "")
     item_type = request.args.get("item_type", "")
     location_filter = request.args.get("location", "")
-    
-    # Check if user should be filtered by location
-    should_filter, user_location = should_filter_by_location(cu)
     
     # Build query (same as reports view)
     with get_db_connection("send") as conn:
@@ -224,15 +209,7 @@ def export():
         if date_to:
             sql += " AND DATE(checkin_date) <= %s"
             params.append(date_to)
-        
-        # Apply location filter
-        if should_filter and user_location:
-            sql += " AND location = %s"
-            params.append(user_location)
-        elif location_filter:
-            sql += " AND location = %s"
-            params.append(location_filter)
-        
+
         if q:
             sql += " AND (tracking_number ILIKE %s OR recipient_name ILIKE %s OR package_type ILIKE %s)"
             like = f"%{q}%"

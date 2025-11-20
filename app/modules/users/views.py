@@ -1267,3 +1267,200 @@ def reject_deletion(request_id: int):
     )
     
     return jsonify({"success": True, "message": "Deletion request rejected"})
+
+# ========== PERMISSION MANAGEMENT API ==========
+# Discord-style permission badge system
+
+@users_bp.route("/api/user/<int:user_id>/permissions", methods=["GET"])
+@login_required
+def get_user_permissions_api(user_id):
+    """API endpoint to get user permissions in badge-friendly format"""
+    cu = current_user()
+    
+    # Permission check - only L1+ can view permissions
+    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+        return jsonify({"error": "Insufficient permissions"}), 403
+    
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            
+            # Get user data
+            cursor.execute("""
+                SELECT id, username, permission_level, instance_id, module_permissions
+                FROM users 
+                WHERE id = %s AND (deleted_at IS NULL OR deleted_at = '')
+            """, (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            
+            # Get instances for L2 users
+            accessible_instances = []
+            if user['permission_level'] == 'L2':
+                cursor.execute("""
+                    SELECT i.id, i.name, i.display_name, i.is_sandbox
+                    FROM user_instance_access uia
+                    JOIN instances i ON uia.instance_id = i.id
+                    WHERE uia.user_id = %s
+                    ORDER BY i.name
+                """, (user_id,))
+                accessible_instances = [dict(row) for row in cursor.fetchall()]
+            
+            cursor.close()
+        
+        # Parse module permissions
+        module_perms = user['module_permissions'] or []
+        if isinstance(module_perms, str):
+            import json
+            try:
+                module_perms = json.loads(module_perms)
+            except:
+                module_perms = []
+        
+        return jsonify({
+            "permission_level": user['permission_level'] or '',
+            "instance_id": user['instance_id'],
+            "accessible_instances": accessible_instances,
+            "module_permissions": module_perms
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user permissions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@users_bp.route("/api/user/<int:user_id>/permissions", methods=["POST"])
+@login_required
+def update_user_permissions_api(user_id):
+    """API endpoint to update user permissions via toggles"""
+    cu = current_user()
+    
+    # Permission check - only L1+ can modify permissions
+    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+        return jsonify({"error": "Insufficient permissions"}), 403
+    
+    try:
+        data = request.json
+        
+        permission_level = data.get('permission_level', '')
+        module_permissions = data.get('module_permissions', [])
+        accessible_instances = data.get('accessible_instances', [])
+        
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            
+            # Get current user data for audit
+            cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+            target_user = cursor.fetchone()
+            
+            if not target_user:
+                return jsonify({"error": "User not found"}), 404
+            
+            # Update permission level and module permissions
+            import json
+            cursor.execute("""
+                UPDATE users 
+                SET permission_level = %s,
+                    module_permissions = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (
+                permission_level if permission_level else None,
+                json.dumps(module_permissions),
+                user_id
+            ))
+            
+            # Handle L2 instance access
+            if permission_level == 'L2':
+                # Clear existing instance access
+                cursor.execute("DELETE FROM user_instance_access WHERE user_id = %s", (user_id,))
+                
+                # Add new instance access
+                for inst_id in accessible_instances:
+                    cursor.execute("""
+                        INSERT INTO user_instance_access (user_id, instance_id, granted_by)
+                        VALUES (%s, %s, %s)
+                    """, (user_id, inst_id, cu['id']))
+            else:
+                # Not L2 - clear all instance access
+                cursor.execute("DELETE FROM user_instance_access WHERE user_id = %s", (user_id,))
+            
+            conn.commit()
+            cursor.close()
+        
+        # Record audit
+        record_audit(cu, "update_user_permissions", "users", 
+                    f"Updated permissions for {target_user['username']}: {permission_level}, modules: {module_permissions}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Permissions updated successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating user permissions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@users_bp.route("/api/instances", methods=["GET"])
+@login_required
+def get_instances_api():
+    """API endpoint to get all available instances"""
+    cu = current_user()
+    
+    # Only L1+ can see instances
+    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+        return jsonify({"error": "Insufficient permissions"}), 403
+    
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, name, display_name, is_sandbox, is_active
+                FROM instances
+                WHERE is_active = TRUE
+                ORDER BY is_sandbox DESC, name
+            """)
+            instances = [dict(row) for row in cursor.fetchall()]
+            cursor.close()
+        
+        return jsonify(instances)
+        
+    except Exception as e:
+        logger.error(f"Error getting instances: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@users_bp.route("/user/<int:user_id>/edit-permissions")
+@login_required
+def edit_permissions(user_id):
+    """Edit user permissions with Discord-style interface"""
+    cu = current_user()
+    
+    # Only L1+ can edit permissions
+    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+        flash("You don't have permission to edit user permissions.", "danger")
+        return redirect(url_for('users.list_users'))
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, first_name, last_name, email, 
+                   permission_level, instance_id, module_permissions
+            FROM users 
+            WHERE id = %s AND deleted_at IS NULL  -- ✅ FIXED: Removed empty string check
+        """, (user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+    
+    if not user:
+        flash("User not found.", "warning")
+        return redirect(url_for('users.list_users'))
+    
+    return render_template(
+        "users/edit_permissions.html",
+        active="users",
+        user=user
+    )

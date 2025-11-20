@@ -239,39 +239,6 @@
                 </div>
             </div>
             {% endif %}
-
-                        <!-- Location Assignment -->
-            <div class="form-section" style="margin-top: 2rem;">
-                <h3 class="form-section-title">
-                    <i class="bi bi-geo-alt"></i>
-                    Location Assignment
-                </h3>
-                
-                <div class="form-group">
-                    <label class="form-label-modern">
-                        <i class="bi bi-pin-map"></i>
-                        Office Location
-                        <span class="required">*</span>
-                    </label>
-                    <select name="location" class="form-control-modern" required>
-                        <option value="NY" {% if user.location == 'NY' or not user.location %}selected{% endif %}>
-                            🗽 New York
-                        </option>
-                        <option value="CT" {% if user.location == 'CT' %}selected{% endif %}>
-                            🌳 Connecticut
-                        </option>
-                        {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
-                        <option value="ALL" {% if user.location == 'ALL' %}selected{% endif %}>
-                            🌎 All Locations (Admin)
-                        </option>
-                        {% endif %}
-                    </select>
-                    <div class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Determines which location's data this user can access.
-                    </div>
-                </div>
-            </div>
             
             <!-- Actions -->
             <div style="margin-top: 2rem;">

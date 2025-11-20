@@ -173,7 +173,7 @@ def require_instance_owner(instance_id_param: str = 'instance_id'):
     
     Usage:
         @require_instance_owner()
-        def edit_instance_data(instance_id):
+        def instance_edit_data(instance_id):
             ...
     """
     def decorator(f):

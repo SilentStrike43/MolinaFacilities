@@ -37,7 +37,6 @@ def get_user_instances(user_data):
                 ORDER BY name
             """)
             instances = cursor.fetchall()
-            cursor.close()
             return [dict(inst) for inst in instances]
     
     # L2: Access multiple instances via junction table
@@ -52,7 +51,6 @@ def get_user_instances(user_data):
                 ORDER BY i.name
             """, (user_data['id'],))
             instances = cursor.fetchall()
-            cursor.close()
             return [dict(inst) for inst in instances]
     
     # L1 and below: Single instance only
@@ -66,7 +64,6 @@ def get_user_instances(user_data):
                 WHERE id = %s
             """, (instance_id,))
             instance = cursor.fetchone()
-            cursor.close()
             return [dict(instance)] if instance else []
     
     return []
@@ -101,7 +98,6 @@ def user_can_access_instance(user_data, instance_id):
                 WHERE user_id = %s AND instance_id = %s
             """, (user_data['id'], instance_id))
             has_access = cursor.fetchone() is not None
-            cursor.close()
             return has_access
     
     # L1 and below: Check single instance
@@ -140,7 +136,6 @@ def grant_instance_access(user_id, instance_id, granted_by_user_id, role_notes=N
             """, (user_id, instance_id, granted_by_user_id, role_notes))
             
             conn.commit()
-            cursor.close()
             return True
             
     except Exception as e:
@@ -167,7 +162,6 @@ def revoke_instance_access(user_id, instance_id):
                 WHERE user_id = %s AND instance_id = %s
             """, (user_id, instance_id))
             conn.commit()
-            cursor.close()
             return True
             
     except Exception as e:
@@ -197,7 +191,6 @@ def get_instance_access_details(user_id):
                 ORDER BY i.name
             """, (user_id,))
             access = cursor.fetchall()
-            cursor.close()
             return [dict(row) for row in access]
             
     except Exception as e:
@@ -244,7 +237,6 @@ def sync_l2_instance_access(user_id, instance_ids, granted_by_user_id):
                 """, (user_id, inst_id))
             
             conn.commit()
-            cursor.close()
             return True
             
     except Exception as e:

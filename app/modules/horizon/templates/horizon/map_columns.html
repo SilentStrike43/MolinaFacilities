@@ -1,0 +1,348 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Map Columns - Horizon{% endblock %}
+{% block page_title %}Map CSV Columns{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.data_migrations') }}">Data Migrations</a></li>
+        <li class="breadcrumb-item active">Map Columns</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .mapping-card {
+        background: var(--bg-card);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid var(--border-color);
+    }
+    
+    .mapping-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+    
+    .mapping-row:hover {
+        background: var(--bg-hover);
+        transform: translateX(4px);
+    }
+    
+    .mapping-row.required {
+        border-left: 4px solid #dc2626;
+    }
+    
+    .mapping-row.optional {
+        border-left: 4px solid #6b7280;
+    }
+    
+    .field-label {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .field-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+    
+    .mapping-arrow {
+        font-size: 1.5rem;
+        color: #3b82f6;
+    }
+    
+    .confidence-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .confidence-high {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .confidence-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .confidence-low {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .unmapped-warning {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .csv-column-select {
+        width: 100%;
+        padding: 0.625rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .csv-column-select:focus {
+        border-color: #3b82f6;
+        outline: none;
+    }
+    
+    .file-info-card {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- File Info -->
+<div class="file-info-card">
+    <div class="d-flex align-items-center gap-3">
+        <div style="font-size: 2.5rem;">📄</div>
+        <div>
+            <h5 class="mb-1">{{ upload_data.filename }}</h5>
+            <div class="text-muted">
+                <strong>{{ upload_data.row_count }}</strong> rows | 
+                <strong>{{ upload_data.csv_headers|length }}</strong> columns | 
+                Target: <strong>{{ instance.display_name or instance.name }}</strong> | 
+                Type: <strong>{{ upload_data.migration_type|title }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Column Mapping:</strong> Match your CSV columns to the app's expected fields. 
+    We've automatically detected likely matches, but you can adjust them as needed.
+</div>
+
+<!-- Unmapped Required Fields Warning -->
+{% if detection.unmapped_required %}
+<div class="unmapped-warning">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Action Required:</strong> The following required fields must be mapped:
+    <ul class="mb-0 mt-2">
+        {% for field in detection.unmapped_required %}
+        <li><code>{{ field }}</code></li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Mapping Form -->
+<form method="POST" id="mappingForm">
+    <div class="mapping-card">
+        <h5 class="mb-4">
+            <i class="bi bi-arrow-left-right"></i> Field Mapping
+        </h5>
+        
+        <!-- Required Fields -->
+        <h6 class="text-danger mb-3">
+            <i class="bi bi-asterisk"></i> Required Fields
+        </h6>
+        
+        {% for field, possible_names in detection.schema.required.items() %}
+        <div class="mapping-row required">
+            <div>
+                <div class="field-label">
+                    {{ field }} <span class="text-danger">*</span>
+                </div>
+                <div class="field-description">
+                    {{ detection.schema | get_field_description(upload_data.migration_type, field) }}
+                </div>
+            </div>
+            
+            <div class="mapping-arrow">
+                <i class="bi bi-arrow-right"></i>
+            </div>
+            
+            <div>
+                <select name="map_{{ field }}" class="csv-column-select" required>
+                    <option value="">-- Select CSV Column --</option>
+                    {% for csv_col in upload_data.csv_headers %}
+                    <option value="{{ csv_col }}" 
+                            {% if detection.detected_mappings.get(field) == csv_col %}selected{% endif %}>
+                        {{ csv_col }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                {% if detection.detected_mappings.get(field) %}
+                    {% set confidence = detection.confidence_scores.get(field, 0) %}
+                    {% if confidence >= 0.9 %}
+                    <span class="confidence-badge confidence-high">
+                        <i class="bi bi-check-circle"></i> High Match
+                    </span>
+                    {% elif confidence >= 0.7 %}
+                    <span class="confidence-badge confidence-medium">
+                        <i class="bi bi-dash-circle"></i> Likely Match
+                    </span>
+                    {% else %}
+                    <span class="confidence-badge confidence-low">
+                        <i class="bi bi-question-circle"></i> Low Match
+                    </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Optional Fields -->
+        <h6 class="text-secondary mb-3 mt-4">
+            <i class="bi bi-plus-circle"></i> Optional Fields
+        </h6>
+        
+        {% for field, possible_names in detection.schema.optional.items() %}
+        <div class="mapping-row optional">
+            <div>
+                <div class="field-label">{{ field }}</div>
+                <div class="field-description">
+                    {{ detection.schema | get_field_description(upload_data.migration_type, field) }}
+                </div>
+            </div>
+            
+            <div class="mapping-arrow">
+                <i class="bi bi-arrow-right"></i>
+            </div>
+            
+            <div>
+                <select name="map_{{ field }}" class="csv-column-select">
+                    <option value="">-- Skip (Optional) --</option>
+                    {% for csv_col in upload_data.csv_headers %}
+                    <option value="{{ csv_col }}"
+                            {% if detection.detected_mappings.get(field) == csv_col %}selected{% endif %}>
+                        {{ csv_col }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                {% if detection.detected_mappings.get(field) %}
+                    {% set confidence = detection.confidence_scores.get(field, 0) %}
+                    {% if confidence >= 0.9 %}
+                    <span class="confidence-badge confidence-high">
+                        <i class="bi bi-check-circle"></i> High Match
+                    </span>
+                    {% elif confidence >= 0.7 %}
+                    <span class="confidence-badge confidence-medium">
+                        <i class="bi bi-dash-circle"></i> Likely Match
+                    </span>
+                    {% else %}
+                    <span class="confidence-badge confidence-low">
+                        <i class="bi bi-question-circle"></i> Low Match
+                    </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Unmapped CSV Columns Info -->
+    {% if detection.unmapped_csv_columns %}
+    <div class="alert alert-secondary">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Unmapped Columns:</strong> The following CSV columns will be ignored:
+        <div class="mt-2">
+            {% for col in detection.unmapped_csv_columns %}
+            <code class="me-2">{{ col }}</code>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ url_for('horizon.data_migrations') }}" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-arrow-left"></i> Start Over
+        </a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check-circle"></i> Continue to Preview
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add custom filter for getting field descriptions
+window.addEventListener('DOMContentLoaded', function() {
+    // Validate required fields before submission
+    document.getElementById('mappingForm').addEventListener('submit', function(e) {
+        const requiredSelects = document.querySelectorAll('select[required]');
+        let allMapped = true;
+        
+        requiredSelects.forEach(select => {
+            if (!select.value) {
+                allMapped = false;
+                select.style.borderColor = '#dc2626';
+            } else {
+                select.style.borderColor = '';
+            }
+        });
+        
+        if (!allMapped) {
+            e.preventDefault();
+            alert('Please map all required fields before continuing.');
+            return false;
+        }
+    });
+    
+    // Highlight duplicate mappings
+    const allSelects = document.querySelectorAll('.csv-column-select');
+    allSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const selectedValues = Array.from(allSelects)
+                .map(s => s.value)
+                .filter(v => v !== '');
+            
+            const duplicates = selectedValues.filter((item, index) => 
+                selectedValues.indexOf(item) !== index
+            );
+            
+            allSelects.forEach(s => {
+                if (duplicates.includes(s.value) && s.value !== '') {
+                    s.style.borderColor = '#f59e0b';
+                    s.title = 'Warning: This column is mapped to multiple fields';
+                } else if (s.value) {
+                    s.style.borderColor = '#10b981';
+                    s.title = '';
+                } else {
+                    s.style.borderColor = '';
+                    s.title = '';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

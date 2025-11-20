@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('interface.static', filename='css/permission_badges.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="page-header-card">
+    <div class="page-header-content">
+        <div class="page-header-icon">
+            <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="page-header-text">
+            <h2>Edit Permissions</h2>
+            <p>{{ user.first_name }} {{ user.last_name }} (@{{ user.username }})</p>
+        </div>
+    </div>
+</div>
+
+<form id="permissionsForm">
+    <!-- Permission Level -->
+    <div class="permission-card">
+        <h3>
+            <i class="bi bi-diagram-3"></i>
+            Permission Level
+        </h3>
+        
+        <div class="permission-level-selector">
+            <label class="level-option" data-level="user">
+                <input type="radio" name="permission_level" value="" class="level-radio">
+                <div>
+                    <div class="fw-bold">Module User</div>
+                    <div class="text-secondary small">Basic access to assigned modules only</div>
+                </div>
+            </label>
+            
+            <label class="level-option" data-level="l1">
+                <input type="radio" name="permission_level" value="L1" class="level-radio">
+                <div>
+                    <div class="fw-bold">
+                        <span class="badge bg-success me-2">L1</span>
+                        Module Admin
+                    </div>
+                    <div class="text-secondary small">Can manage users and access all modules in their instance</div>
+                </div>
+            </label>
+            
+            <label class="level-option" data-level="l2">
+                <input type="radio" name="permission_level" value="L2" class="level-radio">
+                <div>
+                    <div class="fw-bold">
+                        <span class="badge bg-primary me-2">L2</span>
+                        Instance Admin
+                    </div>
+                    <div class="text-secondary small">Can access multiple instances with full module access</div>
+                </div>
+            </label>
+            
+            <label class="level-option" data-level="l3">
+                <input type="radio" name="permission_level" value="L3" class="level-radio">
+                <div>
+                    <div class="fw-bold">
+                        <span class="badge bg-warning me-2">L3</span>
+                        App Operator
+                    </div>
+                    <div class="text-secondary small">Global access to all instances and Horizon admin panel</div>
+                </div>
+            </label>
+            
+            <label class="level-option" data-level="s1">
+                <input type="radio" name="permission_level" value="S1" class="level-radio">
+                <div>
+                    <div class="fw-bold">
+                        <span class="badge bg-danger me-2">S1</span>
+                        System Administrator
+                    </div>
+                    <div class="text-secondary small">Full system access (developers and IT only)</div>
+                </div>
+            </label>
+        </div>
+    </div>
+    
+    <!-- Instance Access (L2 only) -->
+    <div class="permission-card" id="instanceAccessCard" style="display: none;">
+        <h3>
+            <i class="bi bi-building"></i>
+            Instance Access
+            <span class="text-secondary small fw-normal">(L2 Multi-Instance Access)</span>
+        </h3>
+        
+        <div id="instanceToggles">
+            <!-- Will be populated dynamically via JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Module Permissions -->
+    <div class="permission-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">
+                <i class="bi bi-grid-3x3"></i>
+                Module Permissions
+            </h3>
+            <button type="button" class="select-all-btn" id="selectAllBtn">
+                <i class="bi bi-check-all"></i>
+                Select All
+            </button>
+        </div>
+        
+        <p class="text-secondary mb-4">
+            Select all modules this user can access. Multiple selections allowed.
+        </p>
+        
+        <div class="module-checklist">
+            <!-- Send/Ledger -->
+            <label class="module-checkbox-item" data-module="M1">
+                <input type="checkbox" name="module" value="M1" class="module-checkbox">
+                <div class="module-info">
+                    <div class="module-name">
+                        <span>📦</span>
+                        <span>Send/Ledger</span>
+                        <span class="module-code">M1</span>
+                    </div>
+                    <div class="module-description">
+                        Package tracking, check-in/checkout, shipping manifest, and carrier integrations
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Flow/Inventory -->
+            <label class="module-checkbox-item" data-module="M2">
+                <input type="checkbox" name="module" value="M2" class="module-checkbox">
+                <div class="module-info">
+                    <div class="module-name">
+                        <span>📊</span>
+                        <span>Flow/Inventory</span>
+                        <span class="module-code">M2</span>
+                    </div>
+                    <div class="module-description">
+                        Asset management, inventory tracking, ledger entries, and stock control
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Fulfillment - Customer -->
+            <label class="module-checkbox-item" data-module="M3A">
+                <input type="checkbox" name="module" value="M3A" class="module-checkbox">
+                <div class="module-info">
+                    <div class="module-name">
+                        <span>✅</span>
+                        <span>Fulfillment - Customer</span>
+                        <span class="module-code">M3A</span>
+                    </div>
+                    <div class="module-description">
+                        Submit new service requests with file attachments and print specifications
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Fulfillment - Staff -->
+            <label class="module-checkbox-item" data-module="M3B">
+                <input type="checkbox" name="module" value="M3B" class="module-checkbox">
+                <div class="module-info">
+                    <div class="module-name">
+                        <span>✅</span>
+                        <span>Fulfillment - Staff</span>
+                        <span class="module-code">M3B</span>
+                    </div>
+                    <div class="module-description">
+                        Manage service queue, update request status, and access completed archive
+                    </div>
+                </div>
+            </label>
+            
+            <!-- Fulfillment - Manager -->
+            <label class="module-checkbox-item" data-module="M3C">
+                <input type="checkbox" name="module" value="M3C" class="module-checkbox">
+                <div class="module-info">
+                    <div class="module-name">
+                        <span>✅</span>
+                        <span>Fulfillment - Manager</span>
+                        <span class="module-code">M3C</span>
+                    </div>
+                    <div class="module-description">
+                        Full fulfillment access including insights, analytics, and staff management
+                    </div>
+                </div>
+            </label>
+        </div>
+    </div>
+    
+    <!-- Live Preview -->
+    <div class="permission-preview">
+        <h4 class="mb-2">
+            <i class="bi bi-eye"></i>
+            Permission Preview
+        </h4>
+        <p class="text-secondary small mb-3">
+            This is how the user's permissions will appear in the system:
+        </p>
+        
+        <div class="preview-badges" id="previewBadges">
+            <!-- Dynamically updated -->
+        </div>
+    </div>
+    
+    <div class="d-flex gap-3 justify-content-end mt-4">
+        <a href="{{ url_for('users.user_list', instance_id=user.instance_id) }}" class="btn btn-secondary btn-lg">
+            <i class="bi bi-x-circle"></i>
+            Cancel
+        </a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check-circle"></i>
+            Save Permissions
+        </button>
+    </div>
+</form>
+
+<script>
+// Global state
+let currentPermissions = {
+    level: '',
+    instances: [],
+    modules: []
+};
+
+// Load current permissions
+async function loadPermissions() {
+    try {
+        const response = await fetch('/users/api/user/{{ user.id }}/permissions');
+        const data = await response.json();
+        
+        currentPermissions = {
+            level: data.permission_level || '',
+            instances: data.accessible_instances || [],
+            modules: data.module_permissions || []
+        };
+        
+        // Set permission level
+        const levelRadio = document.querySelector(`input[name="permission_level"][value="${currentPermissions.level}"]`);
+        if (levelRadio) {
+            levelRadio.checked = true;
+            levelRadio.closest('.level-option').classList.add('selected');
+            
+            // Show instance access if L2
+            if (currentPermissions.level === 'L2') {
+                document.getElementById('instanceAccessCard').style.display = 'block';
+                loadInstanceToggles(currentPermissions.instances);
+            }
+        }
+        
+        // Set module checkboxes
+        currentPermissions.modules.forEach(mod => {
+            const checkbox = document.querySelector(`input[value="${mod}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.closest('.module-checkbox-item').classList.add('checked');
+            }
+        });
+        
+        updatePreview();
+        
+    } catch (error) {
+        console.error('Error loading permissions:', error);
+        alert('Failed to load current permissions');
+    }
+}
+
+// Instance toggles for L2
+function loadInstanceToggles(accessibleInstances) {
+    const container = document.getElementById('instanceToggles');
+    
+    // Fetch all instances
+    fetch('/users/api/instances')
+        .then(r => r.json())
+        .then(instances => {
+            container.innerHTML = instances.map(inst => {
+                const hasAccess = accessibleInstances.some(ai => ai.id === inst.id);
+                return `
+                    <div class="permission-toggle">
+                        <div>
+                            <div class="fw-bold">
+                                <span class="badge-icon">${inst.is_sandbox ? '🧪' : '🏢'}</span>
+                                ${inst.display_name || inst.name}
+                            </div>
+                            <div class="text-secondary small">${inst.is_sandbox ? 'Testing Environment' : 'Production Instance'}</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="instance" value="${inst.id}" ${hasAccess ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add event listeners
+            container.querySelectorAll('input[name="instance"]').forEach(toggle => {
+                toggle.addEventListener('change', updatePreview);
+            });
+        });
+}
+
+// Permission level change handler
+document.querySelectorAll('input[name="permission_level"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        // Update selection styling
+        document.querySelectorAll('.level-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        e.target.closest('.level-option').classList.add('selected');
+        
+        // Show/hide instance access
+        const level = e.target.value;
+        const card = document.getElementById('instanceAccessCard');
+        card.style.display = level === 'L2' ? 'block' : 'none';
+        
+        if (level === 'L2' && currentPermissions.instances.length === 0) {
+            loadInstanceToggles([]);
+        }
+        
+        currentPermissions.level = level;
+        updatePreview();
+    });
+});
+
+// Module checkbox change handler
+document.querySelectorAll('input[name="module"]').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+        const item = e.target.closest('.module-checkbox-item');
+        if (e.target.checked) {
+            item.classList.add('checked');
+        } else {
+            item.classList.remove('checked');
+        }
+        updatePreview();
+    });
+});
+
+// Select All button
+document.getElementById('selectAllBtn').addEventListener('click', () => {
+    const allChecked = Array.from(document.querySelectorAll('input[name="module"]')).every(cb => cb.checked);
+    
+    document.querySelectorAll('input[name="module"]').forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        const item = checkbox.closest('.module-checkbox-item');
+        if (!allChecked) {
+            item.classList.add('checked');
+        } else {
+            item.classList.remove('checked');
+        }
+    });
+    
+    // Update button text
+    const btn = document.getElementById('selectAllBtn');
+    btn.innerHTML = allChecked ? 
+        '<i class="bi bi-check-all"></i> Select All' : 
+        '<i class="bi bi-x-circle"></i> Deselect All';
+    
+    updatePreview();
+});
+
+// Update preview badges
+function updatePreview() {
+    const container = document.getElementById('previewBadges');
+    const badges = [];
+    
+    // Permission level badge
+    const level = document.querySelector('input[name="permission_level"]:checked')?.value;
+    if (level) {
+        const levelNames = {
+            'L1': { text: 'L1 - Module Admin', icon: 'bi-grid' },
+            'L2': { text: 'L2 - Instance Admin', icon: 'bi-building' },
+            'L3': { text: 'L3 - App Operator', icon: 'bi-globe' },
+            'S1': { text: 'S1 - System', icon: 'bi-star-fill' }
+        };
+        
+        const levelInfo = levelNames[level];
+        if (levelInfo) {
+            badges.push(`
+                <span class="preview-badge level">
+                    <i class="${levelInfo.icon}"></i>
+                    ${levelInfo.text}
+                </span>
+            `);
+        }
+    }
+    
+    // Instance badges (L2 only)
+    if (level === 'L2') {
+        document.querySelectorAll('input[name="instance"]:checked').forEach(toggle => {
+            const label = toggle.closest('.permission-toggle').querySelector('.fw-bold');
+            const text = label.textContent.trim();
+            badges.push(`
+                <span class="preview-badge instance">
+                    <i class="bi bi-building"></i>
+                    ${text}
+                </span>
+            `);
+        });
+    }
+    
+    // Module badges
+    const moduleNames = {
+        'M1': { text: 'Send', icon: '📦' },
+        'M2': { text: 'Inventory', icon: '📊' },
+        'M3A': { text: 'Fulfillment (Customer)', icon: '✅' },
+        'M3B': { text: 'Fulfillment (Staff)', icon: '✅' },
+        'M3C': { text: 'Fulfillment (Manager)', icon: '✅' }
+    };
+    
+    document.querySelectorAll('input[name="module"]:checked').forEach(checkbox => {
+        const moduleInfo = moduleNames[checkbox.value];
+        if (moduleInfo) {
+            badges.push(`
+                <span class="preview-badge module">
+                    <span>${moduleInfo.icon}</span>
+                    ${moduleInfo.text}
+                </span>
+            `);
+        }
+    });
+    
+    container.innerHTML = badges.length > 0 ? badges.join('') : 
+        '<span class="text-secondary">No permissions selected</span>';
+}
+
+// Form submission
+document.getElementById('permissionsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        permission_level: document.querySelector('input[name="permission_level"]:checked')?.value || '',
+        module_permissions: Array.from(document.querySelectorAll('input[name="module"]:checked')).map(cb => cb.value),
+        accessible_instances: []
+    };
+    
+    // Get instances if L2
+    if (formData.permission_level === 'L2') {
+        formData.accessible_instances = Array.from(
+            document.querySelectorAll('input[name="instance"]:checked')
+        ).map(cb => parseInt(cb.value));
+    }
+    
+    try {
+        const response = await fetch('/users/api/user/{{ user.id }}/permissions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            // Show success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+            successDiv.style.zIndex = '9999';
+            successDiv.innerHTML = '<i class="bi bi-check-circle-fill"></i> Permissions saved successfully!';
+            document.body.appendChild(successDiv);
+            
+            // Redirect after 1 second
+            setTimeout(() => {
+                window.location.href = '{{ url_for("users.user_list", instance_id=user.instance_id) }}';
+            }, 1000);
+        } else {
+            throw new Error('Failed to save');
+        }
+    } catch (error) {
+        console.error('Error saving permissions:', error);
+        alert('Failed to save permissions. Please try again.');
+    }
+});
+
+// Load permissions on page load
+loadPermissions();
+</script>
+{% endblock %}

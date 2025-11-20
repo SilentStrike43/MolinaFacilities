@@ -339,6 +339,12 @@ def create_app():
             return dt.strftime(format)
         except:
             return value
+        
+    @app.template_filter('get_field_description')
+    def get_field_description_filter(schema, migration_type, field_name):
+        """Get field description for template."""
+        from app.modules.horizon.column_mapper import ColumnMapper
+        return ColumnMapper.get_field_description(migration_type, field_name)
     
     # ==================== Register Blueprints ====================
     try:

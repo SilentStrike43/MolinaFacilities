@@ -14,7 +14,6 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         row = cursor.fetchone()
-        cursor.close()
         return dict(row) if row else None
 
 

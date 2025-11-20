@@ -10,7 +10,7 @@ from . import bp
 
 from app.modules.auth.security import (
     login_required, require_cap, current_user, 
-    record_audit, get_user_location
+    record_audit
 )
 from app.core.database import get_db_connection
 from app.core.instance_queries import build_insert, build_select, add_instance_filter
@@ -135,7 +135,7 @@ def checkin():
                     'country': country
                 }
                 
-                address_book_id = address_service.find_or_create(recipient_data, cu['id'])
+                address_book_id = address_service.find_or_create(recipient_data, cu['user_id'])
                 
                 if address_book_id:
                     logger.info(f"Package linked to address book entry: {address_book_id}")
@@ -161,6 +161,43 @@ def checkin():
                 # Continue anyway - tracking will retry later
             
             # ============================================
+            # Track the package for status
+            # ============================================
+            tracking_status = None
+            status_description = None
+            estimated_delivery = None
+            service_type = None
+            origin = None
+            destination = None
+            package_weight_value = None
+
+            try:
+                tracker = TrackingService(current_app.config)
+                result = tracker.track(tracking_number, carrier)
+                
+                if result.success:
+                    tracking_status = result.status
+                    status_description = result.status_description
+                    estimated_delivery = result.estimated_delivery
+                    
+                    # Extract additional metadata from tracking result
+                    service_type = getattr(result, 'service_type', None)
+                    origin = getattr(result, 'origin', None)
+                    destination = getattr(result, 'destination', None)
+                    
+                    # Extract weight if available
+                    if hasattr(result, 'package_weight'):
+                        package_weight_value = result.package_weight
+                    
+                    logger.info(f"Initial tracking status: {tracking_status}, Service: {service_type}")
+            except Exception as e:
+                logger.warning(f"Initial tracking failed: {e}")
+                # Continue anyway - tracking will retry later
+
+            # Get shipping method from form (will be auto-filled by JavaScript)
+            shipping_method = request.form.get('shipping_method', '').strip()
+
+            # ============================================
             # Insert into package manifest
             # ============================================
             with get_db_connection("send") as conn:
@@ -177,6 +214,9 @@ def checkin():
                         recipient_name,
                         recipient_dept,
                         recipient_address,
+                        recipient_phone,
+                        recipient_email,
+                        recipient_company,
                         sender,
                         submitter_name,
                         package_type,
@@ -192,22 +232,31 @@ def checkin():
                         address_book_id,
                         tracking_status,
                         tracking_status_description,
-                        estimated_delivery_date
+                        estimated_delivery_date,
+                        service_type,
+                        shipping_method,
+                        package_weight,
+                        origin_location,
+                        destination_location,
+                        last_tracked_at
                     ) VALUES (
                         %s, %s, CURRENT_TIMESTAMP,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, CURRENT_DATE, CURRENT_TIMESTAMP, %s,
-                        %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP
                     )
                 """, (
                     instance_id,
-                    cu['id'],
+                    cu['user_id'],
                     tracking_number,
                     carrier,
                     recipient_name,  # recipient field (backward compat)
                     recipient_name,
                     recipient_company,
                     recipient_address,
+                    recipient_phone,
+                    recipient_email,
+                    recipient_company,
                     'Warehouse',  # sender
                     cu.get('full_name', cu.get('username', 'Unknown')),
                     package_type,
@@ -221,11 +270,15 @@ def checkin():
                     address_book_id,  # Link to address book
                     tracking_status,
                     status_description,
-                    estimated_delivery
+                    estimated_delivery,
+                    service_type,  # NEW
+                    shipping_method,  # NEW
+                    package_weight_value or weight,  # NEW - use tracked weight or form weight
+                    origin,  # NEW
+                    destination  # NEW
                 ))
                 
                 conn.commit()
-                cursor.close()
             
             # Record audit
             audit_details = f"Checked in package {package_id} - Tracking: {tracking_number}, Carrier: {carrier}, Recipient: {recipient_name}"
@@ -341,7 +394,7 @@ def address_book():
                 'notes': request.form.get("Notes")
             }
             
-            address_id = service.add(address_data, cu['id'])
+            address_id = service.add(address_data, cu['user_id'])
             if address_id:
                 flash("✅ Address added to book!", "success")
                 record_audit(cu, "add_address", "send", f"Added address: {address_data['recipient_name']}")
@@ -732,8 +785,8 @@ def delete_package(package_id):
 @require_cap("can_send")
 def validate_tracking():
     """
-    Validate tracking number and auto-populate form fields.
-    Fetches shipment data from FedEx API.
+    Validate tracking number and return package metadata.
+    Does NOT return recipient details - user enters manually with auto-complete.
     """
     cu = current_user()
     instance_id, is_sandbox = get_instance_context()
@@ -741,96 +794,297 @@ def validate_tracking():
     try:
         data = request.get_json()
         tracking_number = data.get('tracking_number', '').strip()
-        carrier = data.get('carrier', 'FedEx').strip().upper()
         
         if not tracking_number:
             return jsonify({"success": False, "error": "Tracking number required"}), 400
         
-        # Only support FedEx for now
-        if carrier != 'FEDEX':
+        # Detect carrier
+        from app.utils.carrier_detector import CarrierDetector
+        carrier = CarrierDetector.detect(tracking_number)
+        
+        if not carrier or carrier not in ['FEDEX', 'USPS']:
             return jsonify({
                 "success": False,
-                "error": f"Auto-populate only supported for FedEx. Please enter details manually for {carrier}."
+                "error": "Unsupported or unrecognized carrier. Please enter details manually."
             }), 400
         
-        # Fetch tracking data from FedEx
-        from app.services.shipping.fedex_tracking import FedExTrackingService
+        # Get package metadata from carrier
+        package_data = None
         
-        tracking_service = FedExTrackingService(current_app.config)
-        tracking_data = tracking_service.track_shipment(tracking_number)
-        
-        if not tracking_data or not tracking_data.get('success'):
-            return jsonify({
-                "success": False,
-                "error": "Could not retrieve tracking information. Please enter details manually.",
-                "details": tracking_data.get('error', 'Unknown error')
-            }), 404
-        
-        # Extract shipment details
-        shipment = tracking_data.get('shipment', {})
-        
-        # Parse recipient information
-        recipient = shipment.get('recipient', {})
-        recipient_address = shipment.get('recipient_address', {})
-        
-        # Parse package information
-        package_info = shipment.get('package', {})
-        
-        # Build auto-populated data
-        populated_data = {
-            # Recipient info
-            'recipient_name': recipient.get('name', ''),
-            'recipient_company': recipient.get('company', ''),
-            'recipient_phone': recipient.get('phone', ''),
-            'recipient_email': recipient.get('email', ''),
+        if carrier == 'FEDEX':
+            from app.services.shipping.fedex_tracking import FedExTrackingService
+            service = FedExTrackingService(current_app.config)
+            result = service.track_shipment(tracking_number)
             
-            # Address
-            'recipient_address': recipient_address.get('street', ''),
-            'recipient_city': recipient_address.get('city', ''),
-            'recipient_state': recipient_address.get('state', ''),
-            'recipient_zip': recipient_address.get('zip', ''),
+            if result.get('success'):
+                # Extract metadata from FedEx response
+                pkg = result.get('package_data', {})
+                package_data = {
+                    'carrier': 'FedEx',
+                    'service_type': pkg.get('service_description', ''),
+                    'package_type': pkg.get('package_type', 'Box'),
+                    'weight': pkg.get('weight', ''),
+                    'status': pkg.get('status_description', ''),
+                    'estimated_delivery': pkg.get('estimated_delivery', ''),
+                    'destination_city': pkg.get('destination_city', ''),
+                    'destination_state': pkg.get('destination_state', '')
+                }
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": result.get('error', 'Could not retrieve tracking information')
+                }), 400
+        
+        elif carrier == 'USPS':
+            from app.services.tracking.tracker import TrackingService
+            tracker = TrackingService(current_app.config)
+            result = tracker.track(tracking_number, 'USPS')
             
-            # Package details
-            'package_type': package_info.get('type', 'Box'),
-            'package_weight': package_info.get('weight', ''),
-            'carrier': 'FedEx',
-            'service_type': shipment.get('service_type', ''),
-            'delivery_date': shipment.get('estimated_delivery', ''),
-            
-            # Status
-            'status': shipment.get('status', 'In Transit'),
-            'status_description': shipment.get('status_description', ''),
-            
-            # Additional info
-            'origin': shipment.get('origin', ''),
-            'destination': shipment.get('destination', '')
-        }
+            if result.success:
+                package_data = {
+                    'carrier': 'USPS',
+                    'service_type': result.status_description,
+                    'package_type': 'Package',
+                    'weight': '',
+                    'status': result.status_description,
+                    'estimated_delivery': result.estimated_delivery.isoformat() if result.estimated_delivery else '',
+                    'destination_city': '',
+                    'destination_state': ''
+                }
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": result.error or 'Could not retrieve tracking information'
+                }), 400
         
         # Record audit
         record_audit(
             cu, "validate_tracking", "send",
-            f"Auto-populated from tracking {tracking_number}"
+            f"Validated {carrier} tracking: {tracking_number}"
         )
         
         return jsonify({
             "success": True,
-            "message": "✓ Tracking data retrieved successfully",
-            "data": populated_data,
-            "tracking_info": {
-                'tracking_number': tracking_number,
-                'carrier': 'FedEx',
-                'status': shipment.get('status', ''),
-                'last_update': shipment.get('last_update', '')
-            }
+            "message": f"✓ {carrier} tracking validated",
+            "tracking_number": tracking_number,
+            "package_data": package_data,
+            "note": "Please enter recipient information (or use auto-complete from address book)"
         })
         
     except Exception as e:
         logger.error(f"Tracking validation error: {e}", exc_info=True)
         return jsonify({
             "success": False,
-            "error": "Error retrieving tracking information. Please enter details manually.",
-            "details": str(e)
+            "error": "Error validating tracking number"
         }), 500
+
+
+@bp.route("/api/search-recipients", methods=["POST"])
+@login_required
+@require_cap("can_send")
+def search_recipients():
+    """
+    Search address book for recipient auto-complete.
+    Returns matching recipients as user types.
+    """
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        
+        if len(query) < 2:
+            return jsonify({"success": True, "results": []})
+        
+        from app.services.address.book import AddressBookService
+        results = AddressBookService.search_recipients(query, limit=10)
+        
+        return jsonify({
+            "success": True,
+            "results": results
+        })
+        
+    except Exception as e:
+        logger.error(f"Recipient search error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/api/import-addresses", methods=["POST"])
+@login_required
+@require_cap("can_send_l2")  # L2+ only for bulk import
+def import_addresses():
+    """
+    Bulk import recipient addresses from CSV.
+    Expected CSV format: recipient_name, recipient_company, recipient_address, 
+    recipient_city, recipient_state, recipient_zip, recipient_phone, recipient_email
+    """
+    cu = current_user()
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "No file uploaded"}), 400
+        
+        file = request.files['file']
+        
+        if not file.filename.endswith('.csv'):
+            return jsonify({"success": False, "error": "Only CSV files accepted"}), 400
+        
+        # Parse CSV
+        import csv
+        import io
+        
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_reader = csv.DictReader(stream)
+        
+        # Convert to list of dicts
+        csv_data = []
+        for row in csv_reader:
+            csv_data.append({
+                'recipient_name': row.get('recipient_name', '').strip(),
+                'recipient_company': row.get('recipient_company', '').strip(),
+                'recipient_address': row.get('recipient_address', '').strip(),
+                'recipient_city': row.get('recipient_city', '').strip(),
+                'recipient_state': row.get('recipient_state', '').strip(),
+                'recipient_zip': row.get('recipient_zip', '').strip(),
+                'recipient_phone': row.get('recipient_phone', '').strip(),
+                'recipient_email': row.get('recipient_email', '').strip()
+            })
+        
+        # Import addresses
+        from app.services.address.book import AddressBookService
+        stats = AddressBookService.import_from_csv(csv_data)
+        
+        # Record audit
+        record_audit(
+            cu, "import_addresses", "send",
+            f"Imported {stats['imported']} addresses (skipped: {stats['skipped']}, errors: {stats['errors']})"
+        )
+        
+        return jsonify({
+            "success": True,
+            "message": f"Imported {stats['imported']} addresses",
+            "stats": stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Address import error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@bp.route("/api/search-recipients", methods=["POST"])
+@login_required
+@require_cap("can_send")
+def api_search_recipients():
+    """
+    Search address book for recipient auto-complete.
+    Returns matching recipients as user types in recipient name field.
+    """
+    cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
+    
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        
+        if len(query) < 2:
+            return jsonify({"success": True, "results": []})
+        
+        from app.services.address.book import AddressBookService
+        address_service = AddressBookService(instance_id)
+        results = address_service.search(query, limit=10)
+        
+        return jsonify({
+            "success": True,
+            "results": results
+        })
+        
+    except Exception as e:
+        logger.error(f"Recipient search error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/api/import-addresses", methods=["POST"])
+@login_required
+@require_cap("can_send_l2")  # L2+ only for bulk operations
+def api_import_addresses():
+    """
+    Bulk import recipient addresses from CSV.
+    
+    Expected CSV columns:
+    - recipient_name (required)
+    - recipient_company
+    - recipient_phone
+    - recipient_email
+    - address_line1 (required)
+    - address_line2
+    - city (required)
+    - state (required)
+    - zip_code (required)
+    - country (default: USA)
+    """
+    cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "No file uploaded"}), 400
+        
+        file = request.files['file']
+        
+        if not file.filename:
+            return jsonify({"success": False, "error": "No file selected"}), 400
+        
+        if not file.filename.lower().endswith('.csv'):
+            return jsonify({"success": False, "error": "Only CSV files are accepted"}), 400
+        
+        # Parse CSV
+        import csv
+        import io
+        
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_reader = csv.DictReader(stream)
+            
+            # Convert to list of dicts
+            csv_data = []
+            for row in csv_reader:
+                csv_data.append({
+                    'recipient_name': row.get('recipient_name', '').strip(),
+                    'recipient_company': row.get('recipient_company', '').strip(),
+                    'recipient_phone': row.get('recipient_phone', '').strip(),
+                    'recipient_email': row.get('recipient_email', '').strip(),
+                    'address_line1': row.get('address_line1', '').strip(),
+                    'address_line2': row.get('address_line2', '').strip(),
+                    'city': row.get('city', '').strip(),
+                    'state': row.get('state', '').strip(),
+                    'zip_code': row.get('zip_code', '').strip(),
+                    'country': row.get('country', 'USA').strip()
+                })
+            
+            if not csv_data:
+                return jsonify({"success": False, "error": "CSV file is empty"}), 400
+            
+        except Exception as e:
+            logger.error(f"CSV parsing error: {e}")
+            return jsonify({"success": False, "error": "Invalid CSV format"}), 400
+        
+        # Import addresses
+        from app.services.address.book import AddressBookService
+        address_service = AddressBookService(instance_id)
+        stats = address_service.bulk_import(csv_data, cu['user_id'])
+        
+        # Record audit
+        record_audit(
+            cu, "import_addresses", "send",
+            f"CSV import: {stats['imported']} imported, {stats['skipped']} skipped, {stats['errors']} errors"
+        )
+        
+        return jsonify({
+            "success": True,
+            "message": f"Successfully imported {stats['imported']} addresses",
+            "stats": stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Address import error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Failed to import addresses"}), 500
 
 # ========== LEGACY ROUTES ==========
 

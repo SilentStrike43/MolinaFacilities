@@ -338,32 +338,6 @@ def has_cap(user_row: Optional[dict], cap: str) -> bool:
 
     return bool(caps.get(key))
 
-def get_user_location(user_data):
-    """Get user's location preference for data filtering."""
-    if not user_data:
-        return 'NY'
-    
-    if not isinstance(user_data, dict):
-        user_data = dict(user_data)
-    
-    location = user_data.get('location', 'NY')
-    
-    if location not in ['NY', 'CT', 'ALL']:
-        location = 'NY'
-    
-    return location
-
-
-def should_filter_by_location(user_data):
-    """Check if queries should be filtered by location."""
-    location = get_user_location(user_data)
-    
-    if location == 'ALL':
-        return (False, 'ALL')
-    
-    return (True, location)
-
-
 # ------------------------------- decorators ----------------------------
 
 def login_required(f):

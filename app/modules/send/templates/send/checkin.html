@@ -725,88 +725,173 @@ async function validateTracking() {
         
         const data = await response.json();
         
+        console.log('API Response:', data); // DEBUG
+        
         if (data.success) {
             // Show success status
             statusDiv.className = 'success';
             
             let statusHTML = `✅ <strong>${data.message}</strong><br>`;
             
-            if (data.data.status_description) {
-                statusHTML += `Status: ${data.data.status_description}<br>`;
+            // Get package data
+            const pkg = data.package_data;
+            console.log('Package Data:', pkg); // DEBUG
+            
+            // Show tracking status
+            if (pkg.status) {
+                statusHTML += `<strong>Status:</strong> ${pkg.status}<br>`;
             }
             
-            if (data.data.estimated_delivery) {
-                statusHTML += `Est. Delivery: ${data.data.estimated_delivery}<br>`;
+            // Show service type
+            if (pkg.service_type) {
+                statusHTML += `<strong>Service:</strong> ${pkg.service_type}<br>`;
             }
             
-            if (data.data.limited_data) {
-                statusHTML += `<small>⚠️ ${data.data.note}</small>`;
+            // Show estimated delivery
+            if (pkg.estimated_delivery) {
+                statusHTML += `<strong>Est. Delivery:</strong> ${pkg.estimated_delivery}<br>`;
+            }
+            
+            // Show destination if available
+            if (pkg.destination_city || pkg.destination_state) {
+                const dest = [pkg.destination_city, pkg.destination_state].filter(x => x).join(', ');
+                if (dest) {
+                    statusHTML += `<strong>Destination:</strong> ${dest}<br>`;
+                }
+            }
+            
+            // Show note about limited data
+            if (data.note) {
+                statusHTML += `<br><small style="color: #666;">ℹ️ ${data.note}</small>`;
             }
             
             statusDiv.innerHTML = statusHTML;
             statusDiv.style.display = 'block';
             
-            // Auto-fill available fields
-            const formData = data.data;
+            // ============================================
+            // AUTO-FILL AVAILABLE FIELDS
+            // ============================================
             
-            if (formData.recipient_name) {
-                document.getElementById('recipient_name').value = formData.recipient_name;
+            let filledFields = [];
+            
+            // 1. Carrier (confirm selection)
+            if (pkg.carrier) {
+                const carrierField = document.getElementById('carrier');
+                if (carrierField) {
+                    carrierField.value = pkg.carrier.toUpperCase();
+                    console.log('✓ Filled carrier:', pkg.carrier); // DEBUG
+                }
             }
             
-            if (formData.recipient_company) {
-                document.getElementById('recipient_company').value = formData.recipient_company;
+            // 2. Service Type -> Shipping Method
+            if (pkg.service_type) {
+                const shippingMethodField = document.getElementById('shipping_method');
+                if (shippingMethodField) {
+                    // Try to match to available options
+                    const serviceType = pkg.service_type.toLowerCase();
+                    
+                    if (serviceType.includes('overnight')) {
+                        shippingMethodField.value = 'Overnight';
+                    } else if (serviceType.includes('2-day') || serviceType.includes('2day')) {
+                        shippingMethodField.value = '2-Day';
+                    } else if (serviceType.includes('express')) {
+                        shippingMethodField.value = 'Express';
+                    } else if (serviceType.includes('priority')) {
+                        shippingMethodField.value = 'Priority';
+                    } else if (serviceType.includes('ground')) {
+                        shippingMethodField.value = 'Ground';
+                    } else {
+                        shippingMethodField.value = 'Standard';
+                    }
+                    
+                    filledFields.push('shipping method');
+                    console.log('✓ Filled shipping method:', shippingMethodField.value); // DEBUG
+                }
             }
             
-            if (formData.recipient_phone) {
-                document.getElementById('recipient_phone').value = formData.recipient_phone;
+            // 3. Package Type
+            if (pkg.package_type) {
+                const packageTypeField = document.getElementById('package_type');
+                if (packageTypeField) {
+                    // Handle object response {type: "YOUR_PACKAGING", description: "Your Packaging"}
+                    let packageTypeValue = 'Package'; // Default
+                    
+                    if (typeof pkg.package_type === 'object') {
+                        const desc = (pkg.package_type.description || '').toLowerCase();
+                        if (desc.includes('envelope')) {
+                            packageTypeValue = 'Envelope';
+                        } else if (desc.includes('pak')) {
+                            packageTypeValue = 'Pak';
+                        } else if (desc.includes('box')) {
+                            packageTypeValue = 'Box';
+                        } else if (desc.includes('tube')) {
+                            packageTypeValue = 'Tube';
+                        }
+                    } else if (typeof pkg.package_type === 'string') {
+                        packageTypeValue = pkg.package_type;
+                    }
+                    
+                    packageTypeField.value = packageTypeValue;
+                    filledFields.push('package type');
+                    console.log('✓ Filled package type:', packageTypeValue); // DEBUG
+                }
             }
             
-            if (formData.recipient_email) {
-                document.getElementById('recipient_email').value = formData.recipient_email;
+            // 4. Weight
+            if (pkg.weight) {
+                const weightField = document.getElementById('weight');
+                if (weightField) {
+                    // Extract numeric value (e.g., "5.2 LBS" -> "5.2")
+                    const weightMatch = pkg.weight.match(/[\d.]+/);
+                    if (weightMatch) {
+                        weightField.value = weightMatch[0];
+                        filledFields.push('weight');
+                        console.log('✓ Filled weight:', weightMatch[0]); // DEBUG
+                    }
+                }
             }
             
-            // Address fields
-            if (formData.address_line1) {
-                document.getElementById('address_line1').value = formData.address_line1;
+            // 5. Destination City
+            if (pkg.destination_city) {
+                const cityField = document.getElementById('city');
+                if (cityField && !cityField.value) {
+                    cityField.value = pkg.destination_city;
+                    filledFields.push('city');
+                    console.log('✓ Filled city:', pkg.destination_city); // DEBUG
+                }
             }
             
-            if (formData.address_line2) {
-                document.getElementById('address_line2').value = formData.address_line2;
-            }
-            
-            if (formData.recipient_city || formData.city) {
-                document.getElementById('city').value = formData.recipient_city || formData.city;
-            }
-            
-            if (formData.recipient_state || formData.state) {
-                document.getElementById('state').value = formData.recipient_state || formData.state;
-            }
-            
-            if (formData.recipient_zip || formData.zip_code) {
-                document.getElementById('postal_code').value = formData.recipient_zip || formData.zip_code;
-            }
-            
-            // Package details
-            if (formData.package_type) {
-                document.getElementById('package_type').value = formData.package_type;
-            }
-            
-            if (formData.package_weight) {
-                document.getElementById('weight').value = formData.package_weight;
+            // 6. Destination State
+            if (pkg.destination_state) {
+                const stateField = document.getElementById('state');
+                if (stateField && !stateField.value) {
+                    stateField.value = pkg.destination_state;
+                    filledFields.push('state');
+                    console.log('✓ Filled state:', pkg.destination_state); // DEBUG
+                }
             }
             
             // Show tracking events if available
             if (data.tracking_events && data.tracking_events.length > 0) {
-                let eventsHTML = '<div style="margin-top: 1rem; font-size: 0.875rem;"><strong>Recent Events:</strong><ul style="margin: 0.5rem 0;">';
+                let eventsHTML = '<div style="margin-top: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; font-size: 0.875rem;">';
+                eventsHTML += '<strong>📍 Recent Tracking Events:</strong><ul style="margin: 0.5rem 0; padding-left: 1.5rem;">';
                 data.tracking_events.forEach(event => {
-                    eventsHTML += `<li>${event.date}: ${event.status} - ${event.location}</li>`;
+                    eventsHTML += `<li style="margin: 0.25rem 0;">${event.timestamp || event.date}: ${event.status || event.description} ${event.location ? '- ' + event.location : ''}</li>`;
                 });
                 eventsHTML += '</ul></div>';
                 statusDiv.innerHTML += eventsHTML;
             }
             
-            // Focus on first empty required field
-            focusNextEmptyField();
+            // Show what was auto-filled
+            if (filledFields.length > 0) {
+                const successMsg = `<br><small style="color: #28a745; font-weight: 500;">✓ Auto-filled: ${filledFields.join(', ')}</small>`;
+                statusDiv.innerHTML += successMsg;
+            }
+            
+            // Focus on first empty required field (recipient name)
+            setTimeout(() => {
+                focusNextEmptyField();
+            }, 100);
             
         } else {
             statusDiv.className = 'error';

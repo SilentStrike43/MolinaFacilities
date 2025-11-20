@@ -727,7 +727,7 @@ def instance_edit(instance_id: int):
     return render_template(
         "horizon/instance_edit.html",
         active="global",
-        page="edit_instance",
+        page="instance_edit",
         instance=instance
     )
 
@@ -1060,73 +1060,107 @@ def global_insights():
 @login_required
 @require_horizon
 def global_users():
-    """Global user management - shows ALL users across ALL instances."""
+    """View and manage ALL users across ALL instances."""
     cu = current_user()
     
-    # Get search/filter parameters
-    search = request.args.get('search', '')
-    instance_filter = request.args.get('instance_id', type=int)
-    permission_filter = request.args.get('permission_level', '')
+    # Get filters
+    search = request.args.get('q', '').strip()
+    instance_filter = request.args.get('instance', type=int)
+    permission_filter = request.args.get('permission', '')
     status_filter = request.args.get('status', '')
+    
+    # Get all instances for filter dropdown
+    instances = get_all_instances()
     
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         
-        # Get ALL instances for filter dropdown
-        cursor.execute("""
-            SELECT id, name, display_name, is_active
-            FROM instances
-            ORDER BY name
-        """)
-        instances = cursor.fetchall()
-        
-        # Build user query with filters (NO automatic instance filtering)
+        # Build query
         query = """
             SELECT 
-                u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
-                u.permission_level, u.module_permissions, u.is_active,
-                u.created_at, u.last_login, u.instance_id,
-                i.name as instance_name, i.display_name as instance_display_name,
-                i.is_active as instance_active
+                u.id, u.username, u.first_name, u.last_name, u.email,
+                u.permission_level, u.module_permissions, u.instance_id,
+                u.is_active, u.created_at, u.last_login,
+                i.name as instance_name, i.display_name as instance_display_name
             FROM users u
             LEFT JOIN instances i ON u.instance_id = i.id
             WHERE u.deleted_at IS NULL
         """
         params = []
         
-        # Apply filters
+        # Search filter
         if search:
             query += """ AND (
-                u.username ILIKE %s OR 
-                u.first_name ILIKE %s OR 
-                u.last_name ILIKE %s OR 
+                u.username ILIKE %s OR
+                u.first_name ILIKE %s OR
+                u.last_name ILIKE %s OR
                 u.email ILIKE %s
             )"""
-            search_term = f"%{search}%"
-            params.extend([search_term, search_term, search_term, search_term])
+            search_param = f'%{search}%'
+            params.extend([search_param, search_param, search_param, search_param])
         
+        # Instance filter
         if instance_filter:
             query += " AND u.instance_id = %s"
             params.append(instance_filter)
         
+        # Permission filter
         if permission_filter:
-            query += " AND u.permission_level = %s"
-            params.append(permission_filter)
+            if permission_filter == 'module':
+                query += " AND (u.permission_level IS NULL OR u.permission_level = '')"
+            else:
+                query += " AND u.permission_level = %s"
+                params.append(permission_filter)
         
+        # Status filter
         if status_filter == 'active':
             query += " AND u.is_active = TRUE"
         elif status_filter == 'inactive':
             query += " AND u.is_active = FALSE"
         
-        query += " ORDER BY i.name, u.username"
+        query += " ORDER BY u.username"
         
         cursor.execute(query, params)
-        all_users = cursor.fetchall()
+        users = cursor.fetchall()
         
-        # Get user statistics (ALL instances)
+        # Enhance users with additional data
+        enhanced_users = []
+        for user in users:
+            user_dict = dict(user)
+            
+            # Add permission description
+            perm_level = user_dict.get('permission_level') or ''
+            from app.core.permissions import PermissionManager
+            user_dict['permission_level_desc'] = PermissionManager.get_permission_description(perm_level)
+            
+            # Parse module permissions
+            module_perms = user_dict.get('module_permissions') or []
+            if isinstance(module_perms, str):
+                import json
+                try:
+                    module_perms = json.loads(module_perms)
+                except:
+                    module_perms = []
+            user_dict['module_permissions_list'] = module_perms
+            
+            # Get accessible instances for L2 users
+            if user_dict.get('permission_level') == 'L2':
+                cursor.execute("""
+                    SELECT i.id, i.name, i.display_name, i.is_sandbox
+                    FROM user_instance_access uia
+                    JOIN instances i ON uia.instance_id = i.id
+                    WHERE uia.user_id = %s
+                    ORDER BY i.name
+                """, (user_dict['id'],))
+                user_dict['accessible_instances'] = cursor.fetchall()
+            else:
+                user_dict['accessible_instances'] = []
+            
+            enhanced_users.append(user_dict)
+        
+        # Get user counts by level
         cursor.execute("""
-            SELECT 
-                COUNT(*) as total_users,
+            SELECT
                 COUNT(CASE WHEN permission_level = 'S1' THEN 1 END) as s1_count,
                 COUNT(CASE WHEN permission_level = 'L3' THEN 1 END) as l3_count,
                 COUNT(CASE WHEN permission_level = 'L2' THEN 1 END) as l2_count,
@@ -1141,7 +1175,11 @@ def global_users():
         
         cursor.close()
     
-    record_global_audit(cu, "view_global_users", f"Viewed global user list ({len(all_users)} users)")
+    record_horizon_audit(
+        cu, "view_global_users", "users",
+        f"Viewed global user list ({len(enhanced_users)} users)",
+        severity="info"
+    )
     
     return render_template(
         "horizon/global_users.html",
@@ -1149,7 +1187,7 @@ def global_users():
         page="global_users",
         cu=cu,
         instances=instances,
-        users=all_users,
+        users=enhanced_users,
         stats=stats,
         search=search,
         instance_filter=instance_filter,
@@ -1371,6 +1409,128 @@ def edit_global_user(user_id: int):
         instances=instances
     )
 
+# ========== USER EXPORT ENDPOINTS ==========
+
+@bp.route("/export/users/csv")
+@login_required
+@require_horizon
+def export_users_csv():
+    """Export all users as CSV."""
+    cu = current_user()
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                u.username, u.first_name, u.last_name, u.email, u.phone,
+                u.permission_level, u.module_permissions, u.department, u.position,
+                u.is_active, u.created_at, u.last_login,
+                i.name as instance_name
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            WHERE u.deleted_at IS NULL
+            ORDER BY u.username
+        """)
+        users = cursor.fetchall()
+        cursor.close()
+    
+    import csv
+    import io
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow([
+        'Username', 'First Name', 'Last Name', 'Email', 'Phone',
+        'Permission Level', 'Modules', 'Department', 'Position',
+        'Status', 'Instance', 'Created', 'Last Login'
+    ])
+    
+    # Data
+    for user in users:
+        writer.writerow([
+            user['username'],
+            user['first_name'] or '',
+            user['last_name'] or '',
+            user['email'] or '',
+            user['phone'] or '',
+            user['permission_level'] or 'Module User',
+            user['module_permissions'] or '',
+            user['department'] or '',
+            user['position'] or '',
+            'Active' if user['is_active'] else 'Inactive',
+            user['instance_name'] or '',
+            user['created_at'].strftime('%Y-%m-%d') if user['created_at'] else '',
+            user['last_login'].strftime('%Y-%m-%d') if user['last_login'] else 'Never'
+        ])
+    
+    record_horizon_audit(cu, "export_users_csv", "users", 
+                        f"Exported {len(users)} users as CSV",
+                        severity="info")
+    
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment;filename=users_{datetime.now().strftime('%Y%m%d')}.csv"
+        }
+    )
+
+
+@bp.route("/export/users/json")
+@login_required
+@require_horizon
+def export_users_json():
+    """Export all users as JSON."""
+    cu = current_user()
+    
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                u.id, u.username, u.first_name, u.last_name, u.email, u.phone,
+                u.permission_level, u.module_permissions, u.department, u.position,
+                u.is_active, u.created_at, u.last_login,
+                i.name as instance_name
+            FROM users u
+            LEFT JOIN instances i ON u.instance_id = i.id
+            WHERE u.deleted_at IS NULL
+            ORDER BY u.username
+        """)
+        users = cursor.fetchall()
+        cursor.close()
+    
+    # Convert to JSON-serializable format
+    users_list = []
+    for user in users:
+        users_list.append({
+            'id': user['id'],
+            'username': user['username'],
+            'first_name': user['first_name'],
+            'last_name': user['last_name'],
+            'email': user['email'],
+            'phone': user['phone'],
+            'permission_level': user['permission_level'],
+            'module_permissions': user['module_permissions'],
+            'department': user['department'],
+            'position': user['position'],
+            'is_active': user['is_active'],
+            'instance': user['instance_name'],
+            'created_at': user['created_at'].isoformat() if user['created_at'] else None,
+            'last_login': user['last_login'].isoformat() if user['last_login'] else None
+        })
+    
+    record_horizon_audit(cu, "export_users_json", "users",
+                        f"Exported {len(users)} users as JSON",
+                        severity="info")
+    
+    return jsonify({
+        'exported_at': datetime.now().isoformat(),
+        'total_users': len(users_list),
+        'users': users_list
+    })
 
 @bp.route("/global-users/<int:user_id>/assign", methods=["POST"])
 @login_required
@@ -1952,6 +2112,9 @@ def data_migrations():
             stream = io.StringIO(uploaded_file.stream.read().decode("UTF8"), newline=None)
             csv_reader = csv.DictReader(stream)
             
+            # Get headers
+            csv_headers = csv_reader.fieldnames
+            
             # Convert to list for processing
             rows = list(csv_reader)
             
@@ -1959,40 +2122,127 @@ def data_migrations():
                 flash("CSV file is empty.", "danger")
                 return redirect(url_for("horizon.data_migrations"))
             
-            # Process based on migration type
-            from .migrations import MigrationProcessor
-            processor = MigrationProcessor(instance_id, cu)
+            if len(rows) > 10000:
+                flash("File exceeds maximum limit of 10,000 rows.", "danger")
+                return redirect(url_for("horizon.data_migrations"))
             
-            result = processor.validate_import(migration_type, rows)
-            
-            # Store in session for preview
-            session['migration_preview'] = {
+            # Store in session for column mapping
+            session['csv_upload_data'] = {
                 'instance_id': instance_id,
-                'instance_name': instance['name'],
+                'instance_name': instance['display_name'] or instance['name'],
                 'migration_type': migration_type,
-                'total_rows': len(rows),
-                'valid_rows': result['valid_count'],
-                'invalid_rows': result['invalid_count'],
-                'warnings': result['warnings'],
-                'errors': result['errors'],
-                'preview_data': result['preview'][:20],  # First 20 rows
-                'validated_data': result['validated_data']  # All processed data
+                'csv_headers': csv_headers,
+                'csv_rows': rows,
+                'filename': uploaded_file.filename,
+                'row_count': len(rows)
             }
             
             record_horizon_audit(
-                cu, "start_migration", "migrations",
-                f"Started {migration_type} migration for instance {instance['name']} ({len(rows)} rows)",
+                cu, "upload_migration_csv", "migrations",
+                f"Uploaded {uploaded_file.filename} for {migration_type} migration ({len(rows)} rows)",
                 target_instance_id=instance_id,
                 severity="info"
             )
             
-            return redirect(url_for("horizon.migration_preview"))
+            # Redirect to column mapping
+            return redirect(url_for("horizon.map_columns"))
             
         except Exception as e:
             logger.error(f"Migration upload error: {e}", exc_info=True)
             flash(f"Error processing file: {str(e)}", "danger")
             return redirect(url_for("horizon.data_migrations"))
 
+@bp.route("/data-migrations/map-columns", methods=["GET", "POST"])
+@login_required
+@require_horizon
+def map_columns():
+    """Column mapping interface for flexible CSV imports."""
+    cu = current_user()
+    
+    if request.method == "GET":
+        # Check if we have uploaded file data in session
+        upload_data = session.get('csv_upload_data')
+        if not upload_data:
+            flash("No CSV file uploaded. Please start again.", "warning")
+            return redirect(url_for("horizon.data_migrations"))
+        
+        from .column_mapper import ColumnMapper
+        
+        # Detect columns automatically
+        detection = ColumnMapper.detect_columns(
+            upload_data['csv_headers'],
+            upload_data['migration_type']
+        )
+        
+        # Get all instances for display
+        instances = get_all_instances()
+        instance = next((i for i in instances if i['id'] == upload_data['instance_id']), None)
+        
+        return render_template(
+            "horizon/map_columns.html",
+            active="migrations",
+            page="map_columns",
+            upload_data=upload_data,
+            detection=detection,
+            instance=instance
+        )
+    
+    # POST - User has confirmed mappings
+    if request.method == "POST":
+        upload_data = session.get('csv_upload_data')
+        if not upload_data:
+            flash("Session expired. Please upload file again.", "warning")
+            return redirect(url_for("horizon.data_migrations"))
+        
+        # Get user's column mappings from form
+        mapping = {}
+        for key in request.form.keys():
+            if key.startswith('map_'):
+                app_field = key[4:]  # Remove 'map_' prefix
+                csv_column = request.form.get(key)
+                if csv_column:
+                    mapping[app_field] = csv_column
+        
+        # Store mapping in session
+        upload_data['column_mapping'] = mapping
+        session['csv_upload_data'] = upload_data
+        
+        # Apply mapping to all rows
+        from .column_mapper import ColumnMapper
+        mapped_rows = []
+        for row in upload_data['csv_rows']:
+            mapped_row = ColumnMapper.apply_mapping(row, mapping)
+            mapped_rows.append(mapped_row)
+        
+        # Now validate with mapped data
+        from .migrations import MigrationProcessor
+        processor = MigrationProcessor(upload_data['instance_id'], cu)
+        
+        result = processor.validate_import(upload_data['migration_type'], mapped_rows)
+        
+        # Store in session for preview
+        session['migration_preview'] = {
+            'instance_id': upload_data['instance_id'],
+            'instance_name': upload_data['instance_name'],
+            'migration_type': upload_data['migration_type'],
+            'total_rows': len(mapped_rows),
+            'valid_rows': result['valid_count'],
+            'invalid_rows': result['invalid_count'],
+            'warnings': result['warnings'],
+            'errors': result['errors'],
+            'preview_data': result['preview'][:20],
+            'validated_data': result['validated_data'],
+            'column_mapping': mapping
+        }
+        
+        record_horizon_audit(
+            cu, "map_columns_migration", "migrations",
+            f"Mapped columns for {upload_data['migration_type']} migration ({len(mapping)} fields mapped)",
+            target_instance_id=upload_data['instance_id'],
+            severity="info"
+        )
+        
+        return redirect(url_for("horizon.migration_preview"))
 
 @bp.route("/data-migrations/preview")
 @login_required

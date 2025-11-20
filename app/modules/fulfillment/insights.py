@@ -4,7 +4,7 @@ import io
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for
 
-from app.modules.auth.security import login_required, current_user, record_audit, get_user_location, should_filter_by_location
+from app.modules.auth.security import login_required, current_user, record_audit
 from app.core.database import get_db_connection
 
 fulfillment_insights_bp = Blueprint("fulfillment_insights", __name__, url_prefix="/fulfillment/insights")
@@ -56,9 +56,6 @@ def insights():
     if not date_to:
         date_to = datetime.now().strftime("%Y-%m-%d")
     
-    # Check if user should be filtered by location
-    should_filter, user_location = should_filter_by_location(cu)
-    
     # Build query
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
@@ -80,14 +77,6 @@ def insights():
             AND DATE(fr.date_submitted) <= %s
         """
         params = [date_from, date_to]
-        
-        # Apply location filter if needed
-        if should_filter and user_location:
-            query += " AND sr.location = %s"
-            params.append(user_location)
-        elif location:
-            query += " AND sr.location = %s"
-            params.append(location)
         
         # Apply other filters
         if order_number:
@@ -172,7 +161,6 @@ def insights():
         completed_by=completed_by,
         location=location,
         locations=locations,
-        user_location=user_location if should_filter else None
     )
 
 @fulfillment_insights_bp.route("/export")
@@ -194,9 +182,6 @@ def export():
     page_count_max = request.args.get("page_count_max", "")
     completed_by = request.args.get("completed_by", "")
     location = request.args.get("location", "")
-    
-    # Check if user should be filtered by location
-    should_filter, user_location = should_filter_by_location(cu)
     
     # Build query (same as insights view)
     with get_db_connection("fulfillment") as conn:
@@ -222,14 +207,6 @@ def export():
         if date_to:
             query += " AND DATE(fr.date_submitted) <= %s"
             params.append(date_to)
-        
-        # Apply location filter if needed
-        if should_filter and user_location:
-            query += " AND sr.location = %s"
-            params.append(user_location)
-        elif location:
-            query += " AND sr.location = %s"
-            params.append(location)
         
         if order_number:
             query += " AND fr.id = %s"

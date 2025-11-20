@@ -323,15 +323,15 @@ def api_validate_tracking():
         tracking_number = data.get('tracking_number', '').strip()
         carrier = data.get('carrier', 'FEDEX').upper()
         
-        if not tracking_number:
-            return jsonify({'success': False, 'error': 'Tracking number required'}), 400
-        
-        # Only support FedEx for now (expand later for USPS/UPS)
-        if carrier != 'FEDEX':
+        if not result.success:
+            # Log the specific error for debugging
+            logger.error(f"FedEx tracking validation failed for {tracking_number}: {result.error}")
+            
             return jsonify({
                 'success': False,
-                'error': f'Auto-populate only supported for FedEx currently. Please enter details manually for {carrier}.'
-            }), 400
+                'error': result.error or 'Could not retrieve tracking information. Please enter details manually.',
+                'details': result.error  # Include full error details
+            }), 400  # Change from 200 to 400
         
         # Track the package using FedEx API
         tracker = TrackingService(current_app.config)
