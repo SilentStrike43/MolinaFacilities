@@ -1,0 +1,890 @@
+{% extends "base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Module-specific CSS that doesn't override core */
+.users-module-wrapper {
+    padding: 20px;
+    max-width: 100%;
+    height: calc(100vh - 120px);
+}
+
+.users-container {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+}
+
+/* User List Panel */
+.user-list-panel {
+    width: 380px;
+    min-width: 320px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.user-list-header {
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-list-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.user-count {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.btn-add-user {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add-user:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(255, 140, 66, 0.3);
+}
+
+.user-search {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.user-search:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+}
+
+.user-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 4px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.user-item:hover {
+    background: var(--bg-hover);
+    transform: translateX(2px);
+}
+
+.user-item.active {
+    background: var(--bg-card);
+    border-left-color: var(--brand-primary);
+}
+
+.user-role-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.role-s1 { background: #ef4444; }
+.role-l3 { background: #f59e0b; }
+.role-l2 { background: #3b82f6; }
+.role-l1 { background: #10b981; }
+.role-module { background: #6b7280; }
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.user-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-active { background: #10b981; }
+.status-inactive { background: #6b7280; }
+
+/* User Details Panel */
+.user-details-panel {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.details-header {
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.details-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.details-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.btn-close {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.details-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-button {
+    padding: 12px 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-button:hover {
+    color: var(--text-secondary);
+}
+
+.tab-button.active {
+    color: var(--brand-primary);
+    border-bottom-color: var(--brand-primary);
+}
+
+.details-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.form-input {
+    padding: 10px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.1);
+}
+
+.permission-group {
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+}
+
+.permission-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.permission-option:hover {
+    background: var(--bg-hover);
+}
+
+.permission-option input[type="radio"],
+.permission-option input[type="checkbox"] {
+    margin-top: 2px;
+}
+
+.permission-details {
+    flex: 1;
+}
+
+.permission-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.permission-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.details-footer {
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 12px;
+}
+
+.btn-primary {
+    padding: 10px 24px;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    padding: 10px 24px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover);
+}
+
+.btn-danger {
+    padding: 10px 24px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.empty-subtext {
+    font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .users-container {
+        flex-direction: column;
+    }
+    
+    .user-list-panel {
+        width: 100%;
+        max-height: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="users-module-wrapper">
+    <div class="users-container">
+        <!-- User List -->
+        <div class="user-list-panel">
+            <div class="user-list-header">
+                <div class="user-list-controls">
+                    <span class="user-count">USERS — {{ user_count or 0 }}</span>
+                    {% if can_create %}
+                    <button class="btn-add-user" onclick="showCreateUser()" title="Add User">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                <input type="text" class="user-search" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+            </div>
+            
+            <div class="user-list" id="userList">
+                {% for user in users %}
+                <div class="user-item" data-user-id="{{ user.get('id', '') }}" 
+                     data-username="{{ user.get('username', '')|lower }}"
+                     data-name="{{ (user.get('first_name', '') + ' ' + user.get('last_name', ''))|lower }}"
+                     onclick="loadUser({{ user.get('id', 0) }})">
+                    <span class="user-role-dot role-{{ (user.get('permission_level', '')|lower) or 'module' }}"></span>
+                    <div class="user-info">
+                        <div class="user-name">
+                            {% if user.get('first_name') or user.get('last_name') %}
+                                {{ user.get('first_name', '') }} {{ user.get('last_name', '') }}
+                            {% else %}
+                                {{ user.get('username', 'Unknown') }}
+                            {% endif %}
+                        </div>
+                        <div class="user-role">
+                            {% if user.get('permission_level') == 'S1' %}System Administrator
+                            {% elif user.get('permission_level') == 'L3' %}App Operator
+                            {% elif user.get('permission_level') == 'L2' %}Systems Administrator
+                            {% elif user.get('permission_level') == 'L1' %}Module Administrator
+                            {% else %}Module User{% endif %}
+                        </div>
+                    </div>
+                    <span class="user-status status-{{ 'active' if user.get('is_active', True) else 'inactive' }}"></span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- User Details -->
+        <div class="user-details-panel">
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <i class="bi bi-person-circle empty-icon"></i>
+                <div class="empty-text">No user selected</div>
+                <div class="empty-subtext">Select a user from the list to view details</div>
+            </div>
+            
+            <!-- User Form -->
+            <div id="userForm" style="display: none; height: 100%; display: flex; flex-direction: column;">
+                <div class="details-header">
+                    <div class="details-header-top">
+                        <h3 class="details-title" id="panelTitle">Edit User</h3>
+                        <button class="btn-close" onclick="closePanel()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="details-tabs">
+                        <button class="tab-button active" onclick="switchTab('info')">User Info</button>
+                        <button class="tab-button" onclick="switchTab('permissions')">Permissions</button>
+                        <button class="tab-button" onclick="switchTab('security')">Security</button>
+                    </div>
+                </div>
+                
+                <div class="details-content">
+                    <!-- User Info Tab -->
+                    <div id="infoTab" class="tab-content active">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-input" id="username">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="email">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-input" id="firstName">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-input" id="lastName">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Department</label>
+                                <input type="text" class="form-input" id="department">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Position</label>
+                                <input type="text" class="form-input" id="position">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-input" id="phone">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permissions Tab -->
+                    <div id="permissionsTab" class="tab-content">
+                        <h4 style="margin-bottom: 16px; color: var(--text-primary);">Administrative Level</h4>
+                        <div class="permission-group">
+                            <label class="permission-option">
+                                <input type="radio" name="adminLevel" value="S1" id="permS1">
+                                <div class="permission-details">
+                                    <div class="permission-name">S1 - System Administrator</div>
+                                    <div class="permission-desc">Unrestricted system access. Can manage all instances, users, and system settings.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="radio" name="adminLevel" value="L3" id="permL3">
+                                <div class="permission-details">
+                                    <div class="permission-name">L3 - App Operator</div>
+                                    <div class="permission-desc">Global oversight via Horizon. Can manage all instances and view cross-instance analytics.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="radio" name="adminLevel" value="L2" id="permL2">
+                                <div class="permission-details">
+                                    <div class="permission-name">L2 - Systems Administrator</div>
+                                    <div class="permission-desc">Manage multiple instances. Can be assigned access to specific instances.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="radio" name="adminLevel" value="L1" id="permL1">
+                                <div class="permission-details">
+                                    <div class="permission-name">L1 - Module Administrator</div>
+                                    <div class="permission-desc">Manage users within assigned instance. Full module access.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="radio" name="adminLevel" value="" id="permNone" checked>
+                                <div class="permission-details">
+                                    <div class="permission-name">Module User</div>
+                                    <div class="permission-desc">Standard user with module-level permissions only.</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <h4 style="margin: 24px 0 16px; color: var(--text-primary);">Module Permissions</h4>
+                        <div class="permission-group">
+                            <label class="permission-option">
+                                <input type="checkbox" id="permM1">
+                                <div class="permission-details">
+                                    <div class="permission-name">M1 - Send/Ledger Module</div>
+                                    <div class="permission-desc">Access to package tracking, shipment management, and mail operations.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="checkbox" id="permM2">
+                                <div class="permission-details">
+                                    <div class="permission-name">M2 - Inventory/Flow Module</div>
+                                    <div class="permission-desc">Asset management, inventory tracking, and warehouse operations.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="checkbox" id="permM3A">
+                                <div class="permission-details">
+                                    <div class="permission-name">M3A - Fulfillment Customer</div>
+                                    <div class="permission-desc">Submit new fulfillment requests only.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="checkbox" id="permM3B">
+                                <div class="permission-details">
+                                    <div class="permission-name">M3B - Fulfillment Service</div>
+                                    <div class="permission-desc">Access to service queue and request management.</div>
+                                </div>
+                            </label>
+                            <label class="permission-option">
+                                <input type="checkbox" id="permM3C">
+                                <div class="permission-details">
+                                    <div class="permission-name">M3C - Fulfillment Manager</div>
+                                    <div class="permission-desc">Full fulfillment module access including insights.</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Tab -->
+                    <div id="securityTab" class="tab-content">
+                        <h4 style="margin-bottom: 16px; color: var(--text-primary);">Password Reset</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">New Password</label>
+                                <input type="password" class="form-input" id="password" placeholder="Leave blank to keep current">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Require Password Change</label>
+                                <label style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <input type="checkbox" id="mustChangePassword">
+                                    <span style="color: var(--text-secondary); font-size: 14px;">User must change password on next login</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="instanceAccessSection" style="display: none; margin-top: 32px;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-primary);">Instance Access (L2 Only)</h4>
+                            <div id="instanceAccessList" class="permission-group">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="details-footer">
+                    <button class="btn-primary" onclick="saveUser()">Save Changes</button>
+                    <button class="btn-secondary" onclick="closePanel()">Cancel</button>
+                    <button class="btn-danger" onclick="deleteUser()" id="deleteBtn" style="display: none;">Delete User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUserId = null;
+let currentUserLevel = '{{ current_user.permission_level }}';
+
+// Search functionality
+function filterUsers() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const userItems = document.querySelectorAll('.user-item');
+    
+    userItems.forEach(item => {
+        const username = item.getAttribute('data-username') || '';
+        const name = item.getAttribute('data-name') || '';
+        
+        if (username.includes(searchTerm) || name.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function loadUser(userId) {
+    if (!userId) return;
+    
+    // Update active state
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeItem = document.querySelector(`[data-user-id="${userId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+    
+    // Show form
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('userForm').style.display = 'flex';
+    
+    currentUserId = userId;
+    
+    // Load user data
+    fetch(`/users/api/user/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            // User Info
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('email').value = data.email || '';
+            document.getElementById('firstName').value = data.first_name || '';
+            document.getElementById('lastName').value = data.last_name || '';
+            document.getElementById('department').value = data.department || '';
+            document.getElementById('position').value = data.position || '';
+            document.getElementById('phone').value = data.phone || '';
+            
+            // Permissions
+            const permLevel = data.permission_level || '';
+            document.querySelectorAll('input[name="adminLevel"]').forEach(radio => {
+                radio.checked = radio.value === permLevel;
+            });
+            
+            const modulePerms = data.module_permissions || [];
+            document.getElementById('permM1').checked = modulePerms.includes('M1');
+            document.getElementById('permM2').checked = modulePerms.includes('M2');
+            document.getElementById('permM3A').checked = modulePerms.includes('M3A');
+            document.getElementById('permM3B').checked = modulePerms.includes('M3B');
+            document.getElementById('permM3C').checked = modulePerms.includes('M3C');
+            
+            // Security
+            document.getElementById('password').value = '';
+            document.getElementById('mustChangePassword').checked = data.must_change_password || false;
+            
+            // Instance Access for L2
+            if (permLevel === 'L2') {
+                document.getElementById('instanceAccessSection').style.display = 'block';
+                loadInstanceAccess(data.accessible_instances || []);
+            } else {
+                document.getElementById('instanceAccessSection').style.display = 'none';
+            }
+            
+            // Delete button visibility
+            document.getElementById('deleteBtn').style.display = checkCanDelete(data) ? 'inline-block' : 'none';
+            
+            // Update title
+            document.getElementById('panelTitle').textContent = 'Edit User';
+        })
+        .catch(error => {
+            console.error('Error loading user:', error);
+        });
+}
+
+function loadInstanceAccess(userInstances) {
+    fetch('/users/api/instances')
+        .then(response => response.json())
+        .then(instances => {
+            const container = document.getElementById('instanceAccessList');
+            container.innerHTML = '';
+            
+            instances.forEach(instance => {
+                const label = document.createElement('label');
+                label.className = 'permission-option';
+                label.innerHTML = `
+                    <input type="checkbox" name="instance_access" value="${instance.id}"
+                           ${userInstances.includes(instance.id) ? 'checked' : ''}>
+                    <div class="permission-details">
+                        <div class="permission-name">
+                            ${instance.display_name || instance.name}
+                            ${instance.is_sandbox ? '<span style="color: #f59e0b; margin-left: 8px;">[Sandbox]</span>' : ''}
+                        </div>
+                        <div class="permission-desc">Instance ID: ${instance.id}</div>
+                    </div>
+                `;
+                container.appendChild(label);
+            });
+        });
+}
+
+function showCreateUser() {
+    currentUserId = null;
+    
+    // Clear form
+    document.querySelectorAll('.form-input').forEach(input => input.value = '');
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('permNone').checked = true;
+    
+    // Update UI
+    document.getElementById('panelTitle').textContent = 'Create User';
+    document.getElementById('userForm').style.display = 'flex';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('deleteBtn').style.display = 'none';
+    
+    // Clear active selection
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Switch to info tab
+    switchTab('info');
+}
+
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(tabName)) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
+
+function saveUser() {
+    const userData = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        first_name: document.getElementById('firstName').value,
+        last_name: document.getElementById('lastName').value,
+        department: document.getElementById('department').value,
+        position: document.getElementById('position').value,
+        phone: document.getElementById('phone').value,
+        password: document.getElementById('password').value,
+        must_change_password: document.getElementById('mustChangePassword').checked,
+        permission_level: document.querySelector('input[name="adminLevel"]:checked').value,
+        module_permissions: []
+    };
+    
+    // Collect module permissions
+    if (document.getElementById('permM1').checked) userData.module_permissions.push('M1');
+    if (document.getElementById('permM2').checked) userData.module_permissions.push('M2');
+    if (document.getElementById('permM3A').checked) userData.module_permissions.push('M3A');
+    if (document.getElementById('permM3B').checked) userData.module_permissions.push('M3B');
+    if (document.getElementById('permM3C').checked) userData.module_permissions.push('M3C');
+    
+    // Collect instance access for L2
+    if (userData.permission_level === 'L2') {
+        userData.accessible_instances = [];
+        document.querySelectorAll('input[name="instance_access"]:checked').forEach(cb => {
+            userData.accessible_instances.push(parseInt(cb.value));
+        });
+    }
+    
+    const url = currentUserId ? `/users/api/user/${currentUserId}` : '/users/api/user';
+    const method = currentUserId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to save'));
+        }
+    });
+}
+
+function deleteUser() {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch(`/users/api/user/${currentUserId}`, {method: 'DELETE'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete'));
+            }
+        });
+}
+
+function closePanel() {
+    document.getElementById('userForm').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    currentUserId = null;
+}
+
+function checkCanDelete(user) {
+    const hierarchy = {'': 0, 'L1': 10, 'L2': 20, 'L3': 30, 'S1': 100};
+    const userLevel = hierarchy[currentUserLevel] || 0;
+    const targetLevel = hierarchy[user.permission_level || ''] || 0;
+    return userLevel > targetLevel;
+}
+
+// Listen for permission level changes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[name="adminLevel"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'L2') {
+                document.getElementById('instanceAccessSection').style.display = 'block';
+                if (!currentUserId) loadInstanceAccess([]);
+            } else {
+                document.getElementById('instanceAccessSection').style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

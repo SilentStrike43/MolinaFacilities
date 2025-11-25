@@ -263,7 +263,7 @@
                     <span class="nav-section-label">Administration</span>
                     <ul class="nav-list">
                         <li class="nav-item">
-                            <a href="{{ url_for('users.user_list', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                            <a href="{{ url_for('users.index', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
                                class="nav-link {{ 'active' if active=='users' else '' }}">
                                 <i class="nav-icon bi bi-people"></i>
                                 <span>Users</span>

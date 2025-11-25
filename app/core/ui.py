@@ -1,4 +1,4 @@
-# app/core/ui.py - FIXED VERSION
+# app/core/ui.py
 """
 UI context processor - injects global variables and user permissions into templates
 """

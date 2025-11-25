@@ -204,7 +204,7 @@
     </div>
     
     <div class="d-flex gap-3 justify-content-end mt-4">
-        <a href="{{ url_for('users.user_list', instance_id=user.instance_id) }}" class="btn btn-secondary btn-lg">
+        <a href="{{ url_for('users.index', instance_id=user.instance_id) }}" class="btn btn-secondary btn-lg">
             <i class="bi bi-x-circle"></i>
             Cancel
         </a>
@@ -457,7 +457,7 @@ document.getElementById('permissionsForm').addEventListener('submit', async (e) 
             
             // Redirect after 1 second
             setTimeout(() => {
-                window.location.href = '{{ url_for("users.user_list", instance_id=user.instance_id) }}';
+                window.location.href = '{{ url_for("users.index", instance_id=user.instance_id) }}';
             }, 1000);
         } else {
             throw new Error('Failed to save');

@@ -179,7 +179,7 @@
                 {{ inst.display_name or inst.name }}
             {% endif %}
         {% endfor %}
-        <a href="{{ url_for('users.user_list', instance_id=current_instance_id) }}" class="btn btn-sm btn-outline-primary ms-3">
+        <a href="{{ url_for('users.index', instance_id=current_instance_id) }}" class="btn btn-sm btn-outline-primary ms-3">
             <i class="bi bi-arrow-left"></i> Back to User List
         </a>
     </div>
