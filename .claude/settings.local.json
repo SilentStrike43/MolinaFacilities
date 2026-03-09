@@ -10,7 +10,8 @@
       "Bash(xargs grep -l \"raise NotImplementedError\")",
       "Bash(wc -l /c/GridlineService/app/modules/*/views.py /c/GridlineService/app/modules/*/views_*.py)",
       "Bash(find \"c:/GridlineService/app/modules/admin/templates/admin\" -name \"*.html\" -exec basename {} ;)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(ls c:/GridlineService/*.py c:/GridlineService/*.txt c:/GridlineService/*.cfg c:/GridlineService/*.ini)"
     ]
   }
 }
