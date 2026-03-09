@@ -17,7 +17,6 @@ Flask-WTF==1.2.1
 flask-talisman==1.1.0  # Security headers
 flask-seasurf==1.1.1  # CSRF protection
 cryptography==42.0.5  # Encryption
-python-ldap==3.4.3  # If integrating with Active Directory
 
 # ============== SCHEDULING & BACKGROUND TASKS ==============
 apscheduler==3.10.4
@@ -36,7 +35,6 @@ pytz==2024.1
 requests==2.31.0
 urllib3==2.2.0
 httpx==0.26.0
-zeep==4.2.1  # SOAP services if needed
 
 # ============== LOCAL FILE HANDLING ==============
 watchdog==3.0.0  # File system monitoring
@@ -53,7 +51,6 @@ flask-profiler==1.8.1  # Performance profiling
 gunicorn==21.2.0
 gevent==24.2.1  # Async workers
 supervisor==4.2.5  # Process management
-waitress==3.0.0  # Alternative to gunicorn for Windows
 
 # ============== UTILITIES ==============
 python-dotenv==1.0.0
