@@ -4,8 +4,12 @@ runtime: python311
 build:
   commands:
     build:
-      - pip install --upgrade pip
-      - pip install -r requirements.txt
+      - pip install --no-cache-dir Flask==3.1.2 Werkzeug==3.1.3 Jinja2==3.1.6 gunicorn==21.2.0
+      - pip install --no-cache-dir psycopg2-binary==2.9.9 bcrypt==4.2.1 Flask-WTF==1.2.1
+      - pip install --no-cache-dir apscheduler==3.10.4 python-dotenv==1.0.0 python-json-logger==2.0.7
+      - pip install --no-cache-dir requests==2.31.0 urllib3==2.2.0 httpx==0.26.0
+      - pip install --no-cache-dir openpyxl==3.1.5 pandas==2.2.0 pytz==2024.1
+      - pip install --no-cache-dir cryptography==42.0.5 flask-talisman==1.1.0 pyyaml==6.0.1
 
 run:
   runtime-version: "3.11"
