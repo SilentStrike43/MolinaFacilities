@@ -18,3 +18,7 @@ run:
       value: "8000"
     - name: FLASK_ENV
       value: production
+    - name: LOG_DIR
+      value: /tmp/logs
+    - name: UPLOAD_FOLDER
+      value: /tmp/uploads

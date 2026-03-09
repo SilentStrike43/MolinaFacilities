@@ -47,31 +47,39 @@ def setup_logging(app_name: str = "facilities_app", log_level: str = None, log_d
     
     level = getattr(logging, log_level.upper(), logging.INFO)
     
-    # Create logs directory
+    # Resolve log directory — env var wins, then explicit arg, then default
     if log_dir is None:
-        log_dir = Path(__file__).parent.parent / 'logs'
-    else:
-        log_dir = Path(log_dir)
-    
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
+        log_dir = os.environ.get('LOG_DIR') or str(Path(__file__).parent.parent / 'logs')
+    log_dir = Path(log_dir)
+
+    _file_logging_available = False
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        _file_logging_available = True
+    except Exception:
+        pass  # read-only filesystem (App Runner runtime) — console only
+
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
-    
+
     # Remove existing handlers
     root_logger.handlers.clear()
-    
+
     # ============== Console Handler ==============
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
-    
+
     console_format = ColoredFormatter(
         fmt='%(levelname)-8s [%(asctime)s] %(name)s: %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     console_handler.setFormatter(console_format)
     root_logger.addHandler(console_handler)
+
+    if not _file_logging_available:
+        logging.warning("File logging unavailable (read-only filesystem) — using console only")
+        return
     
     # ============== File Handler (General) ==============
     # Rotating file handler - rotates at 10MB, keeps 5 backups
