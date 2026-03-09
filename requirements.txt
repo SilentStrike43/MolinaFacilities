@@ -65,7 +65,6 @@ toml==0.10.2  # Config files
 # ============== BACKUP & MAINTENANCE ==============
 schedule==1.2.0  # Task scheduling
 python-crontab==3.0.0  # Cron job management
-]
 
 # ============== DEVELOPMENT/TESTING ==============
 # Put these in requirements-dev.txt
