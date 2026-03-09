@@ -120,4 +120,19 @@ Currently set to 2 workers. For 1 vCPU / 2 GB:
   - APScheduler runs inside the app; with >1 worker you may get duplicate
     scheduler jobs. If that happens, set workers=1 or add a scheduler lock.
 
+The key fingerprint is:
+SHA256:+X6cendfGSOdVyF0c2uIoR2Q3g6i/3On5lOj+Mq1o3g aws-eb
+The key's randomart image is:
++---[RSA 3072]----+
+|         .oo.o +.|
+|         .o + + =|
+|        ...o . o.|
+|       . + .  o o|
+|      . S o  . =.|
+|     .   . . o. =|
+|      .   ooo....|
+|       .oE.**.. o|
+|       .o=@O=. .o|
++----[SHA256]-----+
+
 ================================================================================
