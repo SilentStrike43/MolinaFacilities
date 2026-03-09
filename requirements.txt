@@ -9,20 +9,17 @@ click==8.3.0
 
 # ============== DATABASE ==============
 psycopg2-binary==2.9.9
-psycopg2-pool==1.2  # Connection pooling
+psycopg2-pool==1.2
 
 # ============== AUTHENTICATION & SECURITY ==============
 bcrypt==4.2.1
 Flask-WTF==1.2.1
-flask-talisman==1.1.0  # Security headers
-flask-seasurf==1.1.1  # CSRF protection
-cryptography==42.0.5  # Encryption
+flask-talisman==1.1.0
+flask-seasurf==1.1.1
+cryptography==42.0.5
 
-# ============== SCHEDULING & BACKGROUND TASKS ==============
+# ============== SCHEDULING ==============
 apscheduler==3.10.4
-celery==5.3.4  # Background tasks
-redis==5.0.1  # Local Redis for caching/queues
-flower==2.0.1  # Celery monitoring dashboard
 
 # ============== DATA PROCESSING ==============
 openpyxl==3.1.5
@@ -31,36 +28,20 @@ pandas==2.2.0
 python-dateutil==2.8.2
 pytz==2024.1
 
-# ============== EXTERNAL SERVICES & APIs ==============
+# ============== EXTERNAL APIs ==============
 requests==2.31.0
 urllib3==2.2.0
 httpx==0.26.0
 
-# ============== LOCAL FILE HANDLING ==============
-watchdog==3.0.0  # File system monitoring
-python-magic==0.4.27  # File type detection
-pikepdf==8.10.1  # PDF manipulation
+# ============== LOGGING ==============
+python-json-logger==2.0.7
+loguru==0.7.2
 
-# ============== MONITORING & LOGGING (LOCAL) ==============
-python-json-logger==2.0.7  # Structured logging
-loguru==0.7.2  # Better logging
-prometheus-flask-exporter==0.23.0  # Local metrics
-flask-profiler==1.8.1  # Performance profiling
-
-# ============== LOCAL DEPLOYMENT ==============
+# ============== SERVER ==============
 gunicorn==21.2.0
-gevent==24.2.1  # Async workers
-supervisor==4.2.5  # Process management
+gevent==24.2.1
 
 # ============== UTILITIES ==============
 python-dotenv==1.0.0
-colorama==0.4.6  # Windows terminal colors
-pyyaml==6.0.1  # Config files
-toml==0.10.2  # Config files
-
-# ============== BACKUP & MAINTENANCE ==============
-schedule==1.2.0  # Task scheduling
-python-crontab==3.0.0  # Cron job management
-
-# ============== DEVELOPMENT/TESTING ==============
-# Put these in requirements-dev.txt
+pyyaml==6.0.1
+toml==0.10.2
