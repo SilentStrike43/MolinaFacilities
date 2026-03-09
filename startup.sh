@@ -1,2 +1,2 @@
 #!/bin/bash
-gunicorn --bind=0.0.0.0:$PORT --workers 2 --timeout 600 app.app:application
+gunicorn --bind=0.0.0.0:${PORT:-8000} --workers=2 --timeout=120 wsgi:application

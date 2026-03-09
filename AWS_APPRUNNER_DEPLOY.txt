@@ -1,0 +1,123 @@
+================================================================================
+  GRIDLINE SERVICE — AWS APP RUNNER DEPLOYMENT GUIDE
+================================================================================
+
+DEPLOYMENT METHOD
+-----------------
+Use: "Source code repository" (GitHub) — NOT "Container registry"
+Configuration file: apprunner.yaml (automatic detection)
+
+
+WHERE TO PLACE apprunner.yaml
+------------------------------
+The file MUST be in the ROOT of the repository, at the same level as wsgi.py
+and requirements.txt. App Runner looks for it there automatically.
+
+Correct structure:
+  /
+  ├── apprunner.yaml        <-- HERE (root)
+  ├── wsgi.py
+  ├── requirements.txt
+  ├── startup.sh
+  └── app/
+      └── app.py
+
+
+AWS CONSOLE SETUP (Step by Step)
+----------------------------------
+1. Go to AWS App Runner → Create service
+2. Source: "Source code repository" → Connect GitHub → Select this repo
+3. Deployment trigger: Automatic (deploys on every push to main)
+4. Configuration:
+     [ ] Use a configuration file       <-- SELECT THIS OPTION
+     (NOT "Configure all settings here")
+   App Runner will read apprunner.yaml from the repo root automatically.
+   You do NOT need to enter a Build Command or Start Command manually.
+
+5. Service settings:
+     Service name:  gridline-service  (or whatever you prefer)
+     vCPU:          1 vCPU
+     Memory:        2 GB  (minimum recommended — pandas/psycopg2 need it)
+
+6. Networking → Outbound → Custom VPC  (if your RDS is inside a VPC)
+   Leave as default if using a publicly accessible database.
+
+7. Environment variables — add these in the console under
+   "Service settings → Environment variables" (secrets stay out of the repo):
+
+     SECRET_KEY            your-flask-secret-key
+     DATABASE_URL          (optional, if used)
+     DB_HOST               your-rds-or-postgres-host
+     DB_PORT               5432
+     DB_NAME               your-database-name
+     DB_USER               your-db-user
+     DB_PASSWORD           your-db-password
+     UPLOAD_FOLDER         /tmp/uploads
+     APP_VERSION           2.0.2
+     FEDEX_SHIP_API_KEY    (if using FedEx)
+     FEDEX_SHIP_SECRET_KEY (if using FedEx)
+     FEDEX_ACCOUNT_NUMBER  (if using FedEx)
+     FEDEX_TRACK_API_KEY   (if using FedEx)
+     FEDEX_TRACK_SECRET_KEY(if using FedEx)
+     USPS_CONSUMER_KEY     (if using USPS)
+     USPS_CONSUMER_SECRET  (if using USPS)
+     UPS_CLIENT_ID         (if using UPS)
+     UPS_CLIENT_SECRET     (if using UPS)
+     UPS_ACCOUNT_NUMBER    (if using UPS)
+
+   NOTE: Do NOT add PORT or FLASK_ENV here — they are already set in
+   apprunner.yaml and overriding them can cause the health check to fail.
+
+
+IF YOU ENTER COMMANDS MANUALLY (fallback if config file is not detected)
+--------------------------------------------------------------------------
+Only use this if App Runner does NOT detect apprunner.yaml.
+
+  Runtime:        Python 3
+  Runtime version: 3.11
+
+  Build command:
+    pip install --upgrade pip && pip install -r requirements.txt
+
+  Start command:
+    gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=120 wsgi:application
+
+  Port:  8000
+
+
+HEALTH CHECK
+-------------
+App Runner pings GET /health every 20 seconds after deployment.
+This route is defined in app/app.py and returns HTTP 200 immediately.
+It does NOT require a database connection.
+If the health check fails, the deployment is rolled back automatically.
+
+
+COMMON FAILURE CAUSES
+----------------------
+1. requirements.txt has a broken package (was the original problem — now fixed)
+2. wsgi.py is missing or not at the repo root
+3. app/core/config.py, middleware.py, blueprints.py, etc. not committed to git
+4. Environment variables for the database are missing — app will start but
+   crash on first real request
+5. UPLOAD_FOLDER set to a path that doesn't exist — set it to /tmp/uploads
+   (App Runner containers have /tmp writable; everything else is read-only)
+
+
+IMPORTANT: /tmp NOTE
+---------------------
+App Runner containers are ephemeral. Any file written to UPLOAD_FOLDER
+(/tmp/uploads) is lost when the instance restarts or scales.
+For persistent file storage, connect an S3 bucket and update the upload
+handling code to write there instead.
+
+
+GUNICORN WORKER COUNT
+----------------------
+Currently set to 2 workers. For 1 vCPU / 2 GB:
+  - 2 workers is the safe default
+  - Do NOT use gevent/async workers — they are not in requirements.txt
+  - APScheduler runs inside the app; with >1 worker you may get duplicate
+    scheduler jobs. If that happens, set workers=1 or add a scheduler lock.
+
+================================================================================
