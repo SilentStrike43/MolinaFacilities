@@ -9,7 +9,7 @@ build:
 
 run:
   runtime-version: "3.11"
-  command: /app/venv/bin/gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=120 wsgi:application
+  command: /app/venv/bin/gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=120 --log-level debug wsgi:application
   network:
     port: 8000
     env: PORT

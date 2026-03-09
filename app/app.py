@@ -6,8 +6,6 @@ and Azure App Service can answer its startup health-check probe
 before the schemas and scheduler have finished initialising.
 """
 import os
-import sys
-import signal
 import logging
 from datetime import datetime
 from flask import Flask, redirect, url_for
@@ -71,28 +69,9 @@ def create_app():
     def health():
         return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
-    # ── Graceful shutdown ──────────────────────────────────────────────────────
-    def _shutdown(signum, frame):
-        logger.info("Shutting down…")
-        try:
-            from app.core.database import cleanup_all_pools
-            cleanup_all_pools()
-        except Exception:
-            pass
-        try:
-            from app.scheduler import shutdown_scheduler
-            shutdown_scheduler()
-        except Exception:
-            pass
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, _shutdown)
-    signal.signal(signal.SIGTERM, _shutdown)
-
     logger.info("Application factory complete")
     return app
 
-application = create_app()
 
 # ── Direct execution (local dev) ───────────────────────────────────────────────
 if __name__ == '__main__':
