@@ -269,8 +269,8 @@
     <!-- Action Buttons -->
     <div class="mt-4">
         {% if is_own_profile %}
-        <a href="{{ url_for('users.edit_profile') }}" class="btn btn-primary">
-            <i class="bi bi-pencil"></i> Edit My Profile
+        <a href="{{ url_for('users.submit_request') }}" class="btn btn-primary">
+            <i class="bi bi-send"></i> Submit Request to change
         </a>
         {% elif can_admin_users or elevated %}
         <a href="{{ url_for('users.edit_user', uid=user.id) }}" class="btn btn-primary">

@@ -6,248 +6,465 @@
 
 {% block title %}Service Queue{% endblock %}
 
-{% block body %}
+{% block extra_css %}
 <style>
-    /* Use CSS variables for theme support */
-    .table td, .table th, h2, h5 {
-        color: var(--text-primary) !important;
+    /* ── Queue table ── */
+    .queue-wrap {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.75rem;
+        overflow: hidden;
     }
-    
-    /* Row color coding - keep these colorful */
-    tr.status-hold {
-        background-color: #ffc107 !important;
+    .queue-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .queue-table thead th {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        white-space: nowrap;
     }
-    
-    tr.status-review {
-        background-color: #fff3cd !important;
+    .queue-table tbody tr.request-row {
+        border-bottom: 1px solid var(--border-subtle);
+        transition: background 0.12s;
+        cursor: default;
     }
-    
-    tr.status-completed {
-        background-color: #d1e7dd !important;
+    .queue-table tbody tr.request-row:hover { background: var(--bg-hover); }
+    .queue-table td { padding: 0.7rem 1rem; color: var(--text-primary); vertical-align: middle; }
+
+    /* Status row colours */
+    tr.status-hold   td { background: rgba(245,158,11,0.08) !important; }
+    tr.status-review td { background: rgba(59,130,246,0.06) !important; }
+    tr.status-completed td { background: rgba(16,185,129,0.07) !important; }
+
+    /* ── Status badge ── */
+    .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        font-weight: 700;
     }
-    
-    /* Fix expanded details background */
-    .details-card {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-primary) !important;
+    .status-Received  { background: rgba(245,158,11,0.12); color: #d97706; }
+    .status-Hold      { background: rgba(239,68,68,0.10);  color: #dc2626; }
+    .status-Review    { background: rgba(59,130,246,0.10); color: #2563eb; }
+    .status-Completed { background: rgba(16,185,129,0.12); color: #059669; }
+    .status-Archive   { background: rgba(107,114,128,0.10); color: #6b7280; }
+
+    /* ── Action buttons ── */
+    .btn-details {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.3rem 0.75rem; border-radius: 6px; border: none;
+        font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        background: rgba(59,130,246,0.1); color: #2563eb;
+        transition: background 0.15s;
     }
-    
-    .details-card th,
-    .details-card td,
-    .details-card h5 {
-        color: var(--text-primary) !important;
+    .btn-details:hover { background: rgba(59,130,246,0.2); }
+    .btn-edit-inline {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.3rem 0.75rem; border-radius: 6px; border: none;
+        font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        background: rgba(245,158,11,0.1); color: #d97706;
+        transition: background 0.15s; text-decoration: none;
     }
-    
-    .description-box {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-primary) !important;
-        padding: 1rem;
+    .btn-edit-inline:hover { background: rgba(245,158,11,0.2); color: #b45309; }
+
+    /* ── Expanded details panel ── */
+    .details-panel td { padding: 0; background: var(--bg-secondary) !important; }
+    .details-inner {
+        padding: 1.25rem 1.25rem 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.25rem;
+    }
+    @media (max-width: 900px) { .details-inner { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .details-inner { grid-template-columns: 1fr; } }
+
+    .detail-col {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.625rem;
+        padding: 1rem 1.1rem;
+    }
+    .detail-col-title {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin-bottom: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /* Info rows */
+    .info-row { display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.83rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { color: var(--text-muted); font-weight: 500; }
+    .info-row .val { color: var(--text-primary); font-weight: 600; text-align: right; max-width: 60%; }
+
+    /* Notes display box */
+    .notes-box {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
         border-radius: 0.5rem;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.83rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-bottom: 0.625rem;
     }
-        /* FORCE TABLE TEXT TO BE VISIBLE */
-    .table tbody td,
-    .table tbody th,
-    table tbody td,
-    table tbody th {
-        color: #1a1d2e !important;
-        background: white !important;
+    .notes-box.empty { color: var(--text-muted); font-style: italic; }
+
+    /* Print options compact grid */
+    .print-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+        margin-top: 0.25rem;
+    }
+    .print-item { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 0.4rem; padding: 0.35rem 0.6rem; }
+    .print-item .pi-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+    .print-item .pi-value { font-size: 0.82rem; color: var(--text-primary); font-weight: 500; }
+
+    /* Status update form */
+    .form-select-sm-custom, .form-control-sm-custom {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        color: var(--text-primary) !important;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        padding: 0.45rem 0.75rem;
+        width: 100%;
+    }
+    .form-select-sm-custom:focus, .form-control-sm-custom:focus {
+        border-color: var(--current-module) !important;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(var(--current-module-rgb,255,140,66),0.15) !important;
+    }
+    .btn-update {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        background: var(--current-module);
+        color: #fff;
+        border: none;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        margin-top: 0.5rem;
+    }
+    .btn-update:hover { opacity: 0.85; }
+
+    /* Inline edit section */
+    .edit-section {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 1rem;
+        margin-top: 0.25rem;
+    }
+    .edit-section-inner {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.625rem;
+        padding: 1rem 1.1rem;
+    }
+    .edit-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.875rem;
+        margin-top: 0.75rem;
+    }
+    @media (max-width: 900px) { .edit-form-grid { grid-template-columns: 1fr 1fr; } }
+    .edit-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+        display: block;
+    }
+    .edit-form-full { grid-column: 1 / -1; }
+    .btn-save-edit {
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.5rem;
+        background: var(--current-module);
+        color: #fff;
+        border: none;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .btn-save-edit:hover { opacity: 0.85; }
+    .btn-cancel-edit {
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border-subtle);
+        font-size: 0.85rem;
+        cursor: pointer;
+        margin-left: 0.5rem;
     }
 
-    .table tbody tr,
-    table tbody tr {
-        background: white !important;
-    }
+    /* Files */
+    .file-list { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+    .file-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.83rem; }
+    .file-item:last-child { border-bottom: none; }
+    .file-item a { color: var(--text-primary); text-decoration: none; }
+    .file-item a:hover { text-decoration: underline; }
+    .file-size { color: var(--text-muted); font-size: 0.75rem; margin-left: auto; }
 
-    .table tbody tr:hover,
-    table tbody tr:hover {
-        background: #f9fafb !important;
+    /* Toggle edit chevron */
+    .edit-toggle-btn {
+        background: none;
+        border: 1px solid var(--border-subtle);
+        border-radius: 6px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.15s;
     }
+    .edit-toggle-btn:hover { border-color: var(--current-module); color: var(--current-module); }
 
-    /* Make sure ALL text in tables is visible */
-    table td *,
-    table th *,
-    .table td *,
-    .table th * {
-        color: #1a1d2e !important;
-    }
+    /* Empty queue */
+    .queue-empty { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .queue-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
 </style>
+{% endblock %}
 
-<div class="container-fluid">
-    <h2>Service Queue</h2>
-    
-    <table class="table table-hover">
+{% block body %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+    <div>
+        <h4 style="font-size:1.25rem; font-weight:700; color:var(--text-primary); margin:0;">
+            <i class="bi bi-list-check me-2" style="color:var(--current-module);"></i>Service Queue
+        </h4>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin:0.2rem 0 0;">
+            Active fulfillment requests{% if user_instance and user_instance != 'All' %} — Instance {{ user_instance }}{% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="queue-wrap">
+    <table class="queue-table">
         <thead>
             <tr>
-                <th>Request ID</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Submitted</th>
+                <th>ID</th>
                 <th>Customer</th>
+                <th>Status</th>
+                <th>Pages</th>
+                <th>Due</th>
+                <th>Submitted</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for request in requests %}
-            <tr class="status-{{ request.status|lower|replace(' ', '-') }}">
-                <td><strong>#{{ request.id }}</strong></td>
-                <td>{{ request.request_type }}</td>
+        {% for req in requests %}
+            <!-- Main row -->
+            <tr class="request-row status-{{ req.status|lower|replace(' ', '-') }}">
+                <td><strong>#{{ req.id }}</strong></td>
+                <td>{{ req.customer_name or req.submitted_by }}</td>
                 <td>
-                    <span class="badge bg-{{ 'warning' if request.status == 'Received' else ('info' if request.status == 'Hold' else ('warning' if request.status == 'Review' else 'success')) }}">
-                        {{ request.status }}
-                    </span>
+                    <span class="status-badge status-{{ req.status }}">{{ req.status }}</span>
                 </td>
-                <td>{{ request.submitted_at.strftime('%Y-%m-%d %H:%M') if request.submitted_at else 'N/A' }}</td>
-                <td>{{ request.customer_name or request.submitted_by }}</td>
+                <td style="color:var(--text-muted);">{{ req.page_count or 0 }}</td>
+                <td style="font-size:0.82rem; color:var(--text-muted);">
+                    {{ req.date_due.strftime('%m/%d/%Y') if req.date_due else '—' }}
+                </td>
+                <td style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">
+                    {{ req.submitted_at.strftime('%Y-%m-%d %H:%M') if req.submitted_at else '—' }}
+                </td>
                 <td>
-                    <!-- Expand/Collapse Button -->
-                    <button class="btn btn-sm btn-info" 
-                            type="button" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#details-{{ request.id }}"
-                            aria-expanded="false">
-                        <i class="bi bi-eye"></i> Details
-                    </button>
-                </td>
-            </tr>
-            
-            <!-- EXPANDABLE DETAILS ROW -->
-            <tr class="collapse" id="details-{{ request.id }}">
-                <td colspan="6">
-                    <div class="card details-card">
-                        <div class="card-body">
-                            <div class="row">
-                                <!-- Left Column: Request Details -->
-                                <div class="col-md-6">
-                                    <h5><i class="bi bi-info-circle"></i> Request Details</h5>
-                                    <table class="table table-sm">
-                                        <tr>
-                                            <th>Created By:</th>
-                                            <td>{{ request.created_by_name or request.submitted_by }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th style="width: 150px;">Request ID:</th>
-                                            <td><strong>#{{ request.id }}</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Type:</th>
-                                            <td>{{ request.request_type }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Current Status:</th>
-                                            <td>
-                                                <span class="badge bg-{{ 'warning' if request.status == 'Received' else ('info' if request.status == 'Hold' else ('warning' if request.status == 'Review' else 'success')) }}">
-                                                    {{ request.status }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Page Count:</th>
-                                            <td><strong>{{ request.page_count or 0 }} pages</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Submitted:</th>
-                                            <td>{{ request.submitted_at.strftime('%Y-%m-%d %H:%M') if request.submitted_at else 'N/A' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>Submitted By:</th>
-                                            <td>{{ request.submitted_by }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                
-                                <!-- Right Column: Update Status -->
-                                <div class="col-md-6">
-                                    <h5><i class="bi bi-arrow-repeat"></i> Update Status</h5>
-                                    <form method="POST" action="{{ url_for('fulfillment.queue', instance_id=instance_id) }}" class="mt-3">
-                                        <input type="hidden" name="rid" value="{{ request.id }}">
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label"><strong>Change Status:</strong></label>
-                                            <select name="status" class="form-select" required>
-                                                <option value="Received" {{ 'selected' if request.status == 'Received' else '' }}>Received</option>
-                                                <option value="Hold" {{ 'selected' if request.status == 'Hold' else '' }}>Hold</option>
-                                                <option value="Review" {{ 'selected' if request.status == 'Review' else '' }}>Review</option>
-                                                <option value="Completed" {{ 'selected' if request.status == 'Completed' else '' }}>Complete</option>
-                                                <option value="Archive" {{ 'selected' if request.status == 'Archive' else '' }}>Archive</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label">Notes (optional):</label>
-                                            <textarea name="notes" class="form-control" rows="3" placeholder="Add any notes about this status change..."></textarea>
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="bi bi-save"></i> Update Status
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                            
-                            <!-- Description -->
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h5><i class="bi bi-file-text"></i> Description / Requirements</h5>
-                                    <div class="description-box">
-                                        {{ request.description or 'No description provided' }}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Attachments / Files -->
-                            {% if request.files and request.files|length > 0 %}
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h5><i class="bi bi-paperclip"></i> Uploaded Files</h5>
-                                    <div class="list-group">
-                                        {% for file in request.files %}
-                                        <a href="{{ url_for('fulfillment.download_file', file_id=file.id, instance_id=instance_id) }}" 
-                                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                                           target="_blank">
-                                            <span>
-                                                <i class="bi bi-file-pdf text-danger"></i>
-                                                <strong>{{ file.orig_name }}</strong>
-                                            </span>
-                                            <span class="badge bg-secondary">{{ (file.bytes / 1024) | round(1) }} KB</span>
-                                        </a>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <p class="text-muted"><i class="bi bi-info-circle"></i> No files uploaded</p>
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                            <!-- Internal Notes -->
-                            {% if request.notes %}
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <h5><i class="bi bi-sticky"></i> Internal Notes</h5>
-                                    <div class="alert alert-info">
-                                        {{ request.notes }}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
+                    <div style="display:flex; gap:0.35rem; align-items:center;">
+                        <button class="btn-details"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#details-{{ req.id }}"
+                                aria-expanded="false">
+                            <i class="bi bi-eye"></i> View
+                        </button>
                     </div>
                 </td>
             </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="text-center text-muted">
-                    <i class="bi bi-inbox"></i> No requests in queue
+
+            <!-- Expanded details panel -->
+            <tr class="collapse details-panel" id="details-{{ req.id }}">
+                <td colspan="7">
+                    <div class="details-inner">
+
+                        <!-- Col 1: Request Info -->
+                        <div class="detail-col">
+                            <div class="detail-col-title"><i class="bi bi-info-circle"></i> Request Info</div>
+                            <div class="info-row"><span class="lbl">ID</span><span class="val">#{{ req.id }}</span></div>
+                            <div class="info-row"><span class="lbl">Submitted by</span><span class="val">{{ req.submitted_by }}</span></div>
+                            <div class="info-row"><span class="lbl">Status</span><span class="val"><span class="status-badge status-{{ req.status }}">{{ req.status }}</span></span></div>
+                            <div class="info-row"><span class="lbl">Pages</span><span class="val">{{ req.page_count or 0 }}</span></div>
+                            <div class="info-row"><span class="lbl">Submitted</span><span class="val">{{ req.submitted_at.strftime('%Y-%m-%d %H:%M') if req.submitted_at else '—' }}</span></div>
+                            <div class="info-row"><span class="lbl">Due</span><span class="val">{{ req.date_due.strftime('%Y-%m-%d') if req.date_due else '—' }}</span></div>
+
+                            <!-- Print options compact -->
+                            {% if req.print_options %}
+                            <div class="detail-col-title" style="margin-top:0.875rem;"><i class="bi bi-printer"></i> Print Options</div>
+                            <div class="print-grid">
+                                {% for key, label in [('request_category','Category'),('print_type','Print Type'),('paper_size','Paper Size'),('paper_stock','Stock'),('paper_color','Color'),('paper_sides','Sides'),('binding','Binding')] %}
+                                {% if req.print_options.get(key) and req.print_options.get(key) != 'N/A' %}
+                                <div class="print-item">
+                                    <div class="pi-label">{{ label }}</div>
+                                    <div class="pi-value">{{ req.print_options.get(key) }}</div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Files -->
+                            {% if req.files %}
+                            <div class="detail-col-title" style="margin-top:0.875rem;"><i class="bi bi-paperclip"></i> Files</div>
+                            <ul class="file-list">
+                                {% for file in req.files %}
+                                <li class="file-item">
+                                    <i class="bi bi-file-pdf text-danger" style="flex-shrink:0;"></i>
+                                    <a href="{{ url_for('fulfillment.download_file', file_id=file.id, instance_id=instance_id) }}" target="_blank">{{ file.orig_name }}</a>
+                                    <span class="file-size">{{ (file.bytes / 1024) | round(1) }} KB</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+
+                        <!-- Col 2: Submission Notes (shown alongside status dropdown) -->
+                        <div class="detail-col">
+                            <div class="detail-col-title"><i class="bi bi-file-text"></i> Description &amp; Notes</div>
+
+                            <div style="font-size:0.74rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem;">Description / Requirements</div>
+                            <div class="notes-box {{ 'empty' if not req.description }}">
+                                {{ req.description or 'No description provided.' }}
+                            </div>
+
+                            <div style="font-size:0.74rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem; margin-top:0.625rem;">Additional Notes</div>
+                            <div class="notes-box {{ 'empty' if not req.notes }}">
+                                {{ req.notes or 'No additional notes.' }}
+                            </div>
+                        </div>
+
+                        <!-- Col 3: Update Status -->
+                        <div class="detail-col">
+                            <div class="detail-col-title"><i class="bi bi-arrow-repeat"></i> Update Status</div>
+                            <form method="POST" action="{{ url_for('fulfillment.queue', instance_id=instance_id) }}">
+                                <input type="hidden" name="rid" value="{{ req.id }}">
+                                <div style="margin-bottom:0.625rem;">
+                                    <label class="edit-label">Change Status</label>
+                                    <select name="status" class="form-select-sm-custom" required>
+                                        <option value="Received" {{ 'selected' if req.status == 'Received' }}>Received</option>
+                                        <option value="Hold"     {{ 'selected' if req.status == 'Hold' }}>Hold</option>
+                                        <option value="Review"   {{ 'selected' if req.status == 'Review' }}>Review</option>
+                                        <option value="Completed"{{ 'selected' if req.status == 'Completed' }}>Completed</option>
+                                        <option value="Archive"  {{ 'selected' if req.status == 'Archive' }}>Archive</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:0.625rem;">
+                                    <label class="edit-label">Internal Note (optional)</label>
+                                    <textarea name="notes" class="form-control-sm-custom" rows="3"
+                                              placeholder="Add a note about this status change…">{{ req.notes or '' }}</textarea>
+                                </div>
+                                <button type="submit" class="btn-update">
+                                    <i class="bi bi-save me-1"></i>Update Status
+                                </button>
+                            </form>
+
+                            <!-- Edit Request toggle -->
+                            <div style="margin-top:0.875rem; border-top:1px solid var(--border-subtle); padding-top:0.75rem;">
+                                <button class="edit-toggle-btn" type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#edit-{{ req.id }}">
+                                    <i class="bi bi-pencil-square"></i> Edit Request Details
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Full-width inline edit form (collapsed by default) -->
+                        <div class="edit-section collapse" id="edit-{{ req.id }}">
+                            <div class="edit-section-inner">
+                                <div class="detail-col-title"><i class="bi bi-pencil-square"></i> Edit Request Details</div>
+                                <form method="POST" action="{{ url_for('fulfillment.edit_request', request_id=req.id, instance_id=instance_id) }}">
+                                    <div class="edit-form-grid">
+
+                                        <div>
+                                            <label class="edit-label">Page Count</label>
+                                            <input type="number" name="total_pages" class="form-control-sm-custom"
+                                                   value="{{ req.page_count or 0 }}" min="0">
+                                        </div>
+
+                                        <div>
+                                            <label class="edit-label">Date Due</label>
+                                            <input type="date" name="date_due" class="form-control-sm-custom"
+                                                   value="{{ req.date_due.strftime('%Y-%m-%d') if req.date_due else '' }}">
+                                        </div>
+
+                                        <div>
+                                            <label class="edit-label">Status</label>
+                                            <select name="status" class="form-select-sm-custom">
+                                                <option value="Received" {{ 'selected' if req.status == 'Received' }}>Received</option>
+                                                <option value="Hold"     {{ 'selected' if req.status == 'Hold' }}>Hold</option>
+                                                <option value="Review"   {{ 'selected' if req.status == 'Review' }}>Review</option>
+                                                <option value="Completed"{{ 'selected' if req.status == 'Completed' }}>Completed</option>
+                                                <option value="Archive"  {{ 'selected' if req.status == 'Archive' }}>Archive</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="edit-form-full">
+                                            <label class="edit-label">Description / Requirements <span style="color:#ef4444;">*</span></label>
+                                            <textarea name="description" class="form-control-sm-custom" rows="3"
+                                                      required>{{ req.description or '' }}</textarea>
+                                        </div>
+
+                                        <div class="edit-form-full">
+                                            <label class="edit-label">Additional Notes</label>
+                                            <textarea name="notes" class="form-control-sm-custom" rows="2"
+                                                      placeholder="Any additional context or internal notes…">{{ req.notes or '' }}</textarea>
+                                        </div>
+
+                                    </div>
+                                    <div style="margin-top:0.875rem;">
+                                        <button type="submit" class="btn-save-edit">
+                                            <i class="bi bi-check-lg me-1"></i>Save Changes
+                                        </button>
+                                        <button type="button" class="btn-cancel-edit"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#edit-{{ req.id }}">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
                 </td>
             </tr>
-            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7">
+                    <div class="queue-empty">
+                        <i class="bi bi-inbox"></i>
+                        No requests in queue
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
         </tbody>
     </table>
 </div>
-
 {% endblock %}

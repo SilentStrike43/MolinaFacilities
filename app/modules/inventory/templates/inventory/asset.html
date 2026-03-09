@@ -469,7 +469,7 @@
                        value="{{ edit.product if edit else '' }}"
                        placeholder="Enter product name" required>
             </div>
-            
+
             <div class="form-group-modern">
                 <label class="form-label-modern">
                     <i class="bi bi-building"></i> Manufacturer
@@ -477,6 +477,35 @@
                 <input type="text" class="form-control-modern" name="Manufacturer"
                        value="{{ edit.manufacturer if edit else '' }}"
                        placeholder="Enter manufacturer">
+            </div>
+        </div>
+
+        <!-- Vendor Field -->
+        <div class="form-row-modern">
+            <div class="form-group-modern" style="position:relative;">
+                <label class="form-label-modern">
+                    <i class="bi bi-truck"></i> Vendor
+                    <a href="{{ url_for('inventory.vendor_book') }}" target="_blank"
+                       style="font-size:0.75rem;font-weight:400;color:#00A3AD;margin-left:0.5rem;text-transform:none;letter-spacing:normal;">
+                        Manage Vendor Book <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </label>
+                <input type="hidden" name="vendor_id" id="vendorId"
+                       value="{{ edit.vendor_id if edit and edit.vendor_id else '' }}">
+                <input type="hidden" name="save_new_vendor" id="saveNewVendor" value="0">
+                <input type="text" class="form-control-modern" id="vendorInput" name="vendor_name"
+                       value="{{ edit.vendor_company if edit and edit.vendor_company else '' }}"
+                       placeholder="Type to search Vendor Book..."
+                       autocomplete="off">
+                <div id="vendorDropdown" style="
+                    display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
+                    background:var(--bg-card); border:1px solid var(--border-color);
+                    border-radius:0.625rem; box-shadow:0 8px 24px rgba(0,0,0,0.15);
+                    z-index:200; max-height:220px; overflow-y:auto;
+                "></div>
+                <small style="color:var(--text-muted);margin-top:0.25rem;">
+                    Select from Vendor Book or type a new name — you'll be prompted to save it.
+                </small>
             </div>
         </div>
         
@@ -639,9 +668,14 @@
                             <a href="{{ url_for('inventory.asset_edit', aid=r.id) }}" class="btn-action" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a href="{{ url_for('inventory.ledger', asset_id=r.id) }}" class="btn-action" title="View Ledger">
+                            <a href="{{ url_for('inventory.ledger') }}" class="btn-action" title="View Ledger">
                                 <i class="bi bi-clipboard-data"></i>
                             </a>
+                            <button type="button" class="btn-action" title="Delete asset and free SKU"
+                                    onclick="deleteAsset({{ r.id }}, '{{ r.sku }}')"
+                                    style="background: rgba(239,68,68,0.1); color: #ef4444;">
+                                <i class="bi bi-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -663,9 +697,8 @@
 document.getElementById('categorySelect')?.addEventListener('change', function() {
   const prefix = this.options[this.selectedIndex].dataset.prefix;
   const skuPreview = document.getElementById('skuPreview');
-  
+
   if (prefix) {
-    // Fetch next SKU from server
     fetch(`{{ url_for('inventory.get_next_sku', category='') }}${prefix}`)
       .then(response => response.json())
       .then(data => {
@@ -678,5 +711,98 @@ document.getElementById('categorySelect')?.addEventListener('change', function()
       });
   }
 });
+
+function deleteAsset(assetId, sku) {
+  if (!confirm(`Delete asset ${sku}?\n\nThis will remove it from the inventory list and free the SKU number for reuse. Ledger history is preserved.`)) return;
+  fetch(`/inventory/asset/${assetId}/delete`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.querySelector(`button[onclick*="deleteAsset(${assetId},"]`)?.closest('tr');
+        if (row) row.remove();
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(() => alert('Request failed'));
+}
+
+// ---- Vendor autocomplete ----
+(function() {
+  const input    = document.getElementById('vendorInput');
+  const idField  = document.getElementById('vendorId');
+  const saveFlag = document.getElementById('saveNewVendor');
+  const dropdown = document.getElementById('vendorDropdown');
+  if (!input) return;
+
+  let debounceTimer = null;
+
+  input.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    const q = this.value.trim();
+    // Clear vendor_id if user edits the text manually
+    idField.value = '';
+    saveFlag.value = '0';
+
+    if (q.length < 2) { dropdown.style.display = 'none'; return; }
+
+    debounceTimer = setTimeout(() => {
+      fetch(`/inventory/api/vendor-search?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(results => {
+          dropdown.innerHTML = '';
+          if (results.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+          }
+          results.forEach(v => {
+            const label = v.company + (v.contact_name ? ` — ${v.contact_name}` : '');
+            const industry = v.industry_type ? `<small style="color:var(--text-muted);"> · ${v.industry_type}</small>` : '';
+            const item = document.createElement('div');
+            item.innerHTML = `<strong>${v.company}</strong>${v.contact_name ? ' <span style="color:var(--text-muted);">· ' + v.contact_name + '</span>' : ''}${industry}`;
+            item.style.cssText = 'padding:0.625rem 1rem;cursor:pointer;border-bottom:1px solid var(--border-subtle);color:var(--text-primary);font-size:0.9375rem;';
+            item.addEventListener('mouseenter', () => item.style.background = 'var(--bg-hover)');
+            item.addEventListener('mouseleave', () => item.style.background = '');
+            item.addEventListener('mousedown', (e) => {
+              e.preventDefault();
+              input.value = v.company;
+              idField.value = v.id;
+              saveFlag.value = '0';
+              dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(item);
+          });
+          dropdown.style.display = 'block';
+        })
+        .catch(() => { dropdown.style.display = 'none'; });
+    }, 220);
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+  });
+  input.addEventListener('focus', () => {
+    if (input.value.trim().length >= 2 && dropdown.innerHTML) {
+      dropdown.style.display = 'block';
+    }
+  });
+
+  // On form submit: if vendor name typed but no ID, ask to save
+  const form = input.closest('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const name = input.value.trim();
+      const id   = idField.value.trim();
+      if (name && !id) {
+        e.preventDefault();
+        if (confirm(`"${name}" is not in the Vendor Book.\n\nSave it as a new vendor?`)) {
+          saveFlag.value = '1';
+        }
+        // Submit regardless (with or without saving to vendor book)
+        form.submit();
+      }
+    });
+  }
+})();
 </script>
 {% endblock %}

@@ -61,25 +61,5 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">System Actions</h5>
-                </div>
-                <div class="card-body">
-                    <a href="{{ url_for('horizon.backup_database') }}" class="btn btn-outline-primary me-2">
-                        <i class="bi bi-download"></i> Backup Database
-                    </a>
-                    <a href="{{ url_for('horizon.system_logs') }}" class="btn btn-outline-info me-2">
-                        <i class="bi bi-file-text"></i> View Logs
-                    </a>
-                    <button class="btn btn-outline-warning" onclick="if(confirm('Clear cache?')) alert('Cache cleared!')">
-                        <i class="bi bi-trash"></i> Clear Cache
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

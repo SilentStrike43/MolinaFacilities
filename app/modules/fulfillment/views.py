@@ -55,27 +55,20 @@ def get_instance_context():
 def should_filter_by_instance(user):
     """
     Determine if user should see only their instance's data.
-    
-    Returns:
-        (bool, int): (should_filter, instance_id)
-        - L3+ users: (False, None) - see all instances
-        - Regular users: (True, instance_id) - see only their instance
+
+    All users (including L3/S1) are scoped to the currently active instance.
+    L3/S1 can switch to any instance freely, but when viewing instance X
+    they only see instance X's data — no cross-instance bleed.
     """
     if not user:
         return (True, None)
-    
-    # L3+ can see across all instances
-    permission_level = user.get('permission_level', '')
-    if permission_level in ['L1', 'L2', 'L3', 'S1']:
-        return (False, None)
-    
-    # Regular users see only their instance (middleware already set it)
+
     try:
         instance_id = get_current_instance()
-        return (True, instance_id)
     except RuntimeError:
         instance_id = user.get('instance_id')
-        return (True, instance_id)
+
+    return (True, instance_id)
 
 
 # ---------- Database helpers ----------
@@ -136,22 +129,24 @@ def list_queue(filter_by_instance=False, instance_id=None):
         
         base_where = "fr.is_archived = FALSE"
         params = []
-        
-        # Apply instance filter if needed
+
+        # Apply instance filter — use fr.instance_id (reliably set on all new rows)
+        # with fallback to sr.instance_id for legacy rows that predate the column
         if filter_by_instance and instance_id is not None:
-            base_where += " AND sr.instance_id = %s"
-            params.append(instance_id)
-        
+            base_where += " AND (fr.instance_id = %s OR (fr.instance_id IS NULL AND sr.instance_id = %s))"
+            params.extend([instance_id, instance_id])
+
         query = f"""
-            SELECT 
+            SELECT
                 fr.id,
                 sr.created_at,
                 sr.requester_name,
                 sr.description,
-                sr.instance_id,
+                COALESCE(fr.instance_id, sr.instance_id) AS instance_id,
                 fr.status,
                 fr.is_archived,
                 fr.total_pages,
+                fr.date_due,
                 fr.options_json,
                 fr.notes,
                 fr.created_by_id,
@@ -161,10 +156,10 @@ def list_queue(filter_by_instance=False, instance_id=None):
             WHERE {base_where}
             ORDER BY sr.created_at DESC
         """
-        
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
+
         result = []
         for row in rows:
             result.append({
@@ -176,6 +171,7 @@ def list_queue(filter_by_instance=False, instance_id=None):
                 'status': row['status'] or 'Received',
                 'is_archived': row['is_archived'],
                 'total_pages': row['total_pages'] or 0,
+                'date_due': row['date_due'],
                 'options_json': row['options_json'],
                 'notes': row['notes'],
                 'created_by_id': row['created_by_id'],
@@ -193,23 +189,25 @@ def list_archive(filter_by_instance=False, instance_id=None):
         
         base_where = "fr.is_archived = TRUE"
         params = []
-        
-        # Apply instance filter if needed
+
+        # Apply instance filter — use fr.instance_id (reliably set on all new rows)
+        # with fallback to sr.instance_id for legacy rows that predate the column
         if filter_by_instance and instance_id is not None:
-            base_where += " AND sr.instance_id = %s"
-            params.append(instance_id)
-        
+            base_where += " AND (fr.instance_id = %s OR (fr.instance_id IS NULL AND sr.instance_id = %s))"
+            params.extend([instance_id, instance_id])
+
         query = f"""
-            SELECT 
+            SELECT
                 fr.id,
                 sr.created_at,
                 sr.requester_name,
                 sr.description,
-                sr.instance_id,
+                COALESCE(fr.instance_id, sr.instance_id) AS instance_id,
                 fr.status,
                 fr.completed_at,
                 fr.is_archived,
                 fr.total_pages,
+                fr.date_due,
                 fr.options_json,
                 fr.notes,
                 fr.created_by_id,
@@ -221,10 +219,10 @@ def list_archive(filter_by_instance=False, instance_id=None):
             WHERE {base_where}
             ORDER BY fr.completed_at DESC, sr.created_at DESC
         """
-        
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
+
         result = []
         for row in rows:
             result.append({
@@ -237,6 +235,7 @@ def list_archive(filter_by_instance=False, instance_id=None):
                 'completed_at': row['completed_at'],
                 'is_archived': row['is_archived'],
                 'total_pages': row['total_pages'] or 0,
+                'date_due': row['date_due'],
                 'options_json': row['options_json'],
                 'notes': row['notes'],
                 'created_by_id': row['created_by_id'],
@@ -249,13 +248,25 @@ def list_archive(filter_by_instance=False, instance_id=None):
         return result
 
 
-def get_request(request_id: int):
-    """Get a single request."""
+def get_request(request_id: int, user=None):
+    """Get a single request WITH instance security check."""
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM fulfillment_requests WHERE id=%s", (request_id,))
+        cursor.execute("""
+            SELECT fr.*, sr.instance_id 
+            FROM fulfillment_requests fr
+            JOIN service_requests sr ON fr.service_request_id = sr.id
+            WHERE fr.id=%s
+        """, (request_id,))
         row = cursor.fetchone()
         cursor.close()
+        
+        # Security check if user provided
+        if row and user:
+            should_filter, allowed_instance = should_filter_by_instance(user)
+            if should_filter and row['instance_id'] != allowed_instance:
+                return None  # Access denied
+        
         return row
 
 
@@ -348,6 +359,7 @@ def request_form():
         
         # GET PRINT OPTIONS
         print_options = {
+            'request_category': request.form.get('request_category', 'Standard Mail / Letter'),
             'print_type': request.form.get('print_type', 'Black and White'),
             'paper_size': request.form.get('paper_size', '8.5x11'),
             'paper_stock': request.form.get('paper_stock', '#20 White Paper'),
@@ -396,14 +408,15 @@ def request_form():
                 # STEP 2: Insert into fulfillment_requests
                 cursor.execute("""
                     INSERT INTO fulfillment_requests (
-                        service_request_id, description, 
-                        total_pages, date_submitted, status, is_archived, 
+                        instance_id, service_request_id, description,
+                        total_pages, date_submitted, status, is_archived,
                         options_json,
                         created_by_id, created_by_name
                     )
-                    VALUES (%s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
+                    instance_id,
                     service_request_id,
                     description,
                     page_count,
@@ -583,6 +596,7 @@ def queue():
             'location': None,
             'description': row['description'],
             'page_count': row.get('total_pages', 0),
+            'date_due': row.get('date_due'),
             'priority': 'normal',
             'files': files,
             'notes': row.get('notes'),
@@ -609,14 +623,36 @@ def download_file(file_id: int):
     
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
+# SECURITY: Join with fulfillment_requests to check instance
         cursor.execute("""
-            SELECT orig_name, stored_name, ext
-            FROM fulfillment_files
-            WHERE id = %s AND ok = TRUE
+            SELECT 
+                ff.orig_name, 
+                ff.stored_name, 
+                ff.ext,
+                fr.id as request_id,
+                sr.instance_id
+            FROM fulfillment_files ff
+            JOIN fulfillment_requests fr ON ff.request_id = fr.id
+            JOIN service_requests sr ON fr.service_request_id = sr.id
+            WHERE ff.id = %s AND ff.ok = TRUE
         """, (file_id,))
-        
+
         row = cursor.fetchone()
         cursor.close()
+
+    if not row:
+        flash("File not found.", "danger")
+        return redirect(url_for("fulfillment.queue"))
+
+    # SECURITY CHECK: Verify user can access this instance
+    file_instance = row['instance_id']
+    should_filter, allowed_instance = should_filter_by_instance(cu)
+
+    if should_filter and file_instance != allowed_instance:
+        record_audit(cu, "SECURITY_VIOLATION", "fulfillment", 
+                    f"Attempted to download file {file_id} from instance {file_instance}")
+        flash("Access denied: File not found.", "danger")
+        return redirect(url_for("fulfillment.queue"))
     
     if not row:
         flash("File not found.", "danger")
@@ -654,6 +690,17 @@ def view_request(request_id: int):
     
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
+
+        # SECURITY CHECK: Verify user can access this instance's data
+        request_instance = row.get('instance_id')
+        should_filter, allowed_instance = should_filter_by_instance(cu)
+
+        if should_filter and request_instance != allowed_instance:
+            # User trying to access request from different instance!
+            record_audit(cu, "SECURITY_VIOLATION", "fulfillment", 
+                        f"Attempted to access request #{request_id} from instance {request_instance}")
+            flash("Access denied: Request not found.", "danger")
+            return redirect(url_for("fulfillment.queue"))
         
         cursor.execute("""
             SELECT 
@@ -710,62 +757,63 @@ def edit_request(request_id: int):
     
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
-        
+        cursor.execute("""
+            SELECT fr.*, sr.instance_id, sr.created_at as sr_created_at
+            FROM fulfillment_requests fr
+            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
+            WHERE fr.id = %s
+        """, (request_id,))
+        row = cursor.fetchone()
+        if not row:
+            cursor.close()
+            flash("Request not found.", "warning")
+            return redirect(url_for("fulfillment.queue"))
+
         if request.method == "POST":
             description = request.form.get("description", "").strip()
             total_pages = int(request.form.get("total_pages", 0) or 0)
             date_due = request.form.get("date_due", "") or None
             notes = request.form.get("notes", "").strip()
             status = request.form.get("status", "Received")
-            
+
+            # SECURITY CHECK: Verify user can edit this instance's data
+            should_filter, allowed_instance = should_filter_by_instance(cu)
+            if should_filter and row.get('instance_id') != allowed_instance:
+                cursor.close()
+                record_audit(cu, "SECURITY_VIOLATION", "fulfillment",
+                             f"Attempted to edit request #{request_id} from instance {row.get('instance_id')}")
+                flash("Access denied: Request not found.", "danger")
+                return redirect(url_for("fulfillment.queue"))
+
             if not description:
+                cursor.close()
                 flash("Description is required.", "danger")
-                return redirect(url_for("fulfillment.edit_request", request_id=request_id))
-            
+                return redirect(url_for("fulfillment.edit_request", request_id=request_id,
+                                        instance_id=instance_id))
+
             cursor.execute("""
                 UPDATE fulfillment_requests
-                SET description = %s,
-                    total_pages = %s,
-                    date_due = %s,
-                    notes = %s,
-                    status = %s,
-                    assigned_staff_id = %s,
-                    assigned_staff_name = %s
+                SET description = %s, total_pages = %s, date_due = %s,
+                    notes = %s, status = %s,
+                    assigned_staff_id = %s, assigned_staff_name = %s
                 WHERE id = %s
-            """, (description, total_pages, date_due, notes, status, cu['id'], cu['username'], request_id))
-            
+            """, (description, total_pages, date_due, notes, status,
+                  cu['id'], cu['username'], request_id))
+
             cursor.execute("""
                 UPDATE service_requests
-                SET description = %s,
-                    status = %s,
-                    assigned_to = %s
+                SET description = %s, status = %s, assigned_to = %s
                 WHERE id = (SELECT service_request_id FROM fulfillment_requests WHERE id = %s)
             """, (description, status, cu['id'], request_id))
-            
+
             conn.commit()
             cursor.close()
-            
-            record_audit(cu, "edit_fulfillment_request", "fulfillment", 
-                        f"Edited request #{request_id}")
-            
+
+            record_audit(cu, "edit_fulfillment_request", "fulfillment",
+                         f"Edited request #{request_id}")
             flash(f"Request #{request_id} updated successfully.", "success")
-            return redirect(url_for("fulfillment.view_request", request_id=request_id))
-        
-        cursor.execute("""
-            SELECT 
-                fr.*,
-                sr.instance_id,
-                sr.created_at as sr_created_at
-            FROM fulfillment_requests fr
-            LEFT JOIN service_requests sr ON fr.service_request_id = sr.id
-            WHERE fr.id = %s
-        """, (request_id,))
-        
-        row = cursor.fetchone()
-        if not row:
-            flash("Request not found.", "warning")
-            return redirect(url_for("fulfillment.queue"))
-        
+            return redirect(url_for("fulfillment.queue", instance_id=instance_id))
+
         request_data = dict(row)
         cursor.close()
     
@@ -832,6 +880,7 @@ def archive():
             'location': None,
             'description': row['description'],
             'page_count': row.get('total_pages', 0),
+            'date_due': row.get('date_due'),
             'priority': 'normal',
             'files': files,
             'notes': row.get('notes'),
@@ -922,7 +971,7 @@ def insights():
         where_clause = " AND ".join(base_conditions)
         
         query = f"""
-            SELECT 
+            SELECT
                 fr.id,
                 fr.status,
                 fr.total_pages,
@@ -931,6 +980,7 @@ def insights():
                 fr.created_by_name,
                 fr.completed_by_name,
                 fr.is_archived,
+                fr.options_json,
                 sr.requester_name,
                 sr.instance_id
             FROM fulfillment_requests fr
@@ -938,23 +988,23 @@ def insights():
             WHERE {where_clause}
             ORDER BY fr.date_submitted DESC
         """
-        
+
         cursor.execute(query, params)
         rows = cursor.fetchall()
-        
+
         # Calculate metrics
         total_requests = len(rows)
         total_pages = sum(row['total_pages'] or 0 for row in rows)
         completed_requests = sum(1 for row in rows if row['is_archived'])
         avg_pages = total_pages / total_requests if total_requests > 0 else 0
         completion_rate = (completed_requests / total_requests * 100) if total_requests > 0 else 0
-        
+
         # Status breakdown
         status_counts = {}
         for row in rows:
             status = row['status'] or 'Unknown'
             status_counts[status] = status_counts.get(status, 0) + 1
-        
+
         # Staff performance
         staff_stats = {}
         for row in rows:
@@ -964,10 +1014,10 @@ def insights():
                     staff_stats[staff] = {'completed': 0, 'pages': 0}
                 staff_stats[staff]['completed'] += 1
                 staff_stats[staff]['pages'] += row['total_pages'] or 0
-        
+
         # Sort staff by completed count
         staff_stats = dict(sorted(staff_stats.items(), key=lambda x: x[1]['completed'], reverse=True))
-        
+
         # Daily trends
         daily_stats = {}
         for row in rows:
@@ -978,10 +1028,40 @@ def insights():
                     daily_stats[date_str] = {'requests': 0, 'pages': 0}
                 daily_stats[date_str]['requests'] += 1
                 daily_stats[date_str]['pages'] += row['total_pages'] or 0
-        
+
         # Sort daily stats by date
         daily_stats = dict(sorted(daily_stats.items()))
-        
+
+        # Print options breakdowns (parsed from options_json)
+        request_type_counts = {}
+        print_type_counts = {}
+        paper_sides_counts = {}
+        paper_size_counts = {}
+        binding_counts = {}
+
+        for row in rows:
+            opts = {}
+            if row['options_json']:
+                try:
+                    opts = json.loads(row['options_json'])
+                except Exception:
+                    pass
+
+            rc = opts.get('request_category', 'Unknown')
+            request_type_counts[rc] = request_type_counts.get(rc, 0) + 1
+
+            pt = opts.get('print_type', 'Unknown')
+            print_type_counts[pt] = print_type_counts.get(pt, 0) + 1
+
+            ps = opts.get('paper_sides', 'Unknown')
+            paper_sides_counts[ps] = paper_sides_counts.get(ps, 0) + 1
+
+            pz = opts.get('paper_size', 'Unknown')
+            paper_size_counts[pz] = paper_size_counts.get(pz, 0) + 1
+
+            bd = opts.get('binding', 'Unknown')
+            binding_counts[bd] = binding_counts.get(bd, 0) + 1
+
         cursor.close()
     
     record_audit(cu, "view_fulfillment_insights", "fulfillment", 
@@ -999,6 +1079,11 @@ def insights():
         status_counts=status_counts,
         staff_stats=staff_stats,
         daily_stats=daily_stats,
+        request_type_counts=request_type_counts,
+        print_type_counts=print_type_counts,
+        paper_sides_counts=paper_sides_counts,
+        paper_size_counts=paper_size_counts,
+        binding_counts=binding_counts,
         rows=rows,
         date_from=date_from,
         date_to=date_to,

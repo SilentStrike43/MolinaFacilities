@@ -80,19 +80,6 @@
         </div>
     </div>
     
-    <!-- Instance Access (L2 only) -->
-    <div class="permission-card" id="instanceAccessCard" style="display: none;">
-        <h3>
-            <i class="bi bi-building"></i>
-            Instance Access
-            <span class="text-secondary small fw-normal">(L2 Multi-Instance Access)</span>
-        </h3>
-        
-        <div id="instanceToggles">
-            <!-- Will be populated dynamically via JavaScript -->
-        </div>
-    </div>
-    
     <!-- Module Permissions -->
     <div class="permission-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -265,40 +252,6 @@ async function loadPermissions() {
     }
 }
 
-// Instance toggles for L2
-function loadInstanceToggles(accessibleInstances) {
-    const container = document.getElementById('instanceToggles');
-    
-    // Fetch all instances
-    fetch('/users/api/instances')
-        .then(r => r.json())
-        .then(instances => {
-            container.innerHTML = instances.map(inst => {
-                const hasAccess = accessibleInstances.some(ai => ai.id === inst.id);
-                return `
-                    <div class="permission-toggle">
-                        <div>
-                            <div class="fw-bold">
-                                <span class="badge-icon">${inst.is_sandbox ? '🧪' : '🏢'}</span>
-                                ${inst.display_name || inst.name}
-                            </div>
-                            <div class="text-secondary small">${inst.is_sandbox ? 'Testing Environment' : 'Production Instance'}</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="instance" value="${inst.id}" ${hasAccess ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                `;
-            }).join('');
-            
-            // Add event listeners
-            container.querySelectorAll('input[name="instance"]').forEach(toggle => {
-                toggle.addEventListener('change', updatePreview);
-            });
-        });
-}
-
 // Permission level change handler
 document.querySelectorAll('input[name="permission_level"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
@@ -308,16 +261,7 @@ document.querySelectorAll('input[name="permission_level"]').forEach(radio => {
         });
         e.target.closest('.level-option').classList.add('selected');
         
-        // Show/hide instance access
-        const level = e.target.value;
-        const card = document.getElementById('instanceAccessCard');
-        card.style.display = level === 'L2' ? 'block' : 'none';
-        
-        if (level === 'L2' && currentPermissions.instances.length === 0) {
-            loadInstanceToggles([]);
-        }
-        
-        currentPermissions.level = level;
+        currentPermissions.level = e.target.value;
         updatePreview();
     });
 });

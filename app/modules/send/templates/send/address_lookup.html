@@ -438,7 +438,7 @@
         </div>
         <div class="page-header-text">
             <h2>Address Lookup</h2>
-            <p>Validate and standardize shipping addresses using FedEx</p>
+            <p>Geocode and classify addresses using OpenStreetMap</p>
         </div>
     </div>
 </div>
@@ -558,23 +558,28 @@
 {% if result %}
 <div class="result-card">
     <div class="result-header">
-        <div class="result-icon {% if result.valid %}valid{% else %}invalid{% endif %}">
-            <i class="bi bi-{% if result.valid %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+        <div class="result-icon {% if result.is_valid %}valid{% else %}invalid{% endif %}">
+            <i class="bi bi-{% if result.is_valid %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
         </div>
         <div class="result-title">
-            <h3>{% if result.valid %}Address Valid{% else %}Address Issue Detected{% endif %}</h3>
-            <p>Validation completed using FedEx Address Validation</p>
+            <h3>{% if result.is_valid %}Address Verified{% else %}Address Not Found{% endif %}</h3>
+            <p>{{ result.message }}</p>
         </div>
     </div>
-    
+
     {% if result.classification %}
-    <div class="status-badge {% if result.classification == 'VALID' %}valid{% elif result.classification == 'LIKELY_VALID' %}likely-valid{% else %}invalid{% endif %}">
-        <i class="bi bi-shield-check"></i>
-        {{ result.classification|replace('_', ' ')|title }}
+    {% set cls = result.classification %}
+    <div class="status-badge {% if cls in ('BUSINESS','RESIDENTIAL','INDUSTRIAL') %}valid{% elif cls == 'RURAL' %}likely-valid{% else %}invalid{% endif %}">
+        {% if cls == 'BUSINESS' %}<i class="bi bi-building"></i> Business
+        {% elif cls == 'RESIDENTIAL' %}<i class="bi bi-house-fill"></i> Residential
+        {% elif cls == 'INDUSTRIAL' %}<i class="bi bi-gear-fill"></i> Industrial
+        {% elif cls == 'RURAL' %}<i class="bi bi-signpost-2"></i> Rural
+        {% elif cls == 'UNKNOWN' %}<i class="bi bi-question-circle"></i> Unknown
+        {% else %}<i class="bi bi-x-circle"></i> Invalid{% endif %}
     </div>
     {% endif %}
-    
-    {% if result.corrected_address %}
+
+    <!-- Address comparison -->
     <div class="address-comparison">
         <div class="address-box original">
             <div class="address-box-title">
@@ -582,38 +587,75 @@
                 Original Address
             </div>
             <div class="address-content">
-                {{ request.form.get('AddressLine1') }}<br>
-                {% if request.form.get('AddressLine2') %}{{ request.form.get('AddressLine2') }}<br>{% endif %}
-                {{ request.form.get('City') }}, {{ request.form.get('State') }} {{ request.form.get('ZipCode') }}
+                {% set orig = result.original %}
+                {% for line in orig.street_lines %}{{ line }}<br>{% endfor %}
+                {{ orig.city }}, {{ orig.state_code }} {{ orig.postal_code }}
             </div>
         </div>
-        
-        <div class="address-box corrected">
+
+        <div class="address-box {% if result.is_valid %}corrected{% else %}original{% endif %}">
             <div class="address-box-title">
-                <i class="bi bi-check-circle"></i>
-                Standardized Address
+                <i class="bi bi-{% if result.is_valid %}check-circle{% else %}question-circle{% endif %}"></i>
+                {% if result.is_valid %}Verified Address{% else %}No Match Found{% endif %}
             </div>
             <div class="address-content">
-                {{ result.corrected_address.address_line1 }}<br>
-                {% if result.corrected_address.address_line2 %}{{ result.corrected_address.address_line2 }}<br>{% endif %}
-                {{ result.corrected_address.city }}, {{ result.corrected_address.state }} {{ result.corrected_address.zip_code }}
+                {% if result.suggested %}
+                    {% set sugg = result.suggested %}
+                    {% for line in sugg.street_lines %}{{ line }}<br>{% endfor %}
+                    {{ sugg.city }}, {{ sugg.state_code }} {{ sugg.postal_code }}
+                {% elif result.details and result.details.formatted_address %}
+                    {{ result.details.formatted_address }}
+                {% else %}
+                    <span style="color:var(--text-muted);">—</span>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
-    
-    {% if result.warnings %}
+
+    <!-- Corrections -->
+    {% if result.corrections %}
     <div class="warnings-section">
         <div class="warnings-title">
-            <i class="bi bi-exclamation-triangle"></i>
-            Validation Warnings
+            <i class="bi bi-arrow-right-circle"></i>
+            Suggested Corrections
         </div>
-        {% for warning in result.warnings %}
+        {% for c in result.corrections %}
         <div class="warning-item">
             <i class="bi bi-dot"></i>
-            <span>{{ warning }}</span>
+            <span>{{ c }}</span>
         </div>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- OSM details + map links -->
+    {% if result.details %}
+    {% set det = result.details %}
+    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border-color);display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
+        {% if det.latitude %}
+        <span style="font-size:0.875rem;color:var(--text-secondary);">
+            <i class="bi bi-geo-alt"></i>
+            {{ "%.5f"|format(det.latitude) }}, {{ "%.5f"|format(det.longitude) }}
+        </span>
+        {% endif %}
+        {% if det.confidence %}
+        <span style="font-size:0.875rem;color:var(--text-secondary);">
+            <i class="bi bi-speedometer2"></i> Confidence: {{ det.confidence }}%
+        </span>
+        {% endif %}
+        {% if result.maps_url %}
+        <a href="{{ result.maps_url }}" target="_blank" style="font-size:0.875rem;font-weight:600;color:#3b82f6;text-decoration:none;">
+            <i class="bi bi-map"></i> Google Maps
+        </a>
+        {% endif %}
+        {% if det.maps_osm %}
+        <a href="{{ det.maps_osm }}" target="_blank" style="font-size:0.875rem;font-weight:600;color:#10b981;text-decoration:none;">
+            <i class="bi bi-globe"></i> OpenStreetMap
+        </a>
+        {% endif %}
+        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:auto;">
+            Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--text-muted);">OpenStreetMap contributors</a>
+        </span>
     </div>
     {% endif %}
 </div>

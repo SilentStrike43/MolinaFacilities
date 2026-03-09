@@ -196,7 +196,7 @@ def dashboard():
     
     return render_template(
         "horizon/dashboard.html",
-        active="global",
+        active="dashboard",
         page="dashboard",
         instances=instances,  # ✅ ADD THIS LINE
         total_users=total_users,
@@ -212,58 +212,69 @@ def dashboard():
 
 @bp.route("/back-to-app")
 @login_required
-@require_horizon
 def back_to_app():
     """
-    Smart redirect from Horizon back to app:
-    - L3/S1 → Sandbox instance
-    - Others → Their assigned instance
+    Smart redirect from Horizon back to app.
+    L3/S1 → Sandbox instance
+    L2 → Their assigned home instance
     """
     cu = current_user()
-    perm_level = cu.get('permission_level')
-    
-    logger.info(f"🔙 BACK TO APP: user={cu.get('username')}, perm={perm_level}")
-    
+    perm_level = cu.get('permission_level', '') if cu else ''
+
+    if perm_level not in ['L2', 'L3', 'S1']:
+        flash("Access denied.", "danger")
+        return redirect(url_for("home.index"))
+
     # L3/S1 go to sandbox
     if perm_level in ['L3', 'S1']:
         try:
             with get_db_connection("core") as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT id FROM instances 
-                    WHERE is_sandbox = true 
+                    SELECT id FROM instances
+                    WHERE is_sandbox = true
                     LIMIT 1
                 """)
                 sandbox = cursor.fetchone()
                 cursor.close()
-                
+
                 if sandbox:
-                    logger.info(f"➡️ Sending to sandbox (ID: {sandbox['id']})")
                     return redirect(url_for('home.index', instance_id=sandbox['id']))
         except Exception as e:
-            logger.error(f"❌ Error finding sandbox: {e}")
-    
-    # Others go to their assigned instance
+            logger.error(f"Error finding sandbox: {e}")
+
+    # L2 and fallback: go to assigned home instance
     instance_id = cu.get('instance_id')
     if instance_id:
-        logger.info(f"➡️ Sending to instance {instance_id}")
         return redirect(url_for('home.index', instance_id=instance_id))
-    
+
     flash('No instance assigned.', 'warning')
-    return redirect(url_for('horizon.dashboard'))
+    return redirect(url_for('horizon.instance_management'))
 
 
 # ---------- Instance Management ----------
 @bp.route("/instances")
 @login_required
-@require_horizon
 def instance_management():
-    """View and manage ALL instances (global view)."""
+    """View instances. L3/S1 see all; L2 sees their assigned instances only."""
     cu = current_user()
-    
-    # Get ALL instances (no filtering)
-    instances = get_all_instances()
-    
+    permission_level = cu.get('permission_level', '') if cu else ''
+
+    if permission_level not in ['L2', 'L3', 'S1']:
+        flash("Access denied.", "danger")
+        return redirect(url_for("home.index"))
+
+    is_l3_plus = permission_level in ['L3', 'S1']
+
+    if is_l3_plus:
+        instances = get_all_instances()
+    else:
+        # L2: filter to assigned instances only
+        from app.core.instance_access import get_user_instances
+        assigned = get_user_instances(cu)
+        assigned_ids = {i['id'] for i in assigned}
+        instances = [i for i in get_all_instances() if i['id'] in assigned_ids]
+
     # Enhance with statistics
     enhanced_instances = []
     for inst in instances:
@@ -272,51 +283,64 @@ def instance_management():
             'instance': inst,
             'stats': stats
         })
-    
+
     record_global_audit(cu, "view_instances", f"Viewed {len(instances)} instances")
-    
+
     return render_template(
         "horizon/instances.html",
-        active="global",
+        active="instances",
         page="instances",
-        instances=enhanced_instances
+        instances=enhanced_instances,
+        is_l3_plus=is_l3_plus
     )
 
 @bp.route("/switch-instance/<int:instance_id>")
 @login_required
-@require_horizon
 def switch_instance(instance_id):
     """
-    Switch to a specific instance context
-    Allows L3/S1 users to access instance modules
+    Switch to a specific instance context.
+    L2+ can enter instances; L2 is restricted to their assigned instances.
     """
     cu = current_user()
-    
+    permission_level = cu.get('permission_level', '') if cu else ''
+
+    if permission_level not in ['L2', 'L3', 'S1']:
+        flash("Access denied.", "danger")
+        return redirect(url_for("home.index"))
+
+    # L2: validate they have access to this specific instance
+    if permission_level == 'L2':
+        from app.core.instance_access import user_can_access_instance
+        if not user_can_access_instance(cu, instance_id):
+            flash("You do not have access to that instance.", "danger")
+            return redirect(url_for('horizon.instance_management'))
+
     # Verify instance exists
     instance = get_instance_by_id(instance_id)
     if not instance:
         flash("Instance not found", "error")
-        return redirect(url_for('horizon.index'))
-    
+        return redirect(url_for('horizon.instance_management'))
+
     if not instance['is_active']:
         flash(f"Cannot switch to inactive instance: {instance['display_name']}", "warning")
-        return redirect(url_for('horizon.instances'))
+        return redirect(url_for('horizon.instance_management'))
     
     # Store in session
     session['active_instance_id'] = instance_id
     session['active_instance_name'] = instance.get('display_name') or instance['name']
     
-    # Record audit
+    # Record audit — write to both tables so global_audits (audit_logs) captures it
     record_horizon_audit(
-        cu, 
+        cu,
         "switch_instance",
-        "instances",  # ✅ ADD category parameter
+        "instances",
         f"Switched to instance: {instance['display_name']} (ID: {instance_id})",
-        target_instance_id=instance_id,  # ✅ ADD optional parameter
+        target_instance_id=instance_id,
         severity="info"
     )
-    
-    flash(f"✅ Switched to instance: {instance['display_name']}", "success")
+    record_global_audit(cu, "switch_instance", f"Entered instance: {instance['display_name']} (ID: {instance_id})")
+
+    flash(f"Switched to instance: {instance['display_name']}", "success")
     logger.info(f"User {cu['username']} switched to instance {instance_id}")
     
     # Redirect to home page of that instance WITH instance_id in URL
@@ -325,32 +349,41 @@ def switch_instance(instance_id):
 
 @bp.route("/exit-instance")
 @login_required
-@require_horizon
 def exit_instance():
     """
-    Exit instance context and return to Horizon
+    Exit instance context and return to Horizon.
+    L3/S1 return to Horizon dashboard; L2 returns to Instances page.
     """
     cu = current_user()
-    
+    permission_level = cu.get('permission_level', '') if cu else ''
+
+    if permission_level not in ['L2', 'L3', 'S1']:
+        flash("Access denied.", "danger")
+        return redirect(url_for("home.index"))
+
     # Get current instance before clearing
     current_instance = session.get('active_instance_name', 'Unknown')
-    
+
     # Clear session
     session.pop('active_instance_id', None)
     session.pop('active_instance_name', None)
-    
-    # Record audit
+
+    # Record audit — write to both tables so global_audits (audit_logs) captures it
     record_horizon_audit(
-        cu, 
+        cu,
         "exit_instance",
-        "instances",  # ✅ ADD category parameter
+        "instances",
         f"Exited instance: {current_instance}",
         severity="info"
     )
-    
-    flash(f"✅ Exited instance mode. Back to Horizon.", "info")
-    
-    return redirect(url_for('horizon.index'))
+    record_global_audit(cu, "exit_instance", f"Exited instance: {current_instance}")
+
+    flash("Exited instance mode.", "info")
+
+    if permission_level in ['L3', 'S1']:
+        return redirect(url_for('horizon.index'))
+    else:
+        return redirect(url_for('horizon.instance_management'))
 
 
 @bp.route("/api/current-instance")
@@ -443,8 +476,6 @@ def create_instance():
         
         # Resources
         max_users = int(request.form.get("max_users", 100))
-        storage_limit_gb = int(request.form.get("storage_limit_gb", 10))
-        subscription_tier = request.form.get("subscription_tier", "standard")
         
         # Module Access - Get enabled modules
         enabled_modules = []
@@ -459,13 +490,6 @@ def create_instance():
         if not enabled_modules:
             flash("At least one module must be enabled.", "danger")
             return redirect(url_for("horizon.create_instance"))
-        
-        # Future features
-        subdomain = request.form.get("subdomain", "").strip().lower()
-        custom_domain = request.form.get("custom_domain", "").strip().lower()
-        rate_limit_per_hour = int(request.form.get("rate_limit_per_hour", 1000))
-        allowed_ips = request.form.get("allowed_ips", "").strip()
-        require_2fa = bool(request.form.get("require_2fa"))
         
         # Status
         is_active = bool(request.form.get("is_active"))
@@ -487,20 +511,14 @@ def create_instance():
                     INSERT INTO instances (
                         name, display_name, description,
                         contact_name, contact_email, contact_phone,
-                        max_users, storage_limit_gb, subscription_tier,
-                        subdomain, custom_domain, rate_limit_per_hour,
-                        allowed_ips, require_2fa, is_active, notes,
-                        enabled_modules
+                        max_users, is_active, notes, enabled_modules
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     name, display_name, description,
                     contact_name, contact_email, contact_phone,
-                    max_users, storage_limit_gb, subscription_tier,
-                    subdomain or None, custom_domain or None, rate_limit_per_hour,
-                    allowed_ips or None, require_2fa, is_active, notes,
-                    enabled_modules
+                    max_users, is_active, notes, enabled_modules
                 ))
                 
                 instance_id = cursor.fetchone()['id']
@@ -901,32 +919,271 @@ def export_instance(instance_id: int):
 @login_required
 @require_horizon
 def instance_support():
-    """Support and troubleshooting page."""
+    """Support Tools — cross-instance visibility and management for L3/S1 operators."""
     cu = current_user()
-    
-    # Get all instances for status display
+
     instances = get_all_instances()
-    
-    # Get basic stats for each instance
-    instance_data = []
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+
+        # Pending inquiry counts per instance
+        cursor.execute("""
+            SELECT instance_id, COUNT(*) AS cnt
+            FROM user_inquiries WHERE status = 'pending'
+            GROUP BY instance_id
+        """)
+        inquiry_counts = {r['instance_id']: r['cnt'] for r in cursor.fetchall()}
+
+        # Last user activity per instance
+        cursor.execute("""
+            SELECT instance_id, MAX(last_seen) AS last_activity
+            FROM users WHERE instance_id IS NOT NULL AND deleted_at IS NULL
+            GROUP BY instance_id
+        """)
+        last_activity = {r['instance_id']: r['last_activity'] for r in cursor.fetchall()}
+
+        # All pending inquiries with instance name
+        cursor.execute("""
+            SELECT ui.id, ui.username, ui.first_name, ui.last_name,
+                   ui.request_type, ui.request_details, ui.submitted_at,
+                   ui.instance_id, i.name AS instance_name
+            FROM user_inquiries ui
+            LEFT JOIN instances i ON i.id = ui.instance_id
+            WHERE ui.status = 'pending'
+            ORDER BY ui.submitted_at DESC
+            LIMIT 200
+        """)
+        pending_inquiries = [dict(r) for r in cursor.fetchall()]
+
+        # Instance entry log (last 60)
+        cursor.execute("""
+            SELECT al.username, al.permission_level, al.details,
+                   al.ts_utc, al.ip_address, al.instance_id,
+                   i.name AS instance_name
+            FROM audit_logs al
+            LEFT JOIN instances i ON i.id = al.instance_id
+            WHERE al.module = 'instance_access'
+            ORDER BY al.ts_utc DESC
+            LIMIT 60
+        """)
+        entry_log = [dict(r) for r in cursor.fetchall()]
+
+        # All announcements
+        cursor.execute("""
+            SELECT id, instance_id, title, message, active,
+                   created_by_username, created_at, expires_at
+            FROM instance_announcements
+            ORDER BY created_at DESC
+        """)
+        announcements = [dict(r) for r in cursor.fetchall()]
+
+        # Instance names for announcement labels
+        cursor.execute("SELECT id, name FROM instances ORDER BY name")
+        all_instances_list = [dict(r) for r in cursor.fetchall()]
+
+        cursor.close()
+
+    # Build health cards
+    instance_health = []
     for inst in instances:
         stats = get_instance_stats(inst['id'])
-        instance_data.append({
-            'name': inst['name'],
+        instance_health.append({
             'id': inst['id'],
-            'users': stats['user_count'],
-            'max_users': inst['max_users'],
-            'is_active': inst['is_active']
+            'name': inst['name'],
+            'display_name': inst.get('display_name') or inst['name'],
+            'is_active': inst.get('is_active', True),
+            'user_count': stats.get('user_count', 0),
+            'max_users': inst.get('max_users', 0),
+            'pending_inquiries': inquiry_counts.get(inst['id'], 0),
+            'last_activity': last_activity.get(inst['id']),
         })
-    
-    record_global_audit(cu, "view_support", "Viewed support page")
-    
+
+    record_global_audit(cu, "view_support", "Viewed Support Tools")
+
     return render_template(
-            "horizon/instance_support.html",
-            active="support",
-            page="support",
-            instances=instance_data
-        )
+        "horizon/instance_support.html",
+        active="support",
+        page="support",
+        instance_health=instance_health,
+        pending_inquiries=pending_inquiries,
+        entry_log=entry_log,
+        announcements=announcements,
+        all_instances_list=all_instances_list,
+    )
+
+
+@bp.route("/support/user-lookup")
+@login_required
+@require_horizon
+def support_user_lookup():
+    """AJAX: search users across all instances."""
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify({"users": []})
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT u.id, u.username, u.first_name, u.last_name, u.email,
+                   u.permission_level, u.module_permissions, u.last_seen,
+                   u.force_logout, u.instance_id, i.name AS instance_name
+            FROM users u
+            LEFT JOIN instances i ON i.id = u.instance_id
+            WHERE u.deleted_at IS NULL
+              AND (u.username ILIKE %s OR u.email ILIKE %s
+                   OR u.first_name ILIKE %s OR u.last_name ILIKE %s)
+            ORDER BY u.username
+            LIMIT 25
+        """, (f"%{q}%",) * 4)
+        users = [dict(r) for r in cursor.fetchall()]
+        cursor.close()
+
+    for u in users:
+        u['last_seen'] = u['last_seen'].strftime('%Y-%m-%d %H:%M') if u.get('last_seen') else None
+
+    return jsonify({"users": users})
+
+
+@bp.route("/support/audit-search")
+@login_required
+@require_horizon
+def support_audit_search():
+    """AJAX: cross-instance audit log search."""
+    q = (request.args.get("q") or "").strip()
+    module_filter = (request.args.get("module") or "").strip()
+    if not q:
+        return jsonify({"logs": []})
+
+    params = [f"%{q}%", f"%{q}%"]
+    where = "WHERE (al.username ILIKE %s OR al.ip_address ILIKE %s)"
+    if module_filter:
+        where += " AND al.module = %s"
+        params.append(module_filter)
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute(f"""
+            SELECT al.username, al.permission_level, al.action, al.module,
+                   al.details, al.ts_utc, al.ip_address, al.instance_id,
+                   i.name AS instance_name
+            FROM audit_logs al
+            LEFT JOIN instances i ON i.id = al.instance_id
+            {where}
+            ORDER BY al.ts_utc DESC
+            LIMIT 50
+        """, params)
+        logs = [dict(r) for r in cursor.fetchall()]
+        cursor.close()
+
+    for row in logs:
+        row['ts_utc'] = row['ts_utc'].strftime('%Y-%m-%d %H:%M') if row.get('ts_utc') else None
+
+    return jsonify({"logs": logs})
+
+
+@bp.route("/support/force-logout/<int:user_id>", methods=["POST"])
+@login_required
+@require_horizon
+def support_force_logout(user_id):
+    """Flag a user for forced session invalidation on their next request."""
+    cu = current_user()
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
+        target = cursor.fetchone()
+        if not target:
+            return jsonify({"error": "User not found"}), 404
+        cursor.execute("UPDATE users SET force_logout = TRUE WHERE id = %s", (user_id,))
+        cursor.close()
+
+    from app.core.audit import log_action
+    log_action(cu, "force_logout", "support",
+               f"Force-invalidated session for {target['username']} (id={user_id})",
+               target_user_id=user_id, target_username=target['username'])
+
+    return jsonify({"success": True})
+
+
+@bp.route("/support/announcement", methods=["POST"])
+@login_required
+@require_horizon
+def support_create_announcement():
+    """Create a new announcement."""
+    cu = current_user()
+    data = request.get_json() or {}
+    title = (data.get("title") or "").strip()
+    message = (data.get("message") or "").strip()
+    instance_id = data.get("instance_id") or None
+    expires_raw = (data.get("expires_at") or "").strip()
+
+    if not title or not message:
+        return jsonify({"error": "Title and message are required"}), 400
+
+    expires_at = None
+    if expires_raw:
+        try:
+            expires_at = datetime.strptime(expires_raw, "%Y-%m-%dT%H:%M")
+        except ValueError:
+            pass
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO instance_announcements
+                (instance_id, title, message, active, created_by_username, expires_at)
+            VALUES (%s, %s, %s, TRUE, %s, %s)
+            RETURNING id
+        """, (instance_id, title, message, cu['username'], expires_at))
+        ann_id = cursor.fetchone()['id']
+        cursor.close()
+
+    record_global_audit(cu, "create_announcement",
+                        f"Created announcement '{title}' (instance={instance_id or 'ALL'})")
+
+    return jsonify({"success": True, "id": ann_id})
+
+
+@bp.route("/support/announcement/<int:ann_id>/toggle", methods=["POST"])
+@login_required
+@require_horizon
+def support_toggle_announcement(ann_id):
+    """Toggle an announcement active/inactive."""
+    cu = current_user()
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE instance_announcements SET active = NOT active
+            WHERE id = %s RETURNING active, title
+        """, (ann_id,))
+        row = cursor.fetchone()
+        cursor.close()
+
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+
+    record_global_audit(cu, "toggle_announcement",
+                        f"{'Activated' if row['active'] else 'Deactivated'} announcement '{row['title']}'")
+
+    return jsonify({"success": True, "active": row['active']})
+
+
+@bp.route("/support/announcement/<int:ann_id>/delete", methods=["POST"])
+@login_required
+@require_horizon
+def support_delete_announcement(ann_id):
+    """Delete an announcement."""
+    cu = current_user()
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM instance_announcements WHERE id = %s RETURNING title", (ann_id,))
+        row = cursor.fetchone()
+        cursor.close()
+
+    if row:
+        record_global_audit(cu, "delete_announcement", f"Deleted announcement '{row['title']}'")
+
+    return jsonify({"success": True})
 
 # ---------- Global Insights ----------
 @bp.route("/insights")
@@ -1060,133 +1317,162 @@ def global_insights():
 @login_required
 @require_horizon
 def global_users():
-    """View and manage ALL users across ALL instances."""
+    """View and manage ALL users across ALL instances, grouped by instance."""
     cu = current_user()
-    
-    # Get filters
-    search = request.args.get('q', '').strip()
-    instance_filter = request.args.get('instance', type=int)
+
+    search           = request.args.get('q', '').strip()
+    instance_filter  = request.args.get('instance', type=int)
     permission_filter = request.args.get('permission', '')
-    status_filter = request.args.get('status', '')
-    
-    # Get all instances for filter dropdown
+    status_filter    = request.args.get('status', '')
+
     instances = get_all_instances()
-    
-    with get_db_connection("core") as conn:
-        cursor = conn.cursor()
-        
-        # Build query
-        query = """
-            SELECT 
-                u.id, u.username, u.first_name, u.last_name, u.email,
-                u.permission_level, u.module_permissions, u.instance_id,
-                u.is_active, u.created_at, u.last_login,
-                i.name as instance_name, i.display_name as instance_display_name
-            FROM users u
-            LEFT JOIN instances i ON u.instance_id = i.id
-            WHERE u.deleted_at IS NULL
-        """
-        params = []
-        
-        # Search filter
-        if search:
-            query += """ AND (
-                u.username ILIKE %s OR
-                u.first_name ILIKE %s OR
-                u.last_name ILIKE %s OR
-                u.email ILIKE %s
-            )"""
-            search_param = f'%{search}%'
-            params.extend([search_param, search_param, search_param, search_param])
-        
-        # Instance filter
-        if instance_filter:
-            query += " AND u.instance_id = %s"
-            params.append(instance_filter)
-        
-        # Permission filter
-        if permission_filter:
-            if permission_filter == 'module':
-                query += " AND (u.permission_level IS NULL OR u.permission_level = '')"
-            else:
-                query += " AND u.permission_level = %s"
-                params.append(permission_filter)
-        
-        # Status filter
-        if status_filter == 'active':
-            query += " AND u.is_active = TRUE"
-        elif status_filter == 'inactive':
-            query += " AND u.is_active = FALSE"
-        
-        query += " ORDER BY u.username"
-        
-        cursor.execute(query, params)
-        users = cursor.fetchall()
-        
-        # Enhance users with additional data
-        enhanced_users = []
-        for user in users:
-            user_dict = dict(user)
-            
-            # Add permission description
-            perm_level = user_dict.get('permission_level') or ''
-            from app.core.permissions import PermissionManager
-            user_dict['permission_level_desc'] = PermissionManager.get_permission_description(perm_level)
-            
-            # Parse module permissions
-            module_perms = user_dict.get('module_permissions') or []
-            if isinstance(module_perms, str):
-                import json
+    instances_by_id = {inst['id']: inst for inst in instances}
+
+    enhanced_users = []
+    sorted_groups  = []
+    stats = {'s1_count': 0, 'l3_count': 0, 'l2_count': 0,
+             'l1_count': 0, 'module_count': 0, 'total_count': 0}
+
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+
+            # Explicit column list — omits last_login which may not exist
+            query = """
+                SELECT
+                    u.id, u.username, u.first_name, u.last_name, u.email,
+                    u.permission_level, u.module_permissions, u.instance_id,
+                    u.created_at,
+                    i.name          AS instance_name,
+                    i.display_name  AS instance_display_name,
+                    i.is_sandbox
+                FROM users u
+                LEFT JOIN instances i ON u.instance_id = i.id
+                WHERE u.deleted_at IS NULL
+            """
+            params = []
+
+            if search:
+                query += """ AND (
+                    u.username   ILIKE %s OR
+                    u.first_name ILIKE %s OR
+                    u.last_name  ILIKE %s OR
+                    u.email      ILIKE %s
+                )"""
+                sp = f'%{search}%'
+                params.extend([sp, sp, sp, sp])
+
+            if instance_filter:
+                query += " AND u.instance_id = %s"
+                params.append(instance_filter)
+
+            if permission_filter:
+                if permission_filter == 'module':
+                    query += " AND (u.permission_level IS NULL OR u.permission_level = '')"
+                else:
+                    query += " AND u.permission_level = %s"
+                    params.append(permission_filter)
+
+            # is_active filter — safe: will silently skip if column absent
+            if status_filter in ('active', 'inactive'):
                 try:
-                    module_perms = json.loads(module_perms)
-                except:
-                    module_perms = []
-            user_dict['module_permissions_list'] = module_perms
-            
-            # Get accessible instances for L2 users
-            if user_dict.get('permission_level') == 'L2':
-                cursor.execute("""
-                    SELECT i.id, i.name, i.display_name, i.is_sandbox
-                    FROM user_instance_access uia
-                    JOIN instances i ON uia.instance_id = i.id
-                    WHERE uia.user_id = %s
-                    ORDER BY i.name
-                """, (user_dict['id'],))
-                user_dict['accessible_instances'] = cursor.fetchall()
-            else:
+                    clause = " AND u.is_active = TRUE" if status_filter == 'active' else " AND u.is_active = FALSE"
+                    query += clause
+                except Exception:
+                    pass
+
+            query += " ORDER BY i.name NULLS LAST, u.username"
+
+            cursor.execute(query, params)
+            users_raw = cursor.fetchall()
+
+            from app.core.permissions import PermissionManager
+
+            for user in users_raw:
+                user_dict = dict(user)
+
+                perm_level = user_dict.get('permission_level') or ''
+                user_dict['permission_level_desc'] = PermissionManager.get_permission_description(perm_level)
+
+                mp = user_dict.get('module_permissions') or []
+                if isinstance(mp, str):
+                    try:
+                        mp = json.loads(mp)
+                    except Exception:
+                        mp = []
+                user_dict['module_permissions_list'] = mp
+
+                # Accessible instances for L2 — wrap in try/except in case table missing
                 user_dict['accessible_instances'] = []
-            
-            enhanced_users.append(user_dict)
-        
-        # Get user counts by level
-        cursor.execute("""
-            SELECT
-                COUNT(CASE WHEN permission_level = 'S1' THEN 1 END) as s1_count,
-                COUNT(CASE WHEN permission_level = 'L3' THEN 1 END) as l3_count,
-                COUNT(CASE WHEN permission_level = 'L2' THEN 1 END) as l2_count,
-                COUNT(CASE WHEN permission_level = 'L1' THEN 1 END) as l1_count,
-                COUNT(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 END) as module_count,
-                COUNT(CASE WHEN is_active = TRUE THEN 1 END) as active_count,
-                COUNT(CASE WHEN is_active = FALSE THEN 1 END) as inactive_count
-            FROM users
-            WHERE deleted_at IS NULL
-        """)
-        stats = cursor.fetchone()
-        
-        cursor.close()
-    
+                if perm_level == 'L2':
+                    try:
+                        cursor.execute("""
+                            SELECT i.id, i.name, i.display_name, i.is_sandbox
+                            FROM user_instance_access uia
+                            JOIN instances i ON uia.instance_id = i.id
+                            WHERE uia.user_id = %s
+                            ORDER BY i.name
+                        """, (user_dict['id'],))
+                        user_dict['accessible_instances'] = [dict(r) for r in cursor.fetchall()]
+                    except Exception as e:
+                        logger.warning(f"user_instance_access query failed for user {user_dict['id']}: {e}")
+
+                enhanced_users.append(user_dict)
+
+            # Group users by instance
+            instance_groups: dict = {}
+            for user in enhanced_users:
+                iid = user.get('instance_id') or 0
+                if iid not in instance_groups:
+                    inst_info = instances_by_id.get(iid) or {
+                        'id': iid, 'name': 'no-instance',
+                        'display_name': 'No Instance Assigned',
+                        'is_sandbox': False, 'is_active': True
+                    }
+                    instance_groups[iid] = {'instance': inst_info, 'users': []}
+                instance_groups[iid]['users'].append(user)
+
+            # Sort: sandbox first, then alphabetically
+            sorted_groups = sorted(
+                instance_groups.values(),
+                key=lambda g: (
+                    not bool(g['instance'].get('is_sandbox')),
+                    (g['instance'].get('display_name') or g['instance'].get('name', '')).lower()
+                )
+            )
+
+            # Stats — avoid is_active which may be absent
+            cursor.execute("""
+                SELECT
+                    COUNT(CASE WHEN permission_level = 'S1' THEN 1 END)                     AS s1_count,
+                    COUNT(CASE WHEN permission_level = 'L3' THEN 1 END)                     AS l3_count,
+                    COUNT(CASE WHEN permission_level = 'L2' THEN 1 END)                     AS l2_count,
+                    COUNT(CASE WHEN permission_level = 'L1' THEN 1 END)                     AS l1_count,
+                    COUNT(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 END) AS module_count,
+                    COUNT(*)                                                                  AS total_count
+                FROM users
+                WHERE deleted_at IS NULL
+            """)
+            stats = dict(cursor.fetchone())
+            cursor.close()
+
+    except Exception as e:
+        logger.error(f"global_users error: {e}", exc_info=True)
+        flash(f"Error loading users: {str(e)}", "danger")
+
     record_horizon_audit(
         cu, "view_global_users", "users",
         f"Viewed global user list ({len(enhanced_users)} users)",
         severity="info"
     )
-    
+
     return render_template(
         "horizon/global_users.html",
         active="users",
         page="global_users",
         cu=cu,
         instances=instances,
+        instance_groups=sorted_groups,
         users=enhanced_users,
         stats=stats,
         search=search,
@@ -1305,13 +1591,14 @@ def create_global_user():
     # GET - show form
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, display_name FROM instances WHERE is_active = TRUE ORDER BY name")
+        cursor.execute("SELECT id, name, display_name, is_sandbox FROM instances WHERE is_active = TRUE ORDER BY is_sandbox DESC, name")
         instances = cursor.fetchall()
         cursor.close()
-    
+
     return render_template(
         "horizon/create_global_user.html",
         active="users",
+        cu=cu,
         instances=instances
     )
 
@@ -1403,7 +1690,7 @@ def edit_global_user(user_id: int):
         cursor.close()
     
     return render_template(
-        "horizon/edit_global_user.html",
+        "horizon/edit_global_users.html",
         active="users",
         user=user,
         instances=instances
@@ -1765,7 +2052,7 @@ def global_audits():
         
         # Build query (NO automatic instance filtering)
         query = """
-            SELECT 
+            SELECT
                 al.id,
                 al.action,
                 al.username,
@@ -1775,26 +2062,32 @@ def global_audits():
                 al.permission_level,
                 al.ip_address,
                 al.user_agent,
-                u.instance_id,
-                i.name as instance_name,
+                COALESCE(al.instance_id, u.instance_id) AS instance_id,
+                i.name AS instance_name,
                 al.target_user_id,
                 al.target_username
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
-            LEFT JOIN instances i ON u.instance_id = i.id
+            LEFT JOIN instances i ON COALESCE(al.instance_id, u.instance_id) = i.id
             WHERE (
-                -- ALL actions by L2/L3/S1 users (global admins)
-                u.permission_level IN ('L2', 'L3', 'S1')
-                
-                -- OR actions recorded in horizon module (global operations)
-                OR al.module = 'horizon'
+                -- All Horizon-level actions (L2/L3/S1 entering, editing, creating instances)
+                al.module = 'horizon'
+
+                -- Instance access events (entering/exiting instances)
+                OR al.module = 'instance_access'
+
+                -- All actions taken by L3/S1 platform operators (always globally visible)
+                OR al.permission_level IN ('L3', 'S1')
+
+                -- Sign-in and sign-out events for all users (session tracking)
+                OR al.action IN ('sign_in', 'sign_out')
             )
         """
         params = []
-        
+
         # Apply filters
         if filters.get('instance_id'):
-            query += " AND u.instance_id = %s"
+            query += " AND COALESCE(al.instance_id, u.instance_id) = %s"
             params.append(int(filters['instance_id']))
         
         if filters.get('username'):

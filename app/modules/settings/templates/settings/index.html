@@ -1,0 +1,726 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block title %}Settings — Gridline{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('home.index') }}" class="breadcrumb-link">Home</a>
+<span class="breadcrumb-sep">/</span>
+<span>Settings</span>
+{% endblock %}
+
+{% block body %}
+<style>
+    .settings-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.5rem 0;
+    }
+
+    /* ---- Cards ---- */
+    .settings-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .settings-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .settings-card-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .settings-card-header .card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .settings-card-body {
+        padding: 1.5rem;
+    }
+
+    /* ---- Profile Card ---- */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-field label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 0.2rem;
+    }
+
+    .profile-field p {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    /* Permission badge */
+    .perm-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 1rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.04em;
+    }
+    .perm-badge.s1   { background: #fee2e2; color: #dc2626; }
+    .perm-badge.l3   { background: #ffedd5; color: #ea580c; }
+    .perm-badge.l2   { background: #fef9c3; color: #ca8a04; }
+    .perm-badge.l1   { background: #dbeafe; color: #2563eb; }
+    .perm-badge.mod  { background: #dcfce7; color: #16a34a; }
+
+    .perm-desc {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.35rem;
+    }
+
+    /* Access grid */
+    .access-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin: 1.25rem 0 0.6rem;
+    }
+
+    .access-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .access-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        background: var(--bg-tertiary, var(--bg-secondary));
+        border: 1px solid var(--border-color);
+    }
+
+    .access-item .check {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.6rem;
+    }
+
+    .access-item.has-access .check { background: #22c55e; color: #fff; }
+    .access-item.no-access  .check { background: var(--border-color); color: var(--text-muted); }
+    .access-item.no-access  span   { color: var(--text-muted); opacity: 0.6; }
+
+    /* ---- Appearance Card ---- */
+    .theme-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .theme-btn {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: var(--bg-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: all 0.15s;
+    }
+
+    .theme-btn.active {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    [data-theme="dark"] .theme-btn.active {
+        background: #1e3a5f;
+        color: #60a5fa;
+    }
+
+    .theme-btn:hover:not(.active) {
+        border-color: var(--text-muted);
+    }
+
+    /* Color pickers */
+    .color-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .color-control {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .color-control label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+    }
+
+    .color-picker-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .color-picker-swatch {
+        width: 44px;
+        height: 44px;
+        border-radius: 0.5rem;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        padding: 2px;
+        background: var(--bg-card);
+    }
+
+    .color-picker-swatch::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-swatch::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+    .color-hex-input {
+        flex: 1;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        font-family: monospace;
+        color: var(--text-primary);
+        text-transform: uppercase;
+    }
+
+    .color-hex-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    .btn-reset {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.8rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-reset:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+    .color-preview-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    /* Save + status */
+    .save-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-save-colors {
+        padding: 0.6rem 1.5rem;
+        background: #3b82f6;
+        color: #fff;
+        border: none;
+        border-radius: 0.6rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.15s;
+    }
+
+    .btn-save-colors:hover { background: #2563eb; }
+    .btn-save-colors:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .save-status {
+        font-size: 0.85rem;
+        display: none;
+    }
+
+    .save-status.success { color: #16a34a; }
+    .save-status.error   { color: #dc2626; }
+
+    /* ---- Account Card ---- */
+    .account-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .account-link-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-radius: 0.6rem;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        text-decoration: none;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: background 0.12s;
+    }
+
+    .account-link-item:hover {
+        background: var(--bg-tertiary, var(--bg-card));
+        color: var(--text-primary);
+    }
+
+    .account-link-item .link-left {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .session-info {
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary);
+        border-radius: 0.6rem;
+        border: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .session-info span { color: var(--text-primary); font-weight: 500; }
+</style>
+
+<div class="settings-page">
+
+    <!-- ============================================================ -->
+    <!-- CARD 1: Profile & Permissions                                 -->
+    <!-- ============================================================ -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="card-icon" style="background:#eff6ff; color:#2563eb;">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div>
+                <h4>Profile &amp; Access</h4>
+            </div>
+        </div>
+        <div class="settings-card-body">
+
+            <!-- Basic info grid -->
+            <div class="profile-grid">
+                <div class="profile-field">
+                    <label>Name</label>
+                    <p>{{ cu.first_name }} {{ cu.last_name }}</p>
+                </div>
+                <div class="profile-field">
+                    <label>Username</label>
+                    <p>{{ cu.username }}</p>
+                </div>
+                <div class="profile-field">
+                    <label>Email</label>
+                    <p>{{ cu.email or '—' }}</p>
+                </div>
+                <div class="profile-field">
+                    <label>Phone</label>
+                    <p>{{ cu.phone or '—' }}</p>
+                </div>
+                <div class="profile-field">
+                    <label>Department</label>
+                    <p>{{ cu.department or '—' }}</p>
+                </div>
+                <div class="profile-field">
+                    <label>Position</label>
+                    <p>{{ cu.position or '—' }}</p>
+                </div>
+            </div>
+
+            <!-- Permission level -->
+            {% set perm = cu.permission_level %}
+            {% if perm == 'S1' %}
+                <span class="perm-badge s1"><i class="bi bi-shield-fill-exclamation"></i> System Administrator (S1)</span>
+            {% elif perm == 'L3' %}
+                <span class="perm-badge l3"><i class="bi bi-globe2"></i> Global Operator (L3)</span>
+            {% elif perm == 'L2' %}
+                <span class="perm-badge l2"><i class="bi bi-diagram-3"></i> Systems Administrator (L2)</span>
+            {% elif perm == 'L1' %}
+                <span class="perm-badge l1"><i class="bi bi-building"></i> Instance Manager (L1)</span>
+            {% else %}
+                <span class="perm-badge mod"><i class="bi bi-grid"></i> Module User</span>
+            {% endif %}
+            <p class="perm-desc">{{ cu.permission_level_desc or 'Standard access based on assigned modules.' }}</p>
+
+            <!-- Module access -->
+            <p class="access-section-title">Module Access</p>
+            <div class="access-grid">
+                {% set items = [
+                    ('send',              'bi-box-seam',        'Ledger / Send'),
+                    ('inventory',         'bi-boxes',           'Inventory / Flow'),
+                    ('fulfillment_customer','bi-file-earmark-text','Fulfillment (Submit)'),
+                    ('fulfillment_staff', 'bi-printer',         'Fulfillment (Staff)'),
+                    ('fulfillment_manager','bi-clipboard-check', 'Fulfillment (Manager)'),
+                ] %}
+                {% for key, icon, label in items %}
+                <div class="access-item {{ 'has-access' if access[key] else 'no-access' }}">
+                    <div class="check">
+                        {% if access[key] %}<i class="bi bi-check-lg"></i>{% else %}<i class="bi bi-dash"></i>{% endif %}
+                    </div>
+                    <i class="bi {{ icon }}" style="color: var(--text-muted); font-size:0.85rem;"></i>
+                    <span>{{ label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Admin flags -->
+            {% if access.admin_users %}
+            <p class="access-section-title">Administrative Access</p>
+            <div class="access-grid">
+                {% set admin_items = [
+                    ('admin_users',     'bi-people',          'User Management'),
+                    ('multi_instance',  'bi-diagram-3-fill',  'Multi-Instance Director'),
+                    ('horizon',         'bi-globe',           'Horizon (Global View)'),
+                    ('sysadmin',        'bi-shield-fill',     'System Administration'),
+                ] %}
+                {% for key, icon, label in admin_items %}
+                <div class="access-item {{ 'has-access' if access[key] else 'no-access' }}">
+                    <div class="check">
+                        {% if access[key] %}<i class="bi bi-check-lg"></i>{% else %}<i class="bi bi-dash"></i>{% endif %}
+                    </div>
+                    <i class="bi {{ icon }}" style="color: var(--text-muted); font-size:0.85rem;"></i>
+                    <span>{{ label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CARD 2: Appearance                                           -->
+    <!-- ============================================================ -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="card-icon" style="background:#f5f3ff; color:#7c3aed;">
+                <i class="bi bi-palette2"></i>
+            </div>
+            <div>
+                <h4>Appearance</h4>
+            </div>
+        </div>
+        <div class="settings-card-body">
+
+            <!-- Theme toggle -->
+            <p style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:0.6rem;">Theme</p>
+            <div class="theme-row">
+                <button class="theme-btn" id="theme-light" onclick="setTheme('light')">
+                    <i class="bi bi-sun-fill"></i> Light
+                </button>
+                <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">
+                    <i class="bi bi-moon-stars-fill"></i> Dark
+                </button>
+            </div>
+
+            <!-- Color pickers -->
+            <p style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:0.6rem;">Custom Colors</p>
+            <div class="color-row">
+
+                <!-- Sidebar -->
+                <div class="color-control">
+                    <label>Sidebar Background</label>
+                    <div class="color-picker-row">
+                        <input type="color"
+                               id="sidebar-color-picker"
+                               class="color-picker-swatch"
+                               value="{{ prefs.sidebar_color or '#1a1d2e' }}"
+                               title="Pick sidebar color">
+                        <input type="text"
+                               id="sidebar-color-hex"
+                               class="color-hex-input"
+                               value="{{ prefs.sidebar_color or '#1a1d2e' }}"
+                               maxlength="7"
+                               placeholder="#1A1D2E">
+                        <button class="btn-reset" onclick="resetColor('sidebar')">Reset</button>
+                    </div>
+                    <p class="color-preview-label">Default: <code>#1A1D2E</code></p>
+                </div>
+
+                <!-- Topbar -->
+                <div class="color-control">
+                    <label>Topbar Background</label>
+                    <div class="color-picker-row">
+                        <input type="color"
+                               id="topbar-color-picker"
+                               class="color-picker-swatch"
+                               value="{{ prefs.topbar_color or '#ffffff' }}"
+                               title="Pick topbar color">
+                        <input type="text"
+                               id="topbar-color-hex"
+                               class="color-hex-input"
+                               value="{{ prefs.topbar_color or '#ffffff' }}"
+                               maxlength="7"
+                               placeholder="#FFFFFF">
+                        <button class="btn-reset" onclick="resetColor('topbar')">Reset</button>
+                    </div>
+                    <p class="color-preview-label">Default (light): <code>#FFFFFF</code> &nbsp;|&nbsp; Default (dark): <code>#1A1D2E</code></p>
+                </div>
+
+            </div>
+
+            <div class="save-row">
+                <button class="btn-save-colors" id="save-colors-btn" onclick="saveColors()">
+                    <i class="bi bi-floppy"></i> Save Colors
+                </button>
+                <span class="save-status" id="save-status"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CARD 3: Account                                              -->
+    <!-- ============================================================ -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="card-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="bi bi-person-gear"></i>
+            </div>
+            <div>
+                <h4>Account</h4>
+            </div>
+        </div>
+        <div class="settings-card-body">
+            <div class="account-links">
+                <a href="{{ url_for('users.profile') }}" class="account-link-item">
+                    <div class="link-left">
+                        <i class="bi bi-person-circle" style="color:#3b82f6;"></i>
+                        <span>Edit Profile</span>
+                    </div>
+                    <i class="bi bi-chevron-right" style="color:var(--text-muted);"></i>
+                </a>
+            </div>
+
+            <div class="session-info">
+                <div>Signed in as <span>{{ cu.username }}</span></div>
+                {% if cu.get('instance_name') %}
+                <div>Instance: <span>{{ cu.instance_name }}</span></div>
+                {% endif %}
+                <div>Permission Level: <span>{{ cu.permission_level }}</span></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ---- defaults ---- */
+    const SIDEBAR_DEFAULT = '#1a1d2e';
+    const TOPBAR_DEFAULT_LIGHT = '#ffffff';
+    const TOPBAR_DEFAULT_DARK  = '#1a1d2e';
+
+    /* ---- init theme buttons ---- */
+    const savedTheme = localStorage.getItem('gridline-theme') || 'light';
+    markThemeBtn(savedTheme);
+
+    /* ---- live sidebar preview ---- */
+    const sidebarPicker = document.getElementById('sidebar-color-picker');
+    const sidebarHex    = document.getElementById('sidebar-color-hex');
+
+    sidebarPicker.addEventListener('input', function () {
+        const val = this.value;
+        sidebarHex.value = val.toUpperCase();
+        applySidebarColor(val);
+    });
+
+    sidebarHex.addEventListener('input', function () {
+        const val = this.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            sidebarPicker.value = val;
+            applySidebarColor(val);
+        }
+    });
+
+    /* ---- live topbar preview ---- */
+    const topbarPicker = document.getElementById('topbar-color-picker');
+    const topbarHex    = document.getElementById('topbar-color-hex');
+
+    topbarPicker.addEventListener('input', function () {
+        const val = this.value;
+        topbarHex.value = val.toUpperCase();
+        applyTopbarColor(val);
+    });
+
+    topbarHex.addEventListener('input', function () {
+        const val = this.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            topbarPicker.value = val;
+            applyTopbarColor(val);
+        }
+    });
+
+    /* ---- apply helpers ---- */
+    function applySidebarColor(hex) {
+        document.querySelectorAll('.app-sidebar').forEach(function(el) {
+            el.style.background = hex;
+        });
+    }
+
+    function applyTopbarColor(hex) {
+        document.querySelectorAll('.app-topbar').forEach(function(el) {
+            el.style.background = hex;
+        });
+    }
+
+    /* ---- theme ---- */
+    window.setTheme = function(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('gridline-theme', theme);
+        markThemeBtn(theme);
+        savePrefKey('theme', theme);
+
+        // Update theme-icon in topbar if present
+        const icon = document.getElementById('theme-icon');
+        if (icon) {
+            icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        }
+    };
+
+    function markThemeBtn(theme) {
+        document.getElementById('theme-light').classList.toggle('active', theme === 'light');
+        document.getElementById('theme-dark').classList.toggle('active', theme  === 'dark');
+    }
+
+    /* ---- reset colors ---- */
+    window.resetColor = function(target) {
+        if (target === 'sidebar') {
+            sidebarPicker.value = SIDEBAR_DEFAULT;
+            sidebarHex.value    = SIDEBAR_DEFAULT.toUpperCase();
+            applySidebarColor(SIDEBAR_DEFAULT);
+            // Signal to server: empty string = remove override
+            sidebarPicker.dataset.reset = '1';
+        } else {
+            const theme   = document.documentElement.getAttribute('data-theme') || 'light';
+            const def     = theme === 'dark' ? TOPBAR_DEFAULT_DARK : TOPBAR_DEFAULT_LIGHT;
+            topbarPicker.value = def;
+            topbarHex.value    = def.toUpperCase();
+            applyTopbarColor(def);
+            topbarPicker.dataset.reset = '1';
+        }
+    };
+
+    /* ---- save colors ---- */
+    window.saveColors = function() {
+        const btn    = document.getElementById('save-colors-btn');
+        const status = document.getElementById('save-status');
+
+        // If reset flag set, send empty string to clear the override
+        const sidebarVal = sidebarPicker.dataset.reset === '1' ? '' : sidebarPicker.value;
+        const topbarVal  = topbarPicker.dataset.reset  === '1' ? '' : topbarPicker.value;
+
+        const theme = localStorage.getItem('gridline-theme') || 'light';
+
+        btn.disabled = true;
+        status.style.display = 'none';
+
+        fetch('/settings/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sidebar_color: sidebarVal,
+                topbar_color:  topbarVal,
+                theme:         theme
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            status.style.display = 'inline';
+            if (data.success) {
+                status.className = 'save-status success';
+                status.textContent = '✓ Colors saved';
+                // Clear reset flags
+                delete sidebarPicker.dataset.reset;
+                delete topbarPicker.dataset.reset;
+                setTimeout(function() { status.style.display = 'none'; }, 3000);
+            } else {
+                status.className = 'save-status error';
+                status.textContent = '✗ ' + (data.error || 'Failed to save');
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            status.style.display = 'inline';
+            status.className = 'save-status error';
+            status.textContent = '✗ Network error';
+        });
+    };
+
+    /* ---- save a single pref key (used for theme) ---- */
+    function savePrefKey(key, value) {
+        const payload = {};
+        payload[key] = value;
+        fetch('/settings/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(function(){});
+    }
+
+})();
+</script>
+{% endblock %}

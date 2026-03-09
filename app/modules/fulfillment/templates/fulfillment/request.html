@@ -334,6 +334,70 @@
         color: #1e3a8a;
     }
     
+    /* File Format Badge */
+    .file-format-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.3rem 0.875rem;
+        background: rgba(245, 158, 11, 0.12);
+        color: var(--text-primary);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.625rem;
+    }
+
+    .file-format-badge i {
+        color: #f59e0b;
+        font-size: 0.9rem;
+    }
+
+    /* File error message */
+    .file-error-msg {
+        display: none;
+        margin-top: 0.875rem;
+        padding: 0.875rem 1.25rem;
+        background: rgba(239, 68, 68, 0.08);
+        border: 2px solid rgba(239, 68, 68, 0.35);
+        border-radius: 0.75rem;
+        color: var(--text-primary);
+        gap: 0.75rem;
+        align-items: flex-start;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+    }
+
+    .file-error-msg.visible {
+        display: flex;
+    }
+
+    .file-error-msg .error-icon {
+        color: #ef4444;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    .file-upload-modern.has-error {
+        border-color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.04) !important;
+    }
+
+    .file-upload-modern.has-error .file-upload-icon i {
+        color: #ef4444;
+    }
+
+    /* Disabled submit button */
+    .btn-submit-modern:disabled {
+        background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%) !important;
+        opacity: 0.55;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .form-container {
@@ -390,10 +454,27 @@
                 <i class="bi bi-info-circle"></i>
                 Basic Information
             </h3>
-            
+
             <div class="form-group">
                 <label class="form-label-modern">
-                    Description
+                    Request Type
+                    <span class="required">*</span>
+                </label>
+                <select class="form-select-modern" name="request_category" id="requestTypeSelect" required>
+                    <option value="Standard Mail / Letter">Standard Mail / Letter</option>
+                    <option value="Mail Merge">Mail Merge</option>
+                    <option value="Flyers and Posters">Flyers and Posters</option>
+                    <option value="Special Types">Special Types</option>
+                </select>
+                <div class="form-text">
+                    <i class="bi bi-tag"></i>
+                    Select the category that best describes your request
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-modern">
+                    Title
                     <span class="required">*</span>
                 </label>
                 <input 
@@ -450,15 +531,19 @@
                             <i class="bi bi-cloud-arrow-up"></i>
                         </div>
                         <div class="file-upload-text">Click to upload or drag and drop</div>
-                        <div class="file-upload-hint">PDF, DOC, DOCX, XLS, XLSX, or images (Max size depends on server)</div>
+                        <div class="file-upload-hint">Select files to attach</div>
+                        <div class="file-format-badge" id="formatBadge">
+                            <i class="bi bi-file-earmark-check"></i>
+                            <span id="formatBadgeText">PDF only (.pdf)</span>
+                        </div>
                     </label>
-                    <input 
-                        type="file" 
+                    <input
+                        type="file"
                         id="fileInput"
-                        class="file-input-hidden" 
-                        name="attachments" 
+                        class="file-input-hidden"
+                        name="attachments"
                         multiple
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif"
+                        accept=".pdf"
                     >
                 </div>
 
@@ -471,6 +556,12 @@
                         </div>
                         <ul id="selectedFilesList" style="margin: 0; padding-left: 1.5rem; color: #065f46;"></ul>
                     </div>
+                </div>
+
+                <!-- File format error -->
+                <div id="fileErrorMsg" class="file-error-msg">
+                    <i class="bi bi-exclamation-triangle-fill error-icon"></i>
+                    <div id="fileErrorText"></div>
                 </div>
             </div>
         </div>
@@ -564,7 +655,7 @@
                 <i class="bi bi-x-circle"></i>
                 Cancel
             </a>
-            <button type="submit" class="btn-submit-modern">
+            <button type="submit" id="submitBtn" class="btn-submit-modern">
                 <i class="bi bi-check-circle"></i>
                 Submit Request
             </button>
@@ -573,59 +664,159 @@
 </div>
 
 <script>
-// File upload drag and drop functionality
-const fileUpload = document.querySelector('.file-upload-modern');
-const fileInput = document.getElementById('fileInput');
-const uploadText = document.querySelector('.file-upload-text');
-const uploadHint = document.querySelector('.file-upload-hint');
+// ── File type rules per request category ──────────────────────────────────
+const REQUEST_TYPE_CONFIG = {
+    'Standard Mail / Letter': {
+        accept: '.pdf',
+        exts:   ['pdf'],
+        label:  'PDF only (.pdf)'
+    },
+    'Mail Merge': {
+        accept: '.docx,.xls,.xlsx',
+        exts:   ['docx', 'xls', 'xlsx'],
+        label:  'DOCX, XLS, XLSX only'
+    },
+    'Flyers and Posters': {
+        accept: '.pdf',
+        exts:   ['pdf'],
+        label:  'PDF only (.pdf)'
+    },
+    'Special Types': {
+        accept: '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif',
+        exts:   ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','gif'],
+        label:  'All formats allowed'
+    }
+};
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    fileUpload.addEventListener(eventName, preventDefaults, false);
-});
+// ── DOM refs ───────────────────────────────────────────────────────────────
+const requestTypeSelect = document.getElementById('requestTypeSelect');
+const fileUpload        = document.querySelector('.file-upload-modern');
+const fileInput         = document.getElementById('fileInput');
+const uploadText        = document.querySelector('.file-upload-text');
+const uploadHint        = document.querySelector('.file-upload-hint');
+const formatBadgeText   = document.getElementById('formatBadgeText');
+const selectedContainer = document.getElementById('selectedFilesContainer');
+const selectedList      = document.getElementById('selectedFilesList');
+const fileErrorMsg      = document.getElementById('fileErrorMsg');
+const fileErrorText     = document.getElementById('fileErrorText');
+const submitBtn         = document.getElementById('submitBtn');
 
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getExt(filename) {
+    return filename.split('.').pop().toLowerCase();
 }
 
-['dragenter', 'dragover'].forEach(eventName => {
-    fileUpload.addEventListener(eventName, () => {
-        fileUpload.classList.add('dragover');
-    }, false);
+function currentConfig() {
+    return REQUEST_TYPE_CONFIG[requestTypeSelect.value] || REQUEST_TYPE_CONFIG['Special Types'];
+}
+
+// ── Update accept + badge when request type changes ────────────────────────
+function applyTypeConstraints() {
+    const cfg = currentConfig();
+    fileInput.accept  = cfg.accept;
+    formatBadgeText.textContent = cfg.label;
+
+    // Re-validate any already-selected files against the new type
+    if (fileInput.files && fileInput.files.length > 0) {
+        validateAndRefresh(fileInput.files);
+    } else {
+        clearError();
+    }
+}
+
+requestTypeSelect.addEventListener('change', applyTypeConstraints);
+
+// ── Core validation ────────────────────────────────────────────────────────
+function validateAndRefresh(files) {
+    const cfg     = currentConfig();
+    const invalid = Array.from(files).filter(f => !cfg.exts.includes(getExt(f.name)));
+
+    if (invalid.length > 0) {
+        const names = invalid.map(f => `<strong>${f.name}</strong>`).join(', ');
+        fileErrorText.innerHTML =
+            `Invalid file format${invalid.length > 1 ? 's' : ''}: ${names}<br>` +
+            `<span style="font-size:0.8125rem;">This request type only accepts: <strong>${cfg.label}</strong></span>`;
+        fileErrorMsg.classList.add('visible');
+
+        fileUpload.classList.add('has-error');
+        fileUpload.classList.remove('dragover');
+        fileUpload.style.borderColor = '';
+        fileUpload.style.background  = '';
+
+        submitBtn.disabled = true;
+    } else {
+        clearError();
+    }
+
+    renderFileList(files, invalid);
+}
+
+function clearError() {
+    fileErrorMsg.classList.remove('visible');
+    fileErrorText.innerHTML = '';
+    fileUpload.classList.remove('has-error');
+    submitBtn.disabled = false;
+}
+
+// ── Render the selected-files list ─────────────────────────────────────────
+function renderFileList(files, invalidFiles = []) {
+    const invalidSet = new Set(invalidFiles.map(f => f.name));
+
+    if (files.length === 0) {
+        selectedContainer.style.display = 'none';
+        uploadText.textContent  = 'Click to upload or drag and drop';
+        uploadHint.textContent  = 'Select files to attach';
+        if (!fileUpload.classList.contains('has-error')) {
+            fileUpload.style.borderColor = '';
+            fileUpload.style.background  = '';
+        }
+        return;
+    }
+
+    uploadText.textContent = `${files.length} file(s) selected`;
+    uploadHint.textContent = '';
+
+    const allValid = invalidSet.size === 0;
+    if (allValid) {
+        fileUpload.style.borderColor = '#10b981';
+        fileUpload.style.background  = 'rgba(209,250,229,0.4)';
+    }
+
+    selectedContainer.style.display = 'block';
+    selectedList.innerHTML = Array.from(files).map(f => {
+        if (invalidSet.has(f.name)) {
+            return `<li style="color:#dc2626;"><i class="bi bi-x-circle-fill"></i> ${f.name} <span style="font-size:0.8rem;opacity:0.8;">(invalid format)</span></li>`;
+        }
+        return `<li style="color:#065f46;"><i class="bi bi-check-circle-fill"></i> ${f.name}</li>`;
+    }).join('');
+}
+
+// ── File input change ──────────────────────────────────────────────────────
+fileInput.addEventListener('change', (e) => {
+    validateAndRefresh(e.target.files);
 });
 
-['dragleave', 'drop'].forEach(eventName => {
-    fileUpload.addEventListener(eventName, () => {
-        fileUpload.classList.remove('dragover');
-    }, false);
+// ── Drag and drop ──────────────────────────────────────────────────────────
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+    fileUpload.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+});
+
+['dragenter', 'dragover'].forEach(evt => {
+    fileUpload.addEventListener(evt, () => fileUpload.classList.add('dragover'), false);
+});
+
+['dragleave', 'drop'].forEach(evt => {
+    fileUpload.addEventListener(evt, () => fileUpload.classList.remove('dragover'), false);
 });
 
 fileUpload.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
+    const files = e.dataTransfer.files;
     fileInput.files = files;
-    updateFileDisplay(files);
+    validateAndRefresh(files);
 }, false);
 
-// Update display when files are selected
-fileInput.addEventListener('change', (e) => {
-    updateFileDisplay(e.target.files);
-});
-
-function updateFileDisplay(files) {
-    if (files.length > 0) {
-        const fileList = Array.from(files).map(f => f.name).join(', ');
-        uploadText.textContent = `${files.length} file(s) selected`;
-        uploadHint.innerHTML = `<strong style="color: #059669;">${fileList}</strong>`;
-        fileUpload.style.borderColor = '#10b981';
-        fileUpload.style.background = '#d1fae5';
-    } else {
-        uploadText.textContent = 'Click to upload or drag and drop';
-        uploadHint.textContent = 'PDF, DOC, DOCX, XLS, XLSX, or images (Max size depends on server)';
-        fileUpload.style.borderColor = '#d1d5db';
-        fileUpload.style.background = '#f9fafb';
-    }
-}
+// ── Init: apply constraints for the default selected type ──────────────────
+applyTypeConstraints();
 </script>
 
 {% endblock %}

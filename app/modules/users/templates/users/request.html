@@ -1,0 +1,215 @@
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block title %}Submit a Request{% endblock %}
+
+{% block extra_css %}
+<style>
+    .request-card {
+        max-width: 640px;
+        margin: 0 auto;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 1rem;
+        padding: 2rem 2.5rem;
+    }
+    .request-card h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    .request-card .subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.4rem;
+    }
+    .form-control, .form-select {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        color: var(--text-primary) !important;
+        border-radius: 0.5rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--current-module) !important;
+        box-shadow: 0 0 0 2px rgba(var(--current-module-rgb,255,140,66),0.15) !important;
+    }
+    .type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    @media (max-width: 480px) { .type-grid { grid-template-columns: 1fr; } }
+    .type-option {
+        position: relative;
+    }
+    .type-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+    }
+    .type-option label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.625rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.625rem;
+        background: var(--bg-secondary);
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+    }
+    .type-option label:hover {
+        border-color: var(--current-module);
+        background: var(--bg-hover);
+    }
+    .type-option input:checked + label {
+        border-color: var(--current-module);
+        background: rgba(var(--current-module-rgb,255,140,66),0.08);
+    }
+    .type-option .type-icon {
+        font-size: 1.25rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    .type-option .type-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.125rem;
+    }
+    .type-option .type-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+    .submit-btn {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: 0.625rem;
+        background: var(--current-module);
+        color: #fff;
+        border: none;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        margin-top: 0.5rem;
+    }
+    .submit-btn:hover { opacity: 0.88; }
+    .info-note {
+        background: rgba(59,130,246,0.08);
+        border: 1px solid rgba(59,130,246,0.25);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.83rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div style="padding: 1.5rem 0;">
+    <div class="request-card">
+        <h4><i class="bi bi-send me-2" style="color:var(--current-module);"></i>Submit a Request</h4>
+        <p class="subtitle">Need something changed on your account? Submit a request and your administrator will review it.</p>
+
+        <div class="info-note">
+            <i class="bi bi-info-circle me-1"></i>
+            Requests are reviewed by your instance administrators. You will not be notified automatically — follow up with your admin if urgent.
+        </div>
+
+        <form method="POST">
+            <div class="mb-4">
+                <label class="form-label">Request Type <span style="color:#ef4444;">*</span></label>
+                <div class="type-grid">
+
+                    <div class="type-option">
+                        <input type="radio" name="request_type" id="rt_pw" value="password_reset" required>
+                        <label for="rt_pw">
+                            <span class="type-icon" style="color:#3b82f6;"><i class="bi bi-key"></i></span>
+                            <div>
+                                <div class="type-name">Password Reset</div>
+                                <div class="type-desc">Request your password to be reset by an admin</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="type-option">
+                        <input type="radio" name="request_type" id="rt_profile" value="profile_adjustment">
+                        <label for="rt_profile">
+                            <span class="type-icon" style="color:#8b5cf6;"><i class="bi bi-person-gear"></i></span>
+                            <div>
+                                <div class="type-name">Profile Adjustment</div>
+                                <div class="type-desc">Update your name, email, department, or position</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="type-option">
+                        <input type="radio" name="request_type" id="rt_delete" value="account_deletion">
+                        <label for="rt_delete">
+                            <span class="type-icon" style="color:#ef4444;"><i class="bi bi-person-dash"></i></span>
+                            <div>
+                                <div class="type-name">Account Deletion</div>
+                                <div class="type-desc">Request your account to be permanently removed</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="type-option">
+                        <input type="radio" name="request_type" id="rt_elev" value="elevation_request">
+                        <label for="rt_elev">
+                            <span class="type-icon" style="color:#d97706;"><i class="bi bi-shield-plus"></i></span>
+                            <div>
+                                <div class="type-name">Elevation Request</div>
+                                <div class="type-desc">Request an increase in your admin permission level</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="type-option" style="grid-column: span 2;">
+                        <input type="radio" name="request_type" id="rt_module" value="module_access_request">
+                        <label for="rt_module">
+                            <span class="type-icon" style="color:#10b981;"><i class="bi bi-grid-plus"></i></span>
+                            <div>
+                                <div class="type-name">Module Access Request</div>
+                                <div class="type-desc">Request access to an additional module (Send, Flow, Fulfillment)</div>
+                            </div>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label" for="request_details">Additional Details</label>
+                <textarea class="form-control" name="request_details" id="request_details"
+                          rows="4"
+                          placeholder="Describe what you need. For profile changes, specify the new values. For access requests, list the modules you need."></textarea>
+                <small style="color:var(--text-muted);font-size:0.78rem;margin-top:0.25rem;display:block;">
+                    Be specific — clear details help your admin process your request faster.
+                </small>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="bi bi-send me-2"></i>Submit Request
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

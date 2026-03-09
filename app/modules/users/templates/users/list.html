@@ -1,680 +1,1183 @@
-{% extends "base.html" %}
+{% if is_sandbox %}
+    {% extends "sandbox_base.html" %}
+{% else %}
+    {% extends "base.html" %}
+{% endif %}
+
+{% block title %}Users{% endblock %}
 
 {% block extra_css %}
-<!-- Add permission badges CSS -->
-<link rel="stylesheet" href="{{ url_for('interface.static', filename='css/permission_badges.css') }}">
-
 <style>
-    /* Users Container */
-    .users-container {
-        padding: 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
-    /* Page Header */
-    .page-header {
-        background: var(--bg-card);
-        border-radius: 1rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-color);
-    }
-    
-    .page-header-content {
+    /* ── Layout ─────────────────────────────────────────────── */
+    .users-page {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin: 0 0 0.5rem 0;
-    }
-    
-    .page-subtitle {
-        color: var(--text-secondary);
-        font-size: 1rem;
-        margin: 0;
-    }
-    
-    .header-actions {
-        display: flex;
-        gap: 0.75rem;
-    }
-    
-    .btn-header {
-        padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        text-decoration: none;
-        border-radius: 0.625rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 163, 173, 0.2);
-    }
-    
-    .btn-header:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 163, 173, 0.3);
-        color: white;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    }
-    
-    /* Search Bar */
-    .filters-section {
-        margin-bottom: 2rem;
-    }
-    
-    .search-bar {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-        background: var(--bg-card);
-        padding: 1.5rem;
-        border-radius: 1rem;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-color);
-    }
-    
-    .search-input {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-    }
-    
-    .search-input:focus {
-        outline: none;
-        border-color: #00A3AD;
-        background: var(--bg-card);
-    }
-    
-    .btn-search {
-        padding: 0.75rem 2rem;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-search:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 163, 173, 0.3);
-    }
-    
-    .filter-toggle {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--text-primary);
-    }
-    
-    /* Users Grid */
-    .users-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    /* User Card */
-    .user-card {
-        background: var(--bg-card);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: var(--shadow-md);
-        transition: all 0.3s ease;
-        position: relative;
+        flex-direction: column;
+        height: calc(100vh - 64px); /* subtract topbar */
         overflow: hidden;
-        border: 1px solid var(--border-color);
     }
-    
-    .user-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-xl);
-    }
-    
-    .user-card-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .user-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 800;
+
+    .users-page-header {
+        padding: 1rem 1.5rem 0.75rem;
+        border-bottom: 1px solid var(--border-subtle);
         flex-shrink: 0;
     }
-    
-    .user-info {
-        flex: 1;
-    }
-    
-    .user-name {
-        font-size: 1.25rem;
+
+    .users-page-header h1 {
+        font-size: 1.1rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        margin: 0 0 0.15rem;
     }
-    
-    .user-details {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-    
-    .user-email {
-        font-size: 0.875rem;
+
+    .users-page-header p {
+        font-size: 0.8rem;
         color: var(--text-muted);
-        margin-top: 0.25rem;
+        margin: 0;
     }
-    
-    /* Permission Level Badge - Top right corner */
-    .permission-badge {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        padding: 0.375rem 0.875rem;
-        border-radius: 0.375rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-    
-    .permission-badge.s1 {
-        background: linear-gradient(135deg, #dc2626, #991b1b);
-        color: white;
-    }
-    
-    .permission-badge.l3 {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-    }
-    
-    .permission-badge.l2 {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: white;
-    }
-    
-    .permission-badge.l1 {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-    }
-    
-    .permission-badge.module {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-    }
-    
-    /* Status Indicators */
-    .status-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-    
-    .status-indicator.active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .status-indicator.inactive {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-    
-    .status-indicator.pending-deletion {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    
-    /* Permissions Section */
-    .user-permissions {
-        border-top: 1px solid var(--border-color);
-        padding-top: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .permissions-title {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-        margin-bottom: 0.75rem;
-    }
-    
-    .permissions-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    
-    /* Module Permission Badges */
-    .user-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.75rem;
-        border-radius: 0.375rem;
-        font-size: 0.8125rem;
-        font-weight: 600;
-    }
-    
-    .user-badge.module {
-        background: var(--bg-tertiary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-    }
-    
-    /* User Actions */
-    .user-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .btn-user-action {
+
+    .users-panel {
+        display: grid;
+        grid-template-columns: 260px 1fr;
         flex: 1;
-        padding: 0.625rem;
-        border: 1px solid var(--border-color);
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* ── Roster (left) ──────────────────────────────────────── */
+    .user-roster {
+        border-right: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg-secondary);
+    }
+
+    .roster-top {
+        padding: 0.75rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .roster-search {
+        flex: 1;
+        padding: 0.4rem 0.65rem;
         background: var(--bg-card);
-        border-radius: 0.375rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        outline: none;
+    }
+
+    .roster-search:focus {
+        border-color: var(--current-module);
+    }
+
+    .roster-add {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--current-module);
+        color: white;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-        text-decoration: none;
-        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 1rem;
+        flex-shrink: 0;
+        transition: opacity 0.15s;
     }
-    
-    .btn-user-action:hover {
-        background: var(--bg-hover);
-        border-color: #00A3AD;
-        color: #00A3AD;
-        text-decoration: none;
+
+    .roster-add:hover { opacity: 0.85; }
+
+    .roster-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem 0;
     }
-    
-    .btn-user-action.permissions {
-        border-color: #10b981;
-        color: #10b981;
-    }
-    
-    .btn-user-action.permissions:hover {
-        background: #ecfdf5;
-        border-color: #059669;
-        color: #059669;
-    }
-    
-    .btn-user-action.delete {
-        color: #dc2626;
-        border-color: #fca5a5;
-    }
-    
-    .btn-user-action.delete:hover {
-        background: #fef2f2;
-        border-color: #dc2626;
-    }
-    
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: var(--bg-card);
-        border-radius: 1rem;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-color);
-    }
-    
-    .empty-state-icon {
-        font-size: 4rem;
+
+    /* Group headers */
+    .roster-group-header {
+        padding: 0.5rem 0.75rem 0.2rem;
+        font-size: 0.68rem;
+        font-weight: 700;
         color: var(--text-muted);
-        margin-bottom: 1rem;
-        opacity: 0.5;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        user-select: none;
     }
-    
-    .empty-state-title {
-        font-size: 1.5rem;
+
+    /* User row */
+    .roster-user {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.35rem 0.75rem;
+        cursor: pointer;
+        border-radius: 0.35rem;
+        margin: 0 0.35rem;
+        transition: background 0.1s;
+    }
+
+    .roster-user:hover {
+        background: var(--bg-card);
+    }
+
+    .roster-user.active {
+        background: rgba(0,163,173,0.15);
+    }
+
+    .roster-user.offline { opacity: 0.5; }
+
+    /* Presence dot */
+    .presence-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .roster-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A3AD, #008A93);
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .presence-dot {
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-secondary);
+    }
+
+    .presence-dot.online { background: #23a55a; }
+    .presence-dot.offline { background: #80848e; }
+
+    .roster-name {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ── Detail panel (right) ───────────────────────────────── */
+    .user-detail {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--bg-card);
+    }
+
+    /* Empty state */
+    .detail-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        gap: 0.75rem;
+    }
+
+    .detail-empty i { font-size: 2.5rem; opacity: 0.3; }
+    .detail-empty p { font-size: 0.875rem; margin: 0; }
+
+    /* Loaded state */
+    .detail-content { display: none; flex-direction: column; height: 100%; }
+    .detail-content.visible { display: flex; }
+
+    .detail-header {
+        padding: 1.25rem 1.5rem 0;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 1rem;
+    }
+
+    .detail-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00A3AD, #008A93);
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .detail-avatar .presence-dot {
+        width: 13px;
+        height: 13px;
+        bottom: 0;
+        right: 0;
+    }
+
+    .detail-header-info { flex: 1; }
+
+    .detail-username {
+        font-size: 1.1rem;
         font-weight: 700;
         color: var(--text-primary);
+        margin-bottom: 0.2rem;
+    }
+
+    .detail-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .level-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .level-badge.s1 { background: rgba(220,38,38,0.15); color: #dc2626; }
+    .level-badge.l3 { background: rgba(245,158,11,0.15); color: #d97706; }
+    .level-badge.l2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .level-badge.l1 { background: rgba(16,185,129,0.15); color: #10b981; }
+    .level-badge.module { background: var(--bg-tertiary); color: var(--text-muted); }
+
+    /* Tab bar */
+    .detail-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 0 1.5rem;
+        gap: 0;
+        flex-shrink: 0;
+    }
+
+    .detail-tab {
+        padding: 0.6rem 1rem;
+        font-size: 0.83rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition: all 0.15s;
+        user-select: none;
+    }
+
+    .detail-tab:hover { color: var(--text-primary); }
+
+    .detail-tab.active {
+        color: var(--current-module);
+        border-bottom-color: var(--current-module);
+    }
+
+    /* Tab panels */
+    .detail-panels {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .detail-panel { display: none; }
+    .detail-panel.active { display: block; }
+
+    /* Form fields */
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .field-row.single { grid-template-columns: 1fr; }
+
+    .form-group label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.4rem;
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        outline: none;
+        transition: border-color 0.15s;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: var(--current-module);
+    }
+
+    .form-group input[readonly],
+    .form-group input:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    /* Module permission toggles */
+    .module-perms-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .module-perm-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 0.75rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.4rem;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .module-perm-item.checked {
+        background: rgba(0,163,173,0.08);
+        border-color: rgba(0,163,173,0.35);
+    }
+
+    .module-perm-item.disabled { cursor: not-allowed; opacity: 0.5; }
+
+    /* Admin-locked permissions panel */
+    .perms-admin-notice {
+        display: none;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.65rem 0.9rem;
+        background: rgba(124,58,237,0.07);
+        border: 1px solid rgba(124,58,237,0.2);
+        border-radius: 0.5rem;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+    .perms-admin-notice.visible { display: flex; }
+    .perms-admin-notice i { color: #7c3aed; flex-shrink: 0; }
+
+    .perm-toggle {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 2px solid var(--border-subtle);
+        flex-shrink: 0;
+        appearance: none;
+        cursor: pointer;
+        background: var(--bg-card);
+        transition: all 0.15s;
+    }
+
+    .perm-toggle:checked {
+        background: var(--current-module);
+        border-color: var(--current-module);
+    }
+
+    .perm-toggle:disabled { cursor: not-allowed; }
+
+    .perm-label {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        user-select: none;
+    }
+
+    /* Admin level section */
+    .admin-level-section {
+        margin-top: 1rem;
+        padding: 0.875rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.5rem;
+    }
+
+    .admin-level-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
         margin-bottom: 0.5rem;
     }
-    
-    .empty-state-text {
-        color: var(--text-secondary);
-        margin-bottom: 2rem;
+
+    .admin-level-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
     }
-    
+
+    /* Security tab */
+    .security-section {
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .security-section h4 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.75rem;
+    }
+
+    .security-blocked {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* Action buttons */
+    .btn-action {
+        padding: 0.45rem 1rem;
+        border-radius: 0.4rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-action:hover { opacity: 0.85; }
+
+    .btn-primary-action {
+        background: var(--current-module);
+        color: white;
+    }
+
+    .btn-green {
+        background: #10b981;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-ghost {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-subtle) !important;
+    }
+
+    .panel-footer {
+        padding: 0.75rem 0;
+        margin-top: 1rem;
+        border-top: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    /* Toast */
+    .toast-msg {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 9999;
+        transform: translateY(3rem);
+        opacity: 0;
+        transition: all 0.25s ease;
+        pointer-events: none;
+    }
+
+    .toast-msg.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .toast-msg.success { background: #10b981; color: white; }
+    .toast-msg.error   { background: #dc2626; color: white; }
+
+    /* Section divider label */
+    .section-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.6rem;
+        margin-top: 1.25rem;
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    /* New user panel */
+    .create-note {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        padding: 0.6rem 0.875rem;
+        background: rgba(0,163,173,0.08);
+        border-left: 3px solid var(--current-module);
+        border-radius: 0 0.4rem 0.4rem 0;
+    }
+
     /* Responsive */
-    @media (max-width: 768px) {
-        .users-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .page-header-content {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .header-actions {
-            width: 100%;
-            justify-content: center;
-        }
+    @media (max-width: 700px) {
+        .users-panel { grid-template-columns: 1fr; }
+        .user-roster { display: none; }
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="users-container">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <div>
-                <h1 class="page-title">Users Management</h1>
-                <p class="page-subtitle">
-                    {% if instance %}
-                        {{ instance.display_name or instance.name }}
-                    {% else %}
-                        Manage user accounts and permissions
-                    {% endif %}
-                </p>
-            </div>
-            <div class="header-actions">
+<div class="users-page">
+
+    <!-- Page header -->
+    <div class="users-page-header">
+        <h1><i class="bi bi-people me-1"></i> Users</h1>
+        <p>
+            {% if instance %}{{ instance.display_name or instance.name }}{% endif %}
+            &mdash; {{ groups['S1']|length + groups['L3']|length + groups['L2']|length + groups['L1']|length + groups['']|length }} users
+        </p>
+    </div>
+
+    <div class="users-panel">
+
+        <!-- ── LEFT: User Roster ───────────────────────────── -->
+        <div class="user-roster">
+            <div class="roster-top">
+                <input class="roster-search" id="rosterSearch" type="text" placeholder="Search users…">
                 {% if can_create %}
-                <a href="{{ url_for('users.create', instance_id=instance_id) }}" class="btn-header">
-                    <i class="bi bi-person-plus"></i>
-                    Add User
-                </a>
-                {% endif %}
-                {% if cu.permission_level in ['L1', 'L2', 'L3', 'S1'] %}
-                <a href="{{ url_for('users.elevation_management', instance_id=instance_id) }}" 
-                   class="btn-header btn-primary">
-                    <i class="bi bi-shield"></i> Elevation Management
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <!-- Search and Filters -->
-    <div class="filters-section">
-        <form method="get" class="search-bar">
-            <input type="text" 
-                   name="q" 
-                   class="search-input" 
-                   placeholder="Search by username, name, email, or department..." 
-                   value="{{ q }}">
-            <button type="submit" class="btn-search">
-                <i class="bi bi-search"></i>
-                Search
-            </button>
-            <div class="filter-toggle">
-                <input type="checkbox" 
-                       id="show-all" 
-                       name="all" 
-                       value="1" 
-                       {% if show_all %}checked{% endif %}
-                       onchange="this.form.submit()">
-                <label for="show-all">Show inactive users</label>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Users Grid -->
-    {% if rows %}
-    <div class="users-grid">
-        {% for user in rows %}
-        <div class="user-card">
-            <!-- Permission Level Badge (Top Right) -->
-            {% if user.permission_level == 'S1' %}
-                <span class="permission-badge s1">
-                    <i class="bi bi-star-fill"></i> S1
-                </span>
-            {% elif user.permission_level == 'L3' %}
-                <span class="permission-badge l3">
-                    <i class="bi bi-globe"></i> L3
-                </span>
-            {% elif user.permission_level == 'L2' %}
-                <span class="permission-badge l2">
-                    <i class="bi bi-building"></i> L2
-                </span>
-            {% elif user.permission_level == 'L1' %}
-                <span class="permission-badge l1">
-                    <i class="bi bi-grid"></i> L1
-                </span>
-            {% else %}
-                <span class="permission-badge module">User</span>
-            {% endif %}
-            
-            <!-- User Header -->
-            <div class="user-card-header">
-                <div class="user-avatar">
-                    {{ user.username[0]|upper }}
-                </div>
-                <div class="user-info">
-                    <a href="{{ url_for('users.view_profile', uid=user.id) }}" 
-                       class="user-name" 
-                       style="text-decoration: none; color: var(--text-primary);">
-                        {{ user.username }}
-                    </a>
-                    <div class="user-details">
-                        {% if user.first_name or user.last_name %}
-                            {{ user.first_name }} {{ user.last_name }}
-                        {% else %}
-                            No name set
-                        {% endif %}
-                    </div>
-                    {% if user.email %}
-                    <div class="user-email">{{ user.email }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Status & Department -->
-            <div style="margin-bottom: 1rem;">
-                {% if user.deleted_at %}
-                <span class="status-indicator inactive">
-                    <i class="bi bi-x-circle"></i>
-                    Deleted
-                </span>
-                {% elif user.deletion_requested_at %}
-                <span class="status-indicator pending-deletion">
-                    <i class="bi bi-clock-history"></i>
-                    Deletion Pending
-                </span>
-                {% else %}
-                <span class="status-indicator active">
-                    <i class="bi bi-check-circle"></i>
-                    Active
-                </span>
-                {% endif %}
-                
-                {% if user.department %}
-                <span style="margin-left: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">
-                    {{ user.department }}
-                </span>
-                {% endif %}
-            </div>
-            
-            <!-- Module Permissions Section -->
-            <div class="user-permissions">
-                <div class="permissions-title">
-                    {% if user.permission_level %}
-                        Administrative Privileges
-                    {% else %}
-                        Module Permissions
-                    {% endif %}
-                </div>
-                <div class="permissions-list">
-                    {% if user.permission_level %}
-                        <!-- Show permission description for admin users -->
-                        <span class="user-badge module" style="background: #fef3c7; color: #92400e; border-color: #fde68a;">
-                            {{ user.permission_level_desc }}
-                        </span>
-                    {% else %}
-                        <!-- Show module badges for regular users -->
-                        {% if user.effective_permissions %}
-                            {% if user.effective_permissions.can_send or 'M1' in (user.module_permissions or []) %}
-                            <span class="user-badge module">
-                                <span>📦</span>
-                                Send
-                            </span>
-                            {% endif %}
-                            
-                            {% if user.effective_permissions.can_inventory or 'M2' in (user.module_permissions or []) %}
-                            <span class="user-badge module">
-                                <span>📊</span>
-                                Inventory
-                            </span>
-                            {% endif %}
-                            
-                            {% if user.effective_permissions.can_fulfillment_customer or 'M3A' in (user.module_permissions or []) %}
-                            <span class="user-badge module">
-                                <span>✅</span>
-                                Ful-Customer
-                            </span>
-                            {% endif %}
-                            
-                            {% if user.effective_permissions.can_fulfillment_staff or 'M3B' in (user.module_permissions or []) %}
-                            <span class="user-badge module">
-                                <span>✅</span>
-                                Ful-Staff
-                            </span>
-                            {% endif %}
-                            
-                            {% if user.effective_permissions.can_fulfillment_manager or 'M3C' in (user.module_permissions or []) %}
-                            <span class="user-badge module">
-                                <span>✅</span>
-                                Ful-Manager
-                            </span>
-                            {% endif %}
-                        {% else %}
-                            <span class="user-badge module" style="opacity: 0.6;">
-                                No modules assigned
-                            </span>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- User Actions -->
-            <div class="user-actions">
-                <a href="{{ url_for('users.edit_user', uid=user.id, instance_id=instance_id) }}" 
-                   class="btn-user-action" 
-                   title="Edit User">
-                    <i class="bi bi-pencil"></i>
-                    Edit
-                </a>
-                
-                <!-- NEW: Edit Permissions Button -->
-                <a href="{{ url_for('users.edit_permissions', user_id=user.id) }}" 
-                   class="btn-user-action permissions" 
-                   title="Edit Permissions">
-                    <i class="bi bi-shield-check"></i>
-                    Permissions
-                </a>
-                
-                {% if can_manage and user.id != cu.id %}
-                <button onclick="confirmDelete({{ user.id }}, '{{ user.username }}')" 
-                        class="btn-user-action delete" 
-                        title="Delete User">
-                    <i class="bi bi-trash"></i>
-                    Delete
+                <button class="roster-add" title="Add User" onclick="showCreatePanel()">
+                    <i class="bi bi-plus"></i>
                 </button>
                 {% endif %}
             </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    {% else %}
-    <!-- Empty State -->
-    <div class="empty-state">
-        <div class="empty-state-icon">
-            <i class="bi bi-people"></i>
-        </div>
-        <div class="empty-state-title">No Users Found</div>
-        <div class="empty-state-text">
-            {% if q %}
-                No users match your search query "{{ q }}".
-            {% else %}
-                There are no users in this instance yet.
-            {% endif %}
-        </div>
-        {% if can_create %}
-        <a href="{{ url_for('users.create', instance_id=instance_id) }}" class="btn-header">
-            <i class="bi bi-person-plus"></i>
-            Add First User
-        </a>
-        {% endif %}
-    </div>
-    {% endif %}
-</div>
 
-<!-- Delete Confirmation Modal -->
+            <div class="roster-list" id="rosterList">
+                {% set level_labels = {
+                    'S1': 'S1 — System Admin',
+                    'L3': 'L3 — Platform Ops',
+                    'L2': 'L2 — Administrators',
+                    'L1': 'L1 — Managers',
+                    '':   'Module Users'
+                } %}
+                {% for lvl in levels %}
+                {% if groups[lvl] %}
+                <div class="roster-group" data-level="{{ lvl }}">
+                    <div class="roster-group-header">
+                        {{ level_labels[lvl] }} ({{ groups[lvl]|length }})
+                    </div>
+                    {% for u in groups[lvl] %}
+                    <div class="roster-user {{ 'offline' if not u.is_online }}"
+                         data-uid="{{ u.id }}"
+                         data-username="{{ u.username }}"
+                         data-name="{{ (u.first_name or '') ~ ' ' ~ (u.last_name or '') }}"
+                         onclick="selectUser({{ u.id }})">
+                        <div class="presence-wrap">
+                            <div class="roster-avatar">{{ u.username[0]|upper }}</div>
+                            <span class="presence-dot {{ 'online' if u.is_online else 'offline' }}"></span>
+                        </div>
+                        <span class="roster-name">{{ u.username }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Detail Panel ────────────────────────── -->
+        <div class="user-detail" id="userDetail">
+
+            <!-- Empty state -->
+            <div class="detail-empty" id="detailEmpty">
+                <i class="bi bi-person-circle"></i>
+                <p>Select a user to view their profile</p>
+            </div>
+
+            <!-- Loaded / Create state -->
+            <div class="detail-content" id="detailContent">
+
+                <!-- Header -->
+                <div class="detail-header" id="detailHeader">
+                    <div class="detail-avatar" id="detailAvatar">
+                        <span id="detailAvatarLetter">?</span>
+                        <span class="presence-dot offline" id="detailPresence"></span>
+                    </div>
+                    <div class="detail-header-info">
+                        <div class="detail-username" id="detailUsername">—</div>
+                        <div class="detail-meta" id="detailMeta">—</div>
+                    </div>
+                    <span class="level-badge module" id="detailBadge">User</span>
+                </div>
+
+                <!-- Tabs -->
+                <div class="detail-tabs" id="detailTabs">
+                    <div class="detail-tab active" onclick="switchTab('general')">General</div>
+                    <div class="detail-tab" onclick="switchTab('permissions')">Permissions</div>
+                    <div class="detail-tab" onclick="switchTab('security')">Security</div>
+                </div>
+
+                <!-- Tab panels -->
+                <div class="detail-panels">
+
+                    <!-- GENERAL tab -->
+                    <div class="detail-panel active" id="panel-general">
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" id="f-first_name" placeholder="First name">
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name</label>
+                                <input type="text" id="f-last_name" placeholder="Last name">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="f-email" placeholder="user@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="f-phone" placeholder="(123) 456-7890">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <div class="form-group">
+                                <label>Department</label>
+                                <input type="text" id="f-department" placeholder="Department">
+                            </div>
+                            <div class="form-group">
+                                <label>Title / Position</label>
+                                <input type="text" id="f-position" placeholder="Job title">
+                            </div>
+                        </div>
+                        <div class="panel-footer" id="generalFooter" style="display:none;">
+                            <button class="btn-action btn-ghost" onclick="cancelEdit()">Cancel</button>
+                            <button class="btn-action btn-primary-action" onclick="saveGeneral()">
+                                <i class="bi bi-check2"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PERMISSIONS tab -->
+                    <div class="detail-panel" id="panel-permissions">
+                        <div class="perms-admin-notice" id="permsAdminNotice">
+                            <i class="bi bi-shield-fill-check"></i>
+                            This user has an admin level (L1+). All module permissions are included automatically and cannot be modified here.
+                        </div>
+                        <div class="section-label">Module Access</div>
+                        <div class="module-perms-grid" id="modulePermsGrid">
+                            <label class="module-perm-item" id="perm-M1">
+                                <input type="checkbox" class="perm-toggle" data-perm="M1">
+                                <span class="perm-label"><i class="bi bi-box-seam me-1"></i>Send (M1)</span>
+                            </label>
+                            <label class="module-perm-item" id="perm-M2">
+                                <input type="checkbox" class="perm-toggle" data-perm="M2">
+                                <span class="perm-label"><i class="bi bi-clipboard-data me-1"></i>Inventory (M2)</span>
+                            </label>
+                            <label class="module-perm-item" id="perm-M3A">
+                                <input type="checkbox" class="perm-toggle" data-perm="M3A">
+                                <span class="perm-label"><i class="bi bi-person-check me-1"></i>Ful-Customer (M3A)</span>
+                            </label>
+                            <label class="module-perm-item" id="perm-M3B">
+                                <input type="checkbox" class="perm-toggle" data-perm="M3B">
+                                <span class="perm-label"><i class="bi bi-person-badge me-1"></i>Ful-Staff (M3B)</span>
+                            </label>
+                            <label class="module-perm-item" id="perm-M3C">
+                                <input type="checkbox" class="perm-toggle" data-perm="M3C">
+                                <span class="perm-label"><i class="bi bi-person-gear me-1"></i>Ful-Manager (M3C)</span>
+                            </label>
+                        </div>
+
+                        <!-- Admin Level (L2+ viewers only, read-only — changes via Elevation tab) -->
+                        <div id="adminLevelSection" style="display:none;">
+                            <div class="section-label">Admin Level</div>
+                            <div class="admin-level-section">
+                                <div class="admin-level-label">Current Level</div>
+                                <div class="admin-level-row">
+                                    <span class="level-badge module" id="currentAdminBadge">Module User</span>
+                                </div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">
+                                    <i class="bi bi-info-circle me-1"></i>To change admin level, use the <a href="{{ url_for('users.elevation_management') }}" style="color:var(--current-module);">Elevation tab</a>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-footer" id="permissionsFooter" style="display:none;">
+                            <button class="btn-action btn-ghost" onclick="cancelEdit()">Cancel</button>
+                            <button class="btn-action btn-primary-action" onclick="savePermissions()">
+                                <i class="bi bi-check2"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SECURITY tab -->
+                    <div class="detail-panel" id="panel-security">
+                        <div id="securityContent">
+                            <div class="security-blocked">
+                                <i class="bi bi-lock" style="font-size:1.75rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
+                                Select a user to manage security settings.
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /detail-panels -->
+            </div><!-- /detail-content -->
+        </div><!-- /user-detail -->
+    </div><!-- /users-panel -->
+</div><!-- /users-page -->
+
+<!-- Toast -->
+<div class="toast-msg" id="toastMsg"></div>
+
+<!-- Delete confirmation modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Deletion</h5>
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border-subtle);">
+            <div class="modal-header" style="border-color:var(--border-subtle);">
+                <h5 class="modal-title" style="color:var(--text-primary);">Delete User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                Are you sure you want to delete user <strong id="deleteUsername"></strong>?
-                This action cannot be undone.
+            <div class="modal-body" style="color:var(--text-secondary);">
+                Delete <strong id="deleteModalName" style="color:var(--text-primary);"></strong>? This cannot be undone.
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="" id="deleteForm">
-                    <button type="submit" class="btn btn-danger">Delete User</button>
-                </form>
+            <div class="modal-footer" style="border-color:var(--border-subtle);">
+                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-sm btn-danger" id="deleteModalConfirm">Delete</button>
             </div>
         </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-function confirmDelete(userId, username) {
-    document.getElementById('deleteUsername').textContent = username;
-    document.getElementById('deleteForm').action = `/users/delete/${userId}`;
+// ── State ────────────────────────────────────────────────────
+const CU_LEVEL  = '{{ cu_level }}';
+const CU_ID     = {{ cu.id }};
+const LEVEL_RANK = {'': 0, 'L1': 1, 'L2': 2, 'L3': 3, 'S1': 4};
+const LEVEL_LABELS = {
+    'S1': 'S1 — System Admin', 'L3': 'L3 — Platform Ops',
+    'L2': 'L2 — Administrator', 'L1': 'L1 — Manager', '': 'Module User'
+};
+
+let currentUID  = null;
+let currentUser = null;
+let canEdit     = false;
+let isCreateMode = false;
+
+// ── Toast ────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+    const el = document.getElementById('toastMsg');
+    el.textContent = msg;
+    el.className = 'toast-msg ' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Roster search ─────────────────────────────────────────────
+document.getElementById('rosterSearch').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.roster-user').forEach(el => {
+        const match = el.dataset.username.toLowerCase().includes(q) ||
+                      el.dataset.name.toLowerCase().includes(q);
+        el.style.display = match ? '' : 'none';
+    });
+    // Hide group headers with no visible children
+    document.querySelectorAll('.roster-group').forEach(g => {
+        const anyVisible = [...g.querySelectorAll('.roster-user')].some(u => u.style.display !== 'none');
+        g.style.display = anyVisible ? '' : 'none';
+    });
+});
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.detail-tab').forEach((t, i) => {
+        const tabs = ['general', 'permissions', 'security'];
+        t.classList.toggle('active', tabs[i] === name);
+    });
+    document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── Level badge helper ────────────────────────────────────────
+function levelBadgeHTML(lvl) {
+    const cls = lvl ? lvl.toLowerCase() : 'module';
+    const label = lvl || 'Module User';
+    return `<span class="level-badge ${cls}">${label}</span>`;
+}
+
+// ── Select user ───────────────────────────────────────────────
+async function selectUser(uid) {
+    isCreateMode = false;
+    // Update active state
+    document.querySelectorAll('.roster-user').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.uid) === uid);
+    });
+
+    try {
+        const resp = await fetch(`/users/api/user/${uid}`);
+        if (!resp.ok) throw new Error('Failed to load user');
+        const u = await resp.json();
+        currentUID  = uid;
+        currentUser = u;
+        populateDetail(u);
+    } catch (e) {
+        toast('Failed to load user data', 'error');
+    }
+}
+
+function populateDetail(u) {
+    const lvl = u.permission_level || '';
+    const actorRank = LEVEL_RANK[CU_LEVEL] || 0;
+    const targetRank = LEVEL_RANK[lvl] || 0;
+    canEdit = (actorRank > targetRank) && (u.id !== CU_ID);
+
+    // Header
+    document.getElementById('detailAvatarLetter').textContent = u.username[0].toUpperCase();
+    document.getElementById('detailPresence').className =
+        'presence-dot ' + (u.is_online ? 'online' : 'offline');
+    document.getElementById('detailUsername').textContent = u.username;
+    const name = [u.first_name, u.last_name].filter(Boolean).join(' ');
+    document.getElementById('detailMeta').textContent =
+        [name, u.department].filter(Boolean).join(' · ') || 'No info set';
+    document.getElementById('detailBadge').outerHTML =
+        `<span class="level-badge ${lvl ? lvl.toLowerCase() : 'module'}" id="detailBadge">
+            ${lvl || 'Module User'}
+        </span>`;
+
+    // General fields
+    ['first_name','last_name','email','phone','department','position'].forEach(f => {
+        const el = document.getElementById('f-' + f);
+        el.value = u[f] || '';
+        el.readOnly = !canEdit;
+        el.disabled = !canEdit;
+    });
+    document.getElementById('generalFooter').style.display = canEdit ? '' : 'none';
+
+    // Permissions — module toggles
+    const isAdmin = ['L1','L2','L3','S1'].includes(lvl);
+    const canEditPerms = canEdit && !isAdmin;
+    const allPerms = ['M1','M2','M3A','M3B','M3C'];
+    const userPerms = u.module_permissions || [];
+
+    // Admin notice + grid grey-out
+    document.getElementById('permsAdminNotice').classList.toggle('visible', isAdmin);
+    document.getElementById('modulePermsGrid').style.opacity = isAdmin ? '0.4' : '';
+    document.getElementById('modulePermsGrid').style.pointerEvents = isAdmin ? 'none' : '';
+
+    allPerms.forEach(p => {
+        const label = document.getElementById('perm-' + p);
+        const cb    = label.querySelector('.perm-toggle');
+        cb.checked  = userPerms.includes(p);
+        cb.disabled = !canEditPerms;
+        label.classList.toggle('checked', cb.checked);
+        label.classList.toggle('disabled', !canEditPerms);
+    });
+
+    // Admin level section — read-only display (L2+ viewers only)
+    const adminSection = document.getElementById('adminLevelSection');
+    const showAdmin = (actorRank >= 2);
+    adminSection.style.display = showAdmin ? '' : 'none';
+    if (showAdmin) {
+        document.getElementById('currentAdminBadge').outerHTML =
+            `<span class="level-badge ${lvl ? lvl.toLowerCase() : 'module'}" id="currentAdminBadge">
+                ${LEVEL_LABELS[lvl] || 'Module User'}
+            </span>`;
+    }
+
+    document.getElementById('permissionsFooter').style.display = canEditPerms ? '' : 'none';
+
+    // Security tab
+    buildSecurityTab(u, canEdit);
+
+    // Show content
+    document.getElementById('detailEmpty').style.display = 'none';
+    document.getElementById('detailContent').classList.add('visible');
+    document.getElementById('detailTabs').style.display = '';
+    switchTab('general');
+}
+
+
+function buildSecurityTab(u, editable) {
+    const container = document.getElementById('securityContent');
+    if (!editable) {
+        container.innerHTML = `<div class="security-blocked">
+            <i class="bi bi-lock" style="font-size:1.75rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
+            You cannot manage security settings for this user.
+        </div>`;
+        return;
+    }
+    container.innerHTML = `
+        <div class="security-section">
+            <h4><i class="bi bi-key me-1"></i> Password Reset</h4>
+            <div class="field-row single">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPwInput" placeholder="Min. 8 characters">
+                </div>
+            </div>
+            <button class="btn-action btn-primary-action" onclick="resetPassword()">
+                <i class="bi bi-shield-lock"></i> Reset Password
+            </button>
+        </div>
+        <div class="security-section" style="border-color:rgba(220,38,38,0.3);">
+            <h4 style="color:#dc2626;"><i class="bi bi-trash me-1"></i> Delete Account</h4>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                This will permanently deactivate the account. The user will no longer be able to log in.
+            </p>
+            <button class="btn-action btn-danger" onclick="confirmDelete()">
+                <i class="bi bi-trash"></i> Delete Account
+            </button>
+        </div>
+    `;
+}
+
+// ── Create user panel ─────────────────────────────────────────
+function showCreatePanel() {
+    isCreateMode = true;
+    currentUID  = null;
+    currentUser = null;
+    canEdit     = true;
+
+    // Clear roster active states
+    document.querySelectorAll('.roster-user').forEach(el => el.classList.remove('active'));
+
+    // Setup header for create mode
+    document.getElementById('detailAvatarLetter').textContent = '+';
+    document.getElementById('detailPresence').className = 'presence-dot offline';
+    document.getElementById('detailUsername').textContent = 'New User';
+    document.getElementById('detailMeta').textContent = 'Fill in the form below';
+    document.getElementById('detailBadge').outerHTML =
+        `<span class="level-badge module" id="detailBadge">New</span>`;
+
+    // Clear general fields
+    ['first_name','last_name','email','phone','department','position'].forEach(f => {
+        const el = document.getElementById('f-' + f);
+        el.value = '';
+        el.readOnly = false;
+        el.disabled = false;
+    });
+
+    // Add username field note to general panel
+    // (username is set via prompt for simplicity; or we patch the panel)
+    document.getElementById('generalFooter').style.display = '';
+
+    // Hide admin level section, show save
+    document.getElementById('adminLevelSection').style.display = 'none';
+
+    // Clear perms
+    document.querySelectorAll('.perm-toggle').forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+    });
+    document.getElementById('permissionsFooter').style.display = 'none';
+
+    // Security: hide
+    document.getElementById('securityContent').innerHTML =
+        `<div class="security-blocked">Save the user first, then manage security settings.</div>`;
+
+    // Show
+    document.getElementById('detailEmpty').style.display = 'none';
+    document.getElementById('detailContent').classList.add('visible');
+    document.getElementById('detailTabs').style.display = '';
+
+    // Swap general footer for a "create" footer
+    document.getElementById('generalFooter').innerHTML = `
+        <div class="create-note" style="margin:0 0 0.75rem;flex:1;">
+            A username and password are required. The user will start with no module permissions.
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <div class="form-group" style="min-width:140px;">
+                <label>Username *</label>
+                <input type="text" id="create-username" placeholder="username" style="margin-bottom:0;">
+            </div>
+            <div class="form-group" style="min-width:140px;">
+                <label>Password *</label>
+                <input type="password" id="create-password" placeholder="min. 8 chars" style="margin-bottom:0;">
+            </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end;">
+            <button class="btn-action btn-ghost" onclick="cancelCreate()">Cancel</button>
+            <button class="btn-action btn-primary-action" onclick="createUser()">
+                <i class="bi bi-person-plus"></i> Create User
+            </button>
+        </div>
+    `;
+    switchTab('general');
+}
+
+function cancelCreate() {
+    isCreateMode = false;
+    document.getElementById('detailEmpty').style.display = '';
+    document.getElementById('detailContent').classList.remove('visible');
+}
+
+async function createUser() {
+    const username = (document.getElementById('create-username')?.value || '').trim();
+    const password = (document.getElementById('create-password')?.value || '').trim();
+    if (!username || !password) { toast('Username and password required', 'error'); return; }
+    if (password.length < 8)    { toast('Password must be at least 8 characters', 'error'); return; }
+
+    const payload = {
+        username,
+        password,
+        first_name:  document.getElementById('f-first_name').value,
+        last_name:   document.getElementById('f-last_name').value,
+        email:       document.getElementById('f-email').value,
+        phone:       document.getElementById('f-phone').value,
+        department:  document.getElementById('f-department').value,
+        position:    document.getElementById('f-position').value
+    };
+
+    try {
+        const resp = await fetch('/users/api/user', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (data.success) {
+            toast('User created');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            toast(data.error || 'Failed to create user', 'error');
+        }
+    } catch (e) {
+        toast('Error creating user', 'error');
+    }
+}
+
+// ── Save General ──────────────────────────────────────────────
+async function saveGeneral() {
+    if (!currentUID) return;
+    const payload = {};
+    ['first_name','last_name','email','phone','department','position'].forEach(f => {
+        payload[f] = document.getElementById('f-' + f).value;
+    });
+    try {
+        const resp = await fetch(`/users/api/user/${currentUID}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        data.success ? toast('Saved') : toast(data.error || 'Save failed', 'error');
+        if (data.success) {
+            // Update roster display name
+            const meta = [payload.first_name, payload.last_name].filter(Boolean).join(' ');
+            document.getElementById('detailMeta').textContent =
+                [meta, payload.department].filter(Boolean).join(' · ') || 'No info set';
+        }
+    } catch { toast('Save failed', 'error'); }
+}
+
+function cancelEdit() {
+    if (currentUID) selectUser(currentUID);
+    else cancelCreate();
+}
+
+// ── Save Permissions ──────────────────────────────────────────
+async function savePermissions() {
+    if (!currentUID) return;
+    const checked = [...document.querySelectorAll('.perm-toggle:checked')].map(cb => cb.dataset.perm);
+    try {
+        const resp = await fetch(`/users/api/user/${currentUID}/permissions`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                permission_level: currentUser?.permission_level || '',
+                module_permissions: checked
+            })
+        });
+        const data = await resp.json();
+        data.success ? toast('Permissions saved') : toast(data.error || 'Save failed', 'error');
+        // Sync local state
+        if (data.success && currentUser) currentUser.module_permissions = checked;
+    } catch { toast('Save failed', 'error'); }
+}
+
+
+// ── Password Reset ────────────────────────────────────────────
+async function resetPassword() {
+    const pw = (document.getElementById('newPwInput')?.value || '').trim();
+    if (pw.length < 8) { toast('Password must be at least 8 characters', 'error'); return; }
+    try {
+        const resp = await fetch(`/users/api/user/${currentUID}/password`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({password: pw})
+        });
+        const data = await resp.json();
+        if (data.success) {
+            toast('Password reset successfully');
+            document.getElementById('newPwInput').value = '';
+        } else {
+            toast(data.error || 'Reset failed', 'error');
+        }
+    } catch { toast('Reset failed', 'error'); }
+}
+
+// ── Delete ────────────────────────────────────────────────────
+function confirmDelete() {
+    if (!currentUser) return;
+    document.getElementById('deleteModalName').textContent = currentUser.username;
+    document.getElementById('deleteModalConfirm').onclick = async () => {
+        bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+        try {
+            const resp = await fetch(`/users/api/user/${currentUID}`, {method: 'DELETE'});
+            const data = await resp.json();
+            if (data.success) {
+                toast('User deleted');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                toast(data.error || 'Delete failed', 'error');
+            }
+        } catch { toast('Delete failed', 'error'); }
+    };
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 </script>

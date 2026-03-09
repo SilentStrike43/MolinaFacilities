@@ -4,73 +4,439 @@
     {% extends "base.html" %}
 {% endif %}
 
+{% block title %}Audit Log{% endblock %}
+
+{% block extra_css %}
+<style>
+    .audit-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    @media (max-width: 768px) {
+        .audit-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .audit-stat {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        text-align: center;
+    }
+    .audit-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    .audit-stat-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .filter-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .filter-card .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.35rem;
+    }
+    .filter-card .form-control,
+    .filter-card .form-select {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+    }
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        background: var(--bg-secondary);
+        border-color: var(--current-module);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0,163,173,0.15);
+    }
+    .filter-card .form-select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    .btn-filter-apply {
+        background: linear-gradient(135deg, #00A3AD 0%, #008A93 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 0.5rem !important;
+        font-weight: 600 !important;
+        padding: 0.5rem 1.25rem !important;
+        text-decoration: none !important;
+    }
+    .btn-filter-clear {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 0.5rem !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+    }
+
+    .quick-filter-btn {
+        background: var(--bg-tertiary) !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 999px !important;
+        font-size: 0.78rem !important;
+        padding: 0.25rem 0.75rem !important;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none !important;
+    }
+    .quick-filter-btn:hover {
+        border-color: var(--current-module) !important;
+        color: var(--current-module) !important;
+        background: var(--bg-card) !important;
+    }
+
+    .log-table-wrap {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+    .log-table-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .log-table-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary) !important;
+        margin: 0;
+    }
+
+    .audit-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .audit-table thead th {
+        background: var(--bg-secondary);
+        color: var(--text-secondary) !important;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        white-space: nowrap;
+    }
+    .audit-table tbody tr {
+        border-bottom: 1px solid var(--border-subtle);
+        transition: background 0.15s;
+    }
+    .audit-table tbody tr:last-child { border-bottom: none; }
+    .audit-table tbody tr:hover { background: var(--bg-secondary); }
+    .audit-table tbody td {
+        padding: 0.65rem 1rem;
+        color: var(--text-primary) !important;
+        vertical-align: middle;
+    }
+
+    .audit-timestamp {
+        font-size: 0.78rem;
+        color: var(--text-muted) !important;
+        white-space: nowrap;
+    }
+    .audit-user {
+        font-weight: 600;
+        color: var(--text-primary) !important;
+    }
+    .audit-action {
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.78rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary) !important;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.3rem;
+        display: inline-block;
+    }
+    .audit-details {
+        color: var(--text-secondary) !important;
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .level-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+    .level-badge.s1 { background: rgba(220,38,38,0.15); color: #dc2626; }
+    .level-badge.l3 { background: rgba(245,158,11,0.15); color: #d97706; }
+    .level-badge.l2 { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .level-badge.l1 { background: rgba(16,185,129,0.15); color: #10b981; }
+    .level-badge.user { background: var(--bg-tertiary); color: var(--text-muted); }
+
+    .module-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.3rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(0,163,173,0.1);
+        color: #00A3AD;
+    }
+
+    .empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    .empty-state i { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.75rem; display: block; }
+
+    .audit-footer {
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid var(--border-subtle);
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--text-muted) !important;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
-<div class="container-fluid py-4">
-    <h1 class="mb-4">Audit Logs</h1>
-    
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" value="{{ filters.username or '' }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Action</label>
-                    <select class="form-select" name="action">
-                        <option value="">All Actions</option>
-                        {% for action in actions %}
-                        <option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>{{ action }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Module</label>
-                    <select class="form-select" name="module">
-                        <option value="">All Modules</option>
-                        {% for module in modules %}
-                        <option value="{{ module }}" {% if filters.module == module %}selected{% endif %}>{{ module }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Logs Table -->
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>User</th>
-                        <th>Level</th>
-                        <th>Action</th>
-                        <th>Module</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log.ts_utc }}</td>
-                        <td>{{ log.username }}</td>
-                        <td><span class="badge bg-info">{{ log.permission_level or 'N/A' }}</span></td>
-                        <td>{{ log.action }}</td>
-                        <td>{{ log.module }}</td>
-                        <td>{{ log.details[:100] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="page-header mb-4">
+    <div>
+        <h1 class="page-title">Instance Audit Log</h1>
+        <p class="text-secondary mb-0">
+            All recorded actions within this instance
+            {% if instances|length > 1 %}&mdash;
+                <strong>{{ instances|selectattr('id', 'eq', selected_instance_id)|map(attribute='display_name')|first or selected_instance_id }}</strong>
+            {% endif %}
+        </p>
     </div>
 </div>
 
+<!-- Stats -->
+<div class="audit-stats">
+    <div class="audit-stat">
+        <div class="audit-stat-value" style="color: #00A3AD;">{{ logs|length }}</div>
+        <div class="audit-stat-label">Entries Shown</div>
+    </div>
+    <div class="audit-stat">
+        <div class="audit-stat-value">{{ logs|map(attribute='username')|unique|list|length }}</div>
+        <div class="audit-stat-label">Unique Users</div>
+    </div>
+    <div class="audit-stat">
+        <div class="audit-stat-value">{{ logs|map(attribute='action')|unique|list|length }}</div>
+        <div class="audit-stat-label">Action Types</div>
+    </div>
+    <div class="audit-stat">
+        <div class="audit-stat-value">{{ logs|map(attribute='module')|unique|list|length }}</div>
+        <div class="audit-stat-label">Modules</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="filter-card">
+    <form method="get" id="filterForm">
+        {% if instances|length > 1 %}
+        <input type="hidden" name="instance_id" value="{{ selected_instance_id }}">
+        {% endif %}
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" name="username"
+                       value="{{ filters.username or '' }}" placeholder="Search user…">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Action</label>
+                <select class="form-select" name="action">
+                    <option value="">All Actions</option>
+                    {% for act in actions %}
+                    <option value="{{ act }}" {% if filters.action == act %}selected{% endif %}>{{ act }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Module</label>
+                <select class="form-select" name="module">
+                    <option value="">All Modules</option>
+                    {% for mod in modules %}
+                    <option value="{{ mod }}" {% if filters.module == mod %}selected{% endif %}>{{ mod }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Permission Level</label>
+                <select class="form-select" name="permission_level">
+                    <option value="">All Levels</option>
+                    <option value="S1" {% if filters.permission_level == 'S1' %}selected{% endif %}>S1 - System</option>
+                    <option value="L3" {% if filters.permission_level == 'L3' %}selected{% endif %}>L3 - Platform</option>
+                    <option value="L2" {% if filters.permission_level == 'L2' %}selected{% endif %}>L2 - Admin</option>
+                    <option value="L1" {% if filters.permission_level == 'L1' %}selected{% endif %}>L1 - Manager</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-filter-apply flex-fill">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-filter-clear">
+                    <i class="bi bi-x"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" name="date_from"
+                       value="{{ filters.date_from or '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" name="date_to"
+                       value="{{ filters.date_to or '' }}">
+            </div>
+            <div class="col-md-6 d-flex align-items-end gap-2 flex-wrap">
+                <span style="font-size:0.8rem;color:var(--text-muted);margin-right:0.25rem;">Quick:</span>
+                <button type="button" class="quick-filter-btn" onclick="quickFilter('today')">Today</button>
+                <button type="button" class="quick-filter-btn" onclick="quickFilter('7d')">Last 7 Days</button>
+                <button type="button" class="quick-filter-btn" onclick="quickFilter('30d')">Last 30 Days</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Log Table -->
+<div class="log-table-wrap">
+    <div class="log-table-header">
+        <h2 class="log-table-title">
+            <i class="bi bi-list-ul me-1"></i>
+            Audit Entries ({{ logs|length }})
+        </h2>
+        {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
+        <a href="{{ url_for('admin.export_audit_logs') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}"
+           class="quick-filter-btn" style="text-decoration:none!important;">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        {% endif %}
+    </div>
+
+    {% if logs %}
+    <div style="overflow-x: auto;">
+        <table class="audit-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Level</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Details</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <span class="audit-timestamp">
+                            {{ log.ts_utc.strftime('%Y-%m-%d %H:%M:%S') if log.ts_utc else '—' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="audit-user">{{ log.username }}</span>
+                        {% if log.target_username %}
+                        <br><small class="text-muted">→ {{ log.target_username }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set lvl = (log.permission_level or '') %}
+                        {% if lvl == 'S1' %}
+                            <span class="level-badge s1">S1</span>
+                        {% elif lvl == 'L3' %}
+                            <span class="level-badge l3">L3</span>
+                        {% elif lvl == 'L2' %}
+                            <span class="level-badge l2">L2</span>
+                        {% elif lvl == 'L1' %}
+                            <span class="level-badge l1">L1</span>
+                        {% else %}
+                            <span class="level-badge user">User</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="audit-action">{{ log.action }}</span>
+                    </td>
+                    <td>
+                        <span class="module-badge">{{ log.module or '—' }}</span>
+                    </td>
+                    <td>
+                        <span class="audit-details" title="{{ log.details or '' }}">
+                            {{ log.details or '—' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="audit-timestamp">{{ log.ip_address or '—' }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="audit-footer">
+        Showing {{ logs|length }} of last 500 entries &mdash; use filters to narrow results
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-journal-x"></i>
+        <p class="mb-0">No audit entries found for the current filters.</p>
+        <a href="{{ url_for('admin.audit_logs') }}" class="quick-filter-btn mt-2 d-inline-block"
+           style="text-decoration:none!important;">Clear Filters</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function quickFilter(range) {
+    const form = document.getElementById('filterForm');
+    const today = new Date().toISOString().split('T')[0];
+    const from = form.querySelector('[name="date_from"]');
+    const to   = form.querySelector('[name="date_to"]');
+    to.value = today;
+    if (range === 'today') {
+        from.value = today;
+    } else if (range === '7d') {
+        const d = new Date(); d.setDate(d.getDate() - 7);
+        from.value = d.toISOString().split('T')[0];
+    } else if (range === '30d') {
+        const d = new Date(); d.setDate(d.getDate() - 30);
+        from.value = d.toISOString().split('T')[0];
+    }
+    form.submit();
+}
+</script>
 {% endblock %}

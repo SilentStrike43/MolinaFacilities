@@ -33,6 +33,7 @@ def ensure_schema():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS fulfillment_requests (
                 id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
                 service_request_id INTEGER,
                 description TEXT,
                 date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -73,6 +74,7 @@ def ensure_schema():
         cursor.execute("ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP NULL;")
         
         # fulfillment_requests missing columns
+        cursor.execute("ALTER TABLE fulfillment_requests ADD COLUMN IF NOT EXISTS instance_id INTEGER;")
         cursor.execute("ALTER TABLE fulfillment_requests ADD COLUMN IF NOT EXISTS service_request_id INTEGER;")
         cursor.execute("ALTER TABLE fulfillment_requests ADD COLUMN IF NOT EXISTS options_json TEXT;")
         cursor.execute("ALTER TABLE fulfillment_requests ADD COLUMN IF NOT EXISTS notes TEXT;")
@@ -124,23 +126,3 @@ def ensure_schema():
         
         conn.commit()
         cursor.close()
-
-
-def inventory_db():
-    """
-    DEPRECATED: Legacy compatibility function.
-    Returns a connection but caller must manage it properly.
-    
-    New code should use: with get_db_connection("fulfillment") as conn:
-    """
-    return get_db_connection("fulfillment").__enter__()
-
-
-def insights_db():
-    """
-    DEPRECATED: Legacy compatibility function.
-    Returns a connection but caller must manage it properly.
-    
-    New code should use: with get_db_connection("fulfillment") as conn:
-    """
-    return get_db_connection("fulfillment").__enter__()

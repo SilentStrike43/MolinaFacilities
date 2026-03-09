@@ -127,12 +127,14 @@ def index():
                 with get_db_connection("inventory") as conn:
                     cursor = conn.cursor()
                     cursor.execute("""
-                        SELECT 
+                        SELECT
                             COUNT(*) as total_items,
                             COUNT(*) FILTER (WHERE quantity < 10) as low_stock
                         FROM assets
                         WHERE instance_id = %s
                     """, (instance_id,))
+                    result = cursor.fetchone()
+                    cursor.close()
                     if result:
                         metrics['inventory'] = {
                             'total_items': result['total_items'] or 0,

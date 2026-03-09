@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Gridline Services{% endblock %}</title>
+    <!-- Apply saved theme before CSS renders to prevent flash of unstyled content -->
+    <script>
+        (function() {
+            var saved = localStorage.getItem('gridline-theme');
+            if (saved) { document.documentElement.setAttribute('data-theme', saved); }
+        })();
+    </script>
     
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -116,6 +123,14 @@
             background: rgba(239, 68, 68, 0.15) !important;
             border-color: rgba(239, 68, 68, 0.3) !important;
         }
+
+        /* User-specific color overrides — declared last so they win */
+        {% if user_prefs and user_prefs.sidebar_color %}
+        .app-sidebar { background: {{ user_prefs.sidebar_color }} !important; }
+        {% endif %}
+        {% if user_prefs and user_prefs.topbar_color %}
+        .app-topbar { background: {{ user_prefs.topbar_color }} !important; }
+        {% endif %}
     </style>
 </head>
 <body data-module="{{ active if active in ['ledger', 'flow', 'fulfillment'] else 'default' }}">
@@ -145,6 +160,14 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        {% if cu %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('settings.index') }}" class="nav-link {{ 'active' if active=='settings' else '' }}">
+                                <i class="nav-icon bi bi-sliders"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                 </div>
                 
@@ -191,10 +214,17 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('send.report', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                <a href="{{ url_for('send.report', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
                                    class="nav-link {{ 'active' if active=='send-report' else '' }}">
                                     <i class="nav-icon bi bi-file-earmark-bar-graph"></i>
                                     <span>Report</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('send.address_lookup', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
+                                   class="nav-link {{ 'active' if active=='send-address-lookup' else '' }}">
+                                    <i class="nav-icon bi bi-patch-check"></i>
+                                    <span>Address Validation</span>
                                 </a>
                             </li>
                         </ul>
@@ -214,10 +244,24 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ url_for('inventory.ledger', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                <a href="{{ url_for('inventory.ledger', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
                                    class="nav-link {{ 'active' if active=='ledger' else '' }}">
                                     <i class="nav-icon bi bi-journal-text"></i>
                                     <span>Ledger</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('inventory.vendor_book', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
+                                   class="nav-link {{ 'active' if active=='inventory-vendor-book' else '' }}">
+                                    <i class="nav-icon bi bi-building"></i>
+                                    <span>Vendor Book</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('inventory.insights', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
+                                   class="nav-link {{ 'active' if active=='inventory-insights' else '' }}">
+                                    <i class="nav-icon bi bi-bar-chart"></i>
+                                    <span>Insights</span>
                                 </a>
                             </li>
                         </ul>
@@ -271,27 +315,53 @@
                         </li>
                         {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
                         <li class="nav-item">
-                            <a href="{{ url_for('users.elevation_management', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                            <a href="{{ url_for('users.elevation_management', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
                                class="nav-link {{ 'active' if active=='elevation' else '' }}">
                                 <i class="nav-icon bi bi-shield-check"></i>
                                 <span>Permissions</span>
                             </a>
                         </li>
                         {% endif %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin.audit_logs') }}"
+                               class="nav-link {{ 'active' if active=='audit' else '' }}">
+                                <i class="nav-icon bi bi-journal-text"></i>
+                                <span>Audit Log</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('admin.inquiries', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
+                               class="nav-link {{ 'active' if active=='inquiries' else '' }}">
+                                <i class="nav-icon bi bi-inbox"></i>
+                                <span>User Inquiries</span>
+                                {% if pending_inquiry_count is defined and pending_inquiry_count %}
+                                <span class="nav-badge">{{ pending_inquiry_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 {% endif %}
                 
                 <!-- Horizon -->
-                {% if cu and cu.get('permission_level') in ['L3', 'S1'] %}
+                {% if cu and cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
                 <div class="nav-section">
                     <span class="nav-section-label">Horizon</span>
                     <ul class="nav-list">
+                        {% if cu.get('permission_level') in ['L3', 'S1'] %}
                         <li class="nav-item">
-                            <a href="{{ url_for('horizon.dashboard') }}" 
+                            <a href="{{ url_for('horizon.dashboard') }}"
                                class="nav-link {{ 'active' if active=='horizon' else '' }}">
                                 <i class="nav-icon bi bi-layers"></i>
                                 <span>Platform Control</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('horizon.instance_management') }}"
+                               class="nav-link {{ 'active' if active=='instances' else '' }}">
+                                <i class="nav-icon bi bi-building"></i>
+                                <span>Instances</span>
                             </a>
                         </li>
                     </ul>
@@ -314,9 +384,6 @@
                     </div>
                 </div>
                 <div class="user-actions">
-                    <button class="user-action-btn" onclick="window.location.href='{{ url_for('users.profile') }}'" title="Profile">
-                        <i class="bi bi-person"></i>
-                    </button>
                     <button class="user-action-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'" title="Logout">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -338,12 +405,21 @@
                     </nav>
                 </div>
                 <div class="topbar-actions">
+                    <!-- Submit Request -->
+                    {% if cu %}
+                    <a href="{{ url_for('users.submit_request', instance_id=session.get('active_instance_id') or cu.instance_id) }}" class="topbar-btn" title="Submit a Request" style="text-decoration:none; display:flex; align-items:center;">
+                        <i class="bi bi-send"></i>
+                    </a>
+                    {% endif %}
+                    <!-- Settings -->
+                    {% if cu %}
+                    <a href="{{ url_for('settings.index') }}" class="topbar-btn" title="Settings" style="text-decoration:none; display:flex; align-items:center;">
+                        <i class="bi bi-gear-fill"></i>
+                    </a>
+                    {% endif %}
                     <!-- Theme Toggle -->
                     <button id="theme-toggle" class="topbar-btn" title="Toggle theme">
                         <i id="theme-icon" class="bi bi-moon-stars-fill"></i>
-                    </button>
-                    <button class="topbar-btn" title="Settings" onclick="window.location.href='{{ url_for('users.profile') }}'">
-                        <i class="bi bi-gear"></i>
                     </button>
                     <button class="logout-btn" onclick="window.location.href='{{ url_for('auth.logout') }}'">
                         <i class="bi bi-box-arrow-right"></i>
@@ -367,6 +443,18 @@
                     {% endif %}
                 {% endwith %}
                 
+                {% if active_announcements %}
+                {% for ann in active_announcements %}
+                <div class="alert" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:0.5rem;padding:0.65rem 1rem;margin-bottom:0.75rem;display:flex;align-items:flex-start;gap:0.75rem;" role="alert">
+                    <i class="bi bi-megaphone-fill" style="color:#6366f1;margin-top:0.1rem;flex-shrink:0;"></i>
+                    <div style="flex:1;">
+                        <strong style="color:var(--text-primary);font-size:0.875rem;">{{ ann.title }}</strong>
+                        <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.1rem;">{{ ann.message }}</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Dismiss" style="flex-shrink:0;"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% block body %}{% endblock %}
             </div>
         </main>
@@ -376,5 +464,108 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='interface/js/theme-toggle.js') }}"></script>
     {% block extra_js %}{% endblock %}
+
+{% if cu %}
+<!-- Session ID URL Injection -->
+<script>
+(function () {
+    var sid = "{{ current_sid | e }}";
+    if (!sid) return;
+    function patchLinks() {
+        var links = document.querySelectorAll('a[href]');
+        for (var i = 0; i < links.length; i++) {
+            var a = links[i];
+            var href = a.getAttribute('href');
+            if (!href || href.charAt(0) === '#' || href.startsWith('mailto:') || href.startsWith('javascript:')) continue;
+            if (href.startsWith('http') && !href.startsWith(window.location.origin)) continue;
+            if (href.indexOf('sid=') !== -1) continue;
+            a.setAttribute('href', href + (href.indexOf('?') !== -1 ? '&' : '?') + 'sid=' + sid);
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', patchLinks);
+    } else {
+        patchLinks();
+    }
+    // Re-patch after any dynamic DOM changes (e.g. AJAX-rendered links)
+    var mo = new MutationObserver(function(muts) {
+        muts.forEach(function(m) {
+            m.addedNodes.forEach(function(n) {
+                if (n.nodeType !== 1) return;
+                if (n.tagName === 'A') patchLinks();
+                else if (n.querySelectorAll) { if (n.querySelectorAll('a[href]').length) patchLinks(); }
+            });
+        });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<!-- Idle Session Timeout -->
+<div id="idle-warning-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;">
+    <div style="background:#1a1d2e;border:1px solid rgba(245,158,11,0.45);border-radius:16px;padding:2.25rem 2.75rem;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+        <div style="font-size:2.25rem;margin-bottom:0.875rem;color:#f59e0b;">&#x23F1;</div>
+        <h5 style="color:#ffffff;font-weight:700;margin-bottom:0.5rem;">Still there?</h5>
+        <p style="color:#9ca3af;margin-bottom:0.25rem;line-height:1.6;">You've been idle and will be signed out in</p>
+        <div style="font-size:2.5rem;font-weight:800;color:#f59e0b;line-height:1;margin-bottom:1.25rem;" id="idle-countdown">60</div>
+        <p style="color:#9ca3af;margin-bottom:1.5rem;font-size:0.875rem;">seconds.</p>
+        <button id="idle-continue-btn" style="padding:0.625rem 1.75rem;background:#f59e0b;color:#1a1d2e;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;letter-spacing:0.01em;">
+            Continue Session
+        </button>
+    </div>
+</div>
+<script>
+(function () {
+    var IDLE_MS = 14 * 60 * 1000;
+    var idleTimer = null, countdownTimer = null, countdownSecs = 60;
+    var overlay = document.getElementById('idle-warning-overlay');
+    var countdownEl = document.getElementById('idle-countdown');
+
+    function resetTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(showWarning, IDLE_MS);
+    }
+
+    function showWarning() {
+        countdownSecs = 60;
+        countdownEl.textContent = countdownSecs;
+        overlay.style.display = 'flex';
+        clearInterval(countdownTimer);
+        countdownTimer = setInterval(function () {
+            countdownSecs--;
+            countdownEl.textContent = countdownSecs;
+            if (countdownSecs <= 0) {
+                clearInterval(countdownTimer);
+                doIdleLogout();
+            }
+        }, 1000);
+    }
+
+    function hideWarning() {
+        overlay.style.display = 'none';
+        clearInterval(countdownTimer);
+    }
+
+    function doIdleLogout() {
+        fetch('/auth/idle-logout', { method: 'POST' }).catch(function () {}).finally(function () {
+            window.location.href = '/auth/login';
+        });
+    }
+
+    document.getElementById('idle-continue-btn').addEventListener('click', function () {
+        hideWarning();
+        resetTimer();
+        fetch('/auth/keep-alive', { method: 'POST' }).catch(function () {});
+    });
+
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(function (evt) {
+        document.addEventListener(evt, function () {
+            if (overlay.style.display === 'none') resetTimer();
+        }, { passive: true });
+    });
+
+    resetTimer();
+})();
+</script>
+{% endif %}
 </body>
 </html>

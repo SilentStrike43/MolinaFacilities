@@ -5,13 +5,15 @@ AJAX endpoints for dynamic features
 
 from flask import jsonify, request, current_app
 from . import bp
-from app.modules.auth.security import require_cap, current_user
+from app.modules.auth.security import require_cap, current_user, login_required
 from app.modules.auth.security import record_audit
 from app.services.tracking.tracker import TrackingService
 from app.services.address.book import AddressBookService
 from app.services.address.validator import AddressValidator
 from app.utils.carrier_detector import CarrierDetector
 from app.core.database import get_db_connection
+from app.core.instance_context import get_current_instance
+from app.modules.send.models import next_checkin_id, next_package_id
 import logging
 
 logger = logging.getLogger(__name__)
@@ -310,109 +312,237 @@ def track_package_now(package_id):
 @require_cap("can_send")
 def api_validate_tracking():
     """
-    Validate tracking number and return full shipment data for auto-population
-    
+    Validate a tracking number and return shipment data for form auto-population.
+    Auto-detects carrier; handles DHL and UNKNOWN gracefully without crashing.
+
     POST /send/api/validate-tracking
-    Body: {"tracking_number": "...", "carrier": "FEDEX"}
-    
-    Returns: Full recipient and package data
+    Body: {"tracking_number": "...", "carrier": "FEDEX"|""|"AUTO"}
     """
     try:
         cu = current_user()
-        data = request.get_json()
+        data = request.get_json() or {}
         tracking_number = data.get('tracking_number', '').strip()
-        carrier = data.get('carrier', 'FEDEX').upper()
-        
-        if not result.success:
-            # Log the specific error for debugging
-            logger.error(f"FedEx tracking validation failed for {tracking_number}: {result.error}")
-            
+        carrier_hint = (data.get('carrier') or '').upper().strip()
+
+        if not tracking_number:
+            return jsonify({'success': False, 'error': 'No tracking number provided'}), 400
+
+        # Auto-detect carrier if form left on blank/auto
+        carrier = CarrierDetector.detect(tracking_number) if not carrier_hint or carrier_hint == 'AUTO' else carrier_hint
+        carrier_url = CarrierDetector.get_carrier_url(carrier, tracking_number)
+
+        # DHL detected but no API configured — still useful to identify it
+        if carrier == 'DHL':
+            return jsonify({
+                'success': True,
+                'carrier_detected': 'DHL',
+                'message': '✓ DHL tracking number identified. Enter recipient details manually.',
+                'data': {
+                    'carrier': 'DHL',
+                    'tracking_number': tracking_number,
+                    'status': 'UNKNOWN',
+                    'limited_data': True,
+                    'note': 'DHL tracking API not configured. Carrier has been identified.'
+                },
+                'carrier_url': carrier_url,
+                'tracking_events': []
+            })
+
+        if carrier == 'UNKNOWN':
             return jsonify({
                 'success': False,
-                'error': result.error or 'Could not retrieve tracking information. Please enter details manually.',
-                'details': result.error  # Include full error details
-            }), 400  # Change from 200 to 400
-        
-        # Track the package using FedEx API
+                'carrier_detected': 'UNKNOWN',
+                'error': 'Could not identify carrier from this tracking number. Please select the carrier manually.'
+            })
+
+        # Call carrier API
         tracker = TrackingService(current_app.config)
-        result = tracker.track(tracking_number, 'FEDEX')
-        
+        result = tracker.track(tracking_number, carrier)
+
         if not result.success:
             return jsonify({
                 'success': False,
+                'carrier_detected': carrier,
                 'error': result.error or 'Could not retrieve tracking information. Please enter details manually.'
-            }), 200
-        
-        # Extract available data from tracking result
-        # Note: FedEx Tracking API has limited recipient info for privacy
-        # Full details only available through Ship API if you created the label
+            })
+
+        dest = result.destination or ''
+        dest_parts = [p.strip() for p in dest.split(',')] if dest else []
+
         populated_data = {
-            # Basic tracking info
-            'carrier': 'FEDEX',
+            'carrier': carrier,
             'tracking_number': tracking_number,
             'status': result.status,
             'status_description': result.status_description,
-            
-            # Delivery info (if available)
             'estimated_delivery': result.estimated_delivery.strftime('%Y-%m-%d') if result.estimated_delivery else None,
             'actual_delivery': result.actual_delivery,
-            
-            # Location info from tracking
             'origin': result.origin,
-            'destination': result.destination,
-            
-            # Package details (if available in events)
-            'package_type': 'Box',  # Default, tracking API doesn't provide this
+            'destination': dest,
             'service_type': result.service_type or 'Standard',
-            
-            # Recipient info (limited from tracking API)
-            # FedEx protects recipient PII in tracking responses
-            'recipient_city': result.destination.split(',')[0] if result.destination and ',' in result.destination else '',
-            'recipient_state': result.destination.split(',')[1].strip() if result.destination and ',' in result.destination else '',
-            
-            # Note for user
+            'recipient_city': dest_parts[0] if len(dest_parts) > 0 else '',
+            'recipient_state': dest_parts[1] if len(dest_parts) > 1 else '',
             'limited_data': True,
-            'note': 'FedEx tracking provides limited recipient details for privacy. Please complete remaining fields.'
+            'note': f'{carrier} tracking provides limited recipient details for privacy. Please complete remaining fields.'
         }
-        
-        # Log successful validation
-        record_audit(cu, "validate_tracking_success", "send", 
-                    f"Retrieved tracking data for {tracking_number}")
-        
-        # Log to API calls table
+
+        record_audit(cu, "validate_tracking_success", "send",
+                     f"Validated tracking: {tracking_number} ({carrier})")
+
         try:
             with get_db_connection("send") as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     INSERT INTO carrier_api_calls (
-                        tracking_number, carrier, success, 
-                        response_data, called_by, called_at
+                        tracking_number, carrier, success, response_data, called_by, called_at
                     ) VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
-                """, (
-                    tracking_number, 
-                    'FEDEX', 
-                    True,
-                    result.to_dict().__str__(),
-                    cu['id']
-                ))
+                """, (tracking_number, carrier, True, str(result.to_dict()), cu['id']))
                 conn.commit()
                 cursor.close()
-        except Exception as e:
-            logger.warning(f"Failed to log API call: {e}")
-        
+        except Exception:
+            pass  # API call logging is optional
+
         return jsonify({
             'success': True,
-            'message': f'✓ Tracking validated - Status: {result.status}',
+            'carrier_detected': carrier,
+            'message': f'✓ {carrier} tracking validated — Status: {result.status}',
             'data': populated_data,
-            'tracking_events': result.events[:3] if result.events else []  # Show recent events
-        }), 200
-        
+            'carrier_url': carrier_url,
+            'tracking_events': result.events[:3] if result.events else []
+        })
+
     except Exception as e:
         logger.error(f"Tracking validation error: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Error retrieving tracking information.'}), 500
+
+
+@bp.route("/api/add-to-manifest", methods=["POST"])
+@login_required
+@require_cap("can_send")
+def api_add_to_manifest():
+    """
+    Add one or more tracking numbers to the manifest directly from the lookup page.
+    Each entry receives its own CheckIn ID and Package ID.
+
+    POST /send/api/add-to-manifest
+    Body: {"entries": [{"tracking_number": "...", "carrier": "...", "status": "...",
+                        "status_description": "...", "estimated_delivery": "YYYY-MM-DD"}]}
+    """
+    try:
+        cu = current_user()
+        instance_id = get_current_instance()
+        data = request.get_json() or {}
+        entries = data.get('entries', [])
+
+        if not entries:
+            return jsonify({'success': False, 'error': 'No tracking numbers provided'}), 400
+        if len(entries) > 50:
+            return jsonify({'success': False, 'error': 'Maximum 50 entries per request'}), 400
+
+        added = []
+        with get_db_connection("send") as conn:
+            cursor = conn.cursor()
+            for entry in entries:
+                tn = (entry.get('tracking_number') or '').strip()
+                if not tn:
+                    continue
+                carrier = (entry.get('carrier') or 'UNKNOWN').upper()
+                status = entry.get('status') or 'UNKNOWN'
+                status_desc = entry.get('status_description') or ''
+                est_delivery = entry.get('estimated_delivery') or None
+
+                chk_id = next_checkin_id()
+                pkg_id = next_package_id('Box')
+
+                cursor.execute("""
+                    INSERT INTO package_manifest (
+                        instance_id, created_by, tracking_number, carrier,
+                        checkin_id, package_id, tracking_status,
+                        tracking_status_description, estimated_delivery_date,
+                        status, ts_utc
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'received', CURRENT_TIMESTAMP)
+                    RETURNING id
+                """, (instance_id, cu['id'], tn, carrier, chk_id, pkg_id,
+                      status, status_desc, est_delivery))
+                row = cursor.fetchone()
+                added.append({'tracking_number': tn, 'checkin_id': chk_id,
+                              'package_id': pkg_id, 'db_id': row['id']})
+                record_audit(cu, "add_to_manifest_from_lookup", "send",
+                             f"Added {tn} ({carrier}) to manifest as {chk_id}")
+            conn.commit()
+            cursor.close()
+
+        return jsonify({'success': True, 'added': len(added), 'results': added})
+
+    except Exception as e:
+        logger.error(f"Add-to-manifest error: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route("/api/bulk-lookup", methods=["POST"])
+@login_required
+@require_cap("can_send")
+def api_bulk_lookup():
+    """
+    Look up multiple tracking numbers in one request.
+
+    POST /send/api/bulk-lookup
+    Body: {"tracking_numbers": ["...", "..."]}
+    """
+    try:
+        cu = current_user()
+        data = request.get_json() or {}
+        raw_numbers = data.get('tracking_numbers', [])
+        tracking_numbers = [t.strip() for t in raw_numbers if t.strip()]
+
+        if not tracking_numbers:
+            return jsonify({'success': False, 'error': 'No tracking numbers provided'}), 400
+        if len(tracking_numbers) > 50:
+            return jsonify({'success': False, 'error': 'Maximum 50 tracking numbers per batch'}), 400
+
+        tracker = TrackingService(current_app.config)
+        results = []
+
+        for tn in tracking_numbers:
+            carrier = CarrierDetector.detect(tn)
+            carrier_url = CarrierDetector.get_carrier_url(carrier, tn)
+
+            if carrier in ('DHL', 'UNKNOWN'):
+                results.append({
+                    'tracking_number': tn,
+                    'carrier': carrier,
+                    'success': False,
+                    'status': 'UNKNOWN',
+                    'error': 'DHL API not configured — check DHL website' if carrier == 'DHL' else 'Unknown carrier format',
+                    'carrier_url': carrier_url
+                })
+                continue
+
+            try:
+                result = tracker.track(tn, carrier)
+                r = result.to_dict() if hasattr(result, 'to_dict') else {}
+                r['success'] = result.success
+                r['carrier_url'] = carrier_url
+                if result.estimated_delivery and hasattr(result.estimated_delivery, 'strftime'):
+                    r['estimated_delivery'] = result.estimated_delivery.strftime('%Y-%m-%d')
+                results.append(r)
+            except Exception as ex:
+                results.append({
+                    'tracking_number': tn, 'carrier': carrier,
+                    'success': False, 'error': str(ex), 'carrier_url': carrier_url
+                })
+
+        record_audit(cu, "bulk_lookup", "send", f"Bulk lookup: {len(tracking_numbers)} numbers")
+
         return jsonify({
-            'success': False,
-            'error': 'Error retrieving tracking information. Please try again or enter details manually.'
-        }), 500
+            'success': True,
+            'results': results,
+            'total': len(results),
+            'found': sum(1 for r in results if r.get('success'))
+        })
+
+    except Exception as e:
+        logger.error(f"Bulk lookup error: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route("/api/package/<int:package_id>", methods=["GET"])
 @require_cap("can_send")
@@ -471,76 +601,3 @@ def api_package_get(package_id):
         logger.error(f"Get package error: {str(e)}")
         return jsonify({'error': str(e)}), 500
     
-@bp.route("/api/package/<int:package_id>/delete", methods=["DELETE"])
-@require_cap("can_send")
-def delete_package(package_id):
-    """
-    Delete a package (L1+ only)
-    
-    DELETE /send/api/package/<id>/delete
-    """
-    try:
-        cu = current_user()
-        
-        # Check if user has L1+ permissions
-        user_level = cu.get('permission_level', '')
-        allowed_levels = ['L1', 'L2', 'L3', 'S1']
-        
-        if user_level not in allowed_levels:
-            return jsonify({
-                'success': False, 
-                'error': 'Insufficient permissions. L1+ required.'
-            }), 403
-        
-        # Get package info before deleting (for audit log)
-        with get_db_connection("send") as conn:
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT 
-                    package_id,
-                    tracking_number,
-                    recipient_name,
-                    carrier
-                FROM package_manifest
-                WHERE id = %s
-            """, (package_id,))
-            
-            pkg = cursor.fetchone()
-            
-            if not pkg:
-                return jsonify({'success': False, 'error': 'Package not found'}), 404
-            
-            package_id_str = pkg['package_id']
-            tracking_number = pkg['tracking_number']
-            recipient_name = pkg['recipient_name']
-            carrier = pkg['carrier']
-            
-            # Delete the package
-            cursor.execute("DELETE FROM package_manifest WHERE id = %s", (package_id,))
-            
-            rows_deleted = cursor.rowcount
-            conn.commit()
-            cursor.close()
-        
-        if rows_deleted > 0:
-            # Log audit
-            record_audit(
-                cu, 
-                "delete_package", 
-                "send", 
-                f"Deleted package {package_id_str} (Tracking: {tracking_number}, Recipient: {recipient_name}, Carrier: {carrier})"
-            )
-            
-            logger.info(f"User {cu.get('username')} deleted package {package_id_str}")
-            
-            return jsonify({
-                'success': True,
-                'message': f'Package {package_id_str} deleted successfully'
-            }), 200
-        else:
-            return jsonify({'success': False, 'error': 'Package not found'}), 404
-            
-    except Exception as e:
-        logger.error(f"Delete package error for package {package_id}: {e}", exc_info=True)
-        return jsonify({'success': False, 'error': str(e)}), 500

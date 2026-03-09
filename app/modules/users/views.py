@@ -24,6 +24,7 @@ from app.core.instance_context import get_current_instance
 from app.modules.auth.security import (
     login_required,
     current_user,
+    require_admin,
 )
 from app.core.permissions import PermissionManager, PermissionLevel
 
@@ -314,52 +315,80 @@ def get_accessible_instances(user):
 
 @users_bp.route("/")
 @login_required
+@require_admin
 def index():
-    """Discord-style user management interface"""
+    """Discord-style two-panel user management interface"""
     cu = current_user()
-    
+
     if not can_view_users(cu):
         flash("Permission denied", "danger")
         return redirect(url_for("home.index"))
-    
-    # Get instance context
+
     from flask import session
     instance_id = (
-        request.args.get('instance_id', type=int) or 
+        request.args.get('instance_id', type=int) or
         session.get('active_instance_id') or
         cu.get('instance_id')
     )
-    
-    # Get users for the instance
-    users = list_users(instance_id=instance_id)
-    
-    # Get user's accessible instances
-    from app.core.instance_access import get_user_instances
-    user_instances = get_user_instances(cu)
-    
-    # Permission descriptions
-    permission_descriptions = {
-        'S1': 'System Administrator',
-        'L3': 'App Operator',
-        'L2': 'Systems Administrator',
-        'L1': 'Module Administrator'
-    }
-    
+
+    # Enforce instance boundaries: L1 is locked to their own instance
+    _actor_level = get_user_permission_level(cu) or ''
+    if _actor_level == 'L1':
+        instance_id = cu.get('instance_id')
+    elif _actor_level == 'L2':
+        from app.core.instance_access import user_can_access_instance
+        if instance_id and not user_can_access_instance(cu, instance_id):
+            instance_id = cu.get('instance_id')
+
+    # Build grouped user roster
+    LEVELS = ['S1', 'L3', 'L2', 'L1', '']
+    groups = {lvl: [] for lvl in LEVELS}
+    now = datetime.utcnow()
+
+    for u in list_users(instance_id=instance_id):
+        d = row_to_dict(u)
+        try:
+            d['module_permissions'] = json.loads(d.get('module_permissions', '[]') or '[]')
+        except Exception:
+            d['module_permissions'] = []
+        ls = d.get('last_seen')
+        d['is_online'] = bool(ls and (now - ls).total_seconds() < 300)
+        lvl = d.get('permission_level') or ''
+        groups[lvl if lvl in LEVELS else ''].append(d)
+
+    for lvl in groups:
+        groups[lvl].sort(key=lambda u: (0 if u['is_online'] else 1, u['username'].lower()))
+
+    # Get current instance info
+    instance = None
+    if instance_id:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM instances WHERE id = %s", (instance_id,))
+            instance = cursor.fetchone()
+            cursor.close()
+
+    cu_level = get_user_permission_level(cu) or ''
+    is_sandbox = (instance_id == 4)
+
     return render_template(
-        "users/discord_manager.html",
-        users=users,
-        user_count=len(users),
-        current_user=cu,
-        current_instance_id=instance_id,
-        user_instances=user_instances,
-        permission_descriptions=permission_descriptions,
-        can_create=can_create_users(cu)
+        "users/list.html",
+        active="users",
+        groups=groups,
+        levels=LEVELS,
+        cu=cu,
+        cu_level=cu_level,
+        instance_id=instance_id,
+        instance=instance,
+        can_create=can_create_users(cu),
+        is_sandbox=is_sandbox
     )
 
 # ============== API ENDPOINTS FOR AJAX ==============
 
 @users_bp.route("/api/user/<int:user_id>", methods=["GET"])
 @login_required
+@require_admin
 def api_get_user(user_id):
     """Get user data for Discord-style interface"""
     cu = current_user()
@@ -408,6 +437,7 @@ def api_get_user(user_id):
 
 @users_bp.route("/api/user", methods=["POST"])
 @login_required
+@require_admin
 def api_create_user():
     """Create new user via API"""
     cu = current_user()
@@ -426,10 +456,9 @@ def api_create_user():
     )
     
     try:
-        # Hash password
-        import hashlib
-        pw_hash = hashlib.sha256(data['password'].encode()).hexdigest()
-        
+        from werkzeug.security import generate_password_hash as _gph
+        pw_hash = _gph(data['password'])
+
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -437,9 +466,9 @@ def api_create_user():
                     username, password_hash, first_name, last_name,
                     email, phone, department, position,
                     permission_level, module_permissions, instance_id,
-                    is_active, created_at, created_by
+                    created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
                 RETURNING id
             """, (
                 data['username'], pw_hash,
@@ -449,10 +478,9 @@ def api_create_user():
                 data.get('phone', ''),
                 data.get('department', ''),
                 data.get('position', ''),
-                data.get('permission_level', ''),
-                json.dumps(data.get('module_permissions', [])),
-                instance_id,
-                cu['id']
+                '',
+                json.dumps([]),
+                instance_id
             ))
             
             new_user_id = cursor.fetchone()['id']
@@ -469,6 +497,7 @@ def api_create_user():
 
 @users_bp.route("/api/user/<int:user_id>", methods=["PUT"])
 @login_required
+@require_admin
 def api_update_user(user_id):
     """Update user via API"""
     cu = current_user()
@@ -495,16 +524,19 @@ def api_update_user(user_id):
             
             # Update password if provided
             if data.get('password'):
-                import hashlib
-                pw_hash = hashlib.sha256(data['password'].encode()).hexdigest()
+                from werkzeug.security import generate_password_hash
                 update_fields.append("password_hash = %s")
-                params.append(pw_hash)
-            
-            # Update permissions
+                params.append(generate_password_hash(data['password']))
+
+            # Update permissions — validate actor can grant the new level
             if 'permission_level' in data:
+                new_level = (data.get('permission_level') or '').strip()
+                actor_level = get_user_permission_level(cu) or ''
+                if new_level and not PermissionManager.can_elevate_to(actor_level, new_level):
+                    return jsonify({"error": "You cannot grant that permission level"}), 403
                 update_fields.append("permission_level = %s")
-                params.append(data['permission_level'] or None)
-            
+                params.append(new_level or None)
+
             if 'module_permissions' in data:
                 update_fields.append("module_permissions = %s")
                 params.append(json.dumps(data['module_permissions']))
@@ -519,22 +551,13 @@ def api_update_user(user_id):
                 WHERE id = %s
             """, params)
             
-            # Handle L2 instance access
-            if data.get('permission_level') == 'L2' and 'accessible_instances' in data:
-                # Clear existing
-                cursor.execute("DELETE FROM user_instance_access WHERE user_id = %s", (user_id,))
-                
-                # Add new
-                for inst_id in data['accessible_instances']:
-                    cursor.execute("""
-                        INSERT INTO user_instance_access (user_id, instance_id, granted_by)
-                        VALUES (%s, %s, %s)
-                    """, (user_id, inst_id, cu['id']))
-            
             conn.commit()
             cursor.close()
         
-        record_audit(cu, "update_user", "users", f"Updated user ID {user_id}")
+        cu_level = cu.get('permission_level', 'Admin')
+        record_audit(cu, "update_user", "users",
+                     f"{cu_level} {cu['username']} changed {target['username']}'s Profile",
+                     target_user_id=user_id, target_username=target['username'])
         
         return jsonify({"success": True})
     
@@ -542,8 +565,34 @@ def api_update_user(user_id):
         logger.error(f"Error updating user: {e}")
         return jsonify({"error": str(e)}), 500
 
+@users_bp.route("/api/user/<int:user_id>/password", methods=["POST"])
+@login_required
+@require_admin
+def api_reset_password(user_id):
+    """Reset another user's password — requires strictly higher permission level."""
+    cu = current_user()
+    target = get_user_by_id(user_id)
+    if not target:
+        return jsonify({"error": "User not found"}), 404
+    target = row_to_dict(target)
+    if not can_modify_user(cu, target):
+        return jsonify({"error": "Permission denied"}), 403
+    data = request.get_json() or {}
+    new_pw = (data.get('password') or '').strip()
+    if len(new_pw) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+    from app.modules.users.models import set_password
+    set_password(user_id, new_pw, reset_by=cu['id'])
+    cu_level = cu.get('permission_level', 'Admin')
+    record_audit(cu, "reset_password", "users",
+                 f"{cu_level} {cu['username']} reset password for {target['username']}",
+                 target_user_id=user_id, target_username=target['username'])
+    return jsonify({"success": True})
+
+
 @users_bp.route("/api/user/<int:user_id>", methods=["DELETE"])
 @login_required
+@require_admin
 def api_delete_user(user_id):
     """Delete user via API"""
     cu = current_user()
@@ -689,41 +738,9 @@ def profile():
 @users_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
-    """Edit own profile."""
-    cu = current_user()
-    
-    if request.method == "POST":
-        # Update profile fields
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE users 
-                SET first_name = %s, last_name = %s, 
-                    email = %s, phone = %s,
-                    department = %s, position = %s,
-                    last_modified_at = %s
-                WHERE id = %s
-            """, (
-                request.form.get("first_name", ""),
-                request.form.get("last_name", ""),
-                request.form.get("email", ""),
-                request.form.get("phone", ""),
-                request.form.get("department", ""),
-                request.form.get("position", ""),
-                datetime.utcnow(),
-                cu["id"]
-            ))
-            conn.commit()
-            cursor.close()
-        
-        record_audit(cu, "update_profile", "users", "Updated own profile")
-        flash("Profile updated successfully.", "success")
-        return redirect(url_for("users.profile"))
-    
-    return render_template("users/edit_profile.html",
-                         active="users",
-                         page="profile",
-                         user=cu)
+    """Profile editing is disabled — users must submit a request."""
+    flash("Profile changes must be submitted via the request system.", "info")
+    return redirect(url_for("users.submit_request"))
 
 
 @users_bp.route("/profile/delete", methods=["POST"])
@@ -741,6 +758,7 @@ def request_deletion():
 
 @users_bp.route("/elevation")
 @login_required
+@require_admin
 def elevation_management():
     """Elevation management page (L2+ only)."""
     from flask import session
@@ -772,8 +790,13 @@ def elevation_management():
         # Get users from this specific instance
         rows = list_users(instance_id=instance_id, include_system=False, include_deleted=False)
         
-        # Filter out L3/S1 users from instance views
-        rows = [row for row in rows if row_to_dict(row).get('permission_level') not in ['L3', 'S1']]
+        # Filter users by viewer level:
+        #   L2 sees Module users + L1 only
+        #   L3/S1 sees Module + L1 + L2 (L3/S1 managed in Horizon)
+        _level_rank = {'': 0, 'L1': 1, 'L2': 2, 'L3': 3, 'S1': 4}
+        _max_show = 1 if cu_level == 'L2' else 2
+        rows = [row for row in rows
+                if _level_rank.get(row_to_dict(row).get('permission_level') or '', 0) <= _max_show]
         
         # Process each user
         for row in rows:
@@ -822,7 +845,7 @@ def elevation_management():
     
     logger.info(f"📋 Elevation Management: Found {len(users)} users for instance {instance_id}")
     
-    return render_template("users/elevation.html",
+    return render_template("admin/elevated.html",
                          active="users",
                          page="elevation",
                          users=users,
@@ -832,6 +855,7 @@ def elevation_management():
 
 @users_bp.route("/elevate/<int:uid>", methods=["POST"])
 @login_required
+@require_admin
 def elevate_user(uid: int):
     """Elevate a user to admin level."""
     cu = current_user()
@@ -899,6 +923,7 @@ def elevate_user(uid: int):
 
 @users_bp.route("/demote/<int:uid>", methods=["POST"])
 @login_required
+@require_admin
 def demote_user(uid: int):
     """Demote a user from admin level."""
     cu = current_user()
@@ -948,6 +973,7 @@ def demote_user(uid: int):
 
 @users_bp.route("/request-deletion/<int:uid>", methods=["POST"])
 @login_required
+@require_admin
 def request_user_deletion(uid: int):
     """Request user deletion (requires L1+ approval)."""
     cu = current_user()
@@ -974,6 +1000,7 @@ def request_user_deletion(uid: int):
 
 @users_bp.route("/deletion-requests")
 @login_required
+@require_admin
 def deletion_requests():
     """View pending deletion requests (L1+ only)."""
     cu = current_user()
@@ -1001,6 +1028,7 @@ def deletion_requests():
 
 @users_bp.route("/approve-deletion/<int:request_id>", methods=["POST"])
 @login_required
+@require_admin
 def approve_deletion(request_id: int):
     """Approve a deletion request."""
     cu = current_user()
@@ -1034,6 +1062,7 @@ def approve_deletion(request_id: int):
 
 @users_bp.route("/reject-deletion/<int:request_id>", methods=["POST"])
 @login_required
+@require_admin
 def reject_deletion(request_id: int):
     """Reject a deletion request."""
     cu = current_user()
@@ -1069,6 +1098,7 @@ def reject_deletion(request_id: int):
 
 @users_bp.route("/api/user/<int:user_id>/permissions", methods=["GET"])
 @login_required
+@require_admin
 def get_user_permissions_api(user_id):
     """API endpoint to get user permissions in badge-friendly format"""
     cu = current_user()
@@ -1129,6 +1159,7 @@ def get_user_permissions_api(user_id):
 
 @users_bp.route("/api/user/<int:user_id>/permissions", methods=["POST"])
 @login_required
+@require_admin
 def update_user_permissions_api(user_id):
     """API endpoint to update user permissions via toggles"""
     cu = current_user()
@@ -1157,31 +1188,16 @@ def update_user_permissions_api(user_id):
             # Update permission level and module permissions
             import json
             cursor.execute("""
-                UPDATE users 
+                UPDATE users
                 SET permission_level = %s,
                     module_permissions = %s,
-                    updated_at = CURRENT_TIMESTAMP
+                    last_modified_at = CURRENT_TIMESTAMP
                 WHERE id = %s
             """, (
                 permission_level if permission_level else None,
                 json.dumps(module_permissions),
                 user_id
             ))
-            
-            # Handle L2 instance access
-            if permission_level == 'L2':
-                # Clear existing instance access
-                cursor.execute("DELETE FROM user_instance_access WHERE user_id = %s", (user_id,))
-                
-                # Add new instance access
-                for inst_id in accessible_instances:
-                    cursor.execute("""
-                        INSERT INTO user_instance_access (user_id, instance_id, granted_by)
-                        VALUES (%s, %s, %s)
-                    """, (user_id, inst_id, cu['id']))
-            else:
-                # Not L2 - clear all instance access
-                cursor.execute("DELETE FROM user_instance_access WHERE user_id = %s", (user_id,))
             
             conn.commit()
             cursor.close()
@@ -1200,37 +1216,11 @@ def update_user_permissions_api(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-@users_bp.route("/api/instances", methods=["GET"])
-@login_required
-def get_instances_api():
-    """API endpoint to get all available instances"""
-    cu = current_user()
-    
-    # Only L1+ can see instances
-    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
-        return jsonify({"error": "Insufficient permissions"}), 403
-    
-    try:
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT id, name, display_name, is_sandbox, is_active
-                FROM instances
-                WHERE is_active = TRUE
-                ORDER BY is_sandbox DESC, name
-            """)
-            instances = [dict(row) for row in cursor.fetchall()]
-            cursor.close()
-        
-        return jsonify(instances)
-        
-    except Exception as e:
-        logger.error(f"Error getting instances: {e}", exc_info=True)
-        return jsonify({"error": str(e)}), 500
 
 
 @users_bp.route("/user/<int:user_id>/edit-permissions")
 @login_required
+@require_admin
 def edit_permissions(user_id):
     """Edit user permissions with Discord-style interface"""
     cu = current_user()
@@ -1260,3 +1250,57 @@ def edit_permissions(user_id):
         active="users",
         user=user
     )
+
+
+_VALID_REQUEST_TYPES = {
+    'password_reset', 'profile_adjustment',
+    'account_deletion', 'elevation_request', 'module_access_request'
+}
+
+
+@users_bp.route("/my-request", methods=["GET", "POST"])
+@login_required
+def submit_request():
+    """User self-service: submit a change request to the admin team."""
+    cu = current_user()
+
+    if request.method == "POST":
+        req_type = request.form.get("request_type", "").strip()
+        details = request.form.get("request_details", "").strip()
+
+        if req_type not in _VALID_REQUEST_TYPES:
+            flash("Invalid request type.", "danger")
+            return redirect(url_for("users.submit_request"))
+
+        try:
+            instance_id = get_current_instance()
+        except Exception:
+            instance_id = cu.get('instance_id')
+
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO user_inquiries (
+                    instance_id, user_id, username,
+                    first_name, last_name, email, department, position,
+                    request_type, request_details, status
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+            """, (
+                instance_id, cu['id'], cu['username'],
+                cu.get('first_name', ''), cu.get('last_name', ''),
+                cu.get('email', ''), cu.get('department', ''), cu.get('position', ''),
+                req_type, details or None
+            ))
+            cursor.close()
+
+        from app.core.audit import log_action
+        req_label = req_type.replace('_', ' ').title()
+        log_action(cu, "user_change_request", "users",
+                   f"User Change Request submitted: {req_label}",
+                   instance_id=instance_id)
+
+        flash("Your request has been submitted. An administrator will review it shortly.", "success")
+        return redirect(url_for("home.index"))
+
+    return render_template("users/request.html", active="default", page="request")

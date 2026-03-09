@@ -218,11 +218,12 @@
                     <th style="text-align: right;">Quantity</th>
                     <th>Actor</th>
                     <th>Notes</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for entry in ledger_entries %}
-                <tr>
+                <tr id="ledger-row-{{ entry.id }}">
                     <td style="white-space: nowrap;">
                         <i class="bi bi-clock"></i>
                         {{ entry.timestamp.strftime('%Y-%m-%d %H:%M') if entry.timestamp else 'N/A' }}
@@ -253,6 +254,13 @@
                         {{ entry.actor }}
                     </td>
                     <td><small>{{ entry.notes or '-' }}</small></td>
+                    <td style="text-align: right;">
+                        <button type="button" title="Delete entry"
+                                onclick="deleteLedgerEntry({{ entry.id }})"
+                                style="padding:0.375rem 0.5rem;border:none;background:rgba(239,68,68,0.1);color:#ef4444;border-radius:0.5rem;cursor:pointer;line-height:1;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -268,4 +276,21 @@
 </div>
 
 </div>
+
+<script>
+function deleteLedgerEntry(entryId) {
+  if (!confirm('Remove this ledger entry? This cannot be undone.')) return;
+  fetch(`/inventory/ledger/${entryId}/delete`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.getElementById(`ledger-row-${entryId}`);
+        if (row) row.remove();
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(() => alert('Request failed'));
+}
+</script>
 {% endblock %}

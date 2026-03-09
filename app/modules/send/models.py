@@ -42,27 +42,73 @@ def ensure_schema():
                 created_by INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 tracking_number VARCHAR(255),
+                carrier VARCHAR(100),
                 recipient VARCHAR(255),
+                recipient_name VARCHAR(255),
+                recipient_dept VARCHAR(255),
+                recipient_address TEXT,
+                recipient_phone VARCHAR(50),
+                recipient_email VARCHAR(255),
+                recipient_company VARCHAR(255),
                 sender VARCHAR(255),
+                submitter_name VARCHAR(255),
                 package_type VARCHAR(100),
+                num_pieces INTEGER DEFAULT 1,
                 location VARCHAR(50),
                 status VARCHAR(50) DEFAULT 'received',
                 notes TEXT,
-                picked_up_at TIMESTAMP,
-                picked_up_by VARCHAR(255),
-                ts_utc TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 checkin_id VARCHAR(50),
                 package_id VARCHAR(50),
-                recipient_name VARCHAR(255),
-                recipient_address TEXT,
-                submitter_name VARCHAR(255),
-                checkin_date DATE
+                checkin_date DATE,
+                received_at TIMESTAMP,
+                received_by VARCHAR(255),
+                picked_up_at TIMESTAMP,
+                picked_up_by VARCHAR(255),
+                address_book_id INTEGER,
+                tracking_status VARCHAR(100),
+                tracking_status_description TEXT,
+                estimated_delivery_date DATE,
+                service_type VARCHAR(100),
+                shipping_method VARCHAR(100),
+                package_weight NUMERIC(10,2),
+                origin_location VARCHAR(255),
+                destination_location VARCHAR(255),
+                last_tracked_at TIMESTAMP,
+                ts_utc TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
+        # Migrations: add missing columns to existing package_manifest tables
+        migrations = [
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS carrier VARCHAR(100)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS recipient_dept VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS recipient_phone VARCHAR(50)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS recipient_email VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS recipient_company VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS num_pieces INTEGER DEFAULT 1",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS received_at TIMESTAMP",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS received_by VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS address_book_id INTEGER",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS tracking_status VARCHAR(100)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS tracking_status_description TEXT",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS estimated_delivery_date DATE",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS service_type VARCHAR(100)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS shipping_method VARCHAR(100)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS package_weight NUMERIC(10,2)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS origin_location VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS destination_location VARCHAR(255)",
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS last_tracked_at TIMESTAMP",
+        ]
+        # Soft-delete support
+        migrations.append(
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP"
+        )
+        for sql in migrations:
+            cursor.execute(sql)
+
         # Create indexes
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_package_tracking 
+            CREATE INDEX IF NOT EXISTS idx_package_tracking
             ON package_manifest(tracking_number)
         """)
         cursor.execute("""
@@ -75,7 +121,8 @@ def ensure_schema():
         """)
         
         cursor.close()
-        print("✓ Send schema initialized")
+
+    print("Send schema initialized")
 
 
 def jobs_db():
@@ -113,14 +160,19 @@ def _peek(conn, name: str) -> int:
     return (row['value'] + 1) if row else 1
 
 
-def next_checkin_id() -> int:
-    conn = _conn()
-    return _bump(conn, "checkin_seq")
+_CHECKIN_BASE = 10_000_000
 
 
-def peek_next_checkin_id() -> int:
+def next_checkin_id() -> str:
     conn = _conn()
-    return _peek(conn, "checkin_seq")
+    n = _bump(conn, "checkin_seq")
+    return str(_CHECKIN_BASE + n)
+
+
+def peek_next_checkin_id() -> str:
+    conn = _conn()
+    n = _peek(conn, "checkin_seq")
+    return str(_CHECKIN_BASE + n)
 
 
 def _pkg_key(t: str) -> str:

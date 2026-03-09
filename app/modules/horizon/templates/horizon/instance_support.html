@@ -1,45 +1,890 @@
 {% extends "horizon_base.html" %}
 
+{% block title %}Support Tools - Horizon{% endblock %}
+{% block page_title %}Support Tools{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('horizon.dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Support Tools</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Tab pills styled with Horizon amber ── */
+    .support-nav {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+        background: white;
+        border-radius: 12px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .support-nav .nav-link {
+        padding: 0.5rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6c757d;
+        border: none;
+        background: transparent;
+        transition: all 0.15s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .support-nav .nav-link:hover { background: #fff8ec; color: #1a1d2e; }
+    .support-nav .nav-link.active { background: #f59e0b; color: #fff; font-weight: 600; }
+    .support-nav .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        background: rgba(255,255,255,0.3);
+        color: inherit;
+    }
+    .support-nav .nav-link:not(.active) .tab-badge {
+        background: rgba(245,158,11,0.15);
+        color: #d97706;
+    }
+
+    /* ── Section headings inside cards ── */
+    .section-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+
+    /* ── Health grid ── */
+    .health-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .health-card {
+        background: #f8f9fc;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        text-decoration: none;
+        display: block;
+        transition: all 0.18s;
+        cursor: pointer;
+    }
+    .health-card:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 4px 14px rgba(245,158,11,0.15);
+        transform: translateY(-2px);
+    }
+    .health-card-name {
+        font-weight: 700;
+        color: #1a1d2e;
+        font-size: 0.9rem;
+        margin-bottom: 0.625rem;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .health-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .health-dot.active  { background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+    .health-dot.inactive { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
+    .health-stat {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.3rem;
+    }
+    .health-stat strong { color: #1a1d2e; font-weight: 600; }
+    .health-pending {
+        display: inline-block;
+        background: rgba(245,158,11,0.12);
+        color: #d97706;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.1rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    /* ── Search input row ── */
+    .search-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .search-row input, .search-row select {
+        flex: 1;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.5rem 0.875rem;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: #1a1d2e;
+        background: white;
+        transition: border-color 0.15s;
+    }
+    .search-row input:focus, .search-row select:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+    }
+    .search-row .btn-search {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+    }
+    .search-row .btn-search:hover { background: #d97706; }
+
+    /* ── Horizon-style data table ── */
+    .hz-table-wrap {
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+    }
+    .hz-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.855rem;
+    }
+    .hz-table thead th {
+        background: #f8f9fc;
+        color: #9ca3af;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid #e9ecef;
+        white-space: nowrap;
+    }
+    .hz-table tbody tr {
+        border-bottom: 1px solid #f1f3f5;
+        transition: background 0.12s;
+    }
+    .hz-table tbody tr:last-child { border-bottom: none; }
+    .hz-table tbody tr:hover { background: #fffbf2; }
+    .hz-table td {
+        padding: 0.7rem 1rem;
+        color: #1a1d2e;
+        vertical-align: middle;
+    }
+
+    /* ── Level badges ── */
+    .lv { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700; }
+    .lv-S1 { background: rgba(239,68,68,0.1);   color: #dc2626; }
+    .lv-L3 { background: rgba(139,92,246,0.1);  color: #7c3aed; }
+    .lv-L2 { background: rgba(59,130,246,0.1);  color: #2563eb; }
+    .lv-L1 { background: rgba(245,158,11,0.1);  color: #d97706; }
+    .lv-M  { background: rgba(16,185,129,0.1);  color: #059669; }
+    .lv-req { background: rgba(99,102,241,0.1); color: #4f46e5; }
+
+    /* ── Action buttons ── */
+    .btn-force {
+        background: rgba(239,68,68,0.08);
+        color: #dc2626;
+        border: 1px solid rgba(239,68,68,0.2);
+        border-radius: 6px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .btn-force:hover { background: rgba(239,68,68,0.16); }
+    .btn-force:disabled { opacity: 0.45; cursor: default; }
+
+    /* ── Announcement form ── */
+    .ann-field label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+    .ann-field input, .ann-field textarea, .ann-field select {
+        width: 100%;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.5rem 0.875rem;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: #1a1d2e;
+        background: white;
+        transition: border-color 0.15s;
+    }
+    .ann-field input:focus, .ann-field textarea:focus, .ann-field select:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+    }
+    .btn-post {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-post:hover { background: #d97706; }
+
+    /* ── Announcement list items ── */
+    .ann-item {
+        background: #f8f9fc;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        transition: border-color 0.15s;
+    }
+    .ann-item.is-active { border-left: 3px solid #f59e0b; }
+    .ann-item-body { flex: 1; min-width: 0; }
+    .ann-item-title { font-weight: 700; color: #1a1d2e; font-size: 0.9rem; margin-bottom: 0.2rem; }
+    .ann-item-msg { font-size: 0.82rem; color: #6c757d; margin-bottom: 0.4rem; }
+    .ann-item-meta { font-size: 0.75rem; color: #adb5bd; }
+    .ann-pill {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.1rem 0.45rem;
+        border-radius: 4px;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+    }
+    .pill-live { background: rgba(16,185,129,0.12); color: #059669; }
+    .pill-off  { background: #f1f3f5; color: #9ca3af; }
+    .pill-scope { background: rgba(245,158,11,0.1); color: #d97706; }
+
+    .ann-item-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .btn-ann-toggle {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        background: white;
+        color: #6c757d;
+        transition: all 0.15s;
+    }
+    .btn-ann-toggle:hover { border-color: #f59e0b; color: #d97706; background: #fffbf2; }
+    .btn-ann-del {
+        border: 1px solid #fee2e2;
+        border-radius: 6px;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        background: #fff5f5;
+        color: #dc2626;
+        transition: all 0.15s;
+    }
+    .btn-ann-del:hover { background: #fee2e2; }
+
+    /* ── Empty state ── */
+    .hz-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #9ca3af;
+    }
+    .hz-empty i { font-size: 2rem; display: block; margin-bottom: 0.6rem; color: #d1d5db; }
+    .hz-empty p { font-size: 0.875rem; margin: 0; }
+
+    /* ── Result placeholder ── */
+    .result-placeholder {
+        background: #f8f9fc;
+        border: 1px dashed #d1d5db;
+        border-radius: 10px;
+        padding: 2.5rem 1rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+    .result-placeholder i { font-size: 1.75rem; display: block; margin-bottom: 0.5rem; color: #d1d5db; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h1><i class="bi bi-headset"></i> Support & Troubleshooting</h1>
-            <p class="text-muted">System support tools</p>
-        </div>
-    </div>
 
-    <div class="alert alert-success">
-        <i class="bi bi-check-circle"></i>
-        <strong>All systems operational!</strong> No issues detected.
+<!-- Page header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 style="font-weight:800;color:#1a1d2e;margin:0;font-size:1.4rem;">
+            <i class="bi bi-headset me-2" style="color:#f59e0b;"></i>Support Tools
+        </h4>
+        <p style="color:#9ca3af;margin:0.2rem 0 0;font-size:0.875rem;">
+            Cross-instance visibility and operator controls for Gridline Support
+        </p>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Instance Status</h5>
-        </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Instance</th>
-                        <th>Status</th>
-                        <th>Users</th>
-                        <th>Health</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for inst in instances %}
-                    <tr>
-                        <td><strong>{{ inst.name }}</strong></td>
-                        <td><span class="badge bg-success">Active</span></td>
-                        <td>{{ inst.users }} / {{ inst.max_users }}</td>
-                        <td><span class="text-success">● Healthy</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div style="font-size:0.8rem;color:#9ca3af;text-align:right;">
+        <i class="bi bi-building me-1"></i>{{ instance_health|length }} instances monitored
     </div>
 </div>
+
+<!-- Tab navigation -->
+<ul class="nav support-nav" id="supportTabs" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#pane-health" role="tab">
+            <i class="bi bi-heart-pulse"></i> Instance Health
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-lookup" role="tab">
+            <i class="bi bi-person-search"></i> User Lookup
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-inquiries" role="tab">
+            <i class="bi bi-inbox"></i> Pending Inquiries
+            {% if pending_inquiries %}
+            <span class="tab-badge">{{ pending_inquiries|length }}</span>
+            {% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-audit" role="tab">
+            <i class="bi bi-clipboard-data"></i> Audit Search
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-entry" role="tab">
+            <i class="bi bi-door-open"></i> Entry Log
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-ann" role="tab">
+            <i class="bi bi-megaphone"></i> Announcements
+            {% set live_count = announcements|selectattr('active')|list|length %}
+            {% if live_count %}
+            <span class="tab-badge">{{ live_count }} live</span>
+            {% endif %}
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- ══ INSTANCE HEALTH ══════════════════════════════════════ -->
+    <div class="tab-pane fade show active" id="pane-health" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-building me-1"></i>All Instances — click to enter</p>
+            {% if instance_health %}
+            <div class="health-grid">
+                {% for inst in instance_health %}
+                <a class="health-card" href="{{ url_for('horizon.switch_instance', instance_id=inst.id) }}" title="Enter {{ inst.display_name }}">
+                    <div class="health-card-name">
+                        <span class="health-dot {{ 'active' if inst.is_active else 'inactive' }}"></span>
+                        {{ inst.display_name }}
+                    </div>
+                    <div class="health-stat">
+                        <span>Users</span>
+                        <strong>{{ inst.user_count }}{% if inst.max_users %} / {{ inst.max_users }}{% endif %}</strong>
+                    </div>
+                    <div class="health-stat">
+                        <span>Pending Requests</span>
+                        {% if inst.pending_inquiries %}
+                        <span class="health-pending">{{ inst.pending_inquiries }}</span>
+                        {% else %}<strong>0</strong>{% endif %}
+                    </div>
+                    <div class="health-stat">
+                        <span>Last Activity</span>
+                        <strong>{% if inst.last_activity %}{{ inst.last_activity.strftime('%m/%d %H:%M') }}{% else %}—{% endif %}</strong>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="hz-empty"><i class="bi bi-building"></i><p>No instances found.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ══ USER LOOKUP ══════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-lookup" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-person-search me-1"></i>Search users across all instances</p>
+            <div class="search-row">
+                <input type="text" id="lookupInput" placeholder="Username, email, or name…" autocomplete="off">
+                <button class="btn-search" onclick="runLookup()"><i class="bi bi-search me-1"></i>Search</button>
+            </div>
+            <div id="lookupResults">
+                <div class="result-placeholder">
+                    <i class="bi bi-person-search"></i>
+                    Enter at least 2 characters to search across all instances.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ PENDING INQUIRIES ════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-inquiries" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-inbox me-1"></i>All pending user change requests</p>
+            {% if pending_inquiries %}
+            <div class="hz-table-wrap">
+                <table class="hz-table">
+                    <thead>
+                        <tr>
+                            <th>Instance</th>
+                            <th>User</th>
+                            <th>Request Type</th>
+                            <th>Details</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for inq in pending_inquiries %}
+                        <tr>
+                            <td>
+                                <span style="font-size:0.8rem;color:#6c757d;">{{ inq.instance_name or '—' }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ inq.username }}</strong>
+                                {% if inq.first_name or inq.last_name %}
+                                <div style="font-size:0.78rem;color:#9ca3af;">{{ inq.first_name or '' }} {{ inq.last_name or '' }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="lv lv-req">{{ inq.request_type.replace('_',' ').title() }}</span>
+                            </td>
+                            <td style="max-width:200px;">
+                                <span style="font-size:0.8rem;color:#6c757d;" title="{{ inq.request_details or '' }}">
+                                    {{ (inq.request_details or '—')[:70] }}{% if inq.request_details and inq.request_details|length > 70 %}…{% endif %}
+                                </span>
+                            </td>
+                            <td style="font-size:0.78rem;color:#9ca3af;white-space:nowrap;">
+                                {{ inq.submitted_at.strftime('%Y-%m-%d %H:%M') if inq.submitted_at else '—' }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="hz-empty"><i class="bi bi-inbox"></i><p>No pending inquiries across any instance.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ══ AUDIT SEARCH ════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-audit" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-clipboard-data me-1"></i>Search audit logs across all instances</p>
+            <div class="search-row">
+                <input type="text" id="auditQuery" placeholder="Username or IP address…" autocomplete="off">
+                <select id="auditModule" style="max-width:160px;">
+                    <option value="">All modules</option>
+                    <option value="auth">auth</option>
+                    <option value="send">send</option>
+                    <option value="fulfillment">fulfillment</option>
+                    <option value="inventory">inventory</option>
+                    <option value="users">users</option>
+                    <option value="admin">admin</option>
+                    <option value="horizon">horizon</option>
+                    <option value="instance_access">instance_access</option>
+                    <option value="support">support</option>
+                </select>
+                <button class="btn-search" onclick="runAuditSearch()"><i class="bi bi-search me-1"></i>Search</button>
+            </div>
+            <div id="auditResults">
+                <div class="result-placeholder">
+                    <i class="bi bi-clipboard-data"></i>
+                    Enter a username or IP to search across all instances.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ ENTRY LOG ═══════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-entry" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-door-open me-1"></i>Recent operator instance access — last 60 events</p>
+            {% if entry_log %}
+            <div class="hz-table-wrap">
+                <table class="hz-table">
+                    <thead>
+                        <tr>
+                            <th>Operator</th>
+                            <th>Level</th>
+                            <th>Instance Entered</th>
+                            <th>IP Address</th>
+                            <th>When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for entry in entry_log %}
+                        <tr>
+                            <td><strong>{{ entry.username }}</strong></td>
+                            <td>
+                                {% set lv = entry.permission_level or '' %}
+                                <span class="lv lv-{{ lv if lv in ['S1','L3','L2','L1'] else 'M' }}">{{ lv or 'M' }}</span>
+                            </td>
+                            <td style="font-size:0.82rem;">
+                                {{ entry.instance_name or ('Instance ' ~ entry.instance_id) if entry.instance_id else '—' }}
+                            </td>
+                            <td style="font-size:0.78rem;color:#9ca3af;font-family:monospace;">{{ entry.ip_address or '—' }}</td>
+                            <td style="font-size:0.78rem;color:#9ca3af;white-space:nowrap;">
+                                {{ entry.ts_utc.strftime('%Y-%m-%d %H:%M') if entry.ts_utc else '—' }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="hz-empty"><i class="bi bi-door-open"></i><p>No instance entry records found.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ══ ANNOUNCEMENTS ═══════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-ann" role="tabpanel">
+        <div class="row g-4">
+
+            <!-- Create form -->
+            <div class="col-lg-5">
+                <div class="stat-card h-100" style="margin-bottom:0;">
+                    <p class="section-label"><i class="bi bi-plus-circle me-1"></i>Post New Announcement</p>
+                    <div style="display:flex;flex-direction:column;gap:0.875rem;">
+                        <div class="ann-field">
+                            <label>Title <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="annTitle" placeholder="e.g. Scheduled Maintenance Tonight" maxlength="200">
+                        </div>
+                        <div class="ann-field">
+                            <label>Message <span style="color:#ef4444;">*</span></label>
+                            <textarea id="annMessage" rows="3" placeholder="Describe what users need to know…"></textarea>
+                        </div>
+                        <div class="ann-field">
+                            <label>Target Instance</label>
+                            <select id="annInstance">
+                                <option value="">All Instances — Global Broadcast</option>
+                                {% for inst in all_instances_list %}
+                                <option value="{{ inst.id }}">{{ inst.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="ann-field">
+                            <label>Expires At <span style="color:#9ca3af;font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+                            <input type="datetime-local" id="annExpires">
+                        </div>
+                        <div>
+                            <button class="btn-post" onclick="createAnnouncement()">
+                                <i class="bi bi-megaphone me-1"></i>Post Announcement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing announcements -->
+            <div class="col-lg-7">
+                <div class="stat-card h-100" style="margin-bottom:0;">
+                    <p class="section-label"><i class="bi bi-list-ul me-1"></i>Active & Recent Announcements</p>
+                    <div id="annList">
+                    {% if announcements %}
+                        {% for ann in announcements %}
+                        <div class="ann-item {{ 'is-active' if ann.active else '' }}" id="ann-{{ ann.id }}">
+                            <div class="ann-item-body">
+                                <div class="ann-item-title">
+                                    {{ ann.title }}
+                                    <span class="ann-pill {{ 'pill-live' if ann.active else 'pill-off' }}">
+                                        {{ 'Live' if ann.active else 'Off' }}
+                                    </span>
+                                    <span class="ann-pill pill-scope">
+                                        {{ 'All Instances' if ann.instance_id is none else ('Instance ' ~ ann.instance_id) }}
+                                    </span>
+                                </div>
+                                <div class="ann-item-msg">{{ ann.message }}</div>
+                                <div class="ann-item-meta">
+                                    Posted by {{ ann.created_by_username or '—' }}
+                                    {% if ann.created_at %}&middot; {{ ann.created_at.strftime('%b %d, %Y %H:%M') }}{% endif %}
+                                    {% if ann.expires_at %}&middot; Expires {{ ann.expires_at.strftime('%b %d %H:%M') }}{% endif %}
+                                </div>
+                            </div>
+                            <div class="ann-item-actions">
+                                <button class="btn-ann-toggle" onclick="toggleAnn({{ ann.id }}, this)">
+                                    {{ 'Disable' if ann.active else 'Enable' }}
+                                </button>
+                                <button class="btn-ann-del" onclick="deleteAnn({{ ann.id }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="hz-empty" id="annEmpty">
+                            <i class="bi bi-megaphone"></i>
+                            <p>No announcements yet. Post one using the form.</p>
+                        </div>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── User Lookup ──────────────────────────────────────────────────────────────
+var _lookupTimer = null;
+document.getElementById('lookupInput').addEventListener('input', function () {
+    clearTimeout(_lookupTimer);
+    _lookupTimer = setTimeout(runLookup, 350);
+});
+document.getElementById('lookupInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { clearTimeout(_lookupTimer); runLookup(); }
+});
+
+function runLookup() {
+    var q = document.getElementById('lookupInput').value.trim();
+    if (q.length < 2) {
+        document.getElementById('lookupResults').innerHTML =
+            '<div class="result-placeholder"><i class="bi bi-person-search"></i>Enter at least 2 characters.</div>';
+        return;
+    }
+    document.getElementById('lookupResults').innerHTML =
+        '<div class="result-placeholder"><i class="bi bi-arrow-repeat"></i>Searching…</div>';
+
+    fetch('/horizon/support/user-lookup?q=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var users = data.users || [];
+            if (!users.length) {
+                document.getElementById('lookupResults').innerHTML =
+                    '<div class="result-placeholder"><i class="bi bi-person-x"></i>No users found for "' + esc(q) + '".</div>';
+                return;
+            }
+            var html = '<div class="hz-table-wrap"><table class="hz-table"><thead><tr>' +
+                '<th>Username</th><th>Name</th><th>Email</th><th>Level</th>' +
+                '<th>Instance</th><th>Last Seen</th><th></th>' +
+                '</tr></thead><tbody>';
+            users.forEach(function (u) {
+                var perm = u.permission_level || '';
+                var lvClass = ['S1','L3','L2','L1'].indexOf(perm) !== -1 ? 'lv-' + perm : 'lv-M';
+                var lvLabel = perm || (u.module_permissions || 'Module');
+                html += '<tr>' +
+                    '<td><strong>' + esc(u.username) + '</strong></td>' +
+                    '<td style="font-size:0.82rem;color:#6c757d;">' + esc(((u.first_name||'') + ' ' + (u.last_name||'')).trim() || '—') + '</td>' +
+                    '<td style="font-size:0.78rem;color:#9ca3af;">' + esc(u.email||'—') + '</td>' +
+                    '<td><span class="lv ' + lvClass + '">' + esc(lvLabel) + '</span></td>' +
+                    '<td style="font-size:0.82rem;">' + esc(u.instance_name||'—') + '</td>' +
+                    '<td style="font-size:0.78rem;color:#9ca3af;">' + (u.last_seen||'—') + '</td>' +
+                    '<td><button class="btn-force" id="fl-' + u.id + '" onclick="forceLogout(' + u.id + ')">' +
+                    '<i class="bi bi-box-arrow-right me-1"></i>Force Logout</button></td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table></div>';
+            document.getElementById('lookupResults').innerHTML = html;
+        })
+        .catch(function () {
+            document.getElementById('lookupResults').innerHTML =
+                '<div class="result-placeholder"><i class="bi bi-exclamation-circle"></i>Network error. Please try again.</div>';
+        });
+}
+
+function forceLogout(userId) {
+    if (!confirm('Force sign out this user? They will be logged out on their next page load.')) return;
+    var btn = document.getElementById('fl-' + userId);
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass me-1"></i>Processing…';
+
+    fetch('/horizon/support/force-logout/' + userId, { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                btn.innerHTML = '<i class="bi bi-check me-1"></i>Done';
+                btn.style.background = 'rgba(16,185,129,0.1)';
+                btn.style.color = '#059669';
+                btn.style.borderColor = 'rgba(16,185,129,0.2)';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-right me-1"></i>Force Logout';
+                alert(data.error || 'Error');
+            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-right me-1"></i>Force Logout';
+            alert('Network error. Please try again.');
+        });
+}
+
+// ── Audit Search ─────────────────────────────────────────────────────────────
+document.getElementById('auditQuery').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') runAuditSearch();
+});
+
+function runAuditSearch() {
+    var q = document.getElementById('auditQuery').value.trim();
+    var module = document.getElementById('auditModule').value;
+    if (!q) return;
+    document.getElementById('auditResults').innerHTML =
+        '<div class="result-placeholder"><i class="bi bi-arrow-repeat"></i>Searching…</div>';
+
+    var url = '/horizon/support/audit-search?q=' + encodeURIComponent(q);
+    if (module) url += '&module=' + encodeURIComponent(module);
+
+    fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var logs = data.logs || [];
+            if (!logs.length) {
+                document.getElementById('auditResults').innerHTML =
+                    '<div class="result-placeholder"><i class="bi bi-clipboard-x"></i>No results found for "' + esc(q) + '".</div>';
+                return;
+            }
+            var html = '<div class="hz-table-wrap"><table class="hz-table"><thead><tr>' +
+                '<th>Username</th><th>Action</th><th>Module</th><th>Instance</th><th>IP</th><th>When</th>' +
+                '</tr></thead><tbody>';
+            logs.forEach(function (row) {
+                html += '<tr>' +
+                    '<td><strong>' + esc(row.username||'') + '</strong></td>' +
+                    '<td style="font-size:0.8rem;">' + esc(row.action||'') + '</td>' +
+                    '<td><span style="font-size:0.74rem;color:#9ca3af;font-family:monospace;">' + esc(row.module||'') + '</span></td>' +
+                    '<td style="font-size:0.8rem;">' + esc(row.instance_name || (row.instance_id ? 'inst ' + row.instance_id : '—')) + '</td>' +
+                    '<td style="font-size:0.78rem;color:#9ca3af;font-family:monospace;">' + esc(row.ip_address||'—') + '</td>' +
+                    '<td style="font-size:0.78rem;color:#9ca3af;white-space:nowrap;">' + (row.ts_utc||'—') + '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table></div>';
+            document.getElementById('auditResults').innerHTML = html;
+        })
+        .catch(function () {
+            document.getElementById('auditResults').innerHTML =
+                '<div class="result-placeholder"><i class="bi bi-exclamation-circle"></i>Network error.</div>';
+        });
+}
+
+// ── Announcements ─────────────────────────────────────────────────────────────
+function createAnnouncement() {
+    var title   = document.getElementById('annTitle').value.trim();
+    var message = document.getElementById('annMessage').value.trim();
+    var inst_id = document.getElementById('annInstance').value || null;
+    var expires = document.getElementById('annExpires').value || '';
+    if (!title || !message) { alert('Title and message are required.'); return; }
+
+    fetch('/horizon/support/announcement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, message: message, instance_id: inst_id, expires_at: expires })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (!data.success) { alert(data.error || 'Error creating announcement.'); return; }
+
+        // Clear form
+        document.getElementById('annTitle').value = '';
+        document.getElementById('annMessage').value = '';
+        document.getElementById('annInstance').value = '';
+        document.getElementById('annExpires').value = '';
+
+        // Remove empty state if present
+        var empty = document.getElementById('annEmpty');
+        if (empty) empty.remove();
+
+        // Prepend new item
+        var scope = inst_id ? 'Instance ' + inst_id : 'All Instances';
+        var div = document.createElement('div');
+        div.className = 'ann-item is-active';
+        div.id = 'ann-' + data.id;
+        div.innerHTML =
+            '<div class="ann-item-body">' +
+                '<div class="ann-item-title">' + esc(title) +
+                    '<span class="ann-pill pill-live">Live</span>' +
+                    '<span class="ann-pill pill-scope">' + esc(scope) + '</span>' +
+                '</div>' +
+                '<div class="ann-item-msg">' + esc(message) + '</div>' +
+                '<div class="ann-item-meta">Just posted</div>' +
+            '</div>' +
+            '<div class="ann-item-actions">' +
+                '<button class="btn-ann-toggle" onclick="toggleAnn(' + data.id + ', this)">Disable</button>' +
+                '<button class="btn-ann-del" onclick="deleteAnn(' + data.id + ')"><i class="bi bi-trash"></i></button>' +
+            '</div>';
+        document.getElementById('annList').prepend(div);
+    })
+    .catch(function () { alert('Network error. Please try again.'); });
+}
+
+function toggleAnn(id, btn) {
+    fetch('/horizon/support/announcement/' + id + '/toggle', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            var item = document.getElementById('ann-' + id);
+            var pill = item.querySelector('.pill-live, .pill-off');
+            if (data.active) {
+                item.classList.add('is-active');
+                if (pill) { pill.className = 'ann-pill pill-live'; pill.textContent = 'Live'; }
+                btn.textContent = 'Disable';
+            } else {
+                item.classList.remove('is-active');
+                if (pill) { pill.className = 'ann-pill pill-off'; pill.textContent = 'Off'; }
+                btn.textContent = 'Enable';
+            }
+        });
+}
+
+function deleteAnn(id) {
+    if (!confirm('Delete this announcement? It will stop showing to users immediately.')) return;
+    fetch('/horizon/support/announcement/' + id + '/delete', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            var el = document.getElementById('ann-' + id);
+            if (el) {
+                el.style.transition = 'opacity 0.25s, transform 0.25s';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-4px)';
+                setTimeout(function () { el.remove(); }, 280);
+            }
+        });
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 {% endblock %}

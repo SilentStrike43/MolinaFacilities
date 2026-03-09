@@ -83,12 +83,18 @@ def create_app():
     try:
         logger.info("Initializing database schemas...")
         
+        # Core user/audit schema first (adds instance_id to audit_logs, creates horizon_audit_logs)
+        from app.modules.users.models import ensure_user_schema, ensure_inquiry_schema, ensure_announcement_schema
+        ensure_user_schema()
+        ensure_inquiry_schema()
+        ensure_announcement_schema()
+
         # Then ensure base schemas exist
         from app.modules.send.storage import ensure_schema as ensure_send_schema
         from app.modules.fulfillment.storage import ensure_schema as ensure_fulfillment_schema
         from app.modules.inventory.storage import ensure_schema as ensure_inventory_schema
         from app.modules.inventory.assets import ensure_schema as ensure_assets_schema
-        
+
         ensure_send_schema()
         ensure_fulfillment_schema()
         ensure_inventory_schema()
@@ -101,6 +107,46 @@ def create_app():
     # ==================== Register Error Handlers ====================
     register_error_handlers(app)
     
+    # ==================== Helpers ====================
+    def _get_active_announcements(instance_id):
+        """Fetch active announcements for the current instance (global + instance-specific)."""
+        if not instance_id:
+            return []
+        try:
+            from app.core.database import get_db_connection as _gdb_ann
+            with _gdb_ann("core") as _conn_ann:
+                _c_ann = _conn_ann.cursor()
+                _c_ann.execute("""
+                    SELECT id, title, message FROM instance_announcements
+                    WHERE active = TRUE
+                      AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+                      AND (instance_id IS NULL OR instance_id = %s)
+                    ORDER BY created_at DESC
+                """, (instance_id,))
+                rows = [dict(r) for r in _c_ann.fetchall()]
+                _c_ann.close()
+                return rows
+        except Exception:
+            return []
+
+    def _count_pending_inquiries(cu, instance_id):
+        """Return count of pending user_inquiries for the given instance (L1+ only)."""
+        if not instance_id:
+            return 0
+        try:
+            from app.core.database import get_db_connection
+            with get_db_connection("core") as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT COUNT(*) as c FROM user_inquiries WHERE instance_id=%s AND status='pending'",
+                    (instance_id,)
+                )
+                row = cursor.fetchone()
+                cursor.close()
+                return row['c'] if row else 0
+        except Exception:
+            return 0
+
     # ==================== Context Processors ====================
     @app.context_processor
     def inject_user_context():
@@ -110,7 +156,7 @@ def create_app():
         from app.core.permissions import PermissionManager
         from app.core.module_access import get_user_available_modules
         from app.core.database import get_db_connection
-        import os
+        import os, json
         from app.core.instance_access import get_user_instances
     
         cu = current_user()
@@ -157,9 +203,9 @@ def create_app():
         is_sandbox = False
         sandbox_instance_name = None
 
-        # For S1/L3 without explicit instance_id, assume Sandbox
+        # For S1/L3 without explicit instance_id, assume Sandbox (skip for Horizon routes)
         cu = current_user()
-        if cu and not instance_id:
+        if cu and not instance_id and not request.path.startswith('/horizon'):
             perm_level = cu.get('permission_level', '')
             if perm_level in ['S1', 'L3']:
                 instance_id = 4  # Default to Sandbox
@@ -211,6 +257,8 @@ def create_app():
                     'sidebar_bg_end': default_settings['sidebar_bg_end'],
                     'topbar_bg': default_settings['topbar_bg']
                 },
+                'user_prefs': {},
+                'current_sid': '',
                 'APP_VERSION': APP_VERSION,
                 'BRAND_TEAL': BRAND_TEAL
             }
@@ -232,6 +280,13 @@ def create_app():
                 'can_fulfillment_manager': True,
             }
         
+        # Parse user preferences for color/theme overrides
+        try:
+            _raw_prefs = cu.get('user_preferences', '{}') or '{}'
+            user_prefs = json.loads(_raw_prefs)
+        except Exception:
+            user_prefs = {}
+
         return {
             'cu': cu,
             'current_user': cu,
@@ -257,6 +312,10 @@ def create_app():
                 'sidebar_bg_end': default_settings['sidebar_bg_end'],
                 'topbar_bg': default_settings['topbar_bg']
             },
+            'user_prefs': user_prefs,
+            'current_sid': session.get('session_id', ''),
+            'pending_inquiry_count': _count_pending_inquiries(cu, instance_id) if is_elevated else 0,
+            'active_announcements': _get_active_announcements(instance_id) if cu else [],
             'APP_VERSION': APP_VERSION,
             'BRAND_TEAL': BRAND_TEAL
         }
@@ -284,7 +343,50 @@ def create_app():
         cu = current_user()
         if not cu:
             return
-        
+
+        # Validate session ID when present in URL
+        # Skip auth routes so login/logout/keep-alive always work
+        _auth_prefixes = ('/auth/',)
+        if not any(request.path.startswith(p) for p in _auth_prefixes):
+            sid_in_url = request.args.get('sid', '')
+            if sid_in_url:
+                session_sid = session.get('session_id', '')
+                if session_sid and sid_in_url != session_sid:
+                    session.clear()
+                    from flask import flash as _flash
+                    _flash("Session mismatch — please sign in again.", "danger")
+                    return redirect(url_for("auth.login"))
+
+        # Force-logout check (set by L3/S1 via Support Tools)
+        if cu.get('force_logout'):
+            try:
+                from app.core.database import get_db_connection as _gdb0
+                with _gdb0("core") as _conn0:
+                    _c0 = _conn0.cursor()
+                    _c0.execute("UPDATE users SET force_logout = FALSE WHERE id = %s", (cu['id'],))
+                    _c0.close()
+            except Exception:
+                pass
+            session.clear()
+            from flask import flash as _flash0
+            _flash0("Your session was ended by an administrator.", "warning")
+            return redirect(url_for("auth.login"))
+
+        # Update last_seen for online presence (throttled: once per minute via session)
+        _now = datetime.utcnow()
+        _ls_key = '_ls_db'
+        _prev_ls = session.get(_ls_key)
+        if not _prev_ls or (_now - datetime.fromisoformat(_prev_ls)).seconds > 60:
+            try:
+                from app.core.database import get_db_connection as _gdb
+                with _gdb("core") as _conn:
+                    _c = _conn.cursor()
+                    _c.execute("UPDATE users SET last_seen = %s WHERE id = %s", (_now, cu['id']))
+                    _c.close()
+                session[_ls_key] = _now.isoformat()
+            except Exception:
+                pass
+
         # PRIORITY 1: Check URL query params for explicit instance_id
         instance_id = request.args.get('instance_id', type=int)
         
@@ -294,7 +396,8 @@ def create_app():
             logger.debug(f"📦 Using session instance_id: {instance_id}")
         
         # PRIORITY 3: For S1/L3 users without explicit instance_id, default to Sandbox
-        if not instance_id:
+        # Skip for Horizon routes — they are instance-agnostic
+        if not instance_id and not request.path.startswith('/horizon'):
             perm_level = cu.get('permission_level', '')
             if perm_level in ['S1', 'L3']:
                 # S1/L3 default to Sandbox (instance_id=4)
@@ -308,12 +411,32 @@ def create_app():
         # Set the context
         if instance_id:
             set_current_instance(instance_id)
+
+            # Log instance access when an L3/S1 user explicitly switches instance
+            # (only when instance_id comes from the URL, indicating a deliberate switch)
+            prev_instance_id = session.get('active_instance_id')
+            if (
+                request.args.get('instance_id', type=int)  # explicit URL param
+                and cu.get('permission_level') in ['L3', 'S1']
+                and instance_id != prev_instance_id
+            ):
+                try:
+                    from app.core.audit import log_action
+                    log_action(
+                        cu,
+                        "access_instance",
+                        "instance_access",
+                        f"Accessed instance {instance_id}",
+                        instance_id=instance_id
+                    )
+                except Exception:
+                    pass
+
             # PERSIST to session for subsequent requests
             session['active_instance_id'] = instance_id
             logger.debug(f"✅ Request instance context set: {instance_id}")
         else:
             logger.warning(f"⚠️ No instance context for user {cu.get('username')}")
-
 
     @app.after_request  
     def clear_request_instance_context(response):
@@ -380,6 +503,10 @@ def create_app():
         from app.modules.inventory import bp as inventory_bp
         app.register_blueprint(inventory_bp)
 
+        # Settings module
+        from app.modules.settings import bp as settings_bp
+        app.register_blueprint(settings_bp)
+
         # Horizon - Global Admin Module (L3/S1 only)
         from app.modules.horizon import bp as horizon_bp
         app.register_blueprint(horizon_bp, url_prefix='/horizon')
@@ -439,12 +566,10 @@ def create_app():
     logger.info("Application initialization complete")
     
     # ==================== Cleanup on Shutdown ====================
-    @app.teardown_appcontext
-    def shutdown_session(exception=None):
-        """Cleanup database connections on app shutdown."""
-        from app.core.database import cleanup_all_pools
-        cleanup_all_pools()
-    
+    # NOTE: teardown_appcontext fires after EVERY request — do NOT call
+    # cleanup_all_pools() here. Pools are module-level globals that must
+    # persist for the process lifetime. Signal handlers below handle true shutdown.
+
     # Setup signal handlers for graceful shutdown
     def shutdown_handler(signum, frame):
         logger.info("Application shutting down...")
@@ -488,7 +613,7 @@ if __name__ == '__main__':
     # Run the application
     # Azure provides PORT environment variable, default to 5000 for local dev
     port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '127.0.0.1')
+    host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('FLASK_ENV') == 'development'
     
     logger.info(f"Starting server on {host}:{port}")

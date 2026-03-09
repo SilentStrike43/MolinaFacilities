@@ -11,22 +11,29 @@ import logging
 
 def record_audit(user, action, source, details=""):
     """
-    Record security/audit events.
-    
+    Record security/audit events to both the Python logger and the audit_logs table.
+
     Args:
-        user: User dict or None
-        action: Action being audited (e.g., 'login', 'create_user')
-        source: Source module (e.g., 'auth', 'users', 'admin')
+        user:    User dict or None
+        action:  Action being audited (e.g., 'login', 'create_user')
+        source:  Source module (e.g., 'auth', 'users', 'fulfillment')
         details: Additional details about the action
     """
-    logger = logging.getLogger('app.security.audit')
-    
+    _logger = logging.getLogger('app.security.audit')
+
     username = user.get('username', 'anonymous') if user else 'anonymous'
     user_id = user.get('id', 'N/A') if user else 'N/A'
-    
-    logger.info(
+
+    _logger.info(
         f"AUDIT: {action} | User: {username} (ID:{user_id}) | Source: {source} | Details: {details}"
     )
+
+    # Also persist to the database
+    try:
+        from app.core.audit import log_action
+        log_action(user, action, source, details)
+    except Exception:
+        pass  # Never let audit failures propagate
 
 # Import user lookup functions
 from app.modules.users.models import get_user_by_id as _get_user_by_id, get_user_by_username as _get_user_by_username
@@ -318,7 +325,7 @@ _CAP_SYNONYMS = {
 def has_cap(user_row: Optional[dict], cap: str) -> bool:
     """
     Central capability check.
-    - sysadmins/admins always pass
+    - sysadmins/admins always pass (except sysadmin check itself)
     - understands both JSON caps and boolean columns
     - supports synonyms and the special 'fulfillment_any'
     """
@@ -327,11 +334,15 @@ def has_cap(user_row: Optional[dict], cap: str) -> bool:
     u = _row_to_dict(user_row)
     caps = _parse_caps(u)
 
-    # admin/sysadmin bypass
+    key = _CAP_SYNONYMS.get(cap, cap)
+
+    # Sysadmin requires explicit sysadmin — is_admin alone is not enough
+    if key == "is_sysadmin":
+        return bool(caps.get("is_sysadmin"))
+
+    # For all other caps, admin/sysadmin get a full bypass
     if caps.get("is_sysadmin") or caps.get("is_admin"):
         return True
-
-    key = _CAP_SYNONYMS.get(cap, cap)
 
     if key == "fulfillment_any":
         return bool(caps.get("can_fulfillment_staff") or caps.get("can_fulfillment_customer"))

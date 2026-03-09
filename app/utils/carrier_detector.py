@@ -34,7 +34,9 @@ class CarrierDetector:
             return 'UPS'
         if CarrierDetector._is_fedex(cleaned):
             return 'FEDEX'
-        
+        if CarrierDetector._is_dhl(cleaned):
+            return 'DHL'
+
         return 'UNKNOWN'
     
     @staticmethod
@@ -75,12 +77,25 @@ class CarrierDetector:
         return any(re.match(pattern, tracking) for pattern in patterns)
     
     @staticmethod
+    def _is_dhl(tracking: str) -> bool:
+        """Check if tracking number matches DHL format"""
+        patterns = [
+            r'^\d{10}$',               # DHL Express (10 digits)
+            r'^JD\d{18}$',             # DHL Parcel (JD + 18 digits)
+            r'^GM\d{16}$',             # DHL Parcel (GM + 16 digits)
+            r'^[A-Z]{2}\d{9}[A-Z]{2}$',  # DHL international (e.g. EA123456789DE)
+            r'^\d{11}$',               # DHL Express (11 digits)
+        ]
+        return any(re.match(pattern, tracking) for pattern in patterns)
+
+    @staticmethod
     def get_carrier_name(carrier_code: str) -> str:
         """Get friendly carrier name"""
         names = {
-            'USPS': 'United States Postal Service',
-            'UPS': 'United Parcel Service',
+            'USPS':  'United States Postal Service',
+            'UPS':   'United Parcel Service',
             'FEDEX': 'FedEx',
+            'DHL':   'DHL Express',
             'UNKNOWN': 'Unknown Carrier'
         }
         return names.get(carrier_code, 'Unknown Carrier')
@@ -91,9 +106,10 @@ class CarrierDetector:
         tracking = tracking_number.replace(' ', '').replace('-', '')
         
         urls = {
-            'USPS': f'https://tools.usps.com/go/TrackConfirmAction?tLabels={tracking}',
-            'UPS': f'https://www.ups.com/track?loc=en_US&tracknum={tracking}',
+            'USPS':  f'https://tools.usps.com/go/TrackConfirmAction?tLabels={tracking}',
+            'UPS':   f'https://www.ups.com/track?loc=en_US&tracknum={tracking}',
             'FEDEX': f'https://www.fedex.com/fedextrack/?trknbr={tracking}',
+            'DHL':   f'https://www.dhl.com/us-en/home/tracking.html?tracking-id={tracking}',
         }
-        
+
         return urls.get(carrier_code)

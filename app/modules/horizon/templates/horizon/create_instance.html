@@ -83,32 +83,14 @@
                     <h6 class="text-primary mb-3">
                         <i class="bi bi-speedometer"></i> Resource Allocation
                     </h6>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Max Users</label>
-                            <input type="number" name="max_users" class="form-control" 
+                            <input type="number" name="max_users" class="form-control"
                                    value="100" min="1" max="10000">
                             <small class="text-muted">Maximum concurrent users</small>
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Storage Limit (GB)</label>
-                            <input type="number" name="storage_limit_gb" class="form-control" 
-                                   value="10" min="1" max="1000">
-                            <small class="text-muted">File storage allocation</small>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Subscription Tier</label>
-                        <select name="subscription_tier" class="form-select">
-                            <option value="trial">Trial (30 days)</option>
-                            <option value="basic">Basic</option>
-                            <option value="standard" selected>Standard</option>
-                            <option value="premium">Premium</option>
-                            <option value="enterprise">Enterprise</option>
-                        </select>
                     </div>
                 </div>
 
@@ -346,76 +328,6 @@
                         }
                     });
                 </script>
-                
-                <!-- Future Features -->
-                <div class="mb-4 pb-4 border-bottom">
-                    <h6 class="text-primary mb-3">
-                        <i class="bi bi-globe"></i> Domain Settings 
-                        <span class="badge bg-warning text-dark">Coming Soon</span>
-                    </h6>
-                    
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-info-circle me-2"></i>
-                        These features will be activated when migrating to cloud infrastructure.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                Subdomain <small class="text-muted">(Reserved for future)</small>
-                            </label>
-                            <div class="input-group">
-                                <input type="text" name="subdomain" class="form-control" 
-                                       placeholder="companyname" pattern="[a-z0-9-]+">
-                                <span class="input-group-text">.gridlineservices.com</span>
-                            </div>
-                            <small class="text-muted">Will be: https://companyname.gridlineservices.com</small>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                Custom Domain <small class="text-muted">(Future feature)</small>
-                            </label>
-                            <input type="text" name="custom_domain" class="form-control" 
-                                   placeholder="company.com">
-                            <small class="text-muted">Optional: Use your own domain</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Security Settings -->
-                <div class="mb-4 pb-4 border-bottom">
-                    <h6 class="text-primary mb-3">
-                        <i class="bi bi-shield-check"></i> Security Settings 
-                        <span class="badge bg-warning text-dark">Future Features</span>
-                    </h6>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Rate Limit (requests/hour) <small class="text-muted">(Not enforced yet)</small>
-                        </label>
-                        <input type="number" name="rate_limit_per_hour" class="form-control" 
-                               value="1000" min="100" max="100000">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Allowed IP Addresses <small class="text-muted">(Future feature)</small>
-                        </label>
-                        <textarea name="allowed_ips" class="form-control" rows="2"
-                                  placeholder="192.168.1.0/24, 10.0.0.0/8 (comma-separated)"></textarea>
-                        <small class="text-muted">Leave empty to allow all IPs</small>
-                    </div>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="require_2fa" id="require_2fa">
-                        <label class="form-check-label" for="require_2fa">
-                            <strong>Require Two-Factor Authentication</strong>
-                            <span class="badge bg-warning text-dark ms-2">Future</span>
-                        </label>
-                        <div><small class="text-muted">Force all users to enable 2FA</small></div>
-                    </div>
-                </div>
                 
                 <!-- Instance Status -->
                 <div class="mb-4">

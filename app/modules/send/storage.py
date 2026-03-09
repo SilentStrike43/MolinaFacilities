@@ -56,6 +56,15 @@ def ensure_schema():
             ON fedex_sync_log(instance_id);
         """)
         
+        # Column migrations for package_manifest
+        for migration_sql in [
+            "ALTER TABLE package_manifest ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP",
+        ]:
+            try:
+                cursor.execute(migration_sql)
+            except Exception:
+                pass  # Table may not exist yet; models.py ensure_schema handles creation
+
         cursor.close()
 
 

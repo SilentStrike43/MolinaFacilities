@@ -302,6 +302,7 @@
                         <option value="FEDEX" selected>FedEx</option>
                         <option value="USPS">USPS</option>
                         <option value="UPS">UPS</option>
+                        <option value="DHL">DHL</option>
                     </select>
                 </div>
             </div>
@@ -404,27 +405,24 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    statusDiv.className = 'success';
-                    statusDiv.innerHTML = `
-                        ✅ <strong>Tracking Found!</strong><br>
-                        Status: ${data.status || 'N/A'}<br>
-                        ${data.recipient_name ? 'Recipient: ' + data.recipient_name : ''}
-                    `;
-                    
-                    // Auto-fill form fields
-                    if (data.recipient_name) {
-                        document.getElementById('recipient_name').value = data.recipient_name;
+                    const d = data.data || {};
+                    // Set detected carrier in the select
+                    if (data.carrier_detected) {
+                        const sel = document.getElementById('carrier');
+                        if (sel.querySelector(`option[value="${data.carrier_detected}"]`)) {
+                            sel.value = data.carrier_detected;
+                        }
                     }
-                    if (data.recipient_address) {
-                        // Try to parse address
-                        const parts = data.recipient_address.split(',');
-                        if (parts[0]) document.getElementById('address_line1').value = parts[0].trim();
-                        if (parts[1]) document.getElementById('city').value = parts[1].trim();
-                        if (parts[2]) document.getElementById('state').value = parts[2].trim();
-                        if (parts[3]) document.getElementById('postal_code').value = parts[3].trim();
+                    statusDiv.className = 'success';
+                    statusDiv.style.display = 'block';
+                    if (d.limited_data) {
+                        statusDiv.innerHTML = `✅ <strong>${data.carrier_detected} detected.</strong> ${data.message}<br><small>${d.note || ''}</small>`;
+                    } else {
+                        statusDiv.innerHTML = `✅ <strong>Tracking Found!</strong> ${data.message}`;
                     }
                 } else {
                     statusDiv.className = 'error';
+                    statusDiv.style.display = 'block';
                     statusDiv.innerHTML = `❌ ${data.error || 'Tracking validation failed'}`;
                 }
             } catch (error) {
@@ -965,18 +963,34 @@ document.addEventListener('DOMContentLoaded', function() {
 // AUTO-DETECT CARRIER FROM TRACKING NUMBER
 // ============================================
 document.getElementById('tracking_number').addEventListener('input', function() {
-    const tracking = this.value.trim();
+    const raw = this.value.trim();
+    const t = raw.replace(/[\s\-]/g, '').toUpperCase();
     const carrierSelect = document.getElementById('carrier');
-    
-    if (tracking.length < 10) return;
-    
-    // Simple carrier detection (you have CarrierDetector utility)
-    if (tracking.length === 12 && /^\d+$/.test(tracking)) {
-        carrierSelect.value = 'FEDEX';
-    } else if (tracking.length === 22 && /^\d+$/.test(tracking)) {
-        carrierSelect.value = 'USPS';
-    } else if (tracking.startsWith('1Z')) {
-        carrierSelect.value = 'UPS';
+
+    if (t.length < 8) return;
+
+    // USPS — check first (high-confidence prefixes)
+    if (/^(94|93|92|82)\d+$/.test(t) ||
+        /^[A-Z]{2}\d{9}US$/.test(t) ||
+        (t.length === 20 && /^\d+$/.test(t)) ||
+        (t.length === 22 && /^\d+$/.test(t) && !/^94|^93|^92/.test(t) === false)) {
+        carrierSelect.value = 'USPS'; return;
+    }
+    // UPS
+    if (/^1Z[A-Z0-9]{16}$/.test(t) || /^[HKT]\d{10}$/.test(t) ||
+        (t.length === 18 && /^\d+$/.test(t)) || (t.length === 26 && /^\d+$/.test(t))) {
+        carrierSelect.value = 'UPS'; return;
+    }
+    // FedEx
+    if ((t.length === 12 || t.length === 15 || t.length === 34) && /^\d+$/.test(t)) {
+        carrierSelect.value = 'FEDEX'; return;
+    }
+    // DHL
+    if ((t.length === 10 || t.length === 11) && /^\d+$/.test(t)) {
+        carrierSelect.value = 'DHL'; return;
+    }
+    if (/^JD\d{18}$/.test(t) || /^GM\d{16}$/.test(t)) {
+        carrierSelect.value = 'DHL'; return;
     }
 });
 

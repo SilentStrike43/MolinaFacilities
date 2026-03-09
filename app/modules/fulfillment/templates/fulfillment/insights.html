@@ -274,6 +274,162 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- REQUEST TYPE & PRINT OPTIONS BREAKDOWNS -->
+        <div class="row mt-4">
+            <!-- Request Type Breakdown -->
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="bi bi-tag"></i> Request Type Breakdown</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Request Type</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rtype, count in request_type_counts.items() %}
+                            <tr>
+                                <td>{{ rtype }}</td>
+                                <td class="text-end">{{ count }}</td>
+                                <td class="text-end">
+                                    {% if total_requests > 0 %}
+                                        {{ ((count / total_requests * 100) | round(1)) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Print Type (B&W vs Color) -->
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <h5><i class="bi bi-printer"></i> Print Type (Color vs B&amp;W)</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Print Type</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ptype, count in print_type_counts.items() %}
+                            <tr>
+                                <td>{{ ptype }}</td>
+                                <td class="text-end">{{ count }}</td>
+                                <td class="text-end">
+                                    {% if total_requests > 0 %}
+                                        {{ ((count / total_requests * 100) | round(1)) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Paper Sides -->
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5><i class="bi bi-file-earmark-ruled"></i> Paper Sides</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sides</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sides, count in paper_sides_counts.items() %}
+                            <tr>
+                                <td>{{ sides }}</td>
+                                <td class="text-end">{{ count }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paper Size -->
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5><i class="bi bi-aspect-ratio"></i> Paper Size</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Size</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for size, count in paper_size_counts.items() %}
+                            <tr>
+                                <td>{{ size }}</td>
+                                <td class="text-end">{{ count }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Binding -->
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5><i class="bi bi-journals"></i> Binding Type</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Binding</th>
+                                <th class="text-end">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for binding, count in binding_counts.items() %}
+                            <tr>
+                                <td>{{ binding }}</td>
+                                <td class="text-end">{{ count }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

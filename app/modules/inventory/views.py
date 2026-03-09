@@ -12,7 +12,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 
 from app.modules.auth.security import login_required, require_asset, current_user, record_audit, require_cap
 from app.core.database import get_db_connection
-from app.core.instance_queries import build_insert, build_select, build_update, add_instance_filter
+from app.core.instance_queries import build_insert, build_update, add_instance_filter
 from app.core.instance_context import get_current_instance
 
 from . import bp
@@ -36,6 +36,12 @@ def get_instance_context():
         is_sandbox = (instance_id == 4)
         return instance_id, is_sandbox
 
+
+INDUSTRY_TYPES = [
+    "Medical", "Hardware", "Logistics", "Office Supplies", "Industrial",
+    "Automotive", "Technological", "Government", "Entertainment",
+    "Heavy Industry", "Repairs", "Retail", "Internal", "Other",
+]
 
 # ---------- CATEGORY AND SKU SYSTEM ----------
 INVENTORY_CATEGORIES = {
@@ -203,51 +209,49 @@ def get_category_info(sku: str) -> dict:
 
 
 def generate_next_sku(category_code: str) -> str:
-    """Generate next SKU for given category code (instance-aware)."""
+    """Generate next SKU for given category code, scoped to the current instance.
+
+    Only counts assets that have not been deleted (status != 'deleted'), so that
+    removing an asset frees its SKU number for reassignment.
+    """
+    instance_id, _ = get_instance_context()
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
-        
-        prefix = category_code
-        
-        # Use instance-aware query
-        where_clause, params = add_instance_filter(
-            "sku LIKE %s",
-            [f"{prefix}-%"]
-        )
-        
-        cursor.execute(f"""
-            SELECT sku FROM assets 
-            WHERE {where_clause}
+
+        cursor.execute("""
+            SELECT sku FROM assets
+            WHERE sku LIKE %s
+            AND instance_id = %s
+            AND status != 'deleted'
             ORDER BY sku DESC LIMIT 1
-        """, params)
-        
+        """, (f"{category_code}-%", instance_id))
+
         result = cursor.fetchone()
         cursor.close()
-        
+
         if result:
-            last_sku = result['sku']
             try:
-                last_num = int(last_sku.split("-")[1])
+                last_num = int(result['sku'].split("-")[1])
                 next_num = last_num + 1
-            except:
+            except (IndexError, ValueError):
                 next_num = 1
         else:
             next_num = 1
-        
-        return f"{prefix}-{next_num:06d}"
+
+        return f"{category_code}-{next_num:06d}"
 
 
 def create_asset(data: dict) -> int:
     """Create new asset in database (instance-aware)."""
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
-        
+
         # Use instance-aware insert
         columns = [
             'sku', 'product', 'uom', 'location', 'qty_on_hand',
             'manufacturer', 'part_number', 'serial_number', 'pii', 'notes', 'status'
         ]
-        
+
         values = [
             data.get("sku", ""),
             data.get("product", ""),
@@ -261,15 +265,19 @@ def create_asset(data: dict) -> int:
             data.get("notes", ""),
             data.get("status", "active")
         ]
-        
+
+        if data.get("vendor_id"):
+            columns.append("vendor_id")
+            values.append(int(data["vendor_id"]))
+
         # build_insert automatically adds instance_id
         sql, params = build_insert('assets', columns, values)
         sql += " RETURNING id"
-        
+
         cursor.execute(sql, params)
         result = cursor.fetchone()
         asset_id = result['id']
-        
+
         conn.commit()
         cursor.close()
         return asset_id
@@ -307,13 +315,17 @@ def log_to_insights(asset_id: int, action: str, qty: int, username: str, note: s
         cat_info = get_category_info(asset_dict.get("sku", ""))
         
         cursor.execute("""
-            INSERT INTO inventory_reports(
-                checkin_date, inventory_id, item_type, manufacturer, product_name,
-                submitter_name, notes, part_number, serial_number, count, location, status
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO inventory_transactions(
+                transaction_date, transaction_type, asset_id, sku,
+                item_type, manufacturer, product_name,
+                submitter_name, notes, part_number, serial_number,
+                quantity, location, status
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            datetime.date.today().isoformat(),
+            datetime.date.today(),
+            action,
             asset_id,
+            asset_dict.get("sku", ""),
             f"{cat_info['category']} - {cat_info['subcategory']}",
             asset_dict.get("manufacturer", ""),
             asset_dict.get("product", ""),
@@ -349,34 +361,34 @@ def asset():
     
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
-        
+
         q = (request.args.get("q") or "").strip()
         status_filter = request.args.get("status", "active")
-        
-        # Build WHERE conditions (instance_id added automatically)
-        conditions = []
-        params = []
-        
+
+        # Build WHERE conditions with explicit instance_id for JOIN query
+        conditions = ["a.instance_id = %s"]
+        params = [instance_id]
+
         if status_filter != "all":
-            conditions.append("status = %s")
+            conditions.append("a.status = %s")
             params.append(status_filter)
-        
+
         if q:
-            conditions.append("(product ILIKE %s OR sku ILIKE %s OR location ILIKE %s OR manufacturer ILIKE %s)")
-            params.extend([f"%{q}%"] * 4)
-        
-        where_clause = " AND ".join(conditions) if conditions else "1=1"
-        
-        # Use instance-aware query
-        sql, params = build_select(
-            table='assets',
-            columns='*',
-            where=where_clause,
-            params=params,
-            order_by='id DESC LIMIT 100'
-        )
-        
-        cursor.execute(sql, params)
+            conditions.append(
+                "(a.product ILIKE %s OR a.sku ILIKE %s OR a.location ILIKE %s "
+                "OR a.manufacturer ILIKE %s OR v.company ILIKE %s)"
+            )
+            params.extend([f"%{q}%"] * 5)
+
+        where_clause = " AND ".join(conditions)
+
+        cursor.execute(f"""
+            SELECT a.*, v.company AS vendor_company, v.contact_name AS vendor_contact
+            FROM assets a
+            LEFT JOIN vendor_book v ON a.vendor_id = v.id AND v.is_active = TRUE
+            WHERE {where_clause}
+            ORDER BY a.id DESC LIMIT 100
+        """, params)
         rows = cursor.fetchall()
         cursor.close()
     
@@ -389,18 +401,47 @@ def asset():
             product = (request.form.get("ProductName") or "").strip()
             manufacturer = (request.form.get("Manufacturer") or "").strip()
             location = (request.form.get("Location") or "").strip()
-            qty = int(request.form.get("QtyOnHand", 0))
+            qty = int(request.form.get("InitialQty", 0))
             part_number = (request.form.get("PartNumber") or "").strip()
             serial_number = (request.form.get("SerialNumber") or "").strip()
             pii = (request.form.get("PII") or "").strip()
             notes = (request.form.get("Notes") or "").strip()
             username = cu.get("username", "System")
-            
+
+            # Vendor handling
+            vendor_id = (request.form.get("vendor_id") or "").strip() or None
+            vendor_name = (request.form.get("vendor_name") or "").strip()
+            save_new_vendor = request.form.get("save_new_vendor") == "1"
+
             if not product:
                 flashmsg = ("Product name is required.", False)
             else:
                 try:
-                    cat_info = get_category_info(sku)
+                    # If user typed a new vendor name and confirmed saving it
+                    if vendor_name and not vendor_id and save_new_vendor:
+                        with get_db_connection("inventory") as vconn:
+                            vcursor = vconn.cursor()
+                            vcursor.execute("""
+                                INSERT INTO vendor_book (instance_id, company, is_active)
+                                VALUES (%s, %s, TRUE) RETURNING id
+                            """, (instance_id, vendor_name))
+                            row = vcursor.fetchone()
+                            vendor_id = str(row['id']) if row else None
+                            vconn.commit()
+                            vcursor.close()
+
+                    # Increment use_count for an existing vendor
+                    if vendor_id:
+                        with get_db_connection("inventory") as vconn:
+                            vcursor = vconn.cursor()
+                            vcursor.execute("""
+                                UPDATE vendor_book SET use_count = use_count + 1,
+                                updated_at = CURRENT_TIMESTAMP
+                                WHERE id = %s AND instance_id = %s
+                            """, (int(vendor_id), instance_id))
+                            vconn.commit()
+                            vcursor.close()
+
                     asset_data = {
                         "sku": sku,
                         "product": product,
@@ -411,17 +452,18 @@ def asset():
                         "serial_number": serial_number,
                         "pii": pii,
                         "notes": notes,
-                        "status": "active"
+                        "status": "active",
+                        "vendor_id": vendor_id,
                     }
-                    
+
                     asset_id = create_asset(asset_data)
                     record_initial_checkin(asset_id, qty, username, "Initial inventory")
-                    
-                    record_audit(cu, "create_asset", "inventory", 
+
+                    record_audit(cu, "create_asset", "inventory",
                                 f"Created asset #{asset_id}, SKU {sku}: {product}")
-                    
+
                     flashmsg = (f"✅ Asset #{asset_id} created successfully! SKU: {sku}", True)
-                    
+
                 except Exception as e:
                     flashmsg = (f"❌ Error creating asset: {str(e)}", False)
                     record_audit(cu, "create_asset_error", "inventory", f"Asset creation error: {str(e)}")
@@ -434,11 +476,29 @@ def asset():
             uom = request.form.get("UOM", "EA").strip() or "EA"
             notes = (request.form.get("Notes") or "").strip()
             status = request.form.get("Status", "active")
-            
+
+            # Vendor handling for update
+            vendor_id = (request.form.get("vendor_id") or "").strip() or None
+            vendor_name = (request.form.get("vendor_name") or "").strip()
+            save_new_vendor = request.form.get("save_new_vendor") == "1"
+
+            if vendor_name and not vendor_id and save_new_vendor:
+                with get_db_connection("inventory") as vconn:
+                    vcursor = vconn.cursor()
+                    vcursor.execute("""
+                        INSERT INTO vendor_book (instance_id, company, is_active)
+                        VALUES (%s, %s, TRUE) RETURNING id
+                    """, (instance_id, vendor_name))
+                    row = vcursor.fetchone()
+                    vendor_id = str(row['id']) if row else None
+                    vconn.commit()
+                    vcursor.close()
+
             # Use instance-aware update
-            set_clause = "product=%s, manufacturer=%s, uom=%s, location=%s, notes=%s, status=%s"
-            set_params = [product, manufacturer, uom, location, notes, status]
-            
+            set_clause = "product=%s, manufacturer=%s, uom=%s, location=%s, notes=%s, status=%s, vendor_id=%s"
+            set_params = [product, manufacturer, uom, location, notes, status,
+                          int(vendor_id) if vendor_id else None]
+
             sql, params = build_update(
                 table='assets',
                 set_clause=set_clause,
@@ -446,13 +506,13 @@ def asset():
                 where="id=%s",
                 where_params=[asset_id]
             )
-            
+
             with get_db_connection("inventory") as conn:
                 cursor = conn.cursor()
                 cursor.execute(sql, params)
                 conn.commit()
                 cursor.close()
-            
+
             record_audit(cu, "update_asset", "inventory", f"Updated asset #{asset_id}")
             flashmsg = (f"✅ Asset #{asset_id} updated successfully.", True)
 
@@ -461,10 +521,13 @@ def asset():
     if edit_id:
         with get_db_connection("inventory") as conn:
             cursor = conn.cursor()
-            
-            # Use instance-aware query
-            where_clause, params = add_instance_filter("id=%s", [edit_id])
-            cursor.execute(f"SELECT * FROM assets WHERE {where_clause}", params)
+            where_clause, params = add_instance_filter("a.id=%s", [edit_id])
+            cursor.execute(f"""
+                SELECT a.*, v.company AS vendor_company, v.contact_name AS vendor_contact
+                FROM assets a
+                LEFT JOIN vendor_book v ON a.vendor_id = v.id AND v.is_active = TRUE
+                WHERE {where_clause}
+            """, params)
             edit = cursor.fetchone()
             cursor.close()
 
@@ -479,6 +542,7 @@ def asset():
         q=q,
         status=status_filter,
         edit=edit,
+        industry_types=INDUSTRY_TYPES,
         is_sandbox=is_sandbox,
         instance_id=instance_id
     )
@@ -559,6 +623,150 @@ def get_next_sku(category: str):
         return jsonify({"success": False, "error": str(e)}), 400
 
 
+@bp.route("/vendor-book", methods=["GET", "POST"])
+@login_required
+@require_asset
+def vendor_book():
+    """Vendor Book — manage suppliers and vendors linked to inventory assets."""
+    cu = current_user()
+    instance_id, is_sandbox = get_instance_context()
+
+    flashmsg = None
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "add":
+            company = (request.form.get("Company") or "").strip()
+            if not company:
+                flashmsg = ("Company name is required.", False)
+            else:
+                with get_db_connection("inventory") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT INTO vendor_book
+                            (instance_id, contact_name, company, address, phone, email, industry_type, notes)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        instance_id,
+                        (request.form.get("ContactName") or "").strip() or None,
+                        company,
+                        (request.form.get("Address") or "").strip() or None,
+                        (request.form.get("Phone") or "").strip() or None,
+                        (request.form.get("Email") or "").strip() or None,
+                        request.form.get("IndustryType") or None,
+                        (request.form.get("Notes") or "").strip() or None,
+                    ))
+                    conn.commit()
+                    cursor.close()
+                record_audit(cu, "add_vendor", "inventory", f"Added vendor: {company}")
+                flashmsg = (f"✅ Vendor '{company}' added!", True)
+
+        elif action == "edit":
+            vendor_id = int(request.form.get("VendorID") or 0)
+            company = (request.form.get("Company") or "").strip()
+            if not company:
+                flashmsg = ("Company name is required.", False)
+            else:
+                with get_db_connection("inventory") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        UPDATE vendor_book
+                        SET contact_name=%s, company=%s, address=%s, phone=%s,
+                            email=%s, industry_type=%s, notes=%s,
+                            updated_at=CURRENT_TIMESTAMP
+                        WHERE id=%s AND instance_id=%s
+                    """, (
+                        (request.form.get("ContactName") or "").strip() or None,
+                        company,
+                        (request.form.get("Address") or "").strip() or None,
+                        (request.form.get("Phone") or "").strip() or None,
+                        (request.form.get("Email") or "").strip() or None,
+                        request.form.get("IndustryType") or None,
+                        (request.form.get("Notes") or "").strip() or None,
+                        vendor_id, instance_id,
+                    ))
+                    conn.commit()
+                    cursor.close()
+                record_audit(cu, "edit_vendor", "inventory", f"Updated vendor #{vendor_id}: {company}")
+                flashmsg = (f"✅ Vendor updated.", True)
+
+        elif action == "delete":
+            vendor_id = int(request.form.get("VendorID") or 0)
+            with get_db_connection("inventory") as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE vendor_book SET is_active=FALSE, updated_at=CURRENT_TIMESTAMP WHERE id=%s AND instance_id=%s",
+                    (vendor_id, instance_id)
+                )
+                conn.commit()
+                cursor.close()
+            record_audit(cu, "delete_vendor", "inventory", f"Deleted vendor #{vendor_id}")
+            flashmsg = ("✅ Vendor removed.", True)
+
+        return redirect(url_for("inventory.vendor_book"))
+
+    # GET
+    q = (request.args.get("q") or "").strip()
+    sort = request.args.get("sort", "company")
+    sort_map = {"company": "company ASC", "usage": "use_count DESC", "recent": "updated_at DESC"}
+    order_by = sort_map.get(sort, "company ASC")
+
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        if q:
+            cursor.execute(f"""
+                SELECT * FROM vendor_book
+                WHERE instance_id=%s AND is_active=TRUE
+                AND (company ILIKE %s OR contact_name ILIKE %s OR industry_type ILIKE %s)
+                ORDER BY {order_by}
+            """, (instance_id, f"%{q}%", f"%{q}%", f"%{q}%"))
+        else:
+            cursor.execute(f"""
+                SELECT * FROM vendor_book
+                WHERE instance_id=%s AND is_active=TRUE
+                ORDER BY {order_by}
+            """, (instance_id,))
+        vendors = cursor.fetchall()
+        cursor.close()
+
+    return render_template(
+        "inventory/vendor_book.html",
+        active="inventory-vendor-book",
+        vendors=vendors,
+        flashmsg=flashmsg,
+        q=q,
+        sort=sort,
+        industry_types=INDUSTRY_TYPES,
+        is_sandbox=is_sandbox,
+        instance_id=instance_id,
+    )
+
+
+@bp.route("/api/vendor-search")
+@login_required
+@require_asset
+def api_vendor_search():
+    """API: search vendor book for autocomplete (returns JSON)."""
+    instance_id, _ = get_instance_context()
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify([])
+    with get_db_connection("inventory") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, company, contact_name, industry_type
+            FROM vendor_book
+            WHERE instance_id=%s AND is_active=TRUE
+            AND (company ILIKE %s OR contact_name ILIKE %s)
+            ORDER BY use_count DESC, company ASC
+            LIMIT 10
+        """, (instance_id, f"%{q}%", f"%{q}%"))
+        rows = cursor.fetchall()
+        cursor.close()
+    return jsonify([dict(r) for r in rows])
+
+
 @bp.route("/insights")
 @login_required
 @require_cap("can_inventory")
@@ -566,165 +774,176 @@ def insights():
     """Inventory insights and analytics dashboard"""
     cu = current_user()
     instance_id, is_sandbox = get_instance_context()
-    
-    # Get date range from query params
+
+    from datetime import timedelta, date as _date
     date_from = request.args.get("date_from", "")
     date_to = request.args.get("date_to", "")
-    
-    # Default to last 30 days if not specified
-    from datetime import timedelta, date
     if not date_from:
-        date_from = (date.today() - timedelta(days=30)).isoformat()
+        date_from = (_date.today() - timedelta(days=30)).isoformat()
     if not date_to:
-        date_to = date.today().isoformat()
-    
+        date_to = _date.today().isoformat()
+
     try:
         with get_db_connection("inventory") as conn:
             cursor = conn.cursor()
-            
-            # === Asset Growth Over Time ===
-            # Build query WITHOUT order_by since we need GROUP BY first
-            sql, params = build_select(
-                table='assets',
-                columns='DATE(created_at) as date, COUNT(*) as count',
-                where='created_at >= %s AND created_at <= %s',
-                params=[date_from, date_to]
+
+            # === Unique active assets ===
+            where_assets, p = add_instance_filter("status = 'active'", [])
+            cursor.execute(f"SELECT COUNT(*) as cnt FROM assets WHERE {where_assets}", p)
+            unique_assets = (cursor.fetchone() or {}).get('cnt', 0)
+
+            # === Movement totals from asset_ledger (JOIN assets for instance filter) ===
+            where_mvmt, p = add_instance_filter(
+                "DATE(al.ts_utc) >= %s AND DATE(al.ts_utc) <= %s",
+                [date_from, date_to]
             )
-            # Add GROUP BY and ORDER BY manually
-            cursor.execute(sql + ' GROUP BY DATE(created_at) ORDER BY date', params)
-            asset_growth = cursor.fetchall()
-            
-            # === Assets by Category ===
-            sql, params = build_select(
-                table='assets',
-                columns='category, COUNT(*) as count',
-                where='1=1',
-                params=[]
-            )
-            cursor.execute(sql + ' GROUP BY category ORDER BY count DESC LIMIT 10', params)
-            assets_by_category = cursor.fetchall()
-            
-            # === Assets by Status ===
-            sql, params = build_select(
-                table='assets',
-                columns='status, COUNT(*) as count',
-                where='1=1',
-                params=[]
-            )
-            cursor.execute(sql + ' GROUP BY status ORDER BY count DESC', params)
-            assets_by_status = cursor.fetchall()
-            
-            # === Assets by Location ===
-            sql, params = build_select(
-                table='assets',
-                columns='location, COUNT(*) as count',
-                where='location IS NOT NULL',
-                params=[]
-            )
-            cursor.execute(sql + ' GROUP BY location ORDER BY count DESC LIMIT 10', params)
-            assets_by_location = cursor.fetchall()
-            
-            # === Recent Activity ===
-            sql, params = build_select(
-                table='assets',
-                columns='''
-                    sku, asset_name, category, status, location,
-                    created_at, updated_at
-                ''',
-                where='created_at >= %s',
-                params=[date_from],
-                order_by='created_at DESC LIMIT 20'
-            )
-            cursor.execute(sql, params)
-            recent_activity = cursor.fetchall()
-            
-            # === Asset Value Statistics ===
-            sql, params = build_select(
-                table='assets',
-                columns='''
-                    COUNT(*) as total_assets,
-                    COUNT(CASE WHEN status = 'available' THEN 1 END) as available_count,
-                    COUNT(CASE WHEN status = 'in_use' THEN 1 END) as in_use_count,
-                    COUNT(CASE WHEN status = 'maintenance' THEN 1 END) as maintenance_count,
-                    COUNT(CASE WHEN status = 'retired' THEN 1 END) as retired_count
-                ''',
-                where='1=1',
-                params=[]
-            )
-            cursor.execute(sql, params)
-            asset_stats = cursor.fetchone()
-            
-            cursor.close()
-        
-        # === Top Active Users (uses core schema) ===
-        with get_db_connection("core") as core_conn:
-            core_cursor = core_conn.cursor()
-            core_cursor.execute("""
+            cursor.execute(f"""
                 SELECT
-                    u.username,
-                    u.first_name,
-                    u.last_name,
-                    COUNT(al.id) as action_count
-                FROM users u
-                LEFT JOIN audit_logs al ON u.id = al.user_id
-                WHERE u.instance_id = %s
-                AND al.ts_utc >= CURRENT_TIMESTAMP - INTERVAL '30 days'
-                AND al.module = 'inventory'
-                GROUP BY u.id, u.username, u.first_name, u.last_name
-                ORDER BY action_count DESC
+                    COUNT(*) as total_movements,
+                    COUNT(CASE WHEN al.action = 'CHECKIN'  THEN 1 END) as total_checkins,
+                    COUNT(CASE WHEN al.action = 'CHECKOUT' THEN 1 END) as total_checkouts,
+                    COUNT(DISTINCT al.username) as active_users
+                FROM asset_ledger al
+                JOIN assets a ON al.asset_id = a.id
+                WHERE {where_mvmt}
+            """, p)
+            mvmt = cursor.fetchone() or {}
+            summary = {
+                'unique_assets':    unique_assets,
+                'total_movements':  mvmt.get('total_movements', 0),
+                'total_checkins':   mvmt.get('total_checkins', 0),
+                'total_checkouts':  mvmt.get('total_checkouts', 0),
+                'active_users':     mvmt.get('active_users', 0),
+            }
+
+            # === Category Breakdown (group by 3-digit SKU prefix) ===
+            where_cat, p = add_instance_filter("status = 'active'", [])
+            cursor.execute(f"""
+                SELECT SPLIT_PART(sku, '-', 1) as prefix, COUNT(*) as asset_count
+                FROM assets
+                WHERE {where_cat}
+                GROUP BY prefix
+                ORDER BY asset_count DESC
                 LIMIT 10
-            """, (instance_id,))
-            top_users = core_cursor.fetchall()
-            core_cursor.close()
-        
-        # Format data for charts
-        insights_data = {
-            'asset_growth': asset_growth or [],
-            'assets_by_category': assets_by_category or [],
-            'assets_by_status': assets_by_status or [],
-            'assets_by_location': assets_by_location or [],
-            'recent_activity': recent_activity or [],
-            'top_users': top_users or [],
-            'asset_stats': asset_stats or {}
-        }
-        
-        # Create summary statistics
-        summary = {
-            'total_assets': asset_stats.get('total_assets', 0) if asset_stats else 0,
-            'available_count': asset_stats.get('available_count', 0) if asset_stats else 0,
-            'in_use_count': asset_stats.get('in_use_count', 0) if asset_stats else 0,
-            'maintenance_count': asset_stats.get('maintenance_count', 0) if asset_stats else 0,
-            'retired_count': asset_stats.get('retired_count', 0) if asset_stats else 0,
-            'total_categories': len(assets_by_category) if assets_by_category else 0,
-            'total_locations': len(assets_by_location) if assets_by_location else 0,
-            'new_assets_period': len(asset_growth) if asset_growth else 0
-        }
-        
-        # Create activity trend data (for charts)
-        activity_trend = []
-        if asset_growth:
-            for item in asset_growth:
-                activity_trend.append({
-                    'date': item.get('date').isoformat() if hasattr(item.get('date'), 'isoformat') else str(item.get('date', '')),
-                    'count': item.get('count', 0)
-                })
-        
-        # Record audit
-        record_audit(cu, "view_insights", "inventory", 
-                    f"Viewed insights: {date_from} to {date_to}")
-        
+            """, p)
+            raw_cats = cursor.fetchall()
+            prefix_to_name = {c['code']: c['category'] for c in get_all_categories_flat()}
+            category_breakdown = [
+                {
+                    'category_name': prefix_to_name.get(row['prefix'], f"Category {row['prefix']}"),
+                    'asset_count': row['asset_count']
+                }
+                for row in raw_cats
+            ]
+
+            # === Top Assets by movement count ===
+            where_top, p = add_instance_filter(
+                "DATE(al.ts_utc) >= %s AND DATE(al.ts_utc) <= %s",
+                [date_from, date_to]
+            )
+            cursor.execute(f"""
+                SELECT a.product, a.sku, a.qty_on_hand, COUNT(al.id) as total_movements
+                FROM asset_ledger al
+                JOIN assets a ON al.asset_id = a.id
+                WHERE {where_top}
+                GROUP BY a.id, a.product, a.sku, a.qty_on_hand
+                ORDER BY total_movements DESC
+                LIMIT 10
+            """, p)
+            top_assets = cursor.fetchall()
+
+            # === User Activity Leaderboard ===
+            where_usr, p = add_instance_filter(
+                "DATE(al.ts_utc) >= %s AND DATE(al.ts_utc) <= %s",
+                [date_from, date_to]
+            )
+            cursor.execute(f"""
+                SELECT
+                    al.username,
+                    COUNT(CASE WHEN al.action = 'CHECKIN'  THEN 1 END) as checkins,
+                    COUNT(CASE WHEN al.action = 'CHECKOUT' THEN 1 END) as checkouts,
+                    COUNT(*) as total_actions
+                FROM asset_ledger al
+                JOIN assets a ON al.asset_id = a.id
+                WHERE {where_usr}
+                GROUP BY al.username
+                ORDER BY total_actions DESC
+                LIMIT 10
+            """, p)
+            user_stats = cursor.fetchall()
+
+            # === Low Stock Alerts (qty_on_hand < 10) ===
+            where_low, p = add_instance_filter("status = 'active' AND qty_on_hand < %s", [10])
+            cursor.execute(f"""
+                SELECT product, sku, location, qty_on_hand
+                FROM assets
+                WHERE {where_low}
+                ORDER BY qty_on_hand ASC
+                LIMIT 20
+            """, p)
+            low_stock = cursor.fetchall()
+
+            # === Recent Activity (last 24h) ===
+            where_rec, p = add_instance_filter("al.ts_utc >= NOW() - INTERVAL '24 hours'", [])
+            cursor.execute(f"""
+                SELECT al.action, a.product, al.username, al.qty, al.ts_utc as timestamp
+                FROM asset_ledger al
+                JOIN assets a ON al.asset_id = a.id
+                WHERE {where_rec}
+                ORDER BY al.ts_utc DESC
+                LIMIT 20
+            """, p)
+            recent_activity = cursor.fetchall()
+
+            # === Activity Trend (per-day checkins/checkouts/adjustments) ===
+            where_trend, p = add_instance_filter(
+                "DATE(al.ts_utc) >= %s AND DATE(al.ts_utc) <= %s",
+                [date_from, date_to]
+            )
+            cursor.execute(f"""
+                SELECT
+                    DATE(al.ts_utc) as date,
+                    COUNT(CASE WHEN al.action = 'CHECKIN'  THEN 1 END) as checkins,
+                    COUNT(CASE WHEN al.action = 'CHECKOUT' THEN 1 END) as checkouts,
+                    COUNT(CASE WHEN al.action = 'ADJUST'   THEN 1 END) as adjustments
+                FROM asset_ledger al
+                JOIN assets a ON al.asset_id = a.id
+                WHERE {where_trend}
+                GROUP BY DATE(al.ts_utc)
+                ORDER BY date
+            """, p)
+            trend_rows = cursor.fetchall()
+            activity_trend = [
+                {
+                    'date': row['date'].isoformat() if hasattr(row['date'], 'isoformat') else str(row['date']),
+                    'checkins':    row['checkins'] or 0,
+                    'checkouts':   row['checkouts'] or 0,
+                    'adjustments': row['adjustments'] or 0,
+                }
+                for row in trend_rows
+            ]
+
+            cursor.close()
+
+        record_audit(cu, "view_insights", "inventory",
+                     f"Viewed insights: {date_from} to {date_to}")
+
         return render_template(
             "inventory/insights.html",
             active="inventory-insights",
-            insights=insights_data,
             summary=summary,
-            activity_trend=activity_trend,  # Added this
+            category_breakdown=category_breakdown,
+            top_assets=top_assets,
+            user_stats=user_stats,
+            low_stock=low_stock,
+            recent_activity=recent_activity,
+            activity_trend=activity_trend,
             date_from=date_from,
             date_to=date_to,
             is_sandbox=is_sandbox,
             instance_id=instance_id if is_sandbox else None
         )
-        
+
     except Exception as e:
         logger.error(f"Insights error: {e}", exc_info=True)
         flash(f"Error loading insights: {str(e)}", "danger")
@@ -735,35 +954,47 @@ def insights():
 @login_required
 @require_asset
 def insights_export():
-    """Export inventory insights as CSV."""
+    """Export asset ledger as CSV."""
     import io
     import csv
     from flask import send_file
-    
-    # Use instance filter
+
+    # Filter ledger by instance (via JOIN to assets)
     where_clause, params = add_instance_filter("1=1", [])
-    
+
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
         cursor.execute(f"""
-            SELECT * FROM inventory_reports 
+            SELECT
+                al.ts_utc,
+                a.sku          AS inventory_id,
+                a.product      AS product_name,
+                a.manufacturer,
+                a.location,
+                al.action      AS item_type,
+                al.username    AS submitter_name,
+                al.note        AS notes,
+                al.qty         AS count
+            FROM asset_ledger al
+            JOIN assets a ON al.asset_id = a.id
             WHERE {where_clause}
-            ORDER BY ts_utc DESC
+            ORDER BY al.ts_utc DESC
         """, params)
         rows = cursor.fetchall()
         cursor.close()
-    
+
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(["ts_utc","inventory_id","product_name","manufacturer","item_type","submitter_name","notes","count","location"])
+    w.writerow(["ts_utc", "inventory_id", "product_name", "manufacturer",
+                "location", "action", "submitter_name", "notes", "qty"])
     for r in rows:
         row_dict = dict(r)
         w.writerow([
-            row_dict.get("ts_utc"), row_dict.get("inventory_id"), 
-            row_dict.get("product_name"), row_dict.get("manufacturer"), 
-            row_dict.get("item_type"), row_dict.get("submitter_name"), 
-            row_dict.get("notes"), row_dict.get("count", ""), 
-            row_dict.get("location", "")
+            row_dict.get("ts_utc"), row_dict.get("inventory_id"),
+            row_dict.get("product_name"), row_dict.get("manufacturer"),
+            row_dict.get("location"), row_dict.get("item_type"),
+            row_dict.get("submitter_name"), row_dict.get("notes"),
+            row_dict.get("count", "")
         ])
     
     mem = io.BytesIO(out.getvalue().encode("utf-8"))

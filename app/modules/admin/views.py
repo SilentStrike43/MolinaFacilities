@@ -82,42 +82,15 @@ def require_admin_level(min_level="L1"):
 
 
 # ---------- Audit Log Functions ----------
-def record_audit_log(user_data, action, module, details, 
+def record_audit_log(user_data, action, module, details,
                      target_user_id=None, target_username=None):
-    """Record an audit log entry with enhanced information."""
-    with get_db_connection("core") as conn:
-        cursor = conn.cursor()
-        
-        # Get user's current permission level
-        permission_level = get_user_permission_level(user_data) or ""
-        
-        # Get request metadata
-        ip_address = request.remote_addr if request else ""
-        user_agent = request.headers.get('User-Agent', '')[:500] if request else ""
-        session_id = request.cookies.get('session', '')[:100] if request else ""
-        
-        cursor.execute("""
-            INSERT INTO audit_logs(
-                user_id, username, action, module, details,
-                target_user_id, target_username, permission_level,
-                ip_address, user_agent, session_id, ts_utc
-            )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP)
-        """, (
-            user_data["id"],
-            user_data["username"],
-            action,
-            module,
-            details,
-            target_user_id,
-            target_username,
-            permission_level,
-            ip_address,
-            user_agent,
-            session_id
-        ))
-        conn.commit()
-        cursor.close()
+    """Record an audit log entry. Delegates to app.core.audit.log_action."""
+    from app.core.audit import log_action
+    log_action(
+        user_data, action, module, details,
+        target_user_id=target_user_id,
+        target_username=target_username,
+    )
 
 
 def query_audit_logs(filters=None, limit=1000):
@@ -324,18 +297,18 @@ def dashboard():
 
 @admin_bp.route("/audit")
 @login_required
-@require_admin_level("L2")
+@require_admin_level("L1")
 def audit_logs():
     """
     View and filter audit logs - INSTANCE-AWARE
-    
-    L1/L2: See only logs from users in their instance(s)
-           OR logs where L3/S1 interacted with their instance
-    L3/S1: Should use Horizon Global Audits instead
+
+    L1:    See only logs from users in their own instance.
+    L2:    See logs for all their accessible instances.
+    L3/S1: Redirected to Horizon Global Audits.
     """
     cu = current_user()
     cu_level = get_user_permission_level(cu)
-    
+
     # L3/S1 should use Horizon
     if cu_level in ['L3', 'S1']:
         flash("Please use Horizon Global Audits for cross-instance audit logs.", "info")
@@ -389,7 +362,7 @@ def audit_logs():
         # CRITICAL: Get logs from users in this instance
         # OR logs by L3/S1 that have target context in this instance
         query = """
-            SELECT 
+            SELECT
                 al.id,
                 al.ts_utc,
                 al.user_id,
@@ -401,24 +374,27 @@ def audit_logs():
                 al.ip_address,
                 al.target_user_id,
                 al.target_username,
-                u.instance_id as user_instance_id,
+                COALESCE(al.instance_id, u.instance_id) as user_instance_id,
                 u.permission_level as user_perm_level
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE (
-                -- Logs from users in this instance
-                u.instance_id = %s
-                
-                -- OR logs by L3/S1 where target_user is in this instance
+                -- Logs explicitly tagged to this instance
+                al.instance_id = %s
+
+                -- OR logs from users whose home instance is this one
+                OR (al.instance_id IS NULL AND u.instance_id = %s)
+
+                -- OR actions by L3/S1 users whose target_user belongs to this instance
                 OR (
-                    u.permission_level IN ('L3', 'S1')
+                    al.permission_level IN ('L3', 'S1')
                     AND al.target_user_id IN (
                         SELECT id FROM users WHERE instance_id = %s
                     )
                 )
             )
         """
-        params = [selected_instance_id, selected_instance_id]
+        params = [selected_instance_id, selected_instance_id, selected_instance_id]
         
         # Apply additional filters
         if filters.get("username"):
@@ -452,19 +428,21 @@ def audit_logs():
         
         # Get available modules and actions for filter dropdowns (instance-specific)
         cursor.execute("""
-            SELECT DISTINCT al.module 
+            SELECT DISTINCT al.module
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
-            WHERE u.instance_id = %s AND al.module IS NOT NULL
+            WHERE u.instance_id = %s
+              AND al.module IS NOT NULL
             ORDER BY al.module
         """, (selected_instance_id,))
         modules = [row['module'] for row in cursor.fetchall()]
-        
+
         cursor.execute("""
-            SELECT DISTINCT al.action 
+            SELECT DISTINCT al.action
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
-            WHERE u.instance_id = %s AND al.action IS NOT NULL
+            WHERE u.instance_id = %s
+              AND al.action IS NOT NULL
             ORDER BY al.action
         """, (selected_instance_id,))
         actions = [row['action'] for row in cursor.fetchall()]
@@ -548,7 +526,7 @@ def export_audit_logs():
         cursor = conn.cursor()
         
         query = """
-            SELECT 
+            SELECT
                 al.ts_utc,
                 al.user_id,
                 al.username,
@@ -564,16 +542,17 @@ def export_audit_logs():
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE (
-                u.instance_id = %s
+                al.instance_id = %s
+                OR (al.instance_id IS NULL AND u.instance_id = %s)
                 OR (
-                    u.permission_level IN ('L3', 'S1')
+                    al.permission_level IN ('L3', 'S1')
                     AND al.target_user_id IN (
                         SELECT id FROM users WHERE instance_id = %s
                     )
                 )
             )
         """
-        params = [selected_instance_id, selected_instance_id]
+        params = [selected_instance_id, selected_instance_id, selected_instance_id]
         
         # Apply filters (same as audit_logs view)
         if filters.get("username"):
@@ -648,140 +627,6 @@ def export_audit_logs():
             "Content-Disposition": f"attachment; filename=audit_logs_instance_{selected_instance_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         }
     )
-
-
-@admin_bp.route("/insights")
-@login_required
-@require_admin_level("L2")
-def manage_insights():
-    """Manage system insights (L2+ only)."""
-    cu = current_user()
-    
-    # This would integrate with your existing insights system
-    record_audit_log(cu, "view_insights_management", "admin", "Accessed insights management")
-    
-    return render_template("admin/insights.html",
-                         active="admin",
-                         page="insights")
-
-
-@admin_bp.route("/database")
-@login_required
-@require_admin_level("L2")
-def database_management():
-    """Database management interface (L2+ only)."""
-    cu = current_user()
-    user_level = get_user_permission_level(cu)
-    
-    if user_level not in ["L2", "L3", "S1"]:
-        flash("You need L2 (Systems Administrator) permissions or higher to access database management.", "danger")
-        return redirect(url_for("admin.dashboard"))
-    
-    # Get database statistics using PostgreSQL
-    with get_db_connection("core") as conn:
-        cursor = conn.cursor()
-        
-        # Table counts
-        cursor.execute("SELECT COUNT(*) as count FROM users")
-        users_count = cursor.fetchone()['count']
-        
-        cursor.execute("SELECT COUNT(*) as count FROM audit_logs")
-        audit_logs_count = cursor.fetchone()['count']
-        
-        cursor.execute("SELECT COUNT(*) as count FROM deletion_requests")
-        deletion_requests_count = cursor.fetchone()['count']
-        
-        cursor.execute("SELECT COUNT(*) as count FROM user_elevation_history")
-        elevation_history_count = cursor.fetchone()['count']
-        
-        db_stats = {
-            "users_count": users_count,
-            "audit_logs_count": audit_logs_count,
-            "deletion_requests_count": deletion_requests_count,
-            "elevation_history_count": elevation_history_count,
-        }
-        
-        # Get table column counts (PostgreSQL compatible)
-        table_info = {}
-        tables = ["users", "audit_logs", "deletion_requests", "user_elevation_history"]
-        
-        for table in tables:
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM information_schema.columns 
-                WHERE table_name = %s AND table_schema = 'public'
-            """, (table,))
-            
-            result = cursor.fetchone()
-            table_info[table] = result['count'] if result else 0
-        
-        cursor.close()
-    
-    record_audit_log(cu, "view_database_management", "admin", "Accessed database management interface")
-    
-    return render_template("admin/database.html",
-                         active="admin",
-                         page="database",
-                         db_stats=db_stats,
-                         table_info=table_info,
-                         user_level=user_level)
-
-
-@admin_bp.route("/config", methods=["GET", "POST"])
-@login_required
-@require_admin_level("L2")
-def system_config():
-    """System configuration (L2+ only)."""
-    cu = current_user()
-    
-    if request.method == "POST":
-        # Handle configuration updates
-        config_data = request.get_json()
-        
-        # Save configuration (implement based on your config storage)
-        record_audit_log(
-            cu, 
-            "system_config_change", 
-            "admin",
-            f"Updated system configuration: {json.dumps(config_data)}"
-        )
-        
-        return jsonify({"success": True, "message": "Configuration updated"})
-    
-    # Load current configuration
-    config = {}  # Load your actual configuration here
-    
-    return render_template("admin/config.html",
-                         active="admin",
-                         page="config",
-                         config=config)
-
-
-@admin_bp.route("/elevation-history")
-@login_required
-@require_admin_level("L1")
-def elevation_history():
-    """View user elevation history."""
-    cu = current_user()
-    
-    with get_db_connection("core") as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT eh.*,
-                u1.username as user_username,
-                u2.username as elevated_by_username
-            FROM user_elevation_history eh
-            JOIN users u1 ON eh.user_id = u1.id
-            JOIN users u2 ON eh.elevated_by = u2.id
-            ORDER BY eh.elevated_at DESC LIMIT 100
-        """)
-        history = cursor.fetchall()
-        cursor.close()
-    
-    return render_template("admin/elevation_history.html",
-                         active="admin",
-                         page="elevation_history",
-                         history=history)
 
 
 @admin_bp.route("/deletion-request/<int:request_id>/approve", methods=["POST"])
@@ -909,3 +754,118 @@ def api_audit_logs():
         logs_data.append(log_dict)
     
     return jsonify(logs_data)
+
+
+# ---------- User Inquiries ----------
+
+REQUEST_TYPE_LABELS = {
+    'password_reset': 'Password Reset',
+    'profile_adjustment': 'Profile Adjustment',
+    'account_deletion': 'Account Deletion',
+    'elevation_request': 'Elevation Request',
+    'module_access_request': 'Module Access Request',
+}
+
+
+@admin_bp.route("/inquiries")
+@login_required
+@require_admin_level("L1")
+def inquiries():
+    """User Inquiries tab — view all pending user requests for this instance."""
+    cu = current_user()
+    try:
+        instance_id = get_current_instance()
+    except RuntimeError:
+        instance_id = cu.get('instance_id')
+
+    status_filter = request.args.get('status', 'pending')
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM user_inquiries WHERE instance_id = %s"
+        params = [instance_id]
+
+        if status_filter and status_filter != 'all':
+            query += " AND status = %s"
+            params.append(status_filter)
+
+        query += " ORDER BY submitted_at DESC LIMIT 200"
+        cursor.execute(query, params)
+        inquiry_list = [dict(r) for r in cursor.fetchall()]
+
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM user_inquiries
+            WHERE instance_id = %s AND status = 'pending'
+        """, (instance_id,))
+        pending_count = cursor.fetchone()['count']
+        cursor.close()
+
+    record_audit_log(cu, "view_inquiries", "admin", "Viewed User Inquiries tab")
+
+    return render_template(
+        "admin/inquiries.html",
+        active="admin",
+        page="inquiries",
+        inquiries=inquiry_list,
+        status_filter=status_filter,
+        pending_count=pending_count,
+        request_type_labels=REQUEST_TYPE_LABELS,
+        instance_id=instance_id,
+    )
+
+
+@admin_bp.route("/inquiries/<int:inquiry_id>/review", methods=["POST"])
+@login_required
+@require_admin_level("L1")
+def review_inquiry(inquiry_id):
+    """Approve or deny a user inquiry."""
+    cu = current_user()
+    try:
+        instance_id = get_current_instance()
+    except RuntimeError:
+        instance_id = cu.get('instance_id')
+
+    data = request.get_json() or {}
+    action = data.get('action', '')
+    reason = (data.get('reason') or '').strip()
+
+    if action not in ('approve', 'deny'):
+        return jsonify({"error": "Invalid action"}), 400
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM user_inquiries WHERE id = %s AND instance_id = %s",
+            (inquiry_id, instance_id)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"error": "Inquiry not found"}), 404
+
+        inquiry = dict(row)
+        if inquiry['status'] != 'pending':
+            return jsonify({"error": "This inquiry has already been reviewed"}), 409
+
+        new_status = 'approved' if action == 'approve' else 'denied'
+        cursor.execute("""
+            UPDATE user_inquiries
+            SET status = %s,
+                reviewed_by = %s,
+                reviewer_username = %s,
+                review_reason = %s,
+                reviewed_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (new_status, cu['id'], cu['username'], reason or None, inquiry_id))
+        cursor.close()
+
+    cu_level = get_user_permission_level(cu) or ''
+    action_label = 'Approved' if action == 'approve' else 'Denied'
+    req_label = REQUEST_TYPE_LABELS.get(inquiry['request_type'], inquiry['request_type'])
+    detail = (f"User Change Request {action_label} — {req_label} for {inquiry['username']}"
+              + (f" — Reason: {reason}" if reason else ""))
+    record_audit_log(cu, "inquiry_review", "admin", detail,
+                     target_user_id=inquiry['user_id'],
+                     target_username=inquiry['username'])
+
+    return jsonify({"success": True})

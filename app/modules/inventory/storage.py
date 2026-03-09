@@ -9,7 +9,7 @@ def ensure_schema():
     """Ensure inventory schema exists."""
     with get_db_connection("inventory") as conn:
         cursor = conn.cursor()
-        
+
         # Create inventory_transactions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS inventory_transactions (
@@ -31,40 +31,57 @@ def ensure_schema():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
+        # Create vendor_book table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vendor_book (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER NOT NULL,
+                contact_name VARCHAR(255),
+                company VARCHAR(255) NOT NULL,
+                address TEXT,
+                phone VARCHAR(50),
+                email VARCHAR(255),
+                industry_type VARCHAR(100),
+                notes TEXT,
+                is_active BOOLEAN DEFAULT TRUE,
+                use_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Create indexes
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_transactions_date 
+            CREATE INDEX IF NOT EXISTS idx_transactions_date
             ON inventory_transactions(transaction_date)
         """)
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_transactions_asset_id 
+            CREATE INDEX IF NOT EXISTS idx_transactions_asset_id
             ON inventory_transactions(asset_id)
         """)
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_transactions_sku 
+            CREATE INDEX IF NOT EXISTS idx_transactions_sku
             ON inventory_transactions(sku)
         """)
-        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_vendor_book_instance
+            ON vendor_book(instance_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_vendor_book_company
+            ON vendor_book(company)
+        """)
+
+        # Migrations for existing tables
+        for migration_sql in [
+            "ALTER TABLE assets ADD COLUMN IF NOT EXISTS vendor_id INTEGER",
+        ]:
+            try:
+                cursor.execute(migration_sql)
+            except Exception:
+                pass
+
         cursor.close()
-        print("✓ Inventory schema initialized")
 
-
-def inventory_db():
-    """
-    DEPRECATED: Legacy compatibility function.
-    Returns a connection but caller must manage it properly.
-    
-    New code should use: with get_db_connection("inventory") as conn:
-    """
-    return get_db_connection("inventory").__enter__()
-
-
-def insights_db():
-    """
-    DEPRECATED: Legacy compatibility function.
-    Returns a connection but caller must manage it properly.
-    
-    New code should use: with get_db_connection("inventory") as conn:
-    """
-    return get_db_connection("inventory").__enter__()
+    print("Inventory schema initialized")

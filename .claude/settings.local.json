@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/GridlineService/app -name \"*.py\" -exec grep -l \"CREATE TABLE.*instances\" {} ;)",
+      "Bash(python -c \"from app.modules.users.models import ensure_user_schema; ensure_user_schema\\(\\); print\\(''Schema migration complete''\\)\")",
+      "Bash(venv/Scripts/python -c \"from app.modules.users.models import ensure_user_schema; ensure_user_schema\\(\\)\")",
+      "Bash(venv/Scripts/python -c \":*)",
+      "Bash(grep -n \"print.*✓\\\\|print.*\\\\\\\\u2713\\\\|print.*\\\\\\\\u274\" app/modules/inventory/storage.py)",
+      "Bash(grep -n \"can_modify_user\\\\|can_elevate_to\\\\|PermissionManager\" /c/GridlineService/app/core/*.py)",
+      "Bash(xargs grep -l \"raise NotImplementedError\")",
+      "Bash(wc -l /c/GridlineService/app/modules/*/views.py /c/GridlineService/app/modules/*/views_*.py)",
+      "Bash(find \"c:/GridlineService/app/modules/admin/templates/admin\" -name \"*.html\" -exec basename {} ;)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}

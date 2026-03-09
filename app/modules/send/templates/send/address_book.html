@@ -640,7 +640,7 @@
             {% if addr.last_used_at %}
             <span class="last-used">
                 <i class="bi bi-clock"></i>
-                {{ addr.last_used_at[:10] }}
+                {{ addr.last_used_at | format_datetime('%Y-%m-%d') }}
             </span>
             {% endif %}
         </div>

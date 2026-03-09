@@ -268,6 +268,16 @@ def ensure_user_schema():
             )
         """)
         
+        # Add user_preferences column if not present (migration)
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS user_preferences TEXT DEFAULT '{}'
+        """)
+
+        # Add last_seen column for online presence tracking
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP
+        """)
+
         # Create indexes
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
@@ -294,8 +304,37 @@ def ensure_user_schema():
                 ip_address VARCHAR(50),
                 user_agent TEXT,
                 session_id VARCHAR(255),
+                instance_id INTEGER,
                 ts_utc TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+
+        # Migration: add instance_id column if missing (for existing deployments)
+        cursor.execute("""
+            ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS instance_id INTEGER
+        """)
+
+        # Create horizon_audit_logs table (used by horizon/audit.py)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS horizon_audit_logs (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER,
+                username VARCHAR(255),
+                permission_level VARCHAR(50),
+                action VARCHAR(255) NOT NULL,
+                category VARCHAR(255),
+                details TEXT,
+                target_instance_id INTEGER,
+                severity VARCHAR(50) DEFAULT 'info',
+                ip_address VARCHAR(100),
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_horizon_audit_user
+                ON horizon_audit_logs(user_id, created_at DESC)
         """)
         
         # Create audit indexes
@@ -308,9 +347,75 @@ def ensure_user_schema():
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_audit_logs_module ON audit_logs(module, ts_utc DESC)
         """)
-        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_audit_logs_instance
+                ON audit_logs(instance_id, ts_utc DESC)
+        """)
         cursor.close()
-        print("✓ User schema initialized")
+
+    print("User schema initialized")
+
+
+def ensure_inquiry_schema():
+    """Ensure the user_inquiries table exists."""
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_inquiries (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
+                user_id INTEGER NOT NULL,
+                username VARCHAR(255),
+                first_name VARCHAR(255),
+                last_name VARCHAR(255),
+                email VARCHAR(255),
+                department VARCHAR(255),
+                position VARCHAR(255),
+                request_type VARCHAR(50) NOT NULL,
+                request_details TEXT,
+                status VARCHAR(20) DEFAULT 'pending',
+                reviewed_by INTEGER,
+                reviewer_username VARCHAR(255),
+                review_reason TEXT,
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                reviewed_at TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_inquiries_instance
+                ON user_inquiries(instance_id, status, submitted_at DESC)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_inquiries_user
+                ON user_inquiries(user_id, submitted_at DESC)
+        """)
+        cursor.close()
+
+
+def ensure_announcement_schema():
+    """Ensure instance_announcements table and force_logout user column exist."""
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS instance_announcements (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
+                title VARCHAR(200) NOT NULL,
+                message TEXT NOT NULL,
+                active BOOLEAN DEFAULT TRUE,
+                created_by_username VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_announcements_lookup
+                ON instance_announcements(active, instance_id)
+        """)
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS force_logout BOOLEAN DEFAULT FALSE
+        """)
+        cursor.close()
 
 
 def ensure_first_sysadmin():
@@ -327,17 +432,17 @@ def ensure_first_sysadmin():
             count = cursor.fetchone()['count']
             
             if count == 0:
-                print("\n⚠️  No system administrator found!")
+                print("\n[!] No system administrator found!")
                 print("Creating default admin user...")
-                
+
                 default_password = "ChangeMe123!"
                 password_hash = generate_password_hash(default_password)
-                
+
                 cursor.execute("""
                     INSERT INTO users (
                         username, password_hash,
                         first_name, last_name,
-                        permission_level, 
+                        permission_level,
                         is_admin, is_sysadmin,
                         caps,
                         created_at
@@ -353,18 +458,18 @@ def ensure_first_sysadmin():
                     True,
                     '{"is_system": true}'
                 ))
-                
-                print("✓ Default admin user created")
+
+                print("[+] Default admin user created")
                 print(f"  Username: admin")
                 print(f"  Password: {default_password}")
-                print("  ⚠️  CHANGE THIS PASSWORD IMMEDIATELY!")
+                print("  [!] CHANGE THIS PASSWORD IMMEDIATELY!")
             else:
-                print(f"✓ Found {count} system administrator(s)")
-            
+                print(f"[+] Found {count} system administrator(s)")
+
             cursor.close()
-        
+
         except Exception as e:
-            print(f"✗ Error ensuring sysadmin: {e}")
+            print(f"[!] Error ensuring sysadmin: {e}")
 
 
 if __name__ == "__main__":

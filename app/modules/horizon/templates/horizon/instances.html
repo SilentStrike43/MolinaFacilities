@@ -4,11 +4,13 @@
 {% block page_title %}Instance Management{% endblock %}
 
 {% block content %}
+{% if is_l3_plus %}
 <div class="mb-3">
     <a href="{{ url_for('horizon.create_instance') }}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Create New Instance
     </a>
 </div>
+{% endif %}
 
 <div class="stat-card">
     <div class="table-responsive">
@@ -79,19 +81,25 @@
                     </td>
                     <td>
                         <div class="btn-group" role="group">
-                            <a href="{{ url_for('horizon.instance_detail', instance_id=item.instance.id) }}" 
+                            <a href="{{ url_for('horizon.switch_instance', instance_id=item.instance.id) }}"
+                               class="btn btn-sm btn-success" title="Enter Instance">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                            </a>
+
+                            {% if is_l3_plus %}
+                            <a href="{{ url_for('horizon.instance_detail', instance_id=item.instance.id) }}"
                                class="btn btn-sm btn-info" title="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            
-                            <a href="{{ url_for('horizon.instance_edit', instance_id=item.instance.id) }}" 
+
+                            <a href="{{ url_for('horizon.instance_edit', instance_id=item.instance.id) }}"
                                class="btn btn-sm btn-primary" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            
+
                             {% if not item.instance.is_sandbox %}
-                            <button class="btn btn-sm btn-danger" 
-                                    onclick="confirmDelete({{ item.instance.id }}, '{{ item.instance.name }}')" 
+                            <button class="btn btn-sm btn-danger"
+                                    onclick="confirmDelete({{ item.instance.id }}, '{{ item.instance.name }}')"
                                     title="Delete Instance">
                                 <i class="bi bi-trash"></i>
                             </button>
@@ -99,6 +107,7 @@
                             <button class="btn btn-sm btn-secondary" disabled title="Cannot delete sandbox">
                                 <i class="bi bi-lock"></i>
                             </button>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </td>

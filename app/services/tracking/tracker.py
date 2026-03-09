@@ -50,12 +50,20 @@ class TrackingService:
             return self.fedex.track(tracking_number)
         elif carrier == 'UPS':
             return self.ups.track(tracking_number)
+        elif carrier == 'DHL':
+            # DHL detected but no API configured — return carrier info without live tracking
+            result = TrackingResult()
+            result.carrier = 'DHL'
+            result.tracking_number = tracking_number
+            result.success = False
+            result.error = 'DHL tracking API not configured. Visit the DHL website to track this shipment.'
+            return result
         else:
-            # Unknown carrier - return error
+            # Unknown carrier
             result = TrackingResult()
             result.carrier = 'UNKNOWN'
             result.tracking_number = tracking_number
-            result.error = f"Unsupported carrier: {carrier}"
+            result.error = f"Could not identify carrier for tracking number: {tracking_number}"
             result.success = False
             return result
     

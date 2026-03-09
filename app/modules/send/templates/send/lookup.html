@@ -490,7 +490,7 @@
         </div>
         <div class="page-header-text">
             <h2>Package Lookup</h2>
-            <p>Track any package from USPS, FedEx, or UPS</p>
+            <p>Track any package from USPS, FedEx, UPS, or DHL</p>
         </div>
     </div>
 </div>
@@ -503,7 +503,7 @@
     <div class="info-box-content">
         <div class="info-box-title">Supported Carriers</div>
         <div class="info-box-text">
-            We automatically detect and track packages from USPS, FedEx, UPS, and DHL.
+            Auto-detects and tracks USPS, FedEx, and UPS. DHL numbers are identified and linked to the DHL website. Results can be added directly to the manifest.
         </div>
     </div>
 </div>
@@ -561,12 +561,21 @@
             </div>
         </div>
         
-        {% if carrier_url %}
-        <a href="{{ carrier_url }}" target="_blank" rel="noopener" class="btn-external">
-            <i class="bi bi-box-arrow-up-right"></i>
-            View on {{ carrier }} Site
-        </a>
-        {% endif %}
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            {% if carrier_url %}
+            <a href="{{ carrier_url }}" target="_blank" rel="noopener" class="btn-external">
+                <i class="bi bi-box-arrow-up-right"></i>
+                View on {{ carrier }} Site
+            </a>
+            {% endif %}
+            <button class="btn-external" style="background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);box-shadow:0 8px 20px rgba(99,102,241,0.3);"
+                    onclick="addSingleToManifest('{{ result.tracking_number }}','{{ result.carrier }}','{{ result.status }}',
+                        '{{ result.status_description | replace("'","") }}',
+                        '{{ (result.estimated_delivery | string) if result.estimated_delivery else "" }}')">
+                <i class="bi bi-plus-circle"></i>
+                Add to Manifest
+            </button>
+        </div>
     </div>
     
     <div class="result-details">
@@ -618,7 +627,7 @@
         <div class="detail-item">
             <div class="detail-label">Estimated Delivery</div>
             <div class="detail-value">
-                {{ result.estimated_delivery[:10] }}
+                {{ result.estimated_delivery | format_datetime('%Y-%m-%d') }}
             </div>
         </div>
         {% endif %}
@@ -684,5 +693,264 @@
     {% endif %}
 </div>
 {% endif %}
+
+<!-- ── Bulk Lookup Panel ──────────────────────────────────────────────── -->
+<div class="search-container" style="margin-top:2rem;">
+    <h3 class="search-title">
+        <i class="bi bi-list-check" style="color:#6366f1;"></i>
+        Bulk Lookup
+    </h3>
+    <p style="color:var(--text-secondary);margin-bottom:1.25rem;font-size:0.9375rem;">
+        Paste multiple tracking numbers (one per line, up to 50). Each result can be added to the manifest individually or all at once.
+    </p>
+    <textarea id="bulkInput" rows="6" placeholder="Enter one tracking number per line&#10;1Z999AA10123456784&#10;9400111899223397059192&#10;773187654321" style="width:100%;padding:1rem 1.25rem;border:2px solid var(--border-color);border-radius:0.875rem;font-size:0.9375rem;background:var(--bg-secondary);color:var(--text-primary);resize:vertical;font-family:monospace;"></textarea>
+    <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+        <button class="btn-search" onclick="runBulkLookup()">
+            <i class="bi bi-search"></i> Look Up All
+        </button>
+        <button class="btn-search" style="background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);box-shadow:0 8px 20px rgba(99,102,241,0.3);"
+                onclick="addAllToManifest()" id="addAllBtn" style="display:none;">
+            <i class="bi bi-plus-circle"></i> Add All to Manifest
+        </button>
+    </div>
+    <div id="bulkResults" style="margin-top:1.5rem;"></div>
+</div>
+
+<!-- Toast notification -->
+<div id="manifestToast" style="display:none;position:fixed;bottom:2rem;right:2rem;z-index:9999;
+    background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;padding:1rem 1.5rem;
+    border-radius:0.875rem;font-weight:700;box-shadow:0 8px 30px rgba(99,102,241,0.4);
+    animation:fadeInUp 0.3s ease-out;">
+    <i class="bi bi-check-circle-fill"></i> <span id="toastMsg"></span>
+</div>
+
+<!-- Per-item manifest progress panel -->
+<div id="manifestProgressPanel" style="display:none;position:fixed;bottom:2rem;right:2rem;z-index:9998;
+    width:360px;background:var(--bg-card);border:1px solid var(--border-color);
+    border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                padding:0.875rem 1.25rem;background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;">
+        <span style="font-weight:700;font-size:0.9375rem;">
+            <i class="bi bi-plus-circle-fill"></i> Adding to Manifest
+        </span>
+        <button onclick="document.getElementById('manifestProgressPanel').style.display='none'"
+                style="background:none;border:none;color:white;cursor:pointer;font-size:1.25rem;line-height:1;">&times;</button>
+    </div>
+    <div id="manifestProgressSummary" style="padding:0.625rem 1.25rem;font-size:0.8125rem;
+        font-weight:600;color:#6b7280;border-bottom:1px solid var(--border-color);"></div>
+    <div id="manifestProgressList" style="max-height:320px;overflow-y:auto;padding:0.5rem 0;"></div>
+    <div id="manifestProgressFooter" style="display:none;padding:0.75rem 1.25rem;
+        border-top:1px solid var(--border-color);text-align:right;">
+        <button onclick="document.getElementById('manifestProgressPanel').style.display='none'"
+                style="padding:0.375rem 1rem;background:linear-gradient(135deg,#6366f1,#4f46e5);
+                       color:white;border:none;border-radius:0.5rem;font-weight:700;cursor:pointer;">
+            Done
+        </button>
+    </div>
+</div>
+
+<script>
+// ── Single result → manifest ──────────────────────────────────────────
+function addSingleToManifest(tn, carrier, status, statusDesc, estDelivery) {
+    if (!confirm(`Add ${tn} (${carrier}) to the manifest?`)) return;
+    const entries = [{
+        tracking_number: tn, carrier: carrier, status: status,
+        status_description: statusDesc, estimated_delivery: estDelivery || null
+    }];
+    runManifestWithProgress(entries);
+}
+
+// ── Bulk lookup ───────────────────────────────────────────────────────
+let bulkResultData = [];
+
+async function runBulkLookup() {
+    const lines = document.getElementById('bulkInput').value
+        .split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (!lines.length) { alert('Please enter at least one tracking number.'); return; }
+    if (lines.length > 50) { alert('Maximum 50 tracking numbers per lookup.'); return; }
+
+    const resultsDiv = document.getElementById('bulkResults');
+    resultsDiv.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="bi bi-hourglass-split"></i> Looking up ' + lines.length + ' tracking numbers...</div>';
+    document.getElementById('addAllBtn').style.display = 'none';
+
+    try {
+        const resp = await fetch('/send/api/bulk-lookup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tracking_numbers: lines})
+        });
+        const data = await resp.json();
+        if (!data.success) { resultsDiv.innerHTML = `<div style="color:#ef4444;">❌ ${data.error}</div>`; return; }
+
+        bulkResultData = data.results;
+        renderBulkResults(data.results);
+        if (data.results.length > 0) document.getElementById('addAllBtn').style.display = 'inline-flex';
+    } catch(e) {
+        resultsDiv.innerHTML = '<div style="color:#ef4444;">❌ Network error. Please try again.</div>';
+    }
+}
+
+function renderBulkResults(results) {
+    const resultsDiv = document.getElementById('bulkResults');
+    if (!results.length) { resultsDiv.innerHTML = '<p>No results.</p>'; return; }
+
+    const statusColors = {
+        'DELIVERED': '#10b981', 'IN_TRANSIT': '#3b82f6',
+        'OUT_FOR_DELIVERY': '#f59e0b', 'EXCEPTION': '#ef4444'
+    };
+
+    const carrierColors = {
+        'FEDEX': '#4d148c', 'UPS': '#351c15', 'USPS': '#004b87', 'DHL': '#d40511'
+    };
+
+    let html = `<div style="margin-bottom:0.75rem;">
+        <strong>${results.length} result(s) &mdash; ${results.filter(r=>r.success).length} found</strong>
+    </div><div style="display:flex;flex-direction:column;gap:0.75rem;">`;
+
+    results.forEach((r, i) => {
+        const statusColor = statusColors[r.status] || '#6b7280';
+        const carrierColor = carrierColors[r.carrier] || '#6b7280';
+        const statusText = r.success
+            ? (r.status || 'UNKNOWN').replace(/_/g, ' ')
+            : (r.error || 'Not found');
+        const statusStyle = r.success
+            ? `color:${statusColor};font-weight:600;`
+            : 'color:#ef4444;font-weight:600;';
+        const estDelivery = r.estimated_delivery
+            ? `<span style="margin-left:0.5rem;font-size:0.75rem;color:#6b7280;">Est. ${r.estimated_delivery}</span>` : '';
+        const siteLink = r.carrier_url
+            ? `<a href="${r.carrier_url}" target="_blank" rel="noopener"
+                style="font-size:0.8125rem;color:#3b82f6;font-weight:600;text-decoration:none;white-space:nowrap;">
+                View on site
+               </a>` : '';
+
+        html += `
+        <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:0.75rem;
+                    padding:0.875rem 1.25rem;background:var(--bg-secondary);
+                    border-radius:0.75rem;border:1px solid var(--border-color);">
+            <input type="checkbox" class="bulk-check" data-index="${i}" checked
+                   style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+            <div style="min-width:0;overflow:hidden;">
+                <div style="font-family:monospace;font-weight:700;font-size:0.9375rem;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    ${r.tracking_number || '—'}
+                </div>
+                <div style="margin-top:3px;display:flex;align-items:center;flex-wrap:wrap;gap:0.375rem;">
+                    <span style="font-size:0.75rem;font-weight:700;padding:1px 7px;border-radius:4px;
+                                 background:${carrierColor};color:white;">${r.carrier || '?'}</span>
+                    <span style="${statusStyle}font-size:0.8125rem;">${statusText}</span>
+                    ${estDelivery}
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+                ${siteLink}
+                <button onclick="addSingleToManifest('${r.tracking_number}','${r.carrier}','${r.status||'UNKNOWN'}','','${r.estimated_delivery||''}')"
+                    style="padding:0.375rem 0.875rem;background:linear-gradient(135deg,#6366f1,#4f46e5);
+                           color:white;border:none;border-radius:0.5rem;font-size:0.8125rem;
+                           font-weight:700;cursor:pointer;white-space:nowrap;">
+                    + Add
+                </button>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+}
+
+// ── Add all checked bulk results to manifest ──────────────────────────
+function addAllToManifest() {
+    const checked = [...document.querySelectorAll('.bulk-check:checked')];
+    if (!checked.length) { alert('No tracking numbers selected.'); return; }
+    if (!confirm(`Add ${checked.length} tracking number(s) to the manifest?`)) return;
+
+    const entries = checked.map(cb => {
+        const r = bulkResultData[parseInt(cb.dataset.index)];
+        return {
+            tracking_number: r.tracking_number,
+            carrier: r.carrier,
+            status: r.status || 'UNKNOWN',
+            status_description: r.status_description || '',
+            estimated_delivery: r.estimated_delivery || null
+        };
+    });
+    runManifestWithProgress(entries);
+}
+
+// ── Per-item progress: add entries one by one ─────────────────────────
+async function runManifestWithProgress(entries) {
+    const panel   = document.getElementById('manifestProgressPanel');
+    const summary = document.getElementById('manifestProgressSummary');
+    const list    = document.getElementById('manifestProgressList');
+    const footer  = document.getElementById('manifestProgressFooter');
+
+    // Build row elements
+    const rowEls = entries.map((e, i) => {
+        const div = document.createElement('div');
+        div.id = `mpr-${i}`;
+        div.style.cssText = 'display:flex;align-items:center;gap:0.625rem;padding:0.5rem 1.25rem;border-bottom:1px solid var(--border-color);';
+        div.innerHTML = `
+            <span id="mpr-icon-${i}" style="font-size:1rem;width:20px;text-align:center;">⏳</span>
+            <div style="flex:1;min-width:0;">
+                <div style="font-family:monospace;font-size:0.8125rem;font-weight:700;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.tracking_number}</div>
+                <div id="mpr-status-${i}" style="font-size:0.75rem;color:#6b7280;">Pending…</div>
+            </div>`;
+        return div;
+    });
+
+    list.innerHTML = '';
+    rowEls.forEach(el => list.appendChild(el));
+    summary.textContent = `0 / ${entries.length} added`;
+    footer.style.display = 'none';
+    panel.style.display = 'block';
+
+    let added = 0, failed = 0;
+
+    for (let i = 0; i < entries.length; i++) {
+        const iconEl   = document.getElementById(`mpr-icon-${i}`);
+        const statusEl = document.getElementById(`mpr-status-${i}`);
+        iconEl.textContent = '⏳';
+        statusEl.textContent = 'Adding…';
+
+        try {
+            const resp = await fetch('/send/api/add-to-manifest', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({entries: [entries[i]]})
+            });
+            const data = await resp.json();
+
+            if (data.success && data.results && data.results.length > 0) {
+                const r = data.results[0];
+                iconEl.textContent = '✅';
+                statusEl.innerHTML = `<span style="color:#10b981;font-weight:600;">Added</span>
+                    &nbsp;·&nbsp; CheckIn: <strong>${r.checkin_id}</strong>
+                    &nbsp;·&nbsp; ${r.package_id}`;
+                added++;
+            } else {
+                iconEl.textContent = '❌';
+                statusEl.innerHTML = `<span style="color:#ef4444;">${data.error || 'Failed'}</span>`;
+                failed++;
+            }
+        } catch(e) {
+            iconEl.textContent = '❌';
+            statusEl.innerHTML = `<span style="color:#ef4444;">Network error</span>`;
+            failed++;
+        }
+
+        summary.textContent = `${added} / ${entries.length} added${failed ? ` · ${failed} failed` : ''}`;
+    }
+
+    footer.style.display = 'block';
+    if (added > 0) showToast(`${added} package(s) added to manifest`);
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('manifestToast');
+    document.getElementById('toastMsg').textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+}
+</script>
 
 {% endblock %}

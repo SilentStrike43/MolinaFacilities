@@ -18,8 +18,11 @@ from app.core.instance_context import get_current_instance, get_current_instance
 
 from app.services.tracking.tracker import TrackingService
 from app.services.address.book import AddressBookService
-from app.services.address.validator import AddressValidator
+from app.modules.send.google_address_validator import GoogleAddressValidator
 from app.utils.carrier_detector import CarrierDetector
+from app.modules.send.views_address_check import register_address_routes
+
+register_address_routes(bp)
 
 from .models import (
     ensure_schema, 
@@ -107,10 +110,9 @@ def checkin():
                 flash('Complete address is required', 'error')
                 return redirect(url_for('send.checkin'))
             
-            # Generate IDs
-            import time
-            checkin_id = f"CHK{int(time.time())}"
-            package_id = f"PKG{int(time.time())}"
+            # Generate IDs using atomic counters
+            checkin_id = next_checkin_id()
+            package_id = next_package_id(package_type)
             
             # ============================================
             # NEW: Address Book Integration
@@ -135,7 +137,7 @@ def checkin():
                     'country': country
                 }
                 
-                address_book_id = address_service.find_or_create(recipient_data, cu['user_id'])
+                address_book_id = address_service.find_or_create(recipient_data, cu['id'])
                 
                 if address_book_id:
                     logger.info(f"Package linked to address book entry: {address_book_id}")
@@ -247,7 +249,7 @@ def checkin():
                     )
                 """, (
                     instance_id,
-                    cu['user_id'],
+                    cu['id'],
                     tracking_number,
                     carrier,
                     recipient_name,  # recipient field (backward compat)
@@ -297,7 +299,7 @@ def checkin():
             flash(flash_msg, 'success')
             logger.info(f"Package checked in: {package_id} by {cu.get('username')}")
             
-            return redirect(url_for('send.ledger'))
+            return redirect(url_for('send.manifest'))
             
         except Exception as e:
             logger.error(f"Checkin error: {e}", exc_info=True)
@@ -394,7 +396,7 @@ def address_book():
                 'notes': request.form.get("Notes")
             }
             
-            address_id = service.add(address_data, cu['user_id'])
+            address_id = service.add(address_data, cu['id'])
             if address_id:
                 flash("✅ Address added to book!", "success")
                 record_audit(cu, "add_address", "send", f"Added address: {address_data['recipient_name']}")
@@ -475,23 +477,28 @@ def address_lookup():
         city = request.form.get("City", "").strip()
         state = request.form.get("State", "").strip()
         zip_code = request.form.get("ZipCode", "").strip()
-        
+
         if not all([address_line1, city, state, zip_code]):
             ctx["error"] = "Please fill in all required fields."
         else:
             try:
-                validator = AddressValidator(current_app.config)
-                result = validator.validate(
-                    address_line1, city, state, zip_code, address_line2
-                )
-                
+                validator = GoogleAddressValidator()
+                street_lines = [l for l in [address_line1, address_line2] if l]
+                result = validator.validate({
+                    'street_lines': street_lines,
+                    'city': city,
+                    'state_code': state.upper(),
+                    'postal_code': zip_code,
+                    'country_code': 'US'
+                })
+
                 ctx["result"] = result
-                
+
                 # Record audit
                 cu = current_user()
-                record_audit(cu, "validate_address", "send", 
+                record_audit(cu, "validate_address", "send",
                            f"Validated: {address_line1}, {city}, {state}")
-                
+
             except Exception as e:
                 logger.error(f"Address validation error: {e}", exc_info=True)
                 ctx["error"] = f"Validation error: {str(e)}"
@@ -535,8 +542,9 @@ def manifest():
                 like = f"%{search_query}%"
                 params.extend([like, like, like])
             
-            where_clause = " AND ".join(conditions) if conditions else "1=1"
-            
+            conditions.insert(0, "deleted_at IS NULL")
+            where_clause = " AND ".join(conditions)
+
             # Use instance-aware query helper
             sql, params = build_select(
                 table='package_manifest',
@@ -624,6 +632,7 @@ def report():
             
             # Build WHERE conditions (instance_id added automatically)
             conditions = [
+                "deleted_at IS NULL",
                 "DATE(created_at) >= %s",
                 "DATE(created_at) <= %s"
             ]
@@ -751,27 +760,34 @@ def delete_package(package_id):
             recipient_name = pkg['recipient_name']
             carrier = pkg['carrier']
             
-            # Delete the package (instance filter ensures we only delete from our instance)
-            cursor.execute(f"DELETE FROM package_manifest WHERE {where_clause}", params)
-            
+            # Soft-delete: mark deleted_at instead of hard DELETE so reports
+            # preserve historical counts while hiding the row from data views.
+            where_soft, params_soft = add_instance_filter(
+                "id = %s AND deleted_at IS NULL", [package_id]
+            )
+            cursor.execute(
+                f"UPDATE package_manifest SET deleted_at = CURRENT_TIMESTAMP WHERE {where_soft}",
+                params_soft
+            )
+
             rows_deleted = cursor.rowcount
             conn.commit()
             cursor.close()
-        
+
         if rows_deleted > 0:
             # Log audit
             record_audit(
-                cu, 
-                "delete_package", 
-                "send", 
-                f"Deleted package {package_id_str} (Tracking: {tracking_number}, Recipient: {recipient_name}, Carrier: {carrier})"
+                cu,
+                "delete_package",
+                "send",
+                f"Removed package {package_id_str} (Tracking: {tracking_number}, Recipient: {recipient_name}, Carrier: {carrier})"
             )
-            
-            logger.info(f"User {cu.get('username')} deleted package {package_id_str}")
-            
+
+            logger.info(f"User {cu.get('username')} removed package {package_id_str} from manifest")
+
             return jsonify({
                 'success': True,
-                'message': f'Package {package_id_str} deleted successfully'
+                'message': f'Package {package_id_str} removed from manifest'
             }), 200
         else:
             return jsonify({'success': False, 'error': 'Package not found'}), 404
@@ -779,133 +795,6 @@ def delete_package(package_id):
     except Exception as e:
         logger.error(f"Delete package error for package {package_id}: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
-
-@bp.route("/api/validate-tracking", methods=["POST"])
-@login_required
-@require_cap("can_send")
-def validate_tracking():
-    """
-    Validate tracking number and return package metadata.
-    Does NOT return recipient details - user enters manually with auto-complete.
-    """
-    cu = current_user()
-    instance_id, is_sandbox = get_instance_context()
-    
-    try:
-        data = request.get_json()
-        tracking_number = data.get('tracking_number', '').strip()
-        
-        if not tracking_number:
-            return jsonify({"success": False, "error": "Tracking number required"}), 400
-        
-        # Detect carrier
-        from app.utils.carrier_detector import CarrierDetector
-        carrier = CarrierDetector.detect(tracking_number)
-        
-        if not carrier or carrier not in ['FEDEX', 'USPS']:
-            return jsonify({
-                "success": False,
-                "error": "Unsupported or unrecognized carrier. Please enter details manually."
-            }), 400
-        
-        # Get package metadata from carrier
-        package_data = None
-        
-        if carrier == 'FEDEX':
-            from app.services.shipping.fedex_tracking import FedExTrackingService
-            service = FedExTrackingService(current_app.config)
-            result = service.track_shipment(tracking_number)
-            
-            if result.get('success'):
-                # Extract metadata from FedEx response
-                pkg = result.get('package_data', {})
-                package_data = {
-                    'carrier': 'FedEx',
-                    'service_type': pkg.get('service_description', ''),
-                    'package_type': pkg.get('package_type', 'Box'),
-                    'weight': pkg.get('weight', ''),
-                    'status': pkg.get('status_description', ''),
-                    'estimated_delivery': pkg.get('estimated_delivery', ''),
-                    'destination_city': pkg.get('destination_city', ''),
-                    'destination_state': pkg.get('destination_state', '')
-                }
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": result.get('error', 'Could not retrieve tracking information')
-                }), 400
-        
-        elif carrier == 'USPS':
-            from app.services.tracking.tracker import TrackingService
-            tracker = TrackingService(current_app.config)
-            result = tracker.track(tracking_number, 'USPS')
-            
-            if result.success:
-                package_data = {
-                    'carrier': 'USPS',
-                    'service_type': result.status_description,
-                    'package_type': 'Package',
-                    'weight': '',
-                    'status': result.status_description,
-                    'estimated_delivery': result.estimated_delivery.isoformat() if result.estimated_delivery else '',
-                    'destination_city': '',
-                    'destination_state': ''
-                }
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": result.error or 'Could not retrieve tracking information'
-                }), 400
-        
-        # Record audit
-        record_audit(
-            cu, "validate_tracking", "send",
-            f"Validated {carrier} tracking: {tracking_number}"
-        )
-        
-        return jsonify({
-            "success": True,
-            "message": f"✓ {carrier} tracking validated",
-            "tracking_number": tracking_number,
-            "package_data": package_data,
-            "note": "Please enter recipient information (or use auto-complete from address book)"
-        })
-        
-    except Exception as e:
-        logger.error(f"Tracking validation error: {e}", exc_info=True)
-        return jsonify({
-            "success": False,
-            "error": "Error validating tracking number"
-        }), 500
-
-
-@bp.route("/api/search-recipients", methods=["POST"])
-@login_required
-@require_cap("can_send")
-def search_recipients():
-    """
-    Search address book for recipient auto-complete.
-    Returns matching recipients as user types.
-    """
-    try:
-        data = request.get_json()
-        query = data.get('query', '').strip()
-        
-        if len(query) < 2:
-            return jsonify({"success": True, "results": []})
-        
-        from app.services.address.book import AddressBookService
-        results = AddressBookService.search_recipients(query, limit=10)
-        
-        return jsonify({
-            "success": True,
-            "results": results
-        })
-        
-    except Exception as e:
-        logger.error(f"Recipient search error: {e}", exc_info=True)
-        return jsonify({"success": False, "error": str(e)}), 500
-
 
 @bp.route("/api/import-addresses", methods=["POST"])
 @login_required
@@ -1068,7 +957,7 @@ def api_import_addresses():
         # Import addresses
         from app.services.address.book import AddressBookService
         address_service = AddressBookService(instance_id)
-        stats = address_service.bulk_import(csv_data, cu['user_id'])
+        stats = address_service.bulk_import(csv_data, cu['id'])
         
         # Record audit
         record_audit(
@@ -1088,7 +977,7 @@ def api_import_addresses():
 
 # ========== LEGACY ROUTES ==========
 
-@bp.route("/tracking", methods=["GET", "POST"])
+@bp.route("/tracking", methods=["GET", "POST"], endpoint="tracking")
 @login_required
 @require_cap("can_send")
 def tracking_legacy():
