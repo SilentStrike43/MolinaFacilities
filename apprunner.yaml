@@ -4,16 +4,17 @@ runtime: python311
 build:
   commands:
     build:
-      - python3 --version
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
 
 run:
-  runtime-version: 3.11
-  pre-run:
-    - pip3 --version
-    - pip3 install -r requirements.txt
-  command: python3 -m gunicorn app.app:application --bind 0.0.0.0:8000
+  runtime-version: "3.11"
+  command: gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=120 wsgi:application
   network:
     port: 8000
+    env: PORT
   env:
-    - name: PYTHONUNBUFFERED
-      value: "1"
+    - name: PORT
+      value: "8000"
+    - name: FLASK_ENV
+      value: production
