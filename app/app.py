@@ -26,6 +26,12 @@ logger = logging.getLogger(__name__)
 def create_app():
     app = Flask(__name__)
 
+    # ── Proxy fix — must be first so request.scheme reflects HTTPS ─────────────
+    # Trusts 1 proxy hop (nginx). Required for correct redirects behind
+    # Cloudflare → nginx → gunicorn and for SESSION_COOKIE_SECURE to work.
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     # ── Configuration ──────────────────────────────────────────────────────────
     configure_app(app)
 
