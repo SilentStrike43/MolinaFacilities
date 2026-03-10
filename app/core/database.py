@@ -185,7 +185,10 @@ def parse_connection_string(conn_str: str) -> dict:
     - host=host port=port dbname=dbname user=user password=pass
     """
     if conn_str.startswith('postgresql://') or conn_str.startswith('postgres://'):
-        # Parse URI format
+        # Parse URI format — append connect_timeout if not already present
+        sep = '?' if '?' not in conn_str else '&'
+        if 'connect_timeout' not in conn_str:
+            conn_str = f"{conn_str}{sep}connect_timeout=5"
         return {'dsn': conn_str}
     else:
         # Parse key=value format
@@ -194,6 +197,7 @@ def parse_connection_string(conn_str: str) -> dict:
             if '=' in part:
                 key, value = part.split('=', 1)
                 params[key] = value
+        params.setdefault('connect_timeout', 5)
         return params
 
 
