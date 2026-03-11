@@ -11,7 +11,21 @@
       "Bash(wc -l /c/GridlineService/app/modules/*/views.py /c/GridlineService/app/modules/*/views_*.py)",
       "Bash(find \"c:/GridlineService/app/modules/admin/templates/admin\" -name \"*.html\" -exec basename {} ;)",
       "Bash(python -c \":*)",
-      "Bash(ls c:/GridlineService/*.py c:/GridlineService/*.txt c:/GridlineService/*.cfg c:/GridlineService/*.ini)"
+      "Bash(ls c:/GridlineService/*.py c:/GridlineService/*.txt c:/GridlineService/*.cfg c:/GridlineService/*.ini)",
+      "Bash(git add requirements.txt)",
+      "Bash(git add apprunner.yaml requirements.txt)",
+      "Bash(git commit:*)",
+      "Bash(git push origin main)",
+      "Bash(git pull origin main --no-edit)",
+      "Bash(git checkout --ours /c/GridlineService/requirements.txt)",
+      "Bash(git add apprunner.yaml)",
+      "Bash(git add app/app.py apprunner.yaml)",
+      "Bash(git add app/core/logging_config.py apprunner.yaml)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git update-index:*)",
+      "Bash(git rm:*)",
+      "Bash(eb status:*)"
     ]
   }
 }

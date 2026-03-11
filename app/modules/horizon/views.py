@@ -2302,14 +2302,53 @@ def export_audits():
 def system_health():
     """View system health and performance metrics - ALL instances."""
     cu = current_user()
-    
+
     health = get_system_health_metrics()
-    
-    # Get database statistics (PostgreSQL version)
+
+    # Per-database sizes and table counts
+    db_info = {}
+    for db_name in ('core', 'send', 'inventory', 'fulfillment'):
+        try:
+            with get_db_connection(db_name) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT
+                        current_database() AS db_name,
+                        pg_database_size(current_database()) / (1024.0 * 1024.0) AS size_mb,
+                        (SELECT COUNT(*) FROM pg_stat_user_tables) AS table_count,
+                        version() AS pg_version
+                """)
+                row = dict(cursor.fetchone())
+                cursor.execute("""
+                    SELECT SUM(n_live_tup) AS total_rows
+                    FROM pg_stat_user_tables
+                """)
+                row['total_rows'] = (cursor.fetchone()['total_rows'] or 0)
+                cursor.close()
+            db_info[db_name] = {
+                'actual_name': row['db_name'],
+                'size_mb': round(row['size_mb'], 2),
+                'table_count': row['table_count'],
+                'total_rows': row['total_rows'],
+                'pg_version': row['pg_version'].split(' ')[1] if row['pg_version'] else 'N/A',
+                'status': 'healthy' if row['size_mb'] < 5000 else 'warning',
+                'reachable': True,
+            }
+        except Exception as e:
+            db_info[db_name] = {
+                'actual_name': db_name,
+                'size_mb': 0,
+                'table_count': 0,
+                'total_rows': 0,
+                'pg_version': 'N/A',
+                'status': 'error',
+                'reachable': False,
+                'error': str(e),
+            }
+
+    # Core table stats for the detailed breakdown
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
-        
-        # Table sizes using PostgreSQL system catalogs
         cursor.execute("""
             SELECT
                 schemaname || '.' || relname AS table_name,
@@ -2319,17 +2358,103 @@ def system_health():
             LIMIT 20
         """)
         table_stats = cursor.fetchall()
-        
         cursor.close()
-    
+
+    # ── AWS Elastic Beanstalk info ─────────────────────────────────────────────
+    eb_info = {'reachable': False}
+    try:
+        import boto3 as _boto3
+        _eb = _boto3.client('elasticbeanstalk', region_name='us-east-1')
+        _resp = _eb.describe_environments(EnvironmentNames=['gridline-demo'])
+        _envs = _resp.get('Environments', [])
+        if _envs:
+            _e = _envs[0]
+            _stack = _e.get('SolutionStackName', '')
+            _platform = _stack.split(' running ')[0] if ' running ' in _stack else _stack
+            _runtime  = _stack.split(' running ')[-1] if ' running ' in _stack else ''
+            eb_info = {
+                'reachable':     True,
+                'name':          _e.get('EnvironmentName', 'gridline-demo'),
+                'status':        _e.get('Status', 'Unknown'),
+                'health':        _e.get('Health', 'Unknown'),
+                'health_status': _e.get('HealthStatus', 'Unknown'),
+                'platform':      _platform,
+                'runtime':       _runtime,
+                'cname':         _e.get('CNAME', ''),
+                'region':        'us-east-1',
+                'date_updated':  str(_e.get('DateUpdated', ''))[:19],
+                'env_id':        _e.get('EnvironmentId', ''),
+            }
+    except Exception as _exc:
+        eb_info = {'reachable': False, 'error': str(_exc)}
+
+    # ── AWS S3 info (sizes via CloudWatch — 24 h delayed) ─────────────────────
+    s3_info = {'reachable': False, 'buckets': []}
+    try:
+        import boto3 as _boto3
+        import datetime as _dt
+        from datetime import timedelta as _td
+
+        _s3  = _boto3.client('s3',         region_name='us-east-1')
+        _cw  = _boto3.client('cloudwatch', region_name='us-east-1')
+        _now = _dt.datetime.utcnow()
+        _ago = _now - _td(days=2)
+
+        _buckets = []
+        for _b in _s3.list_buckets().get('Buckets', []):
+            _bname   = _b['Name']
+            _created = str(_b.get('CreationDate', ''))[:10]
+
+            try:
+                _sz_pts = _cw.get_metric_statistics(
+                    Namespace='AWS/S3', MetricName='BucketSizeBytes',
+                    Dimensions=[{'Name': 'BucketName',   'Value': _bname},
+                                {'Name': 'StorageType',  'Value': 'StandardStorage'}],
+                    StartTime=_ago, EndTime=_now, Period=86400, Statistics=['Average'],
+                ).get('Datapoints', [])
+                _sz_bytes = sorted(_sz_pts, key=lambda x: x['Timestamp'])[-1]['Average'] if _sz_pts else 0
+            except Exception:
+                _sz_bytes = 0
+
+            try:
+                _obj_pts = _cw.get_metric_statistics(
+                    Namespace='AWS/S3', MetricName='NumberOfObjects',
+                    Dimensions=[{'Name': 'BucketName',  'Value': _bname},
+                                {'Name': 'StorageType', 'Value': 'AllStorageTypes'}],
+                    StartTime=_ago, EndTime=_now, Period=86400, Statistics=['Average'],
+                ).get('Datapoints', [])
+                _obj_cnt = int(sorted(_obj_pts, key=lambda x: x['Timestamp'])[-1]['Average']) if _obj_pts else 0
+            except Exception:
+                _obj_cnt = 0
+
+            _buckets.append({
+                'name':         _bname,
+                'created':      _created,
+                'size_mb':      round(_sz_bytes / (1024 * 1024), 2),
+                'size_gb':      round(_sz_bytes / (1024 ** 3), 3),
+                'object_count': _obj_cnt,
+            })
+
+        s3_info = {
+            'reachable':     True,
+            'buckets':       _buckets,
+            'total_buckets': len(_buckets),
+            'total_gb':      round(sum(b['size_gb'] for b in _buckets), 3),
+        }
+    except Exception as _exc:
+        s3_info = {'reachable': False, 'buckets': [], 'error': str(_exc)}
+
     record_global_audit(cu, "view_system_health", "Viewed system health metrics")
-    
+
     return render_template(
         "horizon/system_health.html",
         active="global",
         page="system_health",
         health=health,
-        table_stats=table_stats
+        table_stats=table_stats,
+        db_info=db_info,
+        eb_info=eb_info,
+        s3_info=s3_info,
     )
 
 

@@ -8,12 +8,22 @@ import os
 
 def configure_app(app):
     """Load all configuration into the Flask app instance."""
+    _is_production = os.environ.get('FLASK_ENV') == 'production'
+    _secret_key = os.environ.get('SECRET_KEY')
+    if _is_production and not _secret_key:
+        raise RuntimeError(
+            "SECRET_KEY environment variable must be set in production. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    if not _secret_key:
+        _secret_key = 'dev-only-insecure-key-NOT-for-production'
+
     app.config.update(
-        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key-PLEASE-change-in-production-12345'),
-        SESSION_COOKIE_SECURE=os.environ.get('FLASK_ENV') == 'production',
+        SECRET_KEY=_secret_key,
+        SESSION_COOKIE_SECURE=_is_production,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE='Lax',
-        PERMANENT_SESSION_LIFETIME=604800,
+        PERMANENT_SESSION_LIFETIME=28800,  # 8 hours
         MAX_CONTENT_LENGTH=50 * 1024 * 1024,
         UPLOAD_FOLDER=os.environ.get(
             'UPLOAD_FOLDER',

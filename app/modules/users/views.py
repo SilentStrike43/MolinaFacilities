@@ -1171,10 +1171,16 @@ def update_user_permissions_api(user_id):
     try:
         data = request.json
         
-        permission_level = data.get('permission_level', '')
+        permission_level = (data.get('permission_level') or '').strip()
         module_permissions = data.get('module_permissions', [])
         accessible_instances = data.get('accessible_instances', [])
-        
+
+        # Validate the actor can grant the requested permission level
+        if permission_level:
+            actor_level = get_user_permission_level(cu) or ''
+            if not PermissionManager.can_elevate_to(actor_level, permission_level):
+                return jsonify({"error": "You cannot grant that permission level"}), 403
+
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             

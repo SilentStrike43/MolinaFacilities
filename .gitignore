@@ -46,3 +46,7 @@ uploads/*
 # Azure
 .azure/
 .azure_backup
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
