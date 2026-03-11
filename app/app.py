@@ -4,6 +4,8 @@ Application factory — intentionally lean.
 All heavy lifting lives in app/core/*.py so this file imports fast
 and Azure App Service can answer its startup health-check probe
 before the schemas and scheduler have finished initialising.
+
+If you touch this file I will kill you - Chris
 """
 import os
 import logging

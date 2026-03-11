@@ -2,8 +2,11 @@
 """
 Send/Mail module models - PostgreSQL Edition
 """
+import logging
 from typing import Dict
 from app.core.database import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 PACKAGE_PREFIX: Dict[str, str] = {
     "Box": "PACK",
@@ -122,7 +125,7 @@ def ensure_schema():
         
         cursor.close()
 
-    print("Send schema initialized")
+    logger.info("Send schema initialized")
 
 
 def jobs_db():

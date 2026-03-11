@@ -11,21 +11,6 @@ from app.core.instance_context import get_current_instance
 
 logger = logging.getLogger(__name__)
 
-# Run schema migration once on module load
-def _ensure_preferences_column():
-    try:
-        with get_db_connection("core") as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                ALTER TABLE users ADD COLUMN IF NOT EXISTS user_preferences TEXT DEFAULT '{}'
-            """)
-            conn.commit()
-            cursor.close()
-    except Exception as e:
-        logger.warning(f"Could not add user_preferences column: {e}")
-
-_ensure_preferences_column()
-
 
 def _is_valid_hex_color(value):
     """Validate a #RRGGBB hex color string."""

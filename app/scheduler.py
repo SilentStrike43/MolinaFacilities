@@ -1,6 +1,6 @@
 """
 Background Job Scheduler
-Handles periodic tasks like tracking updates and FedEx sync
+Handles periodic tasks like tracking updates, FedEx sync, and system health checks.
 """
 
 import logging
@@ -168,6 +168,18 @@ def sync_fedex_shipments(app):
             logger.error(f"FedEx sync job failed: {str(e)}")
 
 
+def _run_health_checks(app):
+    """Background job: Run all registered system health checks."""
+    try:
+        from app.core.health import run_all_checks
+        results = run_all_checks(app)
+        passed = sum(1 for r in results if r["status"] == "pass")
+        failed = sum(1 for r in results if r["status"] == "fail")
+        logger.info(f"Health checks complete: {passed} passed, {failed} failed")
+    except Exception as e:
+        logger.error(f"Health check job failed: {e}", exc_info=True)
+
+
 def init_scheduler(app):
     """
     Initialize background scheduler with Flask app context
@@ -192,7 +204,7 @@ def init_scheduler(app):
         name='Update package tracking status',
         replace_existing=True
     )
-    logger.info(f"✅ Scheduled tracking updates every {tracking_interval} hours")
+    logger.info(f"Scheduled tracking updates every {tracking_interval} hours")
     
     # Add FedEx sync job (if enabled)
     if app.config.get('FEDEX_SYNC_ENABLED'):
@@ -204,10 +216,20 @@ def init_scheduler(app):
             name='Sync FedEx shipments',
             replace_existing=True
         )
-        logger.info(f"✅ Scheduled FedEx sync every {fedex_interval} minutes")
-    
+        logger.info(f"Scheduled FedEx sync every {fedex_interval} minutes")
+
+    # Hourly system health checks
+    scheduler.add_job(
+        func=lambda: _run_health_checks(app),
+        trigger=IntervalTrigger(hours=1),
+        id='system_health_checks',
+        name='Run system health checks',
+        replace_existing=True
+    )
+    logger.info("Scheduled system health checks every hour")
+
     scheduler.start()
-    logger.info("✅ Background scheduler started successfully")
+    logger.info("Background scheduler started")
     
     return scheduler
 

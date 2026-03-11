@@ -9,6 +9,8 @@ from flask import session, redirect, url_for, request, flash
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 def record_audit(user, action, source, details=""):
     """
     Record security/audit events to both the Python logger and the audit_logs table.
@@ -151,7 +153,7 @@ def get_user_instance_context(instance_id=None):
     if not user:
         return None
     
-    print(f"🔐 GET CONTEXT: user={user.get('username')}, instance_id={instance_id}, perm={user.get('permission_level')}")
+    logger.debug(f"get_user_instance_context: user={user.get('username')}, instance_id={instance_id}, perm={user.get('permission_level')}")
     
     if instance_id is not None:
         # Check if this instance is the sandbox
@@ -170,7 +172,7 @@ def get_user_instance_context(instance_id=None):
                 if inst and inst.get('is_sandbox'):
                     perm_level = user.get('permission_level')
                     if perm_level in ['L3', 'S1']:
-                        print(f"✅ Granting sandbox access to {perm_level} user")
+                        logger.debug(f"Granting sandbox access to {perm_level} user {user.get('username')}")
                         return {
                             **user,
                             'instance_id': instance_id,
@@ -183,12 +185,10 @@ def get_user_instance_context(instance_id=None):
                             'can_fulfillment_manager': True,
                         }
                     else:
-                        print(f"❌ User {user.get('username')} cannot access sandbox (perm: {perm_level})")
+                        logger.warning(f"User {user.get('username')} denied sandbox access (perm: {perm_level})")
                         return None
         except Exception as e:
-            print(f"❌ Error checking sandbox: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error checking sandbox access: {e}", exc_info=True)
     
     # Regular instance access
     if instance_id:
@@ -207,9 +207,7 @@ def get_user_instance_context(instance_id=None):
                 if result:
                     return dict(result)
         except Exception as e:
-            print(f"❌ Error getting instance context: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error getting instance context: {e}", exc_info=True)
     
     return user
 
@@ -292,12 +290,9 @@ def _parse_caps(u: dict) -> dict:
             caps_dict["is_system"] = True
             
     except ImportError as e:
-        # If PermissionManager not available, fall back to legacy behavior
-        print(f"Warning: Could not import PermissionManager: {e}")
-        pass
+        logger.warning(f"PermissionManager unavailable, falling back to legacy caps: {e}")
     except Exception as e:
-        print(f"Error parsing permissions: {e}")
-        pass
+        logger.error(f"Error parsing permissions: {e}", exc_info=True)
 
     return caps_dict
 
@@ -356,9 +351,6 @@ def login_required(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         user_id = session.get("user_id")
-        print(f"✓ login_required check: user_id in session = {user_id}")
-        print(f"✓ Session contents: {dict(session)}")
-        
         if not user_id:
             session['next_url'] = request.url
             flash("Please log in to access this page.", "warning")
@@ -377,13 +369,11 @@ def require_cap(cap: str):
                 flash("Please sign in to continue.", "warning")
                 return redirect(url_for("auth.login", next=request.full_path or request.path))
             if not has_cap(u, cap):
-                # DEBUG - More detailed output
-                print(f"⚠️ PERMISSION DENIED: User {u.get('username')} tried to access {request.endpoint} requiring '{cap}'")
-                print(f"   URL: {request.url}")
-                print(f"   User permission_level: {u.get('permission_level')}")
-                print(f"   User module_permissions: {u.get('module_permissions')}")
-                print(f"   Parsed caps: {_parse_caps(u)}")
-                
+                logger.warning(
+                    f"Permission denied: user={u.get('username')} endpoint={request.endpoint} "
+                    f"required={cap!r} level={u.get('permission_level')} "
+                    f"module_permissions={u.get('module_permissions')}"
+                )
                 flash(f"Access denied. You need '{cap}' permission to access this feature.", "danger")
                 return redirect(url_for("home.index"))
             return view(*args, **kwargs)

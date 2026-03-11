@@ -2,11 +2,14 @@
 """
 User management models - PostgreSQL Edition
 """
+import logging
 import os
 import json
 from typing import Optional, Dict, Any, List
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.core.database import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
     """Get user by ID."""
@@ -153,7 +156,7 @@ def set_password(user_id: int, new_password: str, reset_by: int = None) -> bool:
             return True
         
         except Exception as e:
-            print(f"Error resetting password: {e}")
+            logger.error(f"Error resetting password for user {user_id}: {e}", exc_info=True)
             return False
 
 
@@ -283,7 +286,7 @@ def delete_user(user_id: int, deleted_by: int = None, notes: str = None) -> bool
             cursor.close()
             return True
         except Exception as e:
-            print(f"Error deleting user: {e}")
+            logger.error(f"Error deleting user {user_id}: {e}", exc_info=True)
             return False
 
 
@@ -322,15 +325,7 @@ def ensure_user_schema():
             )
         """)
         
-        # Add user_preferences column if not present (migration)
-        cursor.execute("""
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS user_preferences TEXT DEFAULT '{}'
-        """)
-
-        # Add last_seen column for online presence tracking
-        cursor.execute("""
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP
-        """)
+        # Column additions (user_preferences, last_seen) handled by app/core/migrations.py
 
         # Create indexes
         cursor.execute("""
@@ -363,10 +358,7 @@ def ensure_user_schema():
             )
         """)
 
-        # Migration: add instance_id column if missing (for existing deployments)
-        cursor.execute("""
-            ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS instance_id INTEGER
-        """)
+        # audit_logs instance_id column handled by app/core/migrations.py
 
         # Create horizon_audit_logs table (used by horizon/audit.py)
         cursor.execute("""
@@ -407,7 +399,7 @@ def ensure_user_schema():
         """)
         cursor.close()
 
-    print("User schema initialized")
+    logger.info("User schema initialized")
 
 
 def ensure_inquiry_schema():
@@ -447,7 +439,7 @@ def ensure_inquiry_schema():
 
 
 def ensure_announcement_schema():
-    """Ensure instance_announcements table and force_logout user column exist."""
+    """Ensure instance_announcements table exists."""
     with get_db_connection("core") as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -466,15 +458,8 @@ def ensure_announcement_schema():
             CREATE INDEX IF NOT EXISTS idx_announcements_lookup
                 ON instance_announcements(active, instance_id)
         """)
-        cursor.execute("""
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS force_logout BOOLEAN DEFAULT FALSE
-        """)
-        cursor.execute("""
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0
-        """)
-        cursor.execute("""
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL
-        """)
+        # Column additions (force_logout, failed_login_attempts, locked_until)
+        # are handled by app/core/migrations.py
         cursor.close()
 
 
@@ -492,8 +477,7 @@ def ensure_first_sysadmin():
             count = cursor.fetchone()['count']
             
             if count == 0:
-                print("\n[!] No system administrator found!")
-                print("Creating default admin user...")
+                logger.warning("No system administrator found — creating default admin user")
 
                 default_password = "ChangeMe123!"
                 password_hash = generate_password_hash(default_password)
@@ -519,20 +503,17 @@ def ensure_first_sysadmin():
                     '{"is_system": true}'
                 ))
 
-                print("[+] Default admin user created")
-                print(f"  Username: admin")
-                print(f"  Password: {default_password}")
-                print("  [!] CHANGE THIS PASSWORD IMMEDIATELY!")
+                logger.warning("Default admin user created — CHANGE THIS PASSWORD IMMEDIATELY (username: admin)")
             else:
-                print(f"[+] Found {count} system administrator(s)")
+                logger.info(f"Found {count} system administrator(s)")
 
             cursor.close()
 
         except Exception as e:
-            print(f"[!] Error ensuring sysadmin: {e}")
+            logger.error(f"Error ensuring sysadmin: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
     ensure_user_schema()
     ensure_first_sysadmin()
-    print("\n✓ Database ready")
+    logger.info("Database ready")

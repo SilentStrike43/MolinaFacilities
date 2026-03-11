@@ -2473,6 +2473,13 @@ def system_health():
     except Exception as _exc:
         s3_info = {'reachable': False, 'buckets': [], 'error': str(_exc)}
 
+    # Latest health check results for System Tests tab
+    try:
+        from app.core.health import get_latest_results
+        check_results = get_latest_results()
+    except Exception:
+        check_results = []
+
     record_global_audit(cu, "view_system_health", "Viewed system health metrics")
 
     return render_template(
@@ -2484,7 +2491,27 @@ def system_health():
         db_info=db_info,
         eb_info=eb_info,
         s3_info=s3_info,
+        check_results=check_results,
     )
+
+
+# ---------- System Tests — manual trigger ----------
+@bp.route("/system-health/run-checks", methods=["POST"])
+@login_required
+@require_horizon
+def run_health_checks():
+    """Manually trigger all health checks and return JSON results."""
+    from flask import jsonify
+    from app.core.health import run_all_checks
+    cu = current_user()
+    try:
+        results = run_all_checks()
+        record_global_audit(cu, "run_health_checks", "Manually triggered system health checks")
+        return jsonify({"ok": True, "results": [
+            {**r, "checked_at": r["checked_at"].isoformat()} for r in results
+        ]})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
 
 
 # ---------- API Endpoints ----------

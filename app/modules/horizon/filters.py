@@ -1,6 +1,9 @@
 """
 Custom Jinja2 filters for Horizon module
 """
+import logging
+
+logger = logging.getLogger(__name__)
 
 def format_number(value):
     """
@@ -142,5 +145,5 @@ def get_instance_name(instance_id):
         instance = get_instance_by_id(instance_id)
         return instance.get('name', 'Unknown') if instance else 'Unknown'
     except Exception as e:
-        print(f"Error getting instance name: {e}")
+        logger.error(f"Error getting instance name for id={instance_id}: {e}")
         return 'Unknown'

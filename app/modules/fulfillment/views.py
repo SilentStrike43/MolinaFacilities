@@ -507,17 +507,8 @@ def request_form():
             return redirect(url_for("fulfillment.queue"))
             
         except Exception as e:
-            error_msg = str(e)
-            error_type = type(e).__name__
-            
-            print(f"❌ ERROR in request creation:")
-            print(f"   Type: {error_type}")
-            print(f"   Message: {error_msg}")
-            
-            import traceback
-            traceback.print_exc()
-            
-            flash(f"Error creating request: {error_type}: {error_msg}", "danger")
+            logger.error(f"Error creating fulfillment request: {e}", exc_info=True)
+            flash(f"Error creating request: {e}", "danger")
             return redirect(url_for("fulfillment.request_form"))
     
     # GET request - show form

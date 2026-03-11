@@ -169,6 +169,31 @@
 
 {% block content %}
 
+{# ── Tab navigation ──────────────────────────────────────────────────────── #}
+<ul class="nav nav-tabs mb-4" id="infraTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab"
+                data-bs-target="#tab-overview" type="button" role="tab">
+            <i class="bi bi-speedometer2 me-1"></i> Overview
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tests-tab" data-bs-toggle="tab"
+                data-bs-target="#tab-tests" type="button" role="tab">
+            <i class="bi bi-clipboard2-pulse me-1"></i> System Tests
+            {% set fail_count = check_results | selectattr('status','equalto','fail') | list | length %}
+            {% if fail_count > 0 %}
+            <span class="badge bg-danger ms-1">{{ fail_count }}</span>
+            {% endif %}
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+{# ── Overview tab (existing content) ─────────────────────────────────────── #}
+<div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
+
 {# ── 1. Health score + KPIs ──────────────────────────────────────────────── #}
 <div class="row mb-4">
     <div class="col-md-4">
@@ -848,5 +873,117 @@
         </div>
     </div>
 </div>
+
+</div>{# end tab-pane overview #}
+
+{# ── System Tests tab ─────────────────────────────────────────────────────── #}
+<div class="tab-pane fade" id="tab-tests" role="tabpanel">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>System Health Checks</h5>
+            <small class="text-muted">Run automatically every hour. Results stored for 24h trending.</small>
+        </div>
+        <button class="btn btn-sm btn-primary" id="runChecksBtn" onclick="runChecksNow()">
+            <i class="bi bi-play-circle me-1"></i> Run Now
+        </button>
+    </div>
+
+    {% if not check_results %}
+    <div class="health-card text-center py-5 text-muted">
+        <i class="bi bi-hourglass-split" style="font-size:2rem;"></i>
+        <p class="mt-2 mb-0">No results yet — checks run hourly or click <strong>Run Now</strong>.</p>
+    </div>
+    {% else %}
+
+    {# Group by module #}
+    {% set modules = check_results | map(attribute='module') | unique | sort | list %}
+    {% for mod in modules %}
+    {% set mod_checks = check_results | selectattr('module','equalto',mod) | list %}
+    {% set mod_fails  = mod_checks | selectattr('status','equalto','fail') | list | length %}
+
+    <div class="health-card mb-3">
+        <div class="d-flex align-items-center mb-3">
+            <span class="status-indicator {{ 'offline' if mod_fails > 0 else 'online' }}"></span>
+            <strong class="text-uppercase" style="font-size:0.75rem;letter-spacing:.08em;">{{ mod }}</strong>
+            {% if mod_fails > 0 %}
+            <span class="badge bg-danger ms-2">{{ mod_fails }} failing</span>
+            {% else %}
+            <span class="badge bg-success ms-2">All passing</span>
+            {% endif %}
+        </div>
+
+        <div class="row g-2">
+        {% for chk in mod_checks %}
+        <div class="col-md-6 col-lg-4">
+            <div class="border rounded p-3 h-100"
+                 style="border-color:{{ '#198754' if chk.status=='pass' else '#dc3545' }} !important;
+                        background:{{ 'rgba(25,135,84,.04)' if chk.status=='pass' else 'rgba(220,53,69,.04)' }};">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <small class="fw-semibold" style="font-size:0.8rem;">{{ chk.check_name }}</small>
+                    {% if chk.status == 'pass' %}
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    {% else %}
+                    <i class="bi bi-x-circle-fill text-danger"></i>
+                    {% endif %}
+                </div>
+                <div class="text-muted" style="font-size:0.75rem;">{{ chk.detail }}</div>
+                <div class="mt-1" style="font-size:0.7rem;color:#adb5bd;">
+                    {{ chk.duration_ms }}ms &mdash;
+                    {{ chk.checked_at.strftime('%H:%M UTC') if chk.checked_at else '—' }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {# Run-now result panel (hidden until triggered) #}
+    <div id="runChecksResult" style="display:none;" class="health-card mt-3"></div>
+</div>
+
+</div>{# end tab-content #}
+
+<script>
+function runChecksNow() {
+    const btn = document.getElementById('runChecksBtn');
+    const panel = document.getElementById('runChecksResult');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Running…';
+    panel.style.display = 'none';
+
+    fetch("{{ url_for('horizon.run_health_checks') }}", {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token() }}'}})
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run Now';
+            if (!data.ok) {
+                panel.innerHTML = '<div class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' + data.error + '</div>';
+                panel.style.display = 'block';
+                return;
+            }
+            const passed = data.results.filter(r => r.status === 'pass').length;
+            const failed = data.results.filter(r => r.status === 'fail').length;
+            panel.innerHTML =
+                '<div class="mb-2"><strong>Run complete:</strong> ' +
+                '<span class="text-success">' + passed + ' passed</span>, ' +
+                '<span class="' + (failed > 0 ? 'text-danger' : 'text-muted') + '">' + failed + ' failed</span>' +
+                ' — <small class="text-muted">Reload page to see updated results.</small></div>' +
+                data.results.filter(r => r.status === 'fail').map(r =>
+                    '<div class="text-danger" style="font-size:.85rem;"><i class="bi bi-x-circle me-1"></i>' +
+                    '<strong>[' + r.module + '] ' + r.check_name + '</strong>: ' + r.detail + '</div>'
+                ).join('');
+            panel.style.display = 'block';
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run Now';
+            panel.innerHTML = '<div class="text-danger">Request failed: ' + err + '</div>';
+            panel.style.display = 'block';
+        });
+}
+</script>
 
 {% endblock %}

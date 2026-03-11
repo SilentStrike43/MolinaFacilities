@@ -2,7 +2,10 @@
 """
 Inventory storage - PostgreSQL Edition
 """
+import logging
 from app.core.database import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_schema():
@@ -84,4 +87,4 @@ def ensure_schema():
 
         cursor.close()
 
-    print("Inventory schema initialized")
+    logger.info("Inventory schema initialized")
