@@ -150,5 +150,5 @@ def _fulfillment_s3():
     from app.core.s3 import s3_configured, _client, _BUCKET
     if not s3_configured():
         raise RuntimeError("S3_FULFILLMENT_BUCKET env var not set")
-    _client().head_bucket(Bucket=_BUCKET)
+    _client().get_bucket_location(Bucket=_BUCKET)
     return f"s3://{_BUCKET} reachable"

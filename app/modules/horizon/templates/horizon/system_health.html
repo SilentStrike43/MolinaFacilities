@@ -954,7 +954,7 @@ function runChecksNow() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Running…';
     panel.style.display = 'none';
 
-    fetch("{{ url_for('horizon.run_health_checks') }}", {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token() }}'}})
+    fetch("{{ url_for('horizon.run_health_checks') }}", {method: 'POST'})
         .then(r => r.json())
         .then(data => {
             btn.disabled = false;
