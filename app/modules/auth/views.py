@@ -32,14 +32,14 @@ def row_to_dict(row):
 
 def get_current_user():
     """Get current logged-in user from session"""
-    uid = session.get("uid")
+    uid = session.get("user_id")
     if not uid:
         return None
-    
+
     row = get_user_by_id(uid)
     if not row:
         return None
-    
+
     return row_to_dict(row)
 
 def record_audit(user, action, source, details=""):
@@ -65,14 +65,27 @@ def login():
         
         # Authenticate
         from app.modules.users.models import authenticate_user
-        user_dict = authenticate_user(username, password)
-        
-        if user_dict:
-            # Check if user is deleted
-            if user_dict.get('deleted_at'):
-                flash("This account has been deactivated.", "danger")
-                return render_template("auth/login.html")
+        from app.core.audit import log_action
+        result = authenticate_user(username, password)
 
+        # Account locked
+        if isinstance(result, dict) and result.get('locked'):
+            locked_until = result['locked_until']
+            log_action(
+                {'id': None, 'username': username, 'permission_level': ''},
+                'login_blocked',
+                'auth',
+                f"Login attempt on locked account '{username}' from {request.remote_addr}"
+            )
+            flash(
+                f"This account is temporarily locked after too many failed attempts. "
+                f"Try again after {locked_until.strftime('%H:%M UTC')}.",
+                "danger"
+            )
+            return render_template("auth/login.html")
+
+        if result:
+            user_dict = result
             # Generate session ID and set session
             sid = _generate_session_id()
             session.clear()
@@ -81,8 +94,6 @@ def login():
             session['session_id'] = sid
             session.permanent = True
 
-            # Log sign-in event (appears in global audit logs for all users)
-            from app.core.audit import log_action
             log_action(
                 user_dict,
                 'sign_in',
@@ -92,10 +103,16 @@ def login():
             )
 
             flash(f"Welcome back, {user_dict.get('first_name') or user_dict['username']}!", "success")
-
-            # Redirect to home
             return redirect(url_for("home.index"))
+
         else:
+            # Log the failed attempt (use a stub user dict so log_action doesn't choke)
+            log_action(
+                {'id': None, 'username': username, 'permission_level': ''},
+                'login_failed',
+                'auth',
+                f"Failed login attempt for '{username}' from {request.remote_addr}"
+            )
             flash("Invalid username or password.", "danger")
             return render_template("auth/login.html")
     

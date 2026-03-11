@@ -4,16 +4,20 @@ Fulfillment Module Views - Instance-Aware Edition
 Uses middleware-based instance context instead of manual instance_id handling
 """
 
+import logging
 import os
 import json
 import datetime
 import mimetypes
+
+logger = logging.getLogger(__name__)
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file, abort
 from werkzeug.utils import secure_filename
 
 from app.modules.auth.security import login_required, current_user, record_audit
 from app.core.permissions import PermissionManager
 from app.core.database import get_db_connection
+from app.core.s3 import s3_configured, s3_upload, s3_presigned_url, s3_delete
 from app.core.instance_queries import build_insert, build_select, build_update, add_instance_filter
 from app.core.instance_context import get_current_instance
 
@@ -356,10 +360,32 @@ def request_form():
 
         description = request.form.get("description", "").strip()
         page_count = int(request.form.get("page_count", 0) or 0)
-        
+        request_category = request.form.get('request_category', 'Standard Mail / Letter')
+
+        # For Standard Mail / Letter: auto-detect page count from uploaded PDF
+        # if the user didn't supply one, then enforce it as required.
+        if request_category == 'Standard Mail / Letter':
+            if page_count == 0:
+                # Try to count pages from the first PDF attachment
+                uploaded_files = request.files.getlist("attachments")
+                for f in uploaded_files:
+                    if f and f.filename and f.filename.lower().endswith('.pdf'):
+                        try:
+                            from pypdf import PdfReader
+                            reader = PdfReader(f.stream)
+                            page_count = len(reader.pages)
+                            f.stream.seek(0)  # reset for later save
+                        except Exception as _pdf_err:
+                            logger.warning(f"PDF page count failed: {_pdf_err}")
+                        break  # only read the first PDF
+
+            if page_count == 0:
+                flash("Total Pages is required for Standard Mail / Letter requests.", "danger")
+                return redirect(url_for("fulfillment.request_form"))
+
         # GET PRINT OPTIONS
         print_options = {
-            'request_category': request.form.get('request_category', 'Standard Mail / Letter'),
+            'request_category': request_category,
             'print_type': request.form.get('print_type', 'Black and White'),
             'paper_size': request.form.get('paper_size', '8.5x11'),
             'paper_stock': request.form.get('paper_stock', '#20 White Paper'),
@@ -442,29 +468,33 @@ def request_form():
                     for f in files:
                         if f and f.filename:
                             try:
+                                import uuid
                                 orig_name = secure_filename(f.filename)
                                 ext = os.path.splitext(orig_name)[1].lower()
-                                
-                                import uuid
                                 stored_name = f"{uuid.uuid4().hex}{ext}"
-                                
-                                UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-                                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                                file_path = os.path.join(UPLOAD_FOLDER, stored_name)
-                                
-                                f.save(file_path)
-                                size = os.path.getsize(file_path)
-                                
+
+                                if s3_configured():
+                                    # Upload to S3 — key encodes instance/request/filename
+                                    s3_upload(f, stored_name, instance_id, fulfillment_id)
+                                    size = f.seek(0, 2) or 0  # seek to end for size
+                                else:
+                                    # Local filesystem fallback (dev only)
+                                    LOCAL_UPLOAD = os.path.join(os.path.dirname(__file__), "uploads")
+                                    os.makedirs(LOCAL_UPLOAD, exist_ok=True)
+                                    file_path = os.path.join(LOCAL_UPLOAD, stored_name)
+                                    f.save(file_path)
+                                    size = os.path.getsize(file_path)
+
                                 cursor.execute("""
                                     INSERT INTO fulfillment_files(
                                         request_id, orig_name, stored_name, ext, bytes, ok
                                     )
                                     VALUES (%s, %s, %s, %s, %s, %s)
                                 """, (fulfillment_id, orig_name, stored_name, ext, size, True))
-                                
+
                             except Exception as file_error:
-                                print(f"Warning: File upload failed: {file_error}")
-                    
+                                logger.warning(f"File upload failed: {file_error}")
+
                     conn.commit()
                 
                 cursor.close()
@@ -618,25 +648,25 @@ def queue():
 @fulfillment_bp.route("/download/<int:file_id>")
 @login_required
 def download_file(file_id: int):
-    """Download uploaded file."""
+    """Download uploaded file — S3 presigned redirect or local filesystem fallback."""
+    from flask import redirect as flask_redirect
     cu = current_user()
-    
+
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
-# SECURITY: Join with fulfillment_requests to check instance
+        # SECURITY: Join to verify instance ownership before serving the file
         cursor.execute("""
-            SELECT 
-                ff.orig_name, 
-                ff.stored_name, 
+            SELECT
+                ff.orig_name,
+                ff.stored_name,
                 ff.ext,
-                fr.id as request_id,
+                fr.id AS request_id,
                 sr.instance_id
             FROM fulfillment_files ff
             JOIN fulfillment_requests fr ON ff.request_id = fr.id
-            JOIN service_requests sr ON fr.service_request_id = sr.id
+            JOIN service_requests sr   ON fr.service_request_id = sr.id
             WHERE ff.id = %s AND ff.ok = TRUE
         """, (file_id,))
-
         row = cursor.fetchone()
         cursor.close()
 
@@ -649,28 +679,38 @@ def download_file(file_id: int):
     should_filter, allowed_instance = should_filter_by_instance(cu)
 
     if should_filter and file_instance != allowed_instance:
-        record_audit(cu, "SECURITY_VIOLATION", "fulfillment", 
-                    f"Attempted to download file {file_id} from instance {file_instance}")
+        record_audit(cu, "SECURITY_VIOLATION", "fulfillment",
+                     f"Attempted to download file {file_id} from instance {file_instance}")
         flash("Access denied: File not found.", "danger")
         return redirect(url_for("fulfillment.queue"))
-    
-    if not row:
-        flash("File not found.", "danger")
-        return redirect(url_for("fulfillment.queue"))
-    
-    orig_name = row['orig_name']
+
+    orig_name  = row['orig_name']
     stored_name = row['stored_name']
-    
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-    file_path = os.path.join(UPLOAD_FOLDER, stored_name)
-    
+    request_id  = row['request_id']
+    instance_id = row['instance_id']
+
+    record_audit(cu, "download_fulfillment_file", "fulfillment",
+                 f"Downloaded file: {orig_name}")
+
+    if s3_configured():
+        # Generate a short-lived presigned URL and redirect the browser to it
+        s3_key = f"fulfillment/{instance_id}/{request_id}/{stored_name}"
+        try:
+            url = s3_presigned_url(s3_key)
+            return flask_redirect(url)
+        except Exception as exc:
+            logger.error(f"Presigned URL failed for file {file_id}: {exc}")
+            flash("File temporarily unavailable. Please try again.", "danger")
+            return redirect(url_for("fulfillment.queue"))
+
+    # Local filesystem fallback (dev / no S3 configured)
+    LOCAL_UPLOAD = os.path.join(os.path.dirname(__file__), "uploads")
+    file_path = os.path.join(LOCAL_UPLOAD, stored_name)
+
     if not os.path.exists(file_path):
         flash("File not found on server.", "danger")
         return redirect(url_for("fulfillment.queue"))
-    
-    record_audit(cu, "download_fulfillment_file", "fulfillment", 
-                f"Downloaded file: {orig_name}")
-    
+
     return send_file(file_path, as_attachment=True, download_name=orig_name)
 
 

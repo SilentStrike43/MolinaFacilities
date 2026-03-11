@@ -501,15 +501,20 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label-modern">Total Pages (Optional)</label>
-                    <input 
-                        type="number" 
-                        class="form-control-modern" 
-                        name="page_count" 
-                        min="0" 
+                    <label class="form-label-modern" id="pageCountLabel">
+                        Total Pages
+                        <span class="required" id="pageCountRequired" style="display:none;">*</span>
+                        <span id="pageCountOptional" style="font-weight:400; color:var(--text-muted); font-size:0.875rem;"> (Optional)</span>
+                    </label>
+                    <input
+                        type="number"
+                        class="form-control-modern"
+                        name="page_count"
+                        id="pageCountInput"
+                        min="1"
                         placeholder="If known"
                     >
-                    <div class="form-text">
+                    <div class="form-text" id="pageCountHint">
                         <i class="bi bi-file-earmark"></i>
                         Approximate page count
                     </div>
@@ -663,7 +668,19 @@
     </form>
 </div>
 
-<script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs" type="module"></script>
+<script type="module">
+// ── pdf.js setup ───────────────────────────────────────────────────────────
+import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+
+async function countPdfPages(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    return pdf.numPages;
+}
+
 // ── File type rules per request category ──────────────────────────────────
 const REQUEST_TYPE_CONFIG = {
     'Standard Mail / Letter': {
@@ -689,17 +706,38 @@ const REQUEST_TYPE_CONFIG = {
 };
 
 // ── DOM refs ───────────────────────────────────────────────────────────────
-const requestTypeSelect = document.getElementById('requestTypeSelect');
-const fileUpload        = document.querySelector('.file-upload-modern');
-const fileInput         = document.getElementById('fileInput');
-const uploadText        = document.querySelector('.file-upload-text');
-const uploadHint        = document.querySelector('.file-upload-hint');
-const formatBadgeText   = document.getElementById('formatBadgeText');
-const selectedContainer = document.getElementById('selectedFilesContainer');
-const selectedList      = document.getElementById('selectedFilesList');
-const fileErrorMsg      = document.getElementById('fileErrorMsg');
-const fileErrorText     = document.getElementById('fileErrorText');
-const submitBtn         = document.getElementById('submitBtn');
+const requestTypeSelect  = document.getElementById('requestTypeSelect');
+const fileUpload         = document.querySelector('.file-upload-modern');
+const fileInput          = document.getElementById('fileInput');
+const uploadText         = document.querySelector('.file-upload-text');
+const uploadHint         = document.querySelector('.file-upload-hint');
+const formatBadgeText    = document.getElementById('formatBadgeText');
+const selectedContainer  = document.getElementById('selectedFilesContainer');
+const selectedList       = document.getElementById('selectedFilesList');
+const fileErrorMsg       = document.getElementById('fileErrorMsg');
+const fileErrorText      = document.getElementById('fileErrorText');
+const submitBtn          = document.getElementById('submitBtn');
+const pageCountInput     = document.getElementById('pageCountInput');
+const pageCountRequired  = document.getElementById('pageCountRequired');
+const pageCountOptional  = document.getElementById('pageCountOptional');
+const pageCountHint      = document.getElementById('pageCountHint');
+
+// ── Page count required toggle ─────────────────────────────────────────────
+function updatePageCountRequired() {
+    const isStandardLetter = requestTypeSelect.value === 'Standard Mail / Letter';
+    pageCountInput.required = isStandardLetter;
+    pageCountRequired.style.display = isStandardLetter ? 'inline' : 'none';
+    pageCountOptional.style.display = isStandardLetter ? 'none' : 'inline';
+    if (isStandardLetter) {
+        pageCountInput.placeholder = 'Required — auto-detected from PDF';
+        pageCountHint.innerHTML =
+            '<i class="bi bi-magic"></i> Auto-filled from your PDF, or enter manually';
+    } else {
+        pageCountInput.placeholder = 'If known';
+        pageCountHint.innerHTML =
+            '<i class="bi bi-file-earmark"></i> Approximate page count';
+    }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function getExt(filename) {
@@ -715,6 +753,7 @@ function applyTypeConstraints() {
     const cfg = currentConfig();
     fileInput.accept  = cfg.accept;
     formatBadgeText.textContent = cfg.label;
+    updatePageCountRequired();
 
     // Re-validate any already-selected files against the new type
     if (fileInput.files && fileInput.files.length > 0) {
@@ -792,8 +831,26 @@ function renderFileList(files, invalidFiles = []) {
 }
 
 // ── File input change ──────────────────────────────────────────────────────
-fileInput.addEventListener('change', (e) => {
+fileInput.addEventListener('change', async (e) => {
     validateAndRefresh(e.target.files);
+
+    // Auto-detect page count for Standard Mail / Letter PDFs
+    if (requestTypeSelect.value === 'Standard Mail / Letter') {
+        const pdf = Array.from(e.target.files).find(f => f.name.toLowerCase().endsWith('.pdf'));
+        if (pdf) {
+            pageCountHint.innerHTML = '<i class="bi bi-arrow-repeat"></i> Counting pages…';
+            try {
+                const count = await countPdfPages(pdf);
+                pageCountInput.value = count;
+                pageCountHint.innerHTML =
+                    `<i class="bi bi-check-circle-fill" style="color:#059669;"></i> ` +
+                    `Auto-detected <strong>${count} page${count !== 1 ? 's' : ''}</strong> — edit if needed`;
+            } catch (_) {
+                pageCountHint.innerHTML =
+                    '<i class="bi bi-exclamation-triangle"></i> Could not auto-detect — please enter manually';
+            }
+        }
+    }
 });
 
 // ── Drag and drop ──────────────────────────────────────────────────────────
@@ -816,7 +873,7 @@ fileUpload.addEventListener('drop', (e) => {
 }, false);
 
 // ── Init: apply constraints for the default selected type ──────────────────
-applyTypeConstraints();
+applyTypeConstraints();   // also calls updatePageCountRequired()
 </script>
 
 {% endblock %}

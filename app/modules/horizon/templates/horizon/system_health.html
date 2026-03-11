@@ -709,9 +709,11 @@
                             </span>
                         </span>
                     </div>
-                    <div class="platform-kv"><span class="pk">Environment</span><span class="pv">gridline-demo</span></div>
-                    <div class="platform-kv"><span class="pk">Region</span><span class="pv">us-east-1 (N. Virginia)</span></div>
-                    <div class="platform-kv"><span class="pk">OS Platform</span><span class="pv">Amazon Linux 2023</span></div>
+                    <div class="platform-kv"><span class="pk">Environment</span><span class="pv">{{ eb_info.name if eb_info.reachable else '—' }}</span></div>
+                    <div class="platform-kv"><span class="pk">Application</span><span class="pv">{{ eb_info.app_name if eb_info.reachable else '—' }}</span></div>
+                    <div class="platform-kv"><span class="pk">Region</span><span class="pv">{{ (eb_info.region ~ ' (N. Virginia)') if eb_info.reachable else 'us-east-1 (N. Virginia)' }}</span></div>
+                    <div class="platform-kv"><span class="pk">OS Platform</span><span class="pv">{{ eb_info.platform if eb_info.reachable else '—' }}</span></div>
+                    <div class="platform-kv"><span class="pk">Runtime</span><span class="pv">{{ eb_info.runtime if eb_info.reachable else '—' }}</span></div>
                     <div class="platform-kv"><span class="pk">Load Balancer</span><span class="pv">ALB (1/1 load-balanced)</span></div>
                     <div class="platform-kv"><span class="pk">TLS Certificate</span><span class="pv">AWS ACM — auto-renewing</span></div>
                 </div>
@@ -754,10 +756,10 @@
 
                 <div class="col-md-4">
                     <p class="infra-section-title"><i class="bi bi-cloud me-1"></i>Compute &amp; Application</p>
-                    <a href="https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environments"
+                    <a href="{{ eb_info.env_url if eb_info.reachable else 'https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home?region=us-east-1#/environments' }}"
                        target="_blank" rel="noopener" class="console-link">
                         <span class="link-icon aws-orange"><i class="bi bi-layers"></i></span>
-                        <span class="link-meta"><span>Elastic Beanstalk</span><small>gridline-demo environment</small></span>
+                        <span class="link-meta"><span>Elastic Beanstalk</span><small>{{ eb_info.name if eb_info.reachable else 'EB' }} environment</small></span>
                         <i class="bi bi-box-arrow-up-right ext-icon"></i>
                     </a>
                     <a href="https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-east-1#LoadBalancers:"

@@ -157,19 +157,73 @@ def set_password(user_id: int, new_password: str, reset_by: int = None) -> bool:
             return False
 
 
+_MAX_FAILED_ATTEMPTS = 5
+_LOCKOUT_MINUTES = 15
+
+
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
-    """Authenticate a user by username and password."""
+    """
+    Authenticate a user by username and password.
+
+    Returns:
+        user dict on success
+        {'locked': True, 'locked_until': datetime} if account is locked
+        None on bad credentials or non-existent / deleted user
+    """
+    from datetime import datetime, timezone
+
     user = get_user_by_username(username)
-    
-    if not user:
+
+    if not user or user.get('deleted_at'):
         return None
-    
-    if user.get('deleted_at'):
-        return None
-    
+
+    # Check active lockout
+    locked_until = user.get('locked_until')
+    if locked_until:
+        # psycopg2 returns timezone-aware datetimes when the column has tz;
+        # our column is TIMESTAMP (no tz), so compare against UTC naive.
+        now = datetime.utcnow()
+        if isinstance(locked_until, datetime) and locked_until.tzinfo is not None:
+            now = datetime.now(timezone.utc)
+        if locked_until > now:
+            return {'locked': True, 'locked_until': locked_until}
+
     if verify_password(user, password):
+        # Successful login — reset failure counter
+        if user.get('failed_login_attempts') or user.get('locked_until'):
+            try:
+                with get_db_connection("core") as conn:
+                    c = conn.cursor()
+                    c.execute(
+                        "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = %s",
+                        (user['id'],)
+                    )
+                    c.close()
+            except Exception:
+                pass
         return user
-    
+
+    # Wrong password — increment failure counter
+    try:
+        with get_db_connection("core") as conn:
+            c = conn.cursor()
+            new_attempts = (user.get('failed_login_attempts') or 0) + 1
+            if new_attempts >= _MAX_FAILED_ATTEMPTS:
+                from datetime import timedelta
+                lockout_until = datetime.utcnow() + timedelta(minutes=_LOCKOUT_MINUTES)
+                c.execute(
+                    "UPDATE users SET failed_login_attempts = %s, locked_until = %s WHERE id = %s",
+                    (new_attempts, lockout_until, user['id'])
+                )
+            else:
+                c.execute(
+                    "UPDATE users SET failed_login_attempts = %s WHERE id = %s",
+                    (new_attempts, user['id'])
+                )
+            c.close()
+    except Exception:
+        pass
+
     return None
 
 
@@ -414,6 +468,12 @@ def ensure_announcement_schema():
         """)
         cursor.execute("""
             ALTER TABLE users ADD COLUMN IF NOT EXISTS force_logout BOOLEAN DEFAULT FALSE
+        """)
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0
+        """)
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP NULL
         """)
         cursor.close()
 

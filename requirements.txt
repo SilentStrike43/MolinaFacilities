@@ -23,5 +23,8 @@ httpx==0.26.0
 # botocore pins urllib3<1.27 — do not add an explicit urllib3 pin here
 boto3==1.42.64
 
+# ── PDF ───────────────────────────────────────────────────────────────────────
+pypdf==4.3.1
+
 # ── Utilities ─────────────────────────────────────────────────────────────────
 python-dotenv==1.0.0

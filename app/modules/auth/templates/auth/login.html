@@ -3,82 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Gridline Services</title>
-    
+    <title>Sign In — Gridline</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             background: #0a0e27;
         }
-        
+
         /* Animated Grid Background */
         .grid-background {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
                 linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
                 linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px);
             background-size: 50px 50px;
             animation: gridMove 20s linear infinite;
             z-index: 1;
         }
-        
+
         @keyframes gridMove {
-            0% { transform: translate(0, 0); }
+            0%   { transform: translate(0, 0); }
             100% { transform: translate(50px, 50px); }
         }
-        
-        /* Gradient Overlay */
+
         .gradient-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background:
+                radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 50%);
             z-index: 2;
         }
-        
-        /* Particles */
+
         .particles {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 3;
             pointer-events: none;
         }
-        
+
         .particle {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 4px; height: 4px;
             background: rgba(99, 102, 241, 0.5);
             border-radius: 50%;
             animation: float 10s infinite ease-in-out;
         }
-        
+
         @keyframes float {
             0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
             50% { opacity: 1; }
         }
-        
-        /* Login Container */
+
         .login-container {
             position: relative;
             z-index: 10;
@@ -88,8 +79,7 @@
             justify-content: center;
             padding: 20px;
         }
-        
-        /* Glassmorphism Card */
+
         .login-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
@@ -101,27 +91,19 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             animation: slideUp 0.6s ease-out;
         }
-        
+
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Brand Section */
+
         .brand {
             text-align: center;
             margin-bottom: 40px;
         }
-        
+
         .brand-icon {
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             margin: 0 auto 20px;
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             border-radius: 20px;
@@ -132,12 +114,12 @@
             box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50%       { transform: scale(1.05); }
         }
-        
+
         .brand-name {
             font-size: 2rem;
             font-weight: 700;
@@ -145,21 +127,20 @@
             margin-bottom: 8px;
             letter-spacing: -0.5px;
         }
-        
+
         .brand-subtitle {
             font-size: 0.95rem;
             color: rgba(255, 255, 255, 0.6);
             font-weight: 400;
         }
-        
-        /* Form Styles */
+
         .form-label {
             color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
             margin-bottom: 8px;
             font-size: 0.9rem;
         }
-        
+
         .form-control {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -169,19 +150,32 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
         }
-        
+
         .form-control:focus {
             background: rgba(255, 255, 255, 0.12);
             border-color: #6366f1;
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
             color: #fff;
         }
-        
+
         .form-control::placeholder {
             color: rgba(255, 255, 255, 0.4);
         }
-        
-        /* Password Toggle */
+
+        /* Shake animation for failed login */
+        .form-control.is-invalid-shake {
+            border-color: rgba(239, 68, 68, 0.6);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-6px); }
+            40%       { transform: translateX(6px); }
+            60%       { transform: translateX(-4px); }
+            80%       { transform: translateX(4px); }
+        }
+
         .password-toggle {
             position: absolute;
             right: 16px;
@@ -194,30 +188,9 @@
             padding: 4px;
             transition: color 0.2s;
         }
-        
-        .password-toggle:hover {
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        /* Remember Me Checkbox */
-        .form-check-input {
-            background-color: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-        }
-        
-        .form-check-input:checked {
-            background-color: #6366f1;
-            border-color: #6366f1;
-        }
-        
-        .form-check-label {
-            color: rgba(255, 255, 255, 0.8);
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        /* Login Button */
+
+        .password-toggle:hover { color: rgba(255, 255, 255, 0.8); }
+
         .btn-login {
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             border: none;
@@ -229,43 +202,29 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .btn-login::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: left 0.5s;
         }
-        
-        .btn-login:hover::before {
-            left: 100%;
-        }
-        
+
+        .btn-login:hover::before { left: 100%; }
         .btn-login:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
         }
-        
-        .btn-login:active {
-            transform: translateY(0);
-        }
-        
-        /* Loading State */
-        .btn-login.loading {
-            pointer-events: none;
-        }
-        
+        .btn-login:active { transform: translateY(0); }
+        .btn-login.loading { pointer-events: none; }
+
         .btn-login .spinner-border {
-            width: 1rem;
-            height: 1rem;
+            width: 1rem; height: 1rem;
             border-width: 2px;
         }
-        
-        /* Alert Styles */
+
         .alert {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -273,81 +232,63 @@
             color: #fff;
             backdrop-filter: blur(10px);
         }
-        
+
         .alert-danger {
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(239, 68, 68, 0.3);
         }
-        
+
         .alert-success {
             background: rgba(34, 197, 94, 0.15);
             border-color: rgba(34, 197, 94, 0.3);
         }
-        
+
         .alert-info {
             background: rgba(59, 130, 246, 0.15);
             border-color: rgba(59, 130, 246, 0.3);
         }
-        
-        .btn-close {
-            filter: invert(1);
-            opacity: 0.6;
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.3);
         }
-        
-        /* Links */
-        a {
-            color: #a5b4fc;
-            text-decoration: none;
-            transition: color 0.2s;
+
+        .btn-close { filter: invert(1); opacity: 0.6; }
+
+        .attempts-remaining {
+            font-size: 0.8rem;
+            color: rgba(245, 158, 11, 0.85);
+            margin-top: 6px;
+            display: none;
         }
-        
-        a:hover {
-            color: #c7d2fe;
-        }
-        
-        /* Footer */
+
         .login-footer {
             text-align: center;
             margin-top: 24px;
             padding-top: 24px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .login-footer small {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.85rem;
-        }
-        
-        /* Responsive */
+
+        .login-footer small { color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; }
+
+        a { color: #a5b4fc; text-decoration: none; transition: color 0.2s; }
+        a:hover { color: #c7d2fe; }
+
         @media (max-width: 576px) {
-            .login-card {
-                padding: 32px 24px;
-            }
-            
-            .brand-name {
-                font-size: 1.75rem;
-            }
-            
-            .brand-icon {
-                width: 70px;
-                height: 70px;
-                font-size: 2rem;
-            }
+            .login-card { padding: 32px 24px; }
+            .brand-name { font-size: 1.75rem; }
+            .brand-icon { width: 70px; height: 70px; font-size: 2rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Grid Background -->
     <div class="grid-background"></div>
     <div class="gradient-overlay"></div>
-    
-    <!-- Particles -->
     <div class="particles" id="particles"></div>
-    
-    <!-- Login Container -->
+
     <div class="login-container">
         <div class="login-card">
-            <!-- Brand -->
+
             <div class="brand">
                 <div class="brand-icon">
                     <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -355,137 +296,130 @@
                 <div class="brand-name">Gridline</div>
                 <div class="brand-subtitle">Multi-Tenant Service Platform</div>
             </div>
-            
+
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        <i class="bi bi-{{ 'exclamation-triangle' if category == 'danger' else 'info-circle' }} me-2"></i>
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mb-3"
+                         role="alert"
+                         data-auto-dismiss="{{ 'false' if category in ('danger', 'error', 'warning') else 'true' }}">
+                        <i class="bi bi-{{ 'lock' if 'locked' in message|lower else ('exclamation-triangle' if category in ('danger','error','warning') else 'info-circle') }} me-2"></i>
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
+
             <!-- Login Form -->
-            <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+            <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm" autocomplete="off">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="username" 
-                           name="username" 
-                           required 
+                    <input type="text"
+                           class="form-control"
+                           id="username"
+                           name="username"
+                           required
                            autofocus
+                           autocomplete="username"
                            placeholder="Enter your username">
                 </div>
-                
-                <div class="mb-3">
+
+                <div class="mb-4">
                     <label for="password" class="form-label">Password</label>
                     <div style="position: relative;">
-                        <input type="password" 
-                               class="form-control" 
-                               id="password" 
-                               name="password" 
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
                                required
+                               autocomplete="current-password"
                                placeholder="Enter your password">
-                        <button type="button" class="password-toggle" id="togglePassword">
+                        <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Toggle password visibility">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </button>
                     </div>
                 </div>
-                
-                <div class="mb-4 form-check">
-                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                    <label class="form-check-label" for="remember">
-                        Remember me for 30 days
-                    </label>
-                </div>
-                
+
                 <button type="submit" class="btn btn-primary btn-login w-100" id="loginBtn">
                     <span id="btnText">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                     </span>
                     <span id="btnLoading" style="display: none;">
                         <span class="spinner-border spinner-border-sm me-2"></span>
-                        Signing in...
+                        Signing in…
                     </span>
                 </button>
             </form>
-            
-            <!-- Footer Links -->
+
             <div class="login-footer">
                 <small>
-                    <a href="{{ url_for('auth.change_password') }}">Forgot password?</a>
-                    <span class="mx-2">•</span>
-                    © 2025 Gridline Services
+                    Submit a password reset request through your administrator.
+                    <br>
+                    <span class="text-muted" style="opacity:0.5;">© 2025 Gridline Services</span>
                 </small>
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Password Toggle
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const password = document.getElementById('password');
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const pw = document.getElementById('password');
             const icon = document.getElementById('toggleIcon');
-            
-            if (password.type === 'password') {
-                password.type = 'text';
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
-            } else {
-                password.type = 'password';
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye');
-            }
+            const isHidden = pw.type === 'password';
+            pw.type = isHidden ? 'text' : 'password';
+            icon.classList.toggle('bi-eye', !isHidden);
+            icon.classList.toggle('bi-eye-slash', isHidden);
         });
-        
-        // Form Submit Loading State
-        document.getElementById('loginForm').addEventListener('submit', function() {
+
+        // Shake inputs on a danger flash (failed login)
+        (function () {
+            const hasDanger = document.querySelector('.alert-danger');
+            if (hasDanger) {
+                ['username', 'password'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.classList.add('is-invalid-shake');
+                        el.addEventListener('input', function () {
+                            el.classList.remove('is-invalid-shake');
+                        }, { once: true });
+                    }
+                });
+            }
+        })();
+
+        // Loading state on submit
+        document.getElementById('loginForm').addEventListener('submit', function () {
             const btn = document.getElementById('loginBtn');
-            const btnText = document.getElementById('btnText');
-            const btnLoading = document.getElementById('btnLoading');
-            
             btn.classList.add('loading');
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline';
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('btnLoading').style.display = 'inline';
         });
-        
-        // Generate Particles
-        function createParticles() {
-            const particles = document.getElementById('particles');
-            const particleCount = 30;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                // Random position
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                
-                // Random animation delay and duration
-                particle.style.animationDelay = Math.random() * 10 + 's';
-                particle.style.animationDuration = (Math.random() * 10 + 5) + 's';
-                
-                particles.appendChild(particle);
-            }
-        }
-        
-        createParticles();
-        
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
+
+        // Auto-dismiss only non-error alerts (success/info)
+        document.querySelectorAll('.alert[data-auto-dismiss="true"]').forEach(function (el) {
+            setTimeout(function () {
+                const bsAlert = bootstrap.Alert.getOrCreateInstance(el);
                 bsAlert.close();
-            });
-        }, 5000);
+            }, 5000);
+        });
+
+        // Particles
+        (function () {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top  = Math.random() * 100 + '%';
+                p.style.animationDelay    = (Math.random() * 10) + 's';
+                p.style.animationDuration = (Math.random() * 10 + 5) + 's';
+                container.appendChild(p);
+            }
+        })();
     </script>
 </body>
 </html>

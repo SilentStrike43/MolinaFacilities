@@ -54,6 +54,12 @@ def configure_app(app):
         TRACKING_CACHE_DURATION=int(os.environ.get('TRACKING_CACHE_DURATION', 30)),
         FEDEX_SYNC_ENABLED=os.environ.get('FEDEX_SYNC_ENABLED', 'false').lower() == 'true',
         FEDEX_SYNC_INTERVAL=int(os.environ.get('FEDEX_SYNC_INTERVAL', 30)),
+
+        # ── S3 — Fulfillment file storage ─────────────────────────
+        # Set S3_FULFILLMENT_BUCKET via `eb setenv S3_FULFILLMENT_BUCKET=<bucket-name>`
+        # When unset the app falls back to local filesystem storage (dev only).
+        S3_FULFILLMENT_BUCKET=os.environ.get('S3_FULFILLMENT_BUCKET', ''),
+        S3_BUCKET_REGION=os.environ.get('S3_BUCKET_REGION', 'us-east-1'),
     )
 
     # Ensure upload directory exists

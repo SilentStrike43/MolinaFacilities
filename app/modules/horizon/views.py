@@ -2361,29 +2361,58 @@ def system_health():
         cursor.close()
 
     # ── AWS Elastic Beanstalk info ─────────────────────────────────────────────
+    # Set EB_ENV_NAME in EB environment variables to pin a specific environment.
+    # If not set, auto-detects by listing all active (non-terminated) environments.
+    import os as _os
     eb_info = {'reachable': False}
     try:
         import boto3 as _boto3
         _eb = _boto3.client('elasticbeanstalk', region_name='us-east-1')
-        _resp = _eb.describe_environments(EnvironmentNames=['gridline-demo'])
-        _envs = _resp.get('Environments', [])
+        _env_name = _os.environ.get('EB_ENV_NAME', '').strip()
+        if _env_name:
+            _resp = _eb.describe_environments(
+                EnvironmentNames=[_env_name], IncludeDeleted=False
+            )
+        else:
+            _resp = _eb.describe_environments(IncludeDeleted=False)
+
+        _envs = [
+            e for e in _resp.get('Environments', [])
+            if e.get('Status') not in ('Terminated', 'Terminating')
+        ]
         if _envs:
-            _e = _envs[0]
-            _stack = _e.get('SolutionStackName', '')
+            _e        = _envs[0]
+            _stack    = _e.get('SolutionStackName', '')
             _platform = _stack.split(' running ')[0] if ' running ' in _stack else _stack
             _runtime  = _stack.split(' running ')[-1] if ' running ' in _stack else ''
+            _app_name = _e.get('ApplicationName', '')
+            _env_id   = _e.get('EnvironmentId', '')
+            if _app_name and _env_id:
+                _env_url = (
+                    f"https://us-east-1.console.aws.amazon.com/elasticbeanstalk/home"
+                    f"?region=us-east-1#/environment/overview"
+                    f"?applicationName={_app_name}&environmentId={_env_id}"
+                )
+            else:
+                _env_url = (
+                    "https://us-east-1.console.aws.amazon.com/elasticbeanstalk"
+                    "/home?region=us-east-1#/environments"
+                )
             eb_info = {
                 'reachable':     True,
-                'name':          _e.get('EnvironmentName', 'gridline-demo'),
+                'name':          _e.get('EnvironmentName', ''),
+                'app_name':      _app_name,
                 'status':        _e.get('Status', 'Unknown'),
                 'health':        _e.get('Health', 'Unknown'),
                 'health_status': _e.get('HealthStatus', 'Unknown'),
                 'platform':      _platform,
                 'runtime':       _runtime,
+                'tier':          _e.get('Tier', {}).get('Name', 'WebServer'),
                 'cname':         _e.get('CNAME', ''),
                 'region':        'us-east-1',
                 'date_updated':  str(_e.get('DateUpdated', ''))[:19],
-                'env_id':        _e.get('EnvironmentId', ''),
+                'env_id':        _env_id,
+                'env_url':       _env_url,
             }
     except Exception as _exc:
         eb_info = {'reachable': False, 'error': str(_exc)}
