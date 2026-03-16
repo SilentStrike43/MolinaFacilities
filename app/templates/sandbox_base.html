@@ -166,6 +166,12 @@
                                 <span>Dashboard</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('users.submit_support_ticket') }}" class="nav-link {{ 'active' if active=='support-ticket' else '' }}">
+                                <i class="nav-icon bi bi-headset"></i>
+                                <span>Contact Support</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
@@ -329,6 +335,17 @@
                 {% endfor %}
                 {% endif %}
                 {% block body %}{% endblock %}
+
+                <!-- Footer -->
+                <footer style="
+                    margin-top: 3rem;
+                    padding: 1.25rem 0 0.5rem;
+                    border-top: 1px solid var(--border-subtle);
+                    text-align: center;
+                ">
+                    <p style="margin: 0 0 0.2rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.04em; text-transform: uppercase;">Gridline Platform</p>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Copyright &copy; 2026 Christopher Gonzalez &mdash; All Rights Reserved</p>
+                </footer>
             </div>
         </main>
     </div>

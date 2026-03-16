@@ -104,6 +104,23 @@ a:hover {
     color: var(--brand-primary-dark) !important;
 }
 
+/* Gradient/colored header cards — always white text regardless of theme.
+   Needed because h1-h6 and p rules above use !important which beats
+   template-level color:white rules that lack !important. */
+.welcome-header h1, .welcome-header h2, .welcome-header h3,
+.welcome-header h4, .welcome-header h5, .welcome-header h6,
+.welcome-header p, .welcome-header small, .welcome-header span,
+.welcome-header a, .welcome-header div {
+    color: white !important;
+}
+
+.page-header-card h1, .page-header-card h2, .page-header-card h3,
+.page-header-card h4, .page-header-card h5, .page-header-card h6,
+.page-header-card p, .page-header-card small, .page-header-card span,
+.page-header-card a, .page-header-card div {
+    color: white !important;
+}
+
 /* Small Text */
 small,
 .small {

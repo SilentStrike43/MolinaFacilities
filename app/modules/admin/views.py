@@ -868,4 +868,31 @@ def review_inquiry(inquiry_id):
                      target_user_id=inquiry['user_id'],
                      target_username=inquiry['username'])
 
+    # Send email notification
+    from app.modules.admin.emails import send_inquiry_reviewed, send_password_reset_link
+    user_email = inquiry.get('email', '')
+
+    if action == 'approve' and inquiry['request_type'] == 'password_reset':
+        # Generate a one-time reset token (1-hour expiry) and email the link
+        import secrets
+        from datetime import datetime, timedelta
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        with get_db_connection("core") as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO password_reset_tokens
+                    (user_id, username, token, inquiry_id, expires_at)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (inquiry['user_id'], inquiry['username'], token, inquiry_id, expires_at))
+            cur.close()
+        reset_url = url_for('auth.reset_password', token=token, _external=True)
+        send_password_reset_link(user_email, inquiry['username'], reset_url,
+                                 first_name=inquiry.get('first_name', ''))
+    else:
+        send_inquiry_reviewed(user_email, inquiry['username'],
+                              inquiry['request_type'], action, reason or None,
+                              first_name=inquiry.get('first_name', ''),
+                              last_name=inquiry.get('last_name', ''))
+
     return jsonify({"success": True})

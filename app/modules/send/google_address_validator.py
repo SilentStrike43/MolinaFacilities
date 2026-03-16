@@ -12,6 +12,8 @@ import urllib.parse
 import requests
 from typing import Dict, List, Optional
 
+from app.core.cache import cache_get, cache_set, make_key, TTL_ADDRESS
+
 logger = logging.getLogger(__name__)
 
 _USER_AGENT = 'GridlineService/1.0 (internal shipping app)'
@@ -54,7 +56,24 @@ class GoogleAddressValidator:
             postal_code   – ZIP / postal code
             country_code  – ISO-2 country (default 'US')
             company       – optional company name
+
+        Results are cached in Redis for 24 hours — repeated lookups of the
+        same address (common in batch workflows or multi-user offices) hit
+        the cache instead of Nominatim.
         """
+        cache_key = make_key(
+            "addr",
+            " ".join(address_data.get("street_lines", [])),
+            address_data.get("city", ""),
+            address_data.get("state_code", ""),
+            address_data.get("postal_code", ""),
+            address_data.get("country_code", "US"),
+        )
+        cached = cache_get(cache_key)
+        if cached is not None:
+            logger.debug("Address cache hit: %s", cache_key)
+            return cached
+
         params = {
             'format':         'json',
             'addressdetails': 1,
@@ -93,9 +112,15 @@ class GoogleAddressValidator:
             if fallback:
                 results = [fallback]
             else:
-                return self._not_found(address_data)
+                result = self._not_found(address_data)
+                # Cache "not found" for 1 h so we don't hammer Nominatim on
+                # repeated bad addresses, but don't lock out forever.
+                cache_set(cache_key, result, ttl=3600)
+                return result
 
-        return self._parse(results[0], address_data)
+        result = self._parse(results[0], address_data)
+        cache_set(cache_key, result, ttl=TTL_ADDRESS)
+        return result
 
     # ── Parsing ───────────────────────────────────────────────────────────────
 

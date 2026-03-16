@@ -187,6 +187,14 @@
             {% endif %}
         </button>
     </li>
+    {% if cu and cu.permission_level == 'S1' %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="alerts-tab" data-bs-toggle="tab"
+                data-bs-target="#tab-alerts" type="button" role="tab">
+            <i class="bi bi-broadcast me-1"></i> System Alerts
+        </button>
+    </li>
+    {% endif %}
 </ul>
 
 <div class="tab-content">
@@ -944,6 +952,132 @@
     <div id="runChecksResult" style="display:none;" class="health-card mt-3"></div>
 </div>
 
+{% if cu and cu.permission_level == 'S1' %}
+<div class="tab-pane fade" id="tab-alerts" role="tabpanel">
+
+    <div class="health-card mb-4">
+        <h5 class="mb-1"><i class="bi bi-broadcast me-2 text-danger"></i>Broadcast System Alert</h5>
+        <p class="text-muted mb-4" style="font-size:0.85rem;">
+            Sends an email to all users in the selected scope. Use sparingly — every recipient gets an email.
+        </p>
+
+        <form id="alertForm" onsubmit="sendAlert(event)">
+
+            {# Alert type preset cards #}
+            <div class="mb-4">
+                <label class="form-label" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);">
+                    Alert Type
+                </label>
+                <div class="d-flex flex-wrap gap-2" id="alertTypeCards">
+                    {% set alert_types = [
+                        ('maintenance', '#f59e0b', 'bi-tools',               'Maintenance',  'Scheduled downtime or maintenance window'),
+                        ('outage',      '#ef4444', 'bi-exclamation-octagon', 'Outage',       'Active service disruption'),
+                        ('resolved',    '#10b981', 'bi-check-circle',        'Resolved',     'Previous incident has been resolved'),
+                        ('security',    '#8b5cf6', 'bi-shield-exclamation',  'Security',     'Security notice or advisory'),
+                        ('info',        '#3b82f6', 'bi-info-circle',         'Info',         'General informational notice'),
+                    ] %}
+                    {% for val, color, icon, label, desc in alert_types %}
+                    <label class="alert-type-card" data-value="{{ val }}" data-color="{{ color }}"
+                           style="cursor:pointer;border:2px solid var(--border-subtle);border-radius:.625rem;
+                                  padding:.6rem 1rem;background:var(--bg-secondary);transition:all .15s;
+                                  display:flex;align-items:center;gap:.5rem;min-width:140px;">
+                        <input type="radio" name="alert_type" value="{{ val }}" style="display:none;"
+                               {% if val == 'info' %}checked{% endif %}>
+                        <i class="bi {{ icon }}" style="color:{{ color }};font-size:1.1rem;"></i>
+                        <div>
+                            <div style="font-size:.83rem;font-weight:600;color:var(--text-primary);">{{ label }}</div>
+                            <div style="font-size:.72rem;color:var(--text-muted);line-height:1.3;">{{ desc }}</div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Subject #}
+            <div class="mb-3">
+                <label class="form-label" style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);">
+                    Subject / Title <span style="color:#ef4444;">*</span>
+                </label>
+                <input type="text" id="alertTitle" name="title" maxlength="150" required
+                       class="form-control"
+                       placeholder="e.g. Scheduled maintenance Sunday 2–4 AM UTC">
+            </div>
+
+            {# Suggested presets #}
+            <div class="mb-3">
+                <label class="form-label" style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);">
+                    Quick Presets
+                </label>
+                <div class="d-flex flex-wrap gap-2">
+                    {% set presets = [
+                        ('maintenance', 'Scheduled Maintenance',    'Gridline will be undergoing scheduled maintenance. The platform may be briefly unavailable during this window.'),
+                        ('outage',      'Service Disruption',       'We are currently experiencing a service disruption. Our team is investigating and working on a resolution.'),
+                        ('resolved',    'All Systems Operational',  'The previously reported issue has been resolved. All services are now operating normally.'),
+                        ('security',    'Security Advisory',        'We are issuing a security advisory. Please review your account activity and contact support if you notice anything unusual.'),
+                    ] %}
+                    {% for atype, ptitle, pbody in presets %}
+                    <button type="button" class="btn btn-sm"
+                            style="font-size:.75rem;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-secondary);"
+                            onclick="applyPreset('{{ atype }}', {{ ptitle|tojson }}, {{ pbody|tojson }})">
+                        {{ ptitle }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Message body #}
+            <div class="mb-4">
+                <label class="form-label" style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);">
+                    Message <span style="color:#ef4444;">*</span>
+                </label>
+                <textarea id="alertMessage" name="message" rows="5" required
+                          class="form-control"
+                          placeholder="Full alert message visible to all recipients…"></textarea>
+            </div>
+
+            {# Scope selector #}
+            <div class="mb-4">
+                <label class="form-label" style="font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-secondary);">
+                    Target Scope
+                </label>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="scope" id="scopeGlobal"
+                               value="global" checked onchange="toggleInstanceSelect()">
+                        <label class="form-check-label" for="scopeGlobal" style="font-size:.875rem;">
+                            <i class="bi bi-globe2 me-1"></i> All Users (Global)
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="scope" id="scopeInstance"
+                               value="instance" onchange="toggleInstanceSelect()">
+                        <label class="form-check-label" for="scopeInstance" style="font-size:.875rem;">
+                            <i class="bi bi-building me-1"></i> Specific Instance
+                        </label>
+                    </div>
+                    <select id="instanceSelect" name="instance_id" class="form-select form-select-sm"
+                            style="max-width:220px;display:none;">
+                        <option value="">— Select instance —</option>
+                        {% for inst in instances %}
+                        <option value="{{ inst.id }}">{{ inst.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {# Confirm + send #}
+            <div class="d-flex align-items-center gap-3">
+                <button type="submit" id="alertSendBtn" class="btn btn-danger">
+                    <i class="bi bi-broadcast me-1"></i> Send Alert
+                </button>
+                <span id="alertResultMsg" style="font-size:.875rem;"></span>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endif %}
+
 </div>{# end tab-content #}
 
 <script>
@@ -982,6 +1116,104 @@ function runChecksNow() {
             btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run Now';
             panel.innerHTML = '<div class="text-danger">Request failed: ' + err + '</div>';
             panel.style.display = 'block';
+        });
+}
+
+// ── System Alerts ─────────────────────────────────────────────────────────
+(function() {
+    const cards = document.querySelectorAll('.alert-type-card');
+    function highlightSelected() {
+        cards.forEach(card => {
+            const inp = card.querySelector('input[type="radio"]');
+            if (inp.checked) {
+                card.style.borderColor = card.dataset.color;
+                card.style.background = card.dataset.color + '18';
+            } else {
+                card.style.borderColor = 'var(--border-subtle)';
+                card.style.background = 'var(--bg-secondary)';
+            }
+        });
+    }
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            card.querySelector('input[type="radio"]').checked = true;
+            highlightSelected();
+        });
+    });
+    highlightSelected();
+})();
+
+function toggleInstanceSelect() {
+    const sel = document.getElementById('instanceSelect');
+    sel.style.display = document.getElementById('scopeInstance').checked ? '' : 'none';
+}
+
+function applyPreset(atype, title, body) {
+    document.getElementById('alertTitle').value = title;
+    document.getElementById('alertMessage').value = body;
+    const radio = document.querySelector(`.alert-type-card input[value="${atype}"]`);
+    if (radio) {
+        radio.checked = true;
+        document.querySelectorAll('.alert-type-card').forEach(c => {
+            const inp = c.querySelector('input[type="radio"]');
+            if (inp.checked) {
+                c.style.borderColor = c.dataset.color;
+                c.style.background = c.dataset.color + '18';
+            } else {
+                c.style.borderColor = 'var(--border-subtle)';
+                c.style.background = 'var(--bg-secondary)';
+            }
+        });
+    }
+}
+
+function sendAlert(e) {
+    e.preventDefault();
+    const btn = document.getElementById('alertSendBtn');
+    const msg = document.getElementById('alertResultMsg');
+    const scopeInstance = document.getElementById('scopeInstance').checked;
+    const instanceId = document.getElementById('instanceSelect').value;
+
+    if (scopeInstance && !instanceId) {
+        msg.innerHTML = '<span class="text-danger">Please select an instance.</span>';
+        return;
+    }
+
+    const confirmed = confirm(
+        scopeInstance
+            ? 'Send this alert to all users in the selected instance?'
+            : 'Send this alert to ALL users across every instance?'
+    );
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending…';
+    msg.innerHTML = '';
+
+    const fd = new FormData(document.getElementById('alertForm'));
+    if (!scopeInstance) fd.delete('instance_id');
+
+    fetch("{{ url_for('horizon.send_system_alert') }}", {method: 'POST', body: fd})
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-broadcast me-1"></i> Send Alert';
+            if (data.ok) {
+                msg.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Sent to ${data.sent} of ${data.total} users.</span>`;
+                document.getElementById('alertForm').reset();
+                document.querySelectorAll('.alert-type-card').forEach(c => {
+                    c.style.borderColor = 'var(--border-subtle)';
+                    c.style.background = 'var(--bg-secondary)';
+                });
+                document.querySelector('.alert-type-card input[value="info"]').checked = true;
+            } else {
+                msg.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>${data.error}</span>`;
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-broadcast me-1"></i> Send Alert';
+            msg.innerHTML = `<span class="text-danger">Request failed: ${err}</span>`;
         });
 }
 </script>

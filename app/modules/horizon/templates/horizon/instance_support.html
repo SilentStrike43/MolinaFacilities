@@ -381,6 +381,14 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pane-tickets" role="tab">
+            <i class="bi bi-headset"></i> Tickets
+            {% if open_tickets %}
+            <span class="tab-badge">{{ open_tickets|length }}</span>
+            {% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#pane-audit" role="tab">
             <i class="bi bi-clipboard-data"></i> Audit Search
         </a>
@@ -501,6 +509,81 @@
             </div>
             {% else %}
             <div class="hz-empty"><i class="bi bi-inbox"></i><p>No pending inquiries across any instance.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ══ SUPPORT TICKETS ═════════════════════════════════════ -->
+    <div class="tab-pane fade" id="pane-tickets" role="tabpanel">
+        <div class="stat-card" style="margin-bottom:0;">
+            <p class="section-label"><i class="bi bi-headset me-1"></i>Open &amp; In-Progress tickets across all instances</p>
+            {% if open_tickets %}
+            <div class="hz-table-wrap">
+                <table class="hz-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Subject</th>
+                            <th>Category</th>
+                            <th>User</th>
+                            <th>Instance</th>
+                            <th>Status</th>
+                            <th>Replies</th>
+                            <th>Submitted</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for t in open_tickets %}
+                        <tr>
+                            <td style="color:var(--text-muted,#9ca3af);font-size:0.8rem;">{{ t.id }}</td>
+                            <td style="max-width:220px;">
+                                <span title="{{ t.subject }}" style="font-weight:600;">
+                                    {{ t.subject[:55] }}{% if t.subject|length > 55 %}…{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if t.category in ('bug','feature_request') %}
+                                <span class="lv" style="background:rgba(139,92,246,0.1);color:#7c3aed;">
+                                    {{ t.category.replace('_',' ').title() }}
+                                </span>
+                                {% else %}
+                                <span class="lv" style="background:rgba(245,158,11,0.1);color:#d97706;">
+                                    {{ t.category.replace('_',' ').title() }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ t.username }}</strong>
+                                {% if t.user_email %}
+                                <div style="font-size:0.75rem;color:#9ca3af;">{{ t.user_email }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="font-size:0.82rem;color:#6c757d;">{{ t.instance_name or '—' }}</td>
+                            <td>
+                                {% if t.status == 'open' %}
+                                <span class="lv" style="background:rgba(59,130,246,0.1);color:#2563eb;">Open</span>
+                                {% else %}
+                                <span class="lv" style="background:rgba(245,158,11,0.1);color:#d97706;">In Progress</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:center;font-size:0.82rem;">{{ t.reply_count }}</td>
+                            <td style="font-size:0.78rem;color:#9ca3af;white-space:nowrap;">
+                                {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else '—' }}
+                            </td>
+                            <td>
+                                <button class="btn-force" style="background:rgba(245,158,11,0.08);color:#d97706;border-color:rgba(245,158,11,0.25);"
+                                        onclick="openTicketModal({{ t.id }})">
+                                    <i class="bi bi-reply me-1"></i>Reply
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="hz-empty"><i class="bi bi-headset"></i><p>No open tickets at this time.</p></div>
             {% endif %}
         </div>
     </div>
@@ -666,8 +749,131 @@
 </div>
 {% endblock %}
 
+<!-- Ticket Reply Modal -->
+<div class="modal fade" id="ticketModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:12px;">
+            <div class="modal-header" style="border-bottom:1px solid #e9ecef;">
+                <h5 class="modal-title" id="ticketModalTitle" style="font-weight:700;color:#1a1d2e;">Ticket #—</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.5rem;">
+                <div id="ticketLoading" style="text-align:center;padding:2rem;color:#9ca3af;">
+                    <i class="bi bi-arrow-repeat" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;"></i>
+                    Loading…
+                </div>
+                <div id="ticketDetail" style="display:none;">
+                    <!-- Original message -->
+                    <div style="background:#f8f9fc;border:1px solid #e9ecef;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+                            <strong id="td-username" style="color:#1a1d2e;"></strong>
+                            <span id="td-date" style="font-size:0.78rem;color:#9ca3af;"></span>
+                        </div>
+                        <p id="td-body" style="margin:0;font-size:0.875rem;color:#374151;white-space:pre-line;"></p>
+                    </div>
+                    <!-- Replies -->
+                    <div id="td-replies"></div>
+                    <!-- Reply form -->
+                    <div style="margin-top:1rem;">
+                        <label style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#6c757d;display:block;margin-bottom:0.4rem;">Your Reply</label>
+                        <textarea id="replyBody" rows="4" style="width:100%;border:1px solid #e9ecef;border-radius:8px;padding:0.625rem 0.875rem;font-size:0.875rem;font-family:'Inter',sans-serif;color:#1a1d2e;resize:vertical;" placeholder="Write your reply…"></textarea>
+                        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap;">
+                            <button class="btn-post" id="replyBtn" onclick="submitReply(false)">
+                                <i class="bi bi-reply me-1"></i>Send Reply
+                            </button>
+                            <button class="btn-post" id="resolveBtn" onclick="submitReply(true)"
+                                    style="background:#10b981;">
+                                <i class="bi bi-check-circle me-1"></i>Reply &amp; Resolve
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block extra_js %}
 <script>
+// ── Ticket Modal ──────────────────────────────────────────────────────────────
+var _ticketModal = new bootstrap.Modal(document.getElementById('ticketModal'));
+var _activeTicketId = null;
+
+function openTicketModal(id) {
+    _activeTicketId = id;
+    document.getElementById('ticketModalTitle').textContent = 'Ticket #' + id;
+    document.getElementById('ticketLoading').style.display = 'block';
+    document.getElementById('ticketDetail').style.display = 'none';
+    document.getElementById('replyBody').value = '';
+    _ticketModal.show();
+
+    fetch('/horizon/support/ticket/' + id)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.error) { alert(data.error); _ticketModal.hide(); return; }
+            var t = data.ticket;
+            document.getElementById('ticketModalTitle').textContent =
+                'Ticket #' + t.id + ' — ' + t.subject;
+            document.getElementById('td-username').textContent = t.username;
+            document.getElementById('td-date').textContent = t.created_at;
+            document.getElementById('td-body').textContent = t.body;
+
+            var repliesHtml = '';
+            (data.replies || []).forEach(function (r) {
+                var bg = r.is_staff ? '#fffbf2' : '#f0fdf4';
+                var border = r.is_staff ? '#fde68a' : '#bbf7d0';
+                repliesHtml +=
+                    '<div style="background:' + bg + ';border:1px solid ' + border + ';border-radius:8px;padding:0.875rem 1.1rem;margin-bottom:0.75rem;">' +
+                    '<div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">' +
+                    '<strong style="font-size:0.85rem;color:#1a1d2e;">' + esc(r.author_username) +
+                    (r.is_staff ? ' <span style="font-size:0.72rem;color:#d97706;font-weight:600;">[Staff]</span>' : '') + '</strong>' +
+                    '<span style="font-size:0.75rem;color:#9ca3af;">' + esc(r.created_at) + '</span>' +
+                    '</div>' +
+                    '<p style="margin:0;font-size:0.855rem;color:#374151;white-space:pre-line;">' + esc(r.body) + '</p>' +
+                    '</div>';
+            });
+            document.getElementById('td-replies').innerHTML = repliesHtml;
+
+            document.getElementById('ticketLoading').style.display = 'none';
+            document.getElementById('ticketDetail').style.display = 'block';
+        })
+        .catch(function () { alert('Failed to load ticket.'); _ticketModal.hide(); });
+}
+
+function submitReply(resolve) {
+    var body = document.getElementById('replyBody').value.trim();
+    if (!body) { document.getElementById('replyBody').style.borderColor = '#ef4444'; return; }
+    document.getElementById('replyBody').style.borderColor = '';
+
+    var btn = resolve ? document.getElementById('resolveBtn') : document.getElementById('replyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:.85rem;height:.85rem;border-width:2px;"></span>Sending…';
+
+    fetch('/horizon/support/ticket/' + _activeTicketId + '/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: body, resolve: resolve })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (!data.success) { alert(data.error || 'Error'); btn.disabled = false; return; }
+        _ticketModal.hide();
+        if (resolve) {
+            // Remove row from table
+            var rows = document.querySelectorAll('#pane-tickets tbody tr');
+            rows.forEach(function (row) {
+                if (row.querySelector('button[onclick*="' + _activeTicketId + '"]')) {
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(function () { row.remove(); }, 320);
+                }
+            });
+        }
+    })
+    .catch(function () { alert('Network error.'); btn.disabled = false; });
+}
+
+</script>
 // ── User Lookup ──────────────────────────────────────────────────────────────
 var _lookupTimer = null;
 document.getElementById('lookupInput').addEventListener('input', function () {

@@ -1292,12 +1292,14 @@ def submit_request():
                     request_type, request_details, status
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                RETURNING id
             """, (
                 instance_id, cu['id'], cu['username'],
                 cu.get('first_name', ''), cu.get('last_name', ''),
                 cu.get('email', ''), cu.get('department', ''), cu.get('position', ''),
                 req_type, details or None
             ))
+            inquiry_id = cursor.fetchone()['id']
             cursor.close()
 
         from app.core.audit import log_action
@@ -1306,7 +1308,72 @@ def submit_request():
                    f"User Change Request submitted: {req_label}",
                    instance_id=instance_id)
 
+        # Send submission confirmation email
+        from app.modules.admin.emails import send_inquiry_submitted
+        send_inquiry_submitted(
+            cu.get('email', ''), cu['username'], req_type, details or None,
+            first_name=cu.get('first_name', ''), last_name=cu.get('last_name', ''),
+            inquiry_id=inquiry_id,
+            instance_name=cu.get('instance_name', ''),
+        )
+
         flash("Your request has been submitted. An administrator will review it shortly.", "success")
         return redirect(url_for("home.index"))
 
     return render_template("users/request.html", active="default", page="request")
+
+
+@users_bp.route("/support-ticket", methods=["GET", "POST"])
+@login_required
+def submit_support_ticket():
+    """User self-service: open a support ticket routed to the Gridline support team."""
+    cu = current_user()
+
+    if request.method == "POST":
+        subject  = request.form.get("subject",  "").strip()
+        category = request.form.get("category", "general").strip()
+        body     = request.form.get("body",     "").strip()
+
+        valid_categories = {'general', 'bug', 'feature_request', 'account'}
+        if not subject or not body:
+            flash("Subject and description are required.", "danger")
+            return render_template("users/support_ticket.html", active="support-ticket", page="support_ticket")
+        if category not in valid_categories:
+            category = "general"
+
+        try:
+            instance_id = get_current_instance()
+        except Exception:
+            instance_id = cu.get('instance_id')
+
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO support_tickets
+                    (instance_id, user_id, username, user_email, subject, category, body, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'open')
+                RETURNING id
+            """, (
+                instance_id, cu['id'], cu['username'],
+                cu.get('email', ''), subject, category, body,
+            ))
+            ticket_id = cursor.fetchone()['id']
+            cursor.close()
+
+        from app.core.audit import log_action
+        log_action(cu, "support_ticket_submitted", "support",
+                   f"Support ticket #{ticket_id} submitted: {subject}",
+                   instance_id=instance_id)
+
+        from app.modules.horizon.emails import send_ticket_confirmation
+        _inq_link = url_for('users.submit_request', instance_id=cu.get('instance_id'), _external=True)
+        send_ticket_confirmation(
+            cu.get('email', ''), cu['username'], ticket_id, subject, category,
+            first_name=cu.get('first_name', ''), last_name=cu.get('last_name', ''),
+            inquiry_link=_inq_link,
+        )
+
+        flash(f"Support ticket #{ticket_id} submitted. You'll receive a reply by email.", "success")
+        return redirect(url_for("home.index"))
+
+    return render_template("users/support_ticket.html", active="support-ticket", page="support_ticket")

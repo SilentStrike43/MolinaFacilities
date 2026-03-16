@@ -74,6 +74,7 @@
 
 /* ========== DARK THEME ========== */
 [data-theme="dark"] {
+    color-scheme: dark;
     --bg-primary: #151823;
     --bg-secondary: #1a1d2e;
     --bg-tertiary: #2d3142;

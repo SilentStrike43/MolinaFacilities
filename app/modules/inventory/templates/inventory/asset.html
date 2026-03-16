@@ -287,10 +287,20 @@
         background: #d1fae5;
         color: #065f46;
     }
-    
+
     .status-badge.inactive {
         background: #fef3c7;
         color: #92400e;
+    }
+
+    [data-theme="dark"] .status-badge.active {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+    }
+
+    [data-theme="dark"] .status-badge.inactive {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
     }
     
     /* Quantity Badge - Keep colorful */
@@ -309,10 +319,20 @@
         background: #d1fae5;
         color: #065f46;
     }
-    
+
     .qty-badge.out-of-stock {
         background: #f3f4f6;
         color: #6b7280;
+    }
+
+    [data-theme="dark"] .qty-badge.in-stock {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+    }
+
+    [data-theme="dark"] .qty-badge.out-of-stock {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-muted);
     }
     
     /* Action Buttons */
@@ -338,20 +358,22 @@
         transform: translateY(-2px);
     }
     
-    /* Info Box - Always blue */
+    /* Info Box */
     .info-box {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.25);
         border-radius: 0.875rem;
         padding: 1rem 1.5rem;
         margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
         gap: 1rem;
-        color: #1e40af;
+        color: var(--text-primary);
     }
-    
+
     .info-box i {
         font-size: 1.5rem;
+        color: #3b82f6;
     }
     
     /* Empty State - Theme-aware */

@@ -396,7 +396,7 @@ def asset():
         mode = request.form.get("mode", "create")
         
         if mode == "create":
-            category = request.form.get("Category", "101")
+            category = request.form.get("category", "101")
             sku = generate_next_sku(category)
             product = (request.form.get("ProductName") or "").strip()
             manufacturer = (request.form.get("Manufacturer") or "").strip()

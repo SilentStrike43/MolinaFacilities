@@ -60,6 +60,20 @@ def configure_app(app):
         # When unset the app falls back to local filesystem storage (dev only).
         S3_FULFILLMENT_BUCKET=os.environ.get('S3_FULFILLMENT_BUCKET', ''),
         S3_BUCKET_REGION=os.environ.get('S3_BUCKET_REGION', 'us-east-1'),
+
+        # ── Amazon SES — Transactional Email ─────────────────────
+        # Set via `eb setenv SES_ENABLED=true SES_SENDER_EMAIL=noreply@gridlineservice.com`
+        # When SES_ENABLED is unset/false the app logs emails instead of sending them (dev).
+        SES_ENABLED=os.environ.get('SES_ENABLED', 'false').lower() == 'true',
+        SES_SENDER_EMAIL=os.environ.get('SES_SENDER_EMAIL', 'noreply@gridlineservice.com'),
+        SES_REGION=os.environ.get('SES_REGION', 'us-east-1'),
+        SES_CONFIG_SET=os.environ.get('SES_CONFIG_SET', ''),
+
+        # ── Redis — ElastiCache Serverless ────────────────────────
+        # Use rediss:// (double-s) for TLS.
+        # Example: rediss://gridlinestoplight-ea2wao.serverless.use1.cache.amazonaws.com:6379
+        # Leave unset in local dev — all Redis-dependent features degrade gracefully.
+        REDIS_URL=os.environ.get('REDIS_URL', ''),
     )
 
     # Ensure upload directory exists

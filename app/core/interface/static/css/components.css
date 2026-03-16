@@ -223,6 +223,30 @@ button[type="submit"]:hover {
     color: #6b7280 !important;
 }
 
+[data-theme="dark"] .level-badge.none {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Action badge dark mode — pastel-on-dark becomes tinted semi-transparent */
+[data-theme="dark"] .badge-checkin,
+[data-theme="dark"] .action-badge.badge-checkin {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+}
+
+[data-theme="dark"] .badge-checkout,
+[data-theme="dark"] .action-badge.badge-checkout {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .badge-adjust,
+[data-theme="dark"] .action-badge.badge-adjust {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+}
+
 /* Permission Tags */
 .perm-tag {
     padding: 0.25rem 0.5rem !important;
@@ -372,4 +396,20 @@ label {
 .status-indicator.pending {
     background: #fef3c7 !important;
     color: #92400e !important;
+}
+
+/* Dark mode — swap pastel-on-dark for semi-transparent tinted backgrounds */
+[data-theme="dark"] .status-indicator.active {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+}
+
+[data-theme="dark"] .status-indicator.inactive {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .status-indicator.pending {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
 }

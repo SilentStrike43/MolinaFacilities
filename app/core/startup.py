@@ -20,10 +20,14 @@ def _run_schema_init():
             ensure_user_schema,
             ensure_inquiry_schema,
             ensure_announcement_schema,
+            ensure_reset_token_schema,
+            ensure_support_ticket_schema,
         )
         ensure_user_schema()
         ensure_inquiry_schema()
         ensure_announcement_schema()
+        ensure_reset_token_schema()
+        ensure_support_ticket_schema()
 
         from app.modules.send.storage import ensure_schema as ensure_send_schema
         from app.modules.fulfillment.storage import ensure_schema as ensure_fulfillment_schema

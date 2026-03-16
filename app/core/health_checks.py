@@ -145,6 +145,26 @@ def _fulfillment_requests():
     return f"{n} active request(s)"
 
 
+# ── Redis ─────────────────────────────────────────────────────────────────────
+
+@register_check("core", "Redis: Connection")
+def _redis_connection():
+    from app.core.redis_client import get_redis
+    r = get_redis()
+    if r is None:
+        raise RuntimeError("Redis client not initialised (REDIS_URL not set or connection failed)")
+    r.ping()
+    from app.core.cache import cache_stats
+    stats = cache_stats()
+    hits   = stats.get("hits", 0)
+    misses = stats.get("misses", 0)
+    total  = hits + misses
+    ratio  = f"{hits/total*100:.0f}% hit rate" if total else "no traffic yet"
+    return f"OK — {ratio} ({hits} hits / {misses} misses)"
+
+
+# ── Fulfillment ───────────────────────────────────────────────────────────────
+
 @register_check("fulfillment", "S3: Bucket Reachable")
 def _fulfillment_s3():
     from app.core.s3 import s3_configured, _client, _BUCKET

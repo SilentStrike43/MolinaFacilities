@@ -18,6 +18,7 @@ from app.modules.auth.security import login_required, current_user, record_audit
 from app.core.permissions import PermissionManager
 from app.core.database import get_db_connection
 from app.core.s3 import s3_configured, s3_upload, s3_presigned_url, s3_delete
+from app.modules.fulfillment.emails import send_request_created, send_request_hold, send_request_completed
 from app.core.instance_queries import build_insert, build_select, build_update, add_instance_filter
 from app.core.instance_context import get_current_instance
 
@@ -77,13 +78,22 @@ def should_filter_by_instance(user):
 
 # ---------- Database helpers ----------
 
-def update_status(request_id: int, status: str, archive: bool = False, 
-                 staff_id: int = None, staff_name: str = None, 
+def update_status(request_id: int, status: str, archive: bool = False,
+                 staff_id: int = None, staff_name: str = None,
                  completed_by_id: int = None, completed_by_name: str = None):
     """Update request status in BOTH tables."""
+    req_snapshot = None
     with get_db_connection("fulfillment") as conn:
         cursor = conn.cursor()
-        
+
+        # Fetch request data before update (needed for email notifications)
+        if status in ('Hold', 'Completed'):
+            cursor.execute(
+                "SELECT created_by_id, created_by_name, description, notes FROM fulfillment_requests WHERE id = %s",
+                (request_id,)
+            )
+            req_snapshot = cursor.fetchone()
+
         # Update fulfillment_requests
         if status == 'Completed' or archive:
             cursor.execute("""
@@ -124,6 +134,23 @@ def update_status(request_id: int, status: str, archive: bool = False,
         
         conn.commit()
         cursor.close()
+
+    # Send email notifications after successful commit (never blocks the workflow)
+    if req_snapshot and status == 'Hold':
+        send_request_hold(
+            request_id,
+            req_snapshot['created_by_id'],
+            req_snapshot['created_by_name'],
+            req_snapshot['description'],
+            notes=req_snapshot.get('notes'),
+        )
+    elif req_snapshot and status == 'Completed':
+        send_request_completed(
+            request_id,
+            req_snapshot['created_by_id'],
+            req_snapshot['created_by_name'],
+            req_snapshot['description'],
+        )
 
 
 def list_queue(filter_by_instance=False, instance_id=None):
@@ -394,21 +421,24 @@ def request_form():
             'binding': request.form.get('binding', 'None')
         }
         
+        date_due = request.form.get("date_due", "").strip() or None
+        notes = request.form.get("notes", "").strip() or None
+
         if not description:
             flash("Description is required.", "danger")
             return redirect(url_for("fulfillment.request_form"))
-        
+
         try:
             with get_db_connection("fulfillment") as conn:
                 cursor = conn.cursor()
-                
+
                 # STEP 1: Insert into service_requests (instance_id added automatically)
                 sr_columns = [
                     'title', 'description', 'request_type',
                     'requester_id', 'requester_name',
                     'status', 'is_archived', 'created_at'
                 ]
-                
+
                 sr_values = [
                     description[:100],
                     description,
@@ -419,36 +449,38 @@ def request_form():
                     False,
                     datetime.datetime.now()
                 ]
-                
+
                 # build_insert automatically adds instance_id
                 sql, params = build_insert('service_requests', sr_columns, sr_values)
                 sql += " RETURNING id"
-                
+
                 cursor.execute(sql, params)
                 result = cursor.fetchone()
                 service_request_id = result['id'] if result else None
-                
+
                 if not service_request_id:
                     raise Exception("No ID returned from service_requests insert")
-                
+
                 # STEP 2: Insert into fulfillment_requests
                 cursor.execute("""
                     INSERT INTO fulfillment_requests (
                         instance_id, service_request_id, description,
-                        total_pages, date_submitted, status, is_archived,
-                        options_json,
+                        total_pages, date_submitted, date_due, status, is_archived,
+                        options_json, notes,
                         created_by_id, created_by_name
                     )
-                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     instance_id,
                     service_request_id,
                     description,
                     page_count,
+                    date_due,
                     'Received',
                     False,
                     json.dumps(print_options),
+                    notes,
                     cu['id'],
                     cu['username']
                 ))
@@ -461,7 +493,17 @@ def request_form():
                 
                 # Commit the main inserts
                 conn.commit()
-                
+
+                # Send creation confirmation email (non-blocking)
+                send_request_created(
+                    fulfillment_id,
+                    cu['id'],
+                    cu['username'],
+                    description,
+                    date_due=date_due,
+                    notes=notes,
+                )
+
                 # Handle file uploads
                 files = request.files.getlist("attachments")
                 if files and any(f.filename for f in files):
@@ -825,17 +867,15 @@ def edit_request(request_id: int):
             cursor.execute("""
                 UPDATE fulfillment_requests
                 SET description = %s, total_pages = %s, date_due = %s,
-                    notes = %s, status = %s,
-                    assigned_staff_id = %s, assigned_staff_name = %s
+                    notes = %s, status = %s
                 WHERE id = %s
-            """, (description, total_pages, date_due, notes, status,
-                  cu['id'], cu['username'], request_id))
+            """, (description, total_pages, date_due, notes, status, request_id))
 
             cursor.execute("""
                 UPDATE service_requests
-                SET description = %s, status = %s, assigned_to = %s
+                SET description = %s, status = %s
                 WHERE id = (SELECT service_request_id FROM fulfillment_requests WHERE id = %s)
-            """, (description, status, cu['id'], request_id))
+            """, (description, status, request_id))
 
             conn.commit()
             cursor.close()

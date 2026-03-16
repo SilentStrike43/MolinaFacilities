@@ -8,6 +8,7 @@ from flask import render_template, request, jsonify, flash, redirect, url_for
 from app.modules.auth.security import login_required, current_user, record_audit
 from app.modules.send.google_address_validator import GoogleAddressValidator
 from app.core.instance_context import get_current_instance
+from app.core.rate_limit import limiter
 
 def register_address_routes(send_bp):
     """Register address validation routes with the send blueprint."""
@@ -32,6 +33,7 @@ def register_address_routes(send_bp):
     
     @send_bp.route("/api/validate-address", methods=["POST"])
     @login_required
+    @limiter.limit("20 per minute")
     def validate_address():
         """API endpoint to validate an address."""
         cu = current_user()
@@ -167,6 +169,7 @@ def register_address_routes(send_bp):
     
     @send_bp.route("/api/batch-validate", methods=["POST"])
     @login_required
+    @limiter.limit("3 per minute")
     def batch_validate():
         """Validate multiple addresses at once (CSV upload)."""
         cu = current_user()

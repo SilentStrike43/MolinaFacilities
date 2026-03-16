@@ -1,0 +1,761 @@
+{% extends "horizon_base.html" %}
+
+{% block title %}Database Management — Horizon{% endblock %}
+{% block page_title %}Database Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Page layout ────────────────────────────── */
+    .db-section {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .db-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #1a1d2e, #2d3150);
+        color: #fff;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .db-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        color: #fff;
+    }
+
+    .db-header .db-badge {
+        margin-left: auto;
+        font-size: 0.72rem;
+        font-weight: 600;
+        background: rgba(245,158,11,0.25);
+        color: #f59e0b;
+        border-radius: 20px;
+        padding: 2px 10px;
+        letter-spacing: 0.04em;
+    }
+
+    .db-header .chevron {
+        transition: transform 0.2s;
+        color: rgba(255,255,255,0.5);
+        font-size: 0.85rem;
+    }
+
+    .db-header.collapsed .chevron { transform: rotate(-90deg); }
+
+    /* ── Table tree ─────────────────────────────── */
+    .table-list { padding: 0.5rem 0; }
+
+    .table-row {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .table-row:last-child { border-bottom: none; }
+
+    .table-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 1.5rem;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .table-header:hover { background: rgba(245,158,11,0.06); }
+
+    .table-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1a1d2e;
+        flex: 1;
+    }
+
+    .table-meta {
+        font-size: 0.75rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .row-count-badge {
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 20px;
+        padding: 1px 8px;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
+    .has-instance-badge {
+        background: rgba(16,185,129,0.12);
+        color: #059669;
+        border-radius: 20px;
+        padding: 1px 8px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .load-data-btn {
+        font-size: 0.75rem;
+        padding: 3px 10px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        border-radius: 6px;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .load-data-btn:hover {
+        background: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+    }
+
+    /* ── Column pills ───────────────────────────── */
+    .column-pills {
+        padding: 0.5rem 1.5rem 0.75rem 3rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .col-pill {
+        font-size: 0.7rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 2px 8px;
+        color: #374151;
+        font-family: 'Courier New', monospace;
+    }
+
+    .col-pill.pk { border-color: #f59e0b; color: #d97706; background: rgba(245,158,11,0.07); }
+    .col-pill.instance-id { border-color: #10b981; color: #059669; background: rgba(16,185,129,0.07); }
+
+    /* ── Data rows panel ────────────────────────── */
+    .data-panel {
+        display: none;
+        margin: 0 1.5rem 1rem 3rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .data-panel.loading {
+        display: block;
+        padding: 1.5rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    .data-panel.loaded { display: block; }
+
+    .data-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.78rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .data-table-wrap {
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        font-size: 0.78rem;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        position: sticky;
+        top: 0;
+        background: #f3f4f6;
+        color: #374151;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .data-table td {
+        padding: 5px 10px;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        color: #374151;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(245,158,11,0.04); }
+
+    .data-table td.null-val { color: #d1d5db; font-style: italic; }
+
+    .delete-row-btn {
+        font-size: 0.7rem;
+        padding: 2px 7px;
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.2);
+        color: #dc2626;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+
+    .delete-row-btn:hover {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+    }
+
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+        font-size: 0.78rem;
+        color: #6b7280;
+    }
+
+    .pag-btn {
+        padding: 2px 8px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        border-radius: 5px;
+        color: #374151;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.15s;
+    }
+
+    .pag-btn:hover:not(:disabled) { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+    .pag-btn:disabled { opacity: 0.35; cursor: default; }
+
+    /* ── Filter bar ─────────────────────────────── */
+    .filter-bar {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-bar label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #374151;
+        white-space: nowrap;
+    }
+
+    .filter-bar select {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        color: #1a1d2e;
+        background: #f9fafb;
+        cursor: pointer;
+        min-width: 180px;
+    }
+
+    .filter-bar select:focus { outline: none; border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+
+    /* ── Purge panel ────────────────────────────── */
+    .purge-panel {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        border: 1px solid rgba(239,68,68,0.2);
+        overflow: hidden;
+        margin-top: 2rem;
+    }
+
+    .purge-header {
+        background: rgba(239,68,68,0.06);
+        border-bottom: 1px solid rgba(239,68,68,0.15);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .purge-header h6 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #dc2626;
+    }
+
+    .purge-body { padding: 1.25rem 1.5rem; }
+
+    .purge-body p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+        line-height: 1.55;
+    }
+
+    .purge-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .purge-controls select {
+        font-size: 0.875rem;
+        padding: 7px 14px;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        color: #1a1d2e;
+        background: #fff5f5;
+        min-width: 200px;
+    }
+
+    .btn-purge {
+        padding: 7px 20px;
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-purge:hover { background: #dc2626; }
+    .btn-purge:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Toast ──────────────────────────────────── */
+    #toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        max-width: 340px;
+    }
+
+    #toast.show { opacity: 1; pointer-events: auto; }
+    #toast.success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    #toast.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    #toast.warning { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h4 style="font-size: 1.35rem; font-weight: 800; color: #1a1d2e; margin-bottom: 0.25rem;">
+        <i class="bi bi-database-gear" style="color: #f59e0b; margin-right: 0.5rem;"></i>Database Management
+    </h4>
+    <p style="font-size: 0.875rem; color: #6b7280; margin: 0;">
+        S1-only. Browse schema, inspect row data, delete individual records, or purge all data for an instance.
+        Every action is recorded in Horizon Audit Logs.
+    </p>
+</div>
+
+<!-- Warning banner -->
+<div style="background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+    <i class="bi bi-exclamation-triangle-fill" style="color: #ef4444; flex-shrink: 0; margin-top: 0.1rem;"></i>
+    <div style="font-size: 0.82rem; color: #7f1d1d; line-height: 1.5;">
+        <strong>Caution:</strong> Deletions are permanent and not recoverable. All actions are audit-logged.
+        Do not delete rows that are referenced by active workflows or foreign keys without careful review.
+    </div>
+</div>
+
+<!-- Instance filter -->
+<div class="filter-bar">
+    <label><i class="bi bi-funnel" style="margin-right: 0.35rem;"></i>Filter by instance</label>
+    <select id="instanceFilter" onchange="applyInstanceFilter()">
+        <option value="">— All instances —</option>
+        {% for inst in instances %}
+        <option value="{{ inst.id }}">{{ inst.name }} (ID {{ inst.id }})</option>
+        {% endfor %}
+    </select>
+    <span style="font-size: 0.8rem; color: #9ca3af;">Only tables with an <code>instance_id</code> column support instance filtering.</span>
+</div>
+
+<!-- Database sections -->
+{% for db_name in databases %}
+{% set db_tables = schema.get(db_name, {}) %}
+<div class="db-section" id="db-{{ db_name }}">
+    <div class="db-header" onclick="toggleDb('{{ db_name }}')">
+        <i class="bi bi-database" style="color: #f59e0b;"></i>
+        <h5>{{ db_name }}</h5>
+        <span class="db-badge">{{ db_tables|length }} table{{ 's' if db_tables|length != 1 else '' }}</span>
+        <i class="bi bi-chevron-down chevron" id="chevron-{{ db_name }}"></i>
+    </div>
+    <div class="table-list" id="tablelist-{{ db_name }}">
+        {% if db_tables %}
+            {% for tname, tinfo in db_tables.items() %}
+            <div class="table-row" id="tablerow-{{ db_name }}-{{ tname }}">
+                <div class="table-header" onclick="toggleTable('{{ db_name }}', '{{ tname }}')">
+                    <i class="bi bi-table" style="color: #9ca3af; font-size: 0.875rem;"></i>
+                    <span class="table-name">{{ tname }}</span>
+                    <div class="table-meta">
+                        <span class="row-count-badge">{{ "{:,}".format(tinfo.row_count) }} rows</span>
+                        {% if tinfo.has_instance_id %}
+                        <span class="has-instance-badge"><i class="bi bi-link-45deg"></i> instance_id</span>
+                        {% endif %}
+                        <button class="load-data-btn"
+                                onclick="event.stopPropagation(); loadTableData('{{ db_name }}', '{{ tname }}', '{{ tinfo.pk_column }}', 1)">
+                            <i class="bi bi-eye"></i> View data
+                        </button>
+                    </div>
+                    <i class="bi bi-chevron-right" style="color: #d1d5db; font-size: 0.75rem; margin-left: 0.5rem;"
+                       id="tchev-{{ db_name }}-{{ tname }}"></i>
+                </div>
+
+                <!-- Column pills -->
+                <div class="column-pills" id="cols-{{ db_name }}-{{ tname }}" style="display:none;">
+                    {% for col in tinfo.columns %}
+                    <span class="col-pill
+                        {{ 'pk' if col.column_name == tinfo.pk_column }}
+                        {{ 'instance-id' if col.column_name == 'instance_id' }}"
+                        title="{{ col.data_type }}{% if col.is_nullable == 'YES' %} nullable{% endif %}">
+                        {% if col.column_name == tinfo.pk_column %}<i class="bi bi-key" style="font-size:0.65rem;"></i> {% endif %}
+                        {{ col.column_name }}
+                    </span>
+                    {% endfor %}
+                </div>
+
+                <!-- Data panel (AJAX) -->
+                <div class="data-panel" id="data-{{ db_name }}-{{ tname }}"></div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="padding: 1.25rem 1.5rem; color: #9ca3af; font-size: 0.875rem;">
+                <i class="bi bi-info-circle" style="margin-right: 0.4rem;"></i>No tables found or connection unavailable.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<!-- Purge Panel -->
+<div class="purge-panel" id="purgePanel">
+    <div class="purge-header">
+        <i class="bi bi-trash3-fill"></i>
+        <h6>Purge Instance Data</h6>
+    </div>
+    <div class="purge-body">
+        <p>
+            This permanently deletes <strong>all rows</strong> associated with an instance across every database
+            (<code>core</code>, <code>send</code>, <code>inventory</code>, <code>fulfillment</code>).
+            This operation is irreversible. Use only when decommissioning an instance.
+        </p>
+        <div class="purge-controls">
+            <select id="purgeInstanceSelect">
+                <option value="">— Select instance to purge —</option>
+                {% for inst in instances %}
+                <option value="{{ inst.id }}">{{ inst.name }} (ID {{ inst.id }})</option>
+                {% endfor %}
+            </select>
+            <button class="btn-purge" id="purgeBtn" onclick="confirmPurge()">
+                <i class="bi bi-trash3"></i> Purge Instance Data
+            </button>
+        </div>
+        <div id="purgeResult" style="margin-top: 1rem; display: none;"></div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── State ───────────────────────────────────── */
+var currentInstanceFilter = "";
+// {db_table: {page, pages, pk_column}}
+var tableState = {};
+
+/* ── Helpers ────────────────────────────────── */
+function showToast(msg, type) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "show " + (type || "success");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function() { t.className = ""; }, 3500);
+}
+
+function applyInstanceFilter() {
+    currentInstanceFilter = document.getElementById("instanceFilter").value;
+    // Reload any open data panels
+    Object.keys(tableState).forEach(function(key) {
+        var parts = key.split("|");
+        var db = parts[0], tbl = parts[1], pk = parts[2];
+        var panel = document.getElementById("data-" + db + "-" + tbl);
+        if (panel && panel.classList.contains("loaded")) {
+            loadTableData(db, tbl, pk, 1);
+        }
+    });
+}
+
+/* ── Toggle DB section ──────────────────────── */
+function toggleDb(dbName) {
+    var list  = document.getElementById("tablelist-" + dbName);
+    var chev  = document.getElementById("chevron-" + dbName);
+    var hdr   = chev.closest(".db-header");
+    if (list.style.display === "none") {
+        list.style.display = "";
+        hdr.classList.remove("collapsed");
+    } else {
+        list.style.display = "none";
+        hdr.classList.add("collapsed");
+    }
+}
+
+/* ── Toggle table columns ───────────────────── */
+function toggleTable(db, tbl) {
+    var colDiv = document.getElementById("cols-" + db + "-" + tbl);
+    var chev   = document.getElementById("tchev-" + db + "-" + tbl);
+    if (colDiv.style.display === "none" || !colDiv.style.display) {
+        colDiv.style.display = "flex";
+        chev.className = "bi bi-chevron-down";
+        chev.style.color = "#f59e0b";
+    } else {
+        colDiv.style.display = "none";
+        chev.className = "bi bi-chevron-right";
+        chev.style.color = "#d1d5db";
+    }
+}
+
+/* ── Load table data ────────────────────────── */
+function loadTableData(db, tbl, pk, page) {
+    var key = db + "|" + tbl + "|" + pk;
+    tableState[key] = tableState[key] || {};
+    tableState[key].pk_column = pk;
+    tableState[key].page = page;
+
+    var panel = document.getElementById("data-" + db + "-" + tbl);
+    panel.className = "data-panel loading";
+    panel.innerHTML = '<i class="bi bi-arrow-repeat" style="animation: spin 1s linear infinite; display:inline-block;"></i> Loading…';
+
+    var url = "{{ url_for('horizon.database_table_data') }}?db=" + encodeURIComponent(db) +
+              "&table=" + encodeURIComponent(tbl) +
+              "&page=" + page;
+    if (currentInstanceFilter) url += "&instance_id=" + encodeURIComponent(currentInstanceFilter);
+
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) {
+                panel.innerHTML = '<div style="padding:1rem;color:#ef4444;font-size:0.82rem;"><i class="bi bi-x-circle"></i> ' + data.error + '</div>';
+                panel.className = "data-panel loaded";
+                return;
+            }
+            tableState[key].pages = data.pages;
+            tableState[key].page  = data.page;
+            renderDataPanel(panel, db, tbl, pk, data);
+        })
+        .catch(function(err) {
+            panel.innerHTML = '<div style="padding:1rem;color:#ef4444;font-size:0.82rem;"><i class="bi bi-x-circle"></i> Request failed.</div>';
+            panel.className = "data-panel loaded";
+        });
+}
+
+function renderDataPanel(panel, db, tbl, pk, data) {
+    if (!data.rows || data.rows.length === 0) {
+        panel.className = "data-panel loaded";
+        panel.innerHTML = '<div style="padding:1rem;color:#9ca3af;font-size:0.82rem;"><i class="bi bi-inbox"></i> No rows found.</div>';
+        return;
+    }
+
+    var html = '<div class="data-panel-header">' +
+               '<span>Showing ' + ((data.page-1)*data.per_page+1) + '–' +
+               Math.min(data.page*data.per_page, data.total) + ' of ' +
+               data.total.toLocaleString() + ' rows</span>' +
+               '<button class="load-data-btn" onclick="document.getElementById(\'data-' + db + '-' + tbl + '\').className=\'data-panel\'" style="font-size:0.7rem;">✕ Close</button>' +
+               '</div><div class="data-table-wrap"><table class="data-table"><thead><tr>';
+
+    data.columns.forEach(function(col) {
+        html += '<th>' + escapeHtml(col) + '</th>';
+    });
+    html += '<th style="width:80px;">Action</th></tr></thead><tbody>';
+
+    data.rows.forEach(function(row) {
+        html += '<tr>';
+        data.columns.forEach(function(col) {
+            var val = row[col];
+            if (val === null || val === undefined) {
+                html += '<td class="null-val">NULL</td>';
+            } else {
+                var s = String(val);
+                html += '<td title="' + escapeHtml(s) + '">' + escapeHtml(s.length > 60 ? s.slice(0,60)+'…' : s) + '</td>';
+            }
+        });
+        var pkVal = row[pk];
+        html += '<td><button class="delete-row-btn" ' +
+                'onclick="deleteRow(\'' + escapeJs(db) + '\',\'' + escapeJs(tbl) + '\',\'' +
+                escapeJs(pk) + '\',' + JSON.stringify(pkVal) + ')">' +
+                '<i class="bi bi-trash3"></i></button></td></tr>';
+    });
+
+    html += '</tbody></table></div>';
+
+    // Pagination
+    var state = tableState[db + "|" + tbl + "|" + pk];
+    if (state.pages > 1) {
+        html += '<div class="pagination-bar">' +
+                '<button class="pag-btn" ' + (data.page <= 1 ? 'disabled' : '') +
+                ' onclick="loadTableData(\'' + db + '\',\'' + tbl + '\',\'' + pk + '\',' + (data.page-1) + ')">‹ Prev</button>' +
+                '<span>Page ' + data.page + ' of ' + data.pages + '</span>' +
+                '<button class="pag-btn" ' + (data.page >= data.pages ? 'disabled' : '') +
+                ' onclick="loadTableData(\'' + db + '\',\'' + tbl + '\',\'' + pk + '\',' + (data.page+1) + ')">Next ›</button>' +
+                '</div>';
+    }
+
+    panel.innerHTML = html;
+    panel.className = "data-panel loaded";
+}
+
+/* ── Delete row ─────────────────────────────── */
+function deleteRow(db, tbl, pk, pkVal) {
+    if (!confirm("Delete row where " + pk + " = " + pkVal + " from " + db + "." + tbl + "?\n\nThis cannot be undone.")) return;
+
+    fetch("{{ url_for('horizon.database_delete_row') }}", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({db: db, table: tbl, pk_column: pk, pk_value: pkVal})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            showToast("Row deleted successfully.", "success");
+            // Reload current page
+            var state = tableState[db + "|" + tbl + "|" + pk];
+            if (state) loadTableData(db, tbl, pk, state.page || 1);
+        } else {
+            showToast("Delete failed: " + (data.error || "unknown error"), "error");
+        }
+    })
+    .catch(function() { showToast("Request failed.", "error"); });
+}
+
+/* ── Purge instance ─────────────────────────── */
+function confirmPurge() {
+    var sel = document.getElementById("purgeInstanceSelect");
+    var instanceId = sel.value;
+    var instanceName = sel.options[sel.selectedIndex].text;
+
+    if (!instanceId) {
+        showToast("Select an instance to purge.", "warning");
+        return;
+    }
+
+    var confirmed = confirm(
+        "⚠️  DESTRUCTIVE ACTION\n\n" +
+        "You are about to permanently delete ALL data for:\n" +
+        instanceName + "\n\n" +
+        "This affects all databases (core, send, inventory, fulfillment).\n" +
+        "This CANNOT be undone.\n\n" +
+        "Type OK to confirm."
+    );
+    if (!confirmed) return;
+
+    var btn = document.getElementById("purgeBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Purging…';
+
+    var purgeUrl = "{{ url_for('horizon.database_purge_instance', instance_id=0) }}";
+    purgeUrl = purgeUrl.replace(/\/0$/, '/' + instanceId);
+    fetch(purgeUrl, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash3"></i> Purge Instance Data';
+
+        if (data.success) {
+            var summary = data.summary || {};
+            var lines = [];
+            Object.keys(summary).forEach(function(db) {
+                var tbls = summary[db];
+                if (Object.keys(tbls).length > 0) {
+                    lines.push("<strong>" + db + ":</strong> " +
+                        Object.entries(tbls).map(function(e) { return e[0] + " (" + e[1] + ")"; }).join(", "));
+                }
+            });
+
+            var resultDiv = document.getElementById("purgeResult");
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML =
+                '<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:0.75rem 1rem;">' +
+                '<p style="margin:0 0 0.35rem;font-size:0.82rem;font-weight:600;color:#065f46;"><i class="bi bi-check-circle"></i> Purge complete.</p>' +
+                (lines.length ? '<ul style="margin:0;padding-left:1.25rem;font-size:0.78rem;color:#047857;">' +
+                    lines.map(function(l) { return '<li>' + l + '</li>'; }).join('') + '</ul>' :
+                    '<p style="margin:0;font-size:0.78rem;color:#047857;">No instance-scoped data found.</p>') +
+                '</div>';
+            showToast("Instance purged successfully.", "success");
+        } else {
+            showToast("Purge failed: " + (data.error || "unknown error"), "error");
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash3"></i> Purge Instance Data';
+        showToast("Request failed.", "error");
+    });
+}
+
+/* ── Escape helpers ─────────────────────────── */
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function escapeJs(s) {
+    return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+}
+
+/* ── Spin animation ─────────────────────────── */
+var style = document.createElement("style");
+style.textContent = "@keyframes spin { to { transform: rotate(360deg); } }";
+document.head.appendChild(style);
+</script>
+{% endblock %}

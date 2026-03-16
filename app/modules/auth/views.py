@@ -5,6 +5,7 @@ Authentication routes
 
 import secrets
 import string
+from datetime import datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 
@@ -173,3 +174,89 @@ def change_password():
         return redirect(url_for("auth.login"))
     flash("Password changes must be submitted via the request system.", "info")
     return redirect(url_for("users.submit_request"))
+
+
+@bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token: str):
+    """
+    Password reset via emailed token.
+
+    GET  — validate token, show reset form (or error if expired/used).
+    POST — validate token again, hash and save new password, mark token used.
+
+    Tokens expire after 1 hour. Expired/used attempts are audit-logged.
+    """
+    from app.core.database import get_db_connection
+    from app.core.audit import log_action
+    import bcrypt
+
+    # ── Validate token ────────────────────────────────────────────────────────
+    with get_db_connection("core") as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM password_reset_tokens WHERE token = %s",
+            (token,)
+        )
+        tok = cur.fetchone()
+        cur.close()
+
+    if not tok:
+        log_action(
+            {'id': None, 'username': 'unknown', 'permission_level': ''},
+            'reset_token_invalid', 'auth',
+            f"Invalid password reset token used from {request.remote_addr}"
+        )
+        flash("This reset link is invalid.", "danger")
+        return render_template("auth/reset_password.html", token_invalid=True)
+
+    if tok['used_at']:
+        flash("This reset link has already been used. Please submit a new request.", "warning")
+        return render_template("auth/reset_password.html", token_invalid=True)
+
+    if datetime.utcnow() > tok['expires_at']:
+        log_action(
+            {'id': tok['user_id'], 'username': tok['username'], 'permission_level': ''},
+            'reset_token_expired', 'auth',
+            f"Expired password reset token used by {tok['username']} from {request.remote_addr}"
+        )
+        flash("This reset link has expired. Please submit a new password reset request.", "warning")
+        return render_template("auth/reset_password.html", token_invalid=True, token_expired=True)
+
+    # ── Token is valid ────────────────────────────────────────────────────────
+    if request.method == "POST":
+        new_password = request.form.get("new_password", "").strip()
+        confirm      = request.form.get("confirm_password", "").strip()
+
+        if not new_password or len(new_password) < 8:
+            flash("Password must be at least 8 characters.", "danger")
+            return render_template("auth/reset_password.html", token=token)
+
+        if new_password != confirm:
+            flash("Passwords do not match.", "danger")
+            return render_template("auth/reset_password.html", token=token)
+
+        hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+
+        with get_db_connection("core") as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE users SET password_hash = %s WHERE id = %s",
+                (hashed, tok['user_id'])
+            )
+            cur.execute("""
+                UPDATE password_reset_tokens
+                SET used_at = CURRENT_TIMESTAMP, used_from_ip = %s
+                WHERE id = %s
+            """, (request.remote_addr, tok['id']))
+            cur.close()
+
+        log_action(
+            {'id': tok['user_id'], 'username': tok['username'], 'permission_level': ''},
+            'password_reset_completed', 'auth',
+            f"Password reset completed for {tok['username']} from {request.remote_addr}"
+        )
+
+        flash("Your password has been reset. Please sign in.", "success")
+        return redirect(url_for("auth.login"))
+
+    return render_template("auth/reset_password.html", token=token)

@@ -39,7 +39,7 @@ from flask import (
 from . import bp
 from app.core.database import get_db_connection
 from app.modules.auth.security import login_required, current_user
-from .audit import record_horizon_audit
+from app.core.audit import log_action
 
 # Global Admin specific imports
 from .models import (
@@ -329,15 +329,6 @@ def switch_instance(instance_id):
     session['active_instance_id'] = instance_id
     session['active_instance_name'] = instance.get('display_name') or instance['name']
     
-    # Record audit — write to both tables so global_audits (audit_logs) captures it
-    record_horizon_audit(
-        cu,
-        "switch_instance",
-        "instances",
-        f"Switched to instance: {instance['display_name']} (ID: {instance_id})",
-        target_instance_id=instance_id,
-        severity="info"
-    )
     record_global_audit(cu, "switch_instance", f"Entered instance: {instance['display_name']} (ID: {instance_id})")
 
     flash(f"Switched to instance: {instance['display_name']}", "success")
@@ -368,14 +359,6 @@ def exit_instance():
     session.pop('active_instance_id', None)
     session.pop('active_instance_name', None)
 
-    # Record audit — write to both tables so global_audits (audit_logs) captures it
-    record_horizon_audit(
-        cu,
-        "exit_instance",
-        "instances",
-        f"Exited instance: {current_instance}",
-        severity="info"
-    )
     record_global_audit(cu, "exit_instance", f"Exited instance: {current_instance}")
 
     flash("Exited instance mode.", "info")
@@ -599,16 +582,11 @@ def create_instance():
                 conn.commit()
                 cursor.close()
             
-            # Record Horizon audit
+            # Record audit
             modules_str = ", ".join(enabled_modules)
-            record_horizon_audit(
-                cu, 
-                "create_instance", 
-                "instances",
-                f"Created company instance: {name} (ID: {instance_id}) with modules: {modules_str}. {l2_info}",
-                target_instance_id=instance_id,
-                severity="info"
-            )
+            log_action(cu, "create_instance", "horizon",
+                       f"Created company instance: {name} (ID: {instance_id}) with modules: {modules_str}. {l2_info}",
+                       instance_id=instance_id)
             
             flash(f"✅ Company instance '{name}' created successfully!", "success")
             return redirect(url_for("horizon.instance_detail", instance_id=instance_id))
@@ -619,13 +597,8 @@ def create_instance():
             traceback.print_exc()
             
             # Audit the failed attempt
-            record_horizon_audit(
-                cu,
-                "create_instance_failed",
-                "instances",
-                f"Failed to create instance '{name}': {str(e)}",
-                severity="warning"
-            )
+            log_action(cu, "create_instance_failed", "horizon",
+                       f"Failed to create instance '{name}': {str(e)}")
             
             flash(f"❌ Error creating instance: {str(e)}", "danger")
             return redirect(url_for("horizon.create_instance"))
@@ -722,14 +695,9 @@ def instance_edit(instance_id: int):
             
             # Record audit
             modules_str = ", ".join(enabled_modules)
-            record_horizon_audit(
-                cu, 
-                "update_instance", 
-                "instances",
-                f"Updated instance: {request.form.get('name')} (ID: {instance_id}). Modules: {modules_str}",
-                target_instance_id=instance_id,
-                severity="info"
-            )
+            log_action(cu, "update_instance", "horizon",
+                       f"Updated instance: {request.form.get('name')} (ID: {instance_id}). Modules: {modules_str}",
+                       instance_id=instance_id)
             
             flash(f"✅ Instance '{request.form.get('name')}' updated successfully!", "success")
             return redirect(url_for("horizon.instance_detail", instance_id=instance_id))
@@ -835,17 +803,13 @@ def delete_instance(instance_id: int):
             conn.commit()
             cursor.close()
         
-        # Record in Horizon audit (before deletion)
-        record_horizon_audit(
-            cu,
-            "delete_instance",
-            "instances",
-            f"DELETED instance: {instance['name']} (ID: {instance_id}). "
-            f"Removed: {deleted_users} users, {deleted_audits} audit logs, "
-            f"{deleted_horizon_audits} horizon audits, {deleted_access} access records. "
-            f"Reason: {reason}",
-            severity="critical"
-        )
+        # Record audit (before deletion)
+        log_action(cu, "delete_instance", "horizon",
+                   f"DELETED instance: {instance['name']} (ID: {instance_id}). "
+                   f"Removed: {deleted_users} users, {deleted_audits} audit logs, "
+                   f"{deleted_horizon_audits} horizon audits, {deleted_access} access records. "
+                   f"Reason: {reason}",
+                   instance_id=instance_id)
         
         logger.warning(f"Instance {instance_id} ({instance['name']}) DELETED by {cu['username']}")
         
@@ -982,6 +946,20 @@ def instance_support():
         cursor.execute("SELECT id, name FROM instances ORDER BY name")
         all_instances_list = [dict(r) for r in cursor.fetchall()]
 
+        # Support tickets (open + in_progress)
+        cursor.execute("""
+            SELECT st.id, st.subject, st.category, st.status, st.priority,
+                   st.username, st.user_email, st.body, st.created_at, st.updated_at,
+                   st.instance_id, i.name AS instance_name,
+                   (SELECT COUNT(*) FROM support_ticket_replies r WHERE r.ticket_id = st.id) AS reply_count
+            FROM support_tickets st
+            LEFT JOIN instances i ON i.id = st.instance_id
+            WHERE st.status IN ('open', 'in_progress')
+            ORDER BY st.created_at DESC
+            LIMIT 200
+        """)
+        open_tickets = [dict(r) for r in cursor.fetchall()]
+
         cursor.close()
 
     # Build health cards
@@ -1010,6 +988,7 @@ def instance_support():
         entry_log=entry_log,
         announcements=announcements,
         all_instances_list=all_instances_list,
+        open_tickets=open_tickets,
     )
 
 
@@ -1103,6 +1082,104 @@ def support_force_logout(user_id):
                target_user_id=user_id, target_username=target['username'])
 
     return jsonify({"success": True})
+
+
+@bp.route("/support/ticket/<int:ticket_id>/reply", methods=["POST"])
+@login_required
+@require_horizon
+def support_ticket_reply(ticket_id):
+    """Submit an operator reply to a support ticket and email the user."""
+    cu = current_user()
+    data = request.get_json() or {}
+    body = (data.get("body") or "").strip()
+    resolve = data.get("resolve", False)
+
+    if not body:
+        return jsonify({"error": "Reply body is required"}), 400
+
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM support_tickets WHERE id = %s", (ticket_id,))
+        ticket = cursor.fetchone()
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+
+        ticket = dict(ticket)
+
+        # Always use the current email from the users table, not the snapshot
+        cursor.execute("SELECT email FROM users WHERE id = %s", (ticket['user_id'],))
+        user_row = cursor.fetchone()
+        recipient_email = (user_row['email'] or '').strip() if user_row else ''
+
+        new_status = 'resolved' if resolve else 'in_progress'
+
+        if resolve:
+            cursor.execute("""
+                UPDATE support_tickets
+                SET status = %s, updated_at = CURRENT_TIMESTAMP,
+                    resolved_by_id = %s, resolved_by_username = %s,
+                    resolved_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (new_status, cu['id'], cu['username'], ticket_id))
+        else:
+            cursor.execute("""
+                UPDATE support_tickets
+                SET status = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (new_status, ticket_id))
+
+        cursor.execute("""
+            INSERT INTO support_ticket_replies
+                (ticket_id, author_id, author_username, author_level, body, is_staff)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+        """, (ticket_id, cu['id'], cu['username'], cu.get('permission_level', ''), body))
+        cursor.close()
+
+    log_action(cu, "ticket_reply", "support",
+               f"Replied to ticket #{ticket_id}: {ticket['subject'][:60]}")
+
+    from app.modules.horizon.emails import send_ticket_reply
+    send_ticket_reply(
+        recipient_email, ticket['username'],
+        ticket_id, ticket['subject'], ticket['category'],
+        body, cu['username'],
+        operator_first_name=cu.get('first_name', ''),
+        operator_email=cu.get('email', ''),
+        operator_position=cu.get('position', ''),
+    )
+
+    return jsonify({"success": True, "new_status": new_status})
+
+
+@bp.route("/support/ticket/<int:ticket_id>", methods=["GET"])
+@login_required
+@require_horizon
+def support_ticket_detail(ticket_id):
+    """AJAX: fetch full ticket detail + replies for the reply modal."""
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM support_tickets WHERE id = %s", (ticket_id,))
+        ticket = cursor.fetchone()
+        if not ticket:
+            return jsonify({"error": "Ticket not found"}), 404
+        ticket = dict(ticket)
+
+        cursor.execute("""
+            SELECT author_username, author_level, body, is_staff, created_at
+            FROM support_ticket_replies
+            WHERE ticket_id = %s
+            ORDER BY created_at ASC
+        """, (ticket_id,))
+        replies = []
+        for r in cursor.fetchall():
+            row = dict(r)
+            row['created_at'] = row['created_at'].strftime('%Y-%m-%d %H:%M') if row['created_at'] else ''
+            replies.append(row)
+        cursor.close()
+
+    ticket['created_at'] = ticket['created_at'].strftime('%Y-%m-%d %H:%M') if ticket['created_at'] else ''
+    ticket['updated_at'] = ticket['updated_at'].strftime('%Y-%m-%d %H:%M') if ticket.get('updated_at') else ''
+    return jsonify({"ticket": ticket, "replies": replies})
 
 
 @bp.route("/support/announcement", methods=["POST"])
@@ -1460,11 +1537,8 @@ def global_users():
         logger.error(f"global_users error: {e}", exc_info=True)
         flash(f"Error loading users: {str(e)}", "danger")
 
-    record_horizon_audit(
-        cu, "view_global_users", "users",
-        f"Viewed global user list ({len(enhanced_users)} users)",
-        severity="info"
-    )
+    log_action(cu, "view_global_users", "horizon",
+               f"Viewed global user list ({len(enhanced_users)} users)")
 
     return render_template(
         "horizon/global_users.html",
@@ -1573,12 +1647,9 @@ def create_global_user():
             if permission_level in ['S1', 'L3']:
                 assignment_note = " (auto-assigned to Sandbox)"
             
-            record_horizon_audit(
-                cu, "create_user", "users",
-                f"Created user {username} (ID: {user_id}) with level {permission_level} in instance {instance_id}{assignment_note}",
-                target_user_id=user_id,
-                severity="info"
-            )
+            log_action(cu, "create_user", "horizon",
+                       f"Created user {username} (ID: {user_id}) with level {permission_level} in instance {instance_id}{assignment_note}",
+                       target_user_id=user_id)
             
             flash(f"✅ User '{username}' created successfully!{assignment_note}", "success")
             return redirect(url_for("horizon.global_users"))
@@ -1668,12 +1739,9 @@ def edit_global_user(user_id: int):
                 conn.commit()
                 cursor.close()
             
-            record_horizon_audit(
-                cu, "update_user", "users",
-                f"Updated user {user['username']} (ID: {user_id})",
-                target_user_id=user_id,
-                severity="info"
-            )
+            log_action(cu, "update_user", "horizon",
+                       f"Updated user {user['username']} (ID: {user_id})",
+                       target_user_id=user_id)
             
             flash("✅ User updated successfully!", "success")
             return redirect(url_for("horizon.global_users"))
@@ -1752,9 +1820,7 @@ def export_users_csv():
             user['last_login'].strftime('%Y-%m-%d') if user['last_login'] else 'Never'
         ])
     
-    record_horizon_audit(cu, "export_users_csv", "users", 
-                        f"Exported {len(users)} users as CSV",
-                        severity="info")
+    log_action(cu, "export_users_csv", "horizon", f"Exported {len(users)} users as CSV")
     
     output.seek(0)
     return Response(
@@ -1809,9 +1875,7 @@ def export_users_json():
             'last_login': user['last_login'].isoformat() if user['last_login'] else None
         })
     
-    record_horizon_audit(cu, "export_users_json", "users",
-                        f"Exported {len(users)} users as JSON",
-                        severity="info")
+    log_action(cu, "export_users_json", "horizon", f"Exported {len(users)} users as JSON")
     
     return jsonify({
         'exported_at': datetime.now().isoformat(),
@@ -1854,12 +1918,9 @@ def assign_user_instance(user_id: int):
             conn.commit()
             cursor.close()
         
-        record_horizon_audit(
-            cu, "reassign_user_instance", "users",
-            f"Reassigned user {user['username']} from instance {old_instance_id} to {new_instance_id}",
-            target_user_id=user_id,
-            severity="info"
-        )
+        log_action(cu, "reassign_user_instance", "horizon",
+                   f"Reassigned user {user['username']} from instance {old_instance_id} to {new_instance_id}",
+                   target_user_id=user_id)
         
         return jsonify({"success": True, "message": "User reassigned successfully"})
         
@@ -1903,11 +1964,8 @@ def delete_global_user(user_id: int):
             conn.commit()
             cursor.close()
         
-        record_horizon_audit(
-            cu, "delete_user", "users",
-            f"Deleted user {user['username']} (ID: {user_id})",
-            severity="warning"
-        )
+        log_action(cu, "delete_user", "horizon",
+                   f"Deleted user {user['username']} (ID: {user_id})")
         
         return jsonify({"success": True, "message": f"User '{user['username']}' deleted"})
         
@@ -2482,6 +2540,8 @@ def system_health():
 
     record_global_audit(cu, "view_system_health", "Viewed system health metrics")
 
+    instances = get_all_instances()
+
     return render_template(
         "horizon/system_health.html",
         active="global",
@@ -2492,6 +2552,7 @@ def system_health():
         eb_info=eb_info,
         s3_info=s3_info,
         check_results=check_results,
+        instances=instances,
     )
 
 
@@ -2512,6 +2573,73 @@ def run_health_checks():
         ]})
     except Exception as exc:
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+# ---------- System Alerts ----------
+@bp.route("/system-health/send-alert", methods=["POST"])
+@login_required
+@require_super_admin
+def send_system_alert():
+    """Broadcast a system alert email to all users in the selected scope (S1 only)."""
+    from app.modules.horizon.emails import send_system_alert as _send_alert
+
+    cu = current_user()
+    alert_type  = request.form.get("alert_type", "info").strip()
+    title       = (request.form.get("title", "") or "").strip()
+    message     = (request.form.get("message", "") or "").strip()
+    scope       = request.form.get("scope", "global").strip()   # "global" or instance_id int
+    instance_id = request.form.get("instance_id", type=int)
+
+    VALID_TYPES = {'maintenance', 'outage', 'resolved', 'security', 'info'}
+    if alert_type not in VALID_TYPES:
+        return jsonify({"ok": False, "error": "Invalid alert type"}), 400
+    if not title or not message:
+        return jsonify({"ok": False, "error": "Title and message are required"}), 400
+
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            if scope == "global":
+                cursor.execute(
+                    "SELECT id, username, email FROM users WHERE email IS NOT NULL AND email != ''"
+                )
+                scope_label = "All Users"
+            elif instance_id:
+                cursor.execute(
+                    "SELECT id, username, email FROM users WHERE instance_id = %s AND email IS NOT NULL AND email != ''",
+                    (instance_id,)
+                )
+                inst = get_instance_by_id(instance_id)
+                scope_label = f"Instance: {inst['name']}" if inst else f"Instance #{instance_id}"
+            else:
+                return jsonify({"ok": False, "error": "Invalid scope"}), 400
+            recipients = cursor.fetchall()
+            cursor.close()
+
+        sent = 0
+        for row in recipients:
+            try:
+                _send_alert(
+                    user_email=row["email"],
+                    username=row["username"],
+                    alert_type=alert_type,
+                    title=title,
+                    message=message,
+                    scope_label=scope_label,
+                    sender_name=cu.get('first_name', '') or cu['username'],
+                )
+                sent += 1
+            except Exception as exc:
+                logger.warning(f"[send_system_alert] failed for {row['email']}: {exc}")
+
+        log_action(cu, "send_system_alert", "horizon",
+                   f"Broadcast '{alert_type}' alert '{title}' to {sent}/{len(recipients)} users (scope={scope_label})")
+
+        return jsonify({"ok": True, "sent": sent, "total": len(recipients)})
+
+    except Exception as e:
+        logger.error(f"send_system_alert error: {e}", exc_info=True)
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 # ---------- API Endpoints ----------
@@ -2611,12 +2739,9 @@ def data_migrations():
                 'row_count': len(rows)
             }
             
-            record_horizon_audit(
-                cu, "upload_migration_csv", "migrations",
-                f"Uploaded {uploaded_file.filename} for {migration_type} migration ({len(rows)} rows)",
-                target_instance_id=instance_id,
-                severity="info"
-            )
+            log_action(cu, "upload_migration_csv", "horizon",
+                       f"Uploaded {uploaded_file.filename} for {migration_type} migration ({len(rows)} rows)",
+                       instance_id=instance_id)
             
             # Redirect to column mapping
             return redirect(url_for("horizon.map_columns"))
@@ -2709,12 +2834,9 @@ def map_columns():
             'column_mapping': mapping
         }
         
-        record_horizon_audit(
-            cu, "map_columns_migration", "migrations",
-            f"Mapped columns for {upload_data['migration_type']} migration ({len(mapping)} fields mapped)",
-            target_instance_id=upload_data['instance_id'],
-            severity="info"
-        )
+        log_action(cu, "map_columns_migration", "horizon",
+                   f"Mapped columns for {upload_data['migration_type']} migration ({len(mapping)} fields mapped)",
+                   instance_id=upload_data['instance_id'])
         
         return redirect(url_for("horizon.migration_preview"))
 
@@ -2764,13 +2886,10 @@ def execute_migration():
         session.pop('migration_preview', None)
         
         # Record audit
-        record_horizon_audit(
-            cu, "execute_migration", "migrations",
-            f"Completed {migration_type} migration for instance {instance_id}: "
-            f"{result['success_count']} successful, {result['failed_count']} failed",
-            target_instance_id=instance_id,
-            severity="info"
-        )
+        log_action(cu, "execute_migration", "horizon",
+                   f"Completed {migration_type} migration for instance {instance_id}: "
+                   f"{result['success_count']} successful, {result['failed_count']} failed",
+                   instance_id=instance_id)
         
         return jsonify({
             "success": True,
@@ -2793,10 +2912,318 @@ def cancel_migration():
     preview_data = session.pop('migration_preview', None)
     
     if preview_data:
-        record_horizon_audit(
-            cu, "cancel_migration", "migrations",
-            f"Cancelled {preview_data['migration_type']} migration for instance {preview_data['instance_id']}",
-            severity="info"
-        )
+        log_action(cu, "cancel_migration", "horizon",
+                   f"Cancelled {preview_data['migration_type']} migration for instance {preview_data['instance_id']}",
+                   instance_id=preview_data['instance_id'])
     
     return jsonify({"success": True, "message": "Migration cancelled"})
+
+
+# ─────────────────────────────────────────────
+# Database Management  (S1 only)
+# ─────────────────────────────────────────────
+
+_ALLOWED_DBS = ["core", "send", "inventory", "fulfillment"]
+
+
+def _serialize_row(row_dict):
+    """Convert a psycopg2 row-dict to JSON-safe types."""
+    from datetime import date, datetime as dt
+    import decimal
+    result = {}
+    for k, v in row_dict.items():
+        if v is None:
+            result[k] = None
+        elif isinstance(v, (dt, date)):
+            result[k] = v.isoformat()
+        elif isinstance(v, decimal.Decimal):
+            result[k] = float(v)
+        elif isinstance(v, (int, float, bool, str)):
+            result[k] = v
+        else:
+            result[k] = str(v)
+    return result
+
+
+def _get_db_schema(db_name):
+    """Return schema dict {table_name: {columns, has_instance_id, pk_column, row_count}}."""
+    schema = {}
+    try:
+        with get_db_connection(db_name) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT table_name FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+            """)
+            tables = [r["table_name"] for r in cursor.fetchall()]
+
+            for table in tables:
+                cursor.execute("""
+                    SELECT column_name, data_type, is_nullable
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public' AND table_name = %s
+                    ORDER BY ordinal_position
+                """, (table,))
+                columns = [dict(c) for c in cursor.fetchall()]
+
+                has_instance_id = any(c["column_name"] == "instance_id" for c in columns)
+
+                cursor.execute("""
+                    SELECT kcu.column_name
+                    FROM information_schema.key_column_usage kcu
+                    JOIN information_schema.table_constraints tc
+                        ON kcu.constraint_name = tc.constraint_name
+                        AND kcu.table_schema = tc.table_schema
+                    WHERE tc.table_schema = 'public'
+                        AND tc.table_name = %s
+                        AND tc.constraint_type = 'PRIMARY KEY'
+                    ORDER BY kcu.ordinal_position
+                    LIMIT 1
+                """, (table,))
+                pk_row = cursor.fetchone()
+                pk_column = pk_row["column_name"] if pk_row else "id"
+
+                try:
+                    cursor.execute(f'SELECT COUNT(*) AS cnt FROM "{table}"')
+                    row_count = cursor.fetchone()["cnt"]
+                except Exception:
+                    row_count = 0
+
+                schema[table] = {
+                    "columns": columns,
+                    "has_instance_id": has_instance_id,
+                    "pk_column": pk_column,
+                    "row_count": row_count,
+                }
+
+            cursor.close()
+    except Exception as e:
+        logger.error(f"Schema fetch error for {db_name}: {e}")
+    return schema
+
+
+@bp.route("/database-management")
+@login_required
+@require_super_admin
+def database_management():
+    """Horizon Database Management — S1 only."""
+    cu = current_user()
+
+    schema = {db: _get_db_schema(db) for db in _ALLOWED_DBS}
+    instances = get_all_instances()
+
+    log_action(cu, "view_database_management", "horizon",
+               "Viewed Database Management panel")
+
+    return render_template(
+        "horizon/database_management.html",
+        active="database",
+        schema=schema,
+        databases=_ALLOWED_DBS,
+        instances=instances,
+    )
+
+
+@bp.route("/database-management/table-data")
+@login_required
+@require_super_admin
+def database_table_data():
+    """AJAX — return paginated rows from a table."""
+    cu = current_user()
+    db_name    = request.args.get("db", "")
+    table_name = request.args.get("table", "")
+    instance_id = request.args.get("instance_id", "").strip()
+    page       = max(1, int(request.args.get("page", 1)))
+    per_page   = 50
+
+    if db_name not in _ALLOWED_DBS:
+        return jsonify({"error": "Invalid database"}), 400
+
+    try:
+        with get_db_connection(db_name) as conn:
+            cursor = conn.cursor()
+
+            # Validate table + collect columns
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = %s
+                ORDER BY ordinal_position
+            """, (table_name,))
+            col_rows = cursor.fetchall()
+            if not col_rows:
+                return jsonify({"error": "Table not found"}), 404
+
+            columns = [r["column_name"] for r in col_rows]
+            has_instance_id = "instance_id" in columns
+
+            # Primary key
+            cursor.execute("""
+                SELECT kcu.column_name
+                FROM information_schema.key_column_usage kcu
+                JOIN information_schema.table_constraints tc
+                    ON kcu.constraint_name = tc.constraint_name
+                    AND kcu.table_schema = tc.table_schema
+                WHERE tc.table_schema = 'public'
+                    AND tc.table_name = %s
+                    AND tc.constraint_type = 'PRIMARY KEY'
+                ORDER BY kcu.ordinal_position LIMIT 1
+            """, (table_name,))
+            pk_row = cursor.fetchone()
+            pk_column = pk_row["column_name"] if pk_row else "id"
+
+            offset = (page - 1) * per_page
+
+            if has_instance_id and instance_id:
+                cursor.execute(
+                    f'SELECT COUNT(*) AS cnt FROM "{table_name}" WHERE instance_id = %s',
+                    (instance_id,)
+                )
+                total = cursor.fetchone()["cnt"]
+                cursor.execute(
+                    f'SELECT * FROM "{table_name}" WHERE instance_id = %s ORDER BY 1 LIMIT %s OFFSET %s',
+                    (instance_id, per_page, offset)
+                )
+            else:
+                cursor.execute(f'SELECT COUNT(*) AS cnt FROM "{table_name}"')
+                total = cursor.fetchone()["cnt"]
+                cursor.execute(
+                    f'SELECT * FROM "{table_name}" ORDER BY 1 LIMIT %s OFFSET %s',
+                    (per_page, offset)
+                )
+
+            rows = [_serialize_row(dict(r)) for r in cursor.fetchall()]
+            cursor.close()
+
+        log_action(cu, "view_table_data", "horizon",
+                   f"Viewed data from {db_name}.{table_name}" +
+                   (f" (instance_id={instance_id})" if instance_id else ""),
+                   instance_id=int(instance_id) if instance_id else None)
+
+        return jsonify({
+            "columns":  columns,
+            "pk_column": pk_column,
+            "rows":     rows,
+            "total":    total,
+            "page":     page,
+            "per_page": per_page,
+            "pages":    max(1, (total + per_page - 1) // per_page),
+        })
+
+    except Exception as e:
+        logger.error(f"Table data fetch error: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/database-management/delete-row", methods=["POST"])
+@login_required
+@require_super_admin
+def database_delete_row():
+    """Delete a specific row identified by primary key."""
+    cu   = current_user()
+    data = request.get_json() or {}
+
+    db_name    = data.get("db", "")
+    table_name = data.get("table", "")
+    pk_column  = data.get("pk_column", "id")
+    pk_value   = data.get("pk_value")
+
+    if db_name not in _ALLOWED_DBS:
+        return jsonify({"success": False, "error": "Invalid database"}), 400
+    if not table_name or pk_value is None:
+        return jsonify({"success": False, "error": "Missing parameters"}), 400
+
+    try:
+        with get_db_connection(db_name) as conn:
+            cursor = conn.cursor()
+
+            # Validate table
+            cursor.execute("""
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = %s AND table_type = 'BASE TABLE'
+            """, (table_name,))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "error": "Table not found"}), 404
+
+            # Validate PK column
+            cursor.execute("""
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = %s AND column_name = %s
+            """, (table_name, pk_column))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "error": "Invalid column"}), 400
+
+            cursor.execute(
+                f'DELETE FROM "{table_name}" WHERE "{pk_column}" = %s',
+                (pk_value,)
+            )
+            conn.commit()
+            cursor.close()
+
+        log_action(cu, "delete_row", "horizon",
+                   f"Deleted row {pk_column}={pk_value} from {db_name}.{table_name}")
+        return jsonify({"success": True})
+
+    except Exception as e:
+        logger.error(f"Row delete error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/database-management/purge-instance/<int:instance_id>", methods=["POST"])
+@login_required
+@require_super_admin
+def database_purge_instance(instance_id):
+    """Purge ALL data for an instance across every database."""
+    cu = current_user()
+
+    instance = get_instance_by_id(instance_id)
+    if not instance:
+        return jsonify({"success": False, "error": "Instance not found"}), 404
+
+    purge_summary = {}
+
+    try:
+        for db_name in _ALLOWED_DBS:
+            with get_db_connection(db_name) as conn:
+                cursor = conn.cursor()
+
+                cursor.execute("""
+                    SELECT DISTINCT table_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public' AND column_name = 'instance_id'
+                    ORDER BY table_name
+                """)
+                tables = [r["table_name"] for r in cursor.fetchall()]
+
+                db_counts = {}
+                for table in tables:
+                    try:
+                        cursor.execute(
+                            f'DELETE FROM "{table}" WHERE instance_id = %s',
+                            (instance_id,)
+                        )
+                        deleted = cursor.rowcount
+                        if deleted > 0:
+                            db_counts[table] = deleted
+                    except Exception as te:
+                        logger.warning(f"Purge skip {db_name}.{table}: {te}")
+
+                conn.commit()
+                cursor.close()
+                purge_summary[db_name] = db_counts
+
+        summary_str = "; ".join(
+            f"{db}: {', '.join(f'{t}({n})' for t, n in tbls.items())}"
+            for db, tbls in purge_summary.items() if tbls
+        ) or "no instance data found"
+
+        log_action(cu, "purge_instance", "horizon",
+                   f"PURGED all data for instance {instance_id} "
+                   f"({instance.get('name', 'unknown')}). Deleted: {summary_str}",
+                   instance_id=instance_id)
+
+        return jsonify({"success": True, "summary": purge_summary})
+
+    except Exception as e:
+        logger.error(f"Instance purge error: {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 500

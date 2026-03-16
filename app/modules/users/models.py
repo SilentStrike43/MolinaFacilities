@@ -463,6 +463,76 @@ def ensure_announcement_schema():
         cursor.close()
 
 
+def ensure_support_ticket_schema():
+    """Ensure support_tickets and support_ticket_replies tables exist."""
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS support_tickets (
+                id SERIAL PRIMARY KEY,
+                instance_id INTEGER,
+                user_id INTEGER NOT NULL,
+                username VARCHAR(255) NOT NULL,
+                user_email VARCHAR(255),
+                subject VARCHAR(200) NOT NULL,
+                category VARCHAR(50) NOT NULL,
+                body TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'open',
+                priority VARCHAR(20) DEFAULT 'normal',
+                resolved_by_id INTEGER,
+                resolved_by_username VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS support_ticket_replies (
+                id SERIAL PRIMARY KEY,
+                ticket_id INTEGER NOT NULL,
+                author_id INTEGER NOT NULL,
+                author_username VARCHAR(255) NOT NULL,
+                author_level VARCHAR(10),
+                body TEXT NOT NULL,
+                is_staff BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tickets_status
+                ON support_tickets(status, created_at DESC)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_ticket_replies_ticket
+                ON support_ticket_replies(ticket_id)
+        """)
+        cursor.close()
+
+
+def ensure_reset_token_schema():
+    """Ensure the password_reset_tokens table exists."""
+    with get_db_connection("core") as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                username VARCHAR(255) NOT NULL,
+                token VARCHAR(128) NOT NULL UNIQUE,
+                inquiry_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                used_at TIMESTAMP,
+                used_from_ip VARCHAR(45)
+            )
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_reset_tokens_token
+                ON password_reset_tokens(token)
+        """)
+        cursor.close()
+
+
 def ensure_first_sysadmin():
     """Ensure at least one system administrator exists."""
     with get_db_connection("core") as conn:

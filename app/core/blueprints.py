@@ -9,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 def register_blueprints(app):
+    # ── Redis + rate limiter (must be before any blueprint that imports limiter) ──
+    from app.core.redis_client import init_redis
+    from app.core.rate_limit import init_limiter
+    init_redis(app)
+    init_limiter(app)
     """Register all application blueprints."""
     try:
         # CSS / static assets (highest priority)

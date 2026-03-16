@@ -363,6 +363,16 @@
                 </a>
             </div>
 
+            {% if cu and cu.get('permission_level') == 'S1' %}
+            <div class="horizon-nav-section">
+                <div class="horizon-nav-title">System</div>
+                <a href="{{ url_for('horizon.database_management') }}" class="horizon-nav-link {{ 'active' if active=='database' else '' }}">
+                    <i class="bi bi-database-gear horizon-nav-icon"></i>
+                    <span>Database Management</span>
+                </a>
+            </div>
+            {% endif %}
+
             <div class="horizon-nav-section">
                 <div class="horizon-nav-title">Quick Access</div>
                 <a href="{{ url_for('horizon.back_to_app') }}" class="nav-link">
@@ -447,6 +457,17 @@
             {% endfor %}
             {% endif %}
             {% block content %}{% endblock %}
+
+            <!-- Footer -->
+            <footer style="
+                margin-top: 3rem;
+                padding: 1.25rem 0 0.5rem;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                text-align: center;
+            ">
+                <p style="margin: 0 0 0.2rem; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; text-transform: uppercase;">Gridline Platform</p>
+                <p style="margin: 0; font-size: 0.75rem; color: rgba(255,255,255,0.25);">Copyright &copy; 2026 Christopher Gonzalez &mdash; All Rights Reserved</p>
+            </footer>
         </div>
     </div>
     
