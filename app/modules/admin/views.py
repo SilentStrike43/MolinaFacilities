@@ -379,15 +379,25 @@ def audit_logs():
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE (
-                -- Logs explicitly tagged to this instance
+                -- Logs explicitly tagged to this instance (includes L3/S1 entering the instance)
                 al.instance_id = %s
 
-                -- OR logs from users whose home instance is this one
-                OR (al.instance_id IS NULL AND u.instance_id = %s)
+                -- Logs from users whose home instance is this one, but only for
+                -- actions that belong to this instance's scope.  Horizon-level
+                -- modules (global dashboard operations, instance-switching) are
+                -- excluded here — they appear in the Global Audit Log instead.
+                OR (
+                    al.instance_id IS NULL
+                    AND u.instance_id = %s
+                    AND al.module NOT IN ('horizon', 'instance_access')
+                )
 
-                -- OR actions by L3/S1 users whose target_user belongs to this instance
+                -- Actions by L3/S1 users that directly targeted a user in this
+                -- instance (elevation, assignment, deletion, etc.) but only when
+                -- those actions are not pure Horizon bookkeeping.
                 OR (
                     al.permission_level IN ('L3', 'S1')
+                    AND al.module NOT IN ('horizon', 'instance_access')
                     AND al.target_user_id IN (
                         SELECT id FROM users WHERE instance_id = %s
                     )
@@ -433,6 +443,7 @@ def audit_logs():
             LEFT JOIN users u ON al.user_id = u.id
             WHERE u.instance_id = %s
               AND al.module IS NOT NULL
+              AND al.module NOT IN ('horizon', 'instance_access')
             ORDER BY al.module
         """, (selected_instance_id,))
         modules = [row['module'] for row in cursor.fetchall()]
@@ -443,6 +454,7 @@ def audit_logs():
             LEFT JOIN users u ON al.user_id = u.id
             WHERE u.instance_id = %s
               AND al.action IS NOT NULL
+              AND al.module NOT IN ('horizon', 'instance_access')
             ORDER BY al.action
         """, (selected_instance_id,))
         actions = [row['action'] for row in cursor.fetchall()]

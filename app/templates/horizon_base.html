@@ -404,9 +404,10 @@
                 <div class="horizon-user-details">
                     <div class="horizon-user-name">{{ cu.username }}</div>
                     <div class="horizon-user-role">
-                        {% if cu.permission_level == 'S1' %}System Admin
-                        {% elif cu.permission_level == 'L3' %}App Operator
-                        {% else %}Administrator{% endif %}
+                        {% if cu.permission_level == 'S1' %}System Administrator
+                        {% elif cu.permission_level == 'L3' %}Gridline Operator
+                        {% elif cu.permission_level == 'L2' %}Instance Administrator
+                        {% else %}Module Administrator{% endif %}
                     </div>
                 </div>
             </div>

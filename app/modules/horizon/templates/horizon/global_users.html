@@ -236,19 +236,19 @@
     </div>
     <div class="stat-pill">
         <span class="stat-num text-danger">{{ stats.s1_count }}</span>
-        <span class="text-muted">System (S1)</span>
+        <span class="text-muted">System Administrator (S1)</span>
     </div>
     <div class="stat-pill">
         <span class="stat-num" style="color:#d97706;">{{ stats.l3_count }}</span>
-        <span class="text-muted">App Operator (L3)</span>
+        <span class="text-muted">Gridline Operator (L3)</span>
     </div>
     <div class="stat-pill">
         <span class="stat-num text-primary">{{ stats.l2_count }}</span>
-        <span class="text-muted">Systems Admin (L2)</span>
+        <span class="text-muted">Instance Administrator (L2)</span>
     </div>
     <div class="stat-pill">
         <span class="stat-num text-success">{{ stats.l1_count }}</span>
-        <span class="text-muted">Module Admin (L1)</span>
+        <span class="text-muted">Module Administrator (L1)</span>
     </div>
     <div class="stat-pill">
         <span class="stat-num text-secondary">{{ stats.module_count }}</span>
@@ -288,10 +288,10 @@
             <label class="form-label form-label-sm mb-1">Permission</label>
             <select class="form-select form-select-sm" name="permission">
                 <option value="">All Levels</option>
-                <option value="S1"     {% if permission_filter == 'S1'     %}selected{% endif %}>System (S1)</option>
-                <option value="L3"     {% if permission_filter == 'L3'     %}selected{% endif %}>App Operator (L3)</option>
-                <option value="L2"     {% if permission_filter == 'L2'     %}selected{% endif %}>Systems Admin (L2)</option>
-                <option value="L1"     {% if permission_filter == 'L1'     %}selected{% endif %}>Module Admin (L1)</option>
+                <option value="S1"     {% if permission_filter == 'S1'     %}selected{% endif %}>System Administrator (S1)</option>
+                <option value="L3"     {% if permission_filter == 'L3'     %}selected{% endif %}>Gridline Operator (L3)</option>
+                <option value="L2"     {% if permission_filter == 'L2'     %}selected{% endif %}>Instance Administrator (L2)</option>
+                <option value="L1"     {% if permission_filter == 'L1'     %}selected{% endif %}>Module Administrator (L1)</option>
                 <option value="module" {% if permission_filter == 'module' %}selected{% endif %}>Module User</option>
             </select>
         </div>
@@ -411,7 +411,7 @@
                                 {% elif pl == 'L1' %}
                                     <span class="perm-badge perm-l1"><i class="bi bi-shield-check"></i> L1</span>
                                 {% else %}
-                                    <span class="perm-badge perm-mod"><i class="bi bi-person"></i> Module</span>
+                                    <span class="perm-badge perm-mod"><i class="bi bi-person"></i> Module User</span>
                                 {% endif %}
                             </td>
 

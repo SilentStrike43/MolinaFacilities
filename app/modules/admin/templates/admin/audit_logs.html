@@ -292,10 +292,10 @@
                 <label class="form-label">Permission Level</label>
                 <select class="form-select" name="permission_level">
                     <option value="">All Levels</option>
-                    <option value="S1" {% if filters.permission_level == 'S1' %}selected{% endif %}>S1 - System</option>
-                    <option value="L3" {% if filters.permission_level == 'L3' %}selected{% endif %}>L3 - Platform</option>
-                    <option value="L2" {% if filters.permission_level == 'L2' %}selected{% endif %}>L2 - Admin</option>
-                    <option value="L1" {% if filters.permission_level == 'L1' %}selected{% endif %}>L1 - Manager</option>
+                    <option value="S1" {% if filters.permission_level == 'S1' %}selected{% endif %}>S1 - System Administrator</option>
+                    <option value="L3" {% if filters.permission_level == 'L3' %}selected{% endif %}>L3 - Gridline Operator</option>
+                    <option value="L2" {% if filters.permission_level == 'L2' %}selected{% endif %}>L2 - Instance Administrator</option>
+                    <option value="L1" {% if filters.permission_level == 'L1' %}selected{% endif %}>L1 - Module Administrator</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex align-items-end gap-2">

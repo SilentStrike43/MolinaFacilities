@@ -144,7 +144,7 @@
                 </div>
                 <div class="brand-content">
                     <h1>Gridline</h1>
-                    <p>{{ g.cu.instance_name if g.cu and g.cu.get('instance_name') else 'Platform' }}</p>
+                    <p>{{ instance_name if instance_name else 'Platform' }}</p>
                 </div>
             </div>
             
@@ -296,12 +296,21 @@
                             </li>
                             {% endif %}
                             <li class="nav-item">
-                                <a href="{{ url_for('fulfillment.archive', instance_id=session.get('active_instance_id') or cu.instance_id) }}" 
+                                <a href="{{ url_for('fulfillment.archive', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
                                    class="nav-link {{ 'active' if active=='archive' else '' }}">
                                     <i class="nav-icon bi bi-archive"></i>
                                     <span>Archive</span>
                                 </a>
                             </li>
+                            {% if can_fulfillment_manager or elevated %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('fulfillment.insights', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
+                                   class="nav-link {{ 'active' if active=='fulfillment-insights' else '' }}">
+                                    <i class="nav-icon bi bi-bar-chart-line"></i>
+                                    <span>Insights</span>
+                                </a>
+                            </li>
+                            {% endif %}
                         </ul>
                     </div>
                     {% endif %}
@@ -382,11 +391,16 @@
                 <div class="user-details">
                     <div class="user-name">{{ cu.username }}</div>
                     <div class="user-role">
-                        {% if cu.get('permission_level') == 'S1' %}System Admin
-                        {% elif cu.get('permission_level') == 'L3' %}Platform Ops
-                        {% elif cu.get('permission_level') == 'L2' %}Administrator
-                        {% elif cu.get('permission_level') == 'L1' %}Manager
-                        {% else %}User{% endif %}
+                        {% if cu.get('permission_level') == 'S1' %}System Administrator
+                        {% elif cu.get('permission_level') == 'L3' %}Gridline Operator
+                        {% elif cu.get('permission_level') == 'L2' %}Instance Administrator
+                        {% elif cu.get('permission_level') == 'L1' %}Module Administrator
+                        {% elif cu.can_fulfillment_manager %}Fulfillment Manager
+                        {% elif cu.can_fulfillment_service %}Fulfillment Staff
+                        {% elif cu.can_fulfillment_customer %}Fulfillment Customer
+                        {% elif cu.can_inventory %}Flow Operator
+                        {% elif cu.can_send %}Send Operator
+                        {% else %}Module User{% endif %}
                     </div>
                 </div>
                 <div class="user-actions">

@@ -172,3 +172,200 @@ def _fulfillment_s3():
         raise RuntimeError("S3_FULFILLMENT_BUCKET env var not set")
     _client().get_bucket_location(Bucket=_BUCKET)
     return f"s3://{_BUCKET} reachable"
+
+
+# ── Carrier APIs ──────────────────────────────────────────────────────────────
+
+@register_check("carriers", "USPS: OAuth Token")
+def _usps_auth():
+    import os, time, requests
+    key    = os.environ.get("USPS_CONSUMER_KEY")
+    secret = os.environ.get("USPS_CONSUMER_SECRET")
+    if not key or not secret:
+        raise RuntimeError("USPS_CONSUMER_KEY / USPS_CONSUMER_SECRET not configured")
+    base = os.environ.get("USPS_API_URL", "https://apis.usps.com")
+    t0   = time.monotonic()
+    resp = requests.post(
+        f"{base}/oauth2/v3/token",
+        data={"grant_type": "client_credentials", "client_id": key, "client_secret": secret},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    resp.raise_for_status()
+    token_type = resp.json().get("token_type", "bearer")
+    return f"Token obtained ({token_type}) — {ms}ms"
+
+
+@register_check("carriers", "USPS: Tracking Endpoint")
+def _usps_tracking():
+    import os, time, requests
+    key    = os.environ.get("USPS_CONSUMER_KEY")
+    secret = os.environ.get("USPS_CONSUMER_SECRET")
+    if not key or not secret:
+        raise RuntimeError("USPS credentials not configured")
+    base = os.environ.get("USPS_API_URL", "https://apis.usps.com")
+    tok = requests.post(
+        f"{base}/oauth2/v3/token",
+        data={"grant_type": "client_credentials", "client_id": key, "client_secret": secret},
+        timeout=10,
+    ).json().get("access_token")
+    if not tok:
+        raise RuntimeError("Could not obtain access token")
+    # Any HTTP response from the tracking endpoint (200/400/404) proves it is reachable.
+    # USPS returns 400 for unknown numbers rather than 404.
+    t0   = time.monotonic()
+    resp = requests.get(
+        f"{base}/tracking/v3/tracking/9400111899223398369910",
+        headers={"Authorization": f"Bearer {tok}", "Accept": "application/json"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    if resp.status_code in (200, 400, 404):
+        return f"Endpoint reachable (HTTP {resp.status_code}) — {ms}ms"
+    resp.raise_for_status()
+
+
+@register_check("carriers", "UPS: OAuth Token")
+def _ups_auth():
+    import os, time, requests
+    from requests.auth import HTTPBasicAuth
+    client_id     = os.environ.get("UPS_CLIENT_ID")
+    client_secret = os.environ.get("UPS_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise RuntimeError("UPS_CLIENT_ID / UPS_CLIENT_SECRET not configured")
+    t0   = time.monotonic()
+    resp = requests.post(
+        "https://onlinetools.ups.com/security/v1/oauth/token",
+        auth=HTTPBasicAuth(client_id, client_secret),
+        data={"grant_type": "client_credentials"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    resp.raise_for_status()
+    token_type = resp.json().get("token_type", "Bearer")
+    return f"Token obtained ({token_type}) — {ms}ms"
+
+
+@register_check("carriers", "UPS: Tracking Endpoint")
+def _ups_tracking():
+    import os, uuid, time, requests
+    from requests.auth import HTTPBasicAuth
+    client_id     = os.environ.get("UPS_CLIENT_ID")
+    client_secret = os.environ.get("UPS_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise RuntimeError("UPS credentials not configured")
+    tok = requests.post(
+        "https://onlinetools.ups.com/security/v1/oauth/token",
+        auth=HTTPBasicAuth(client_id, client_secret),
+        data={"grant_type": "client_credentials"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=10,
+    ).json().get("access_token")
+    if not tok:
+        raise RuntimeError("Could not obtain access token")
+    t0   = time.monotonic()
+    resp = requests.get(
+        "https://onlinetools.ups.com/api/track/v1/details/1Z8E757E0398644523",
+        headers={
+            "Authorization": f"Bearer {tok}",
+            "transId": str(uuid.uuid4()),
+            "transactionSrc": "GridlineService",
+        },
+        params={"locale": "en_US", "returnSignature": "false"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    if resp.status_code in (200, 404):
+        return f"Endpoint reachable (HTTP {resp.status_code}) — {ms}ms"
+    resp.raise_for_status()
+
+
+@register_check("carriers", "FedEx: OAuth Token")
+def _fedex_auth():
+    import os, time, requests
+    api_key    = os.environ.get("FEDEX_TRACK_API_KEY")
+    secret_key = os.environ.get("FEDEX_TRACK_SECRET_KEY")
+    if not api_key or not secret_key:
+        raise RuntimeError("FEDEX_TRACK_API_KEY / FEDEX_TRACK_SECRET_KEY not configured")
+    base = os.environ.get("FEDEX_API_URL", "https://apis.fedex.com")
+    t0   = time.monotonic()
+    resp = requests.post(
+        f"{base}/oauth/token",
+        data={"grant_type": "client_credentials", "client_id": api_key, "client_secret": secret_key},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    resp.raise_for_status()
+    token_type = resp.json().get("token_type", "bearer")
+    return f"Token obtained ({token_type}) — {ms}ms"
+
+
+@register_check("carriers", "FedEx: Tracking Endpoint")
+def _fedex_tracking():
+    import os, time, requests
+    api_key    = os.environ.get("FEDEX_TRACK_API_KEY")
+    secret_key = os.environ.get("FEDEX_TRACK_SECRET_KEY")
+    if not api_key or not secret_key:
+        raise RuntimeError("FedEx credentials not configured")
+    base = os.environ.get("FEDEX_API_URL", "https://apis.fedex.com")
+    tok = requests.post(
+        f"{base}/oauth/token",
+        data={"grant_type": "client_credentials", "client_id": api_key, "client_secret": secret_key},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=10,
+    ).json().get("access_token")
+    if not tok:
+        raise RuntimeError("Could not obtain access token")
+    t0   = time.monotonic()
+    resp = requests.post(
+        f"{base}/track/v1/trackingnumbers",
+        json={"includeDetailedScans": False, "trackingInfo": [{"trackingNumberInfo": {"trackingNumber": "123456789012"}}]},
+        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json", "X-locale": "en_US"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    if resp.status_code in (200, 400, 404):
+        return f"Endpoint reachable (HTTP {resp.status_code}) — {ms}ms"
+    resp.raise_for_status()
+
+
+@register_check("carriers", "OpenStreetMap: Nominatim")
+def _osm_nominatim():
+    import time, requests
+    t0   = time.monotonic()
+    resp = requests.get(
+        "https://nominatim.openstreetmap.org/search",
+        params={"q": "New York, NY, USA", "format": "json", "limit": "1"},
+        headers={"User-Agent": "GridlineService/1.0 (health-check)"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    resp.raise_for_status()
+    results = resp.json()
+    if not results:
+        raise RuntimeError("Nominatim returned empty results")
+    top = results[0]
+    return f"Reachable — '{top.get('display_name','?')[:40]}…' in {ms}ms"
+
+
+@register_check("carriers", "OpenStreetMap: Reverse Geocode")
+def _osm_reverse():
+    import time, requests
+    # Times Square, NYC
+    t0   = time.monotonic()
+    resp = requests.get(
+        "https://nominatim.openstreetmap.org/reverse",
+        params={"lat": "40.7580", "lon": "-73.9855", "format": "json"},
+        headers={"User-Agent": "GridlineService/1.0 (health-check)"},
+        timeout=10,
+    )
+    ms = int((time.monotonic() - t0) * 1000)
+    resp.raise_for_status()
+    data = resp.json()
+    if "error" in data:
+        raise RuntimeError(data["error"])
+    addr = data.get("address", {})
+    city = addr.get("city") or addr.get("town") or addr.get("county", "?")
+    return f"Reachable — resolved to {city} in {ms}ms"

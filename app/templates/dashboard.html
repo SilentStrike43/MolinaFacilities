@@ -227,7 +227,17 @@
             {% if cu.permission_level %}
                 {{ cu.permission_level_desc }}
             {% else %}
-                Module User
+                {% set ns = namespace(mods=[]) %}
+                {% if cu.can_send %}{% set ns.mods = ns.mods + ['Send'] %}{% endif %}
+                {% if cu.can_inventory %}{% set ns.mods = ns.mods + ['Flow'] %}{% endif %}
+                {% if cu.can_fulfillment_manager or cu.can_fulfillment_service or cu.can_fulfillment_customer %}{% set ns.mods = ns.mods + ['Fulfillment'] %}{% endif %}
+                {% if ns.mods | length > 1 %}
+                    You have access to {{ ns.mods | join(', ') }}. See your profile for more details.
+                {% elif ns.mods | length == 1 %}
+                    {{ ns.mods[0] }} Module Access
+                {% else %}
+                    Module User
+                {% endif %}
             {% endif %}
         </div>
         {% if cu.permission_level %}
@@ -325,29 +335,29 @@
                     {% if cu.can_send %}
                     <li>
                         <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
-                        <span class="permission-tag">M1</span> Send Module
+                        <span class="permission-tag">M1</span> Send Operator
                     </li>
                     {% endif %}
                     {% if cu.can_inventory %}
                     <li>
                         <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
-                        <span class="permission-tag">M2</span> Inventory Module
+                        <span class="permission-tag">M2</span> Flow Operator
                     </li>
                     {% endif %}
                     {% if cu.can_fulfillment_manager %}
                     <li>
                         <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
-                        <span class="permission-tag">M3C</span> Fulfillment (Manager)
+                        <span class="permission-tag">M3C</span> Fulfillment Manager
                     </li>
                     {% elif cu.can_fulfillment_service %}
                     <li>
                         <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
-                        <span class="permission-tag">M3B</span> Fulfillment (Service)
+                        <span class="permission-tag">M3B</span> Fulfillment Staff
                     </li>
                     {% elif cu.can_fulfillment_customer %}
                     <li>
                         <i class="bi bi-check-circle-fill" style="color: #10b981;"></i>
-                        <span class="permission-tag">M3A</span> Fulfillment (Customer)
+                        <span class="permission-tag">M3A</span> Fulfillment Customer
                     </li>
                     {% endif %}
                     

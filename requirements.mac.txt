@@ -1,0 +1,51 @@
+# ── Gridline Service — macOS Requirements ─────────────────────────────────────
+#
+# Setup (first time):
+#   brew install postgresql        # provides libpq for psycopg2
+#   python3 -m venv venv
+#   source venv/bin/activate
+#   pip install -r requirements.mac.txt
+#
+# Apple Silicon (M1/M2/M3) note:
+#   If psycopg2-binary fails to build, run:
+#     pip install psycopg2-binary --no-binary psycopg2-binary
+#   or install the Homebrew pg client first (brew install postgresql).
+#
+# gunicorn runs natively on macOS — use it the same as on Linux.
+# For local dev you can also use: flask run --debug
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Core Framework ────────────────────────────────────────────────────────────
+Flask==3.1.2
+Jinja2==3.1.6
+Werkzeug==3.1.3
+gunicorn==21.2.0
+
+# ── Database ──────────────────────────────────────────────────────────────────
+psycopg2-binary==2.9.9
+
+# ── Auth & Security ───────────────────────────────────────────────────────────
+bcrypt==4.2.1
+Flask-WTF==1.2.1
+cryptography==42.0.5
+
+# ── Scheduling ────────────────────────────────────────────────────────────────
+apscheduler==3.10.4
+
+# ── HTTP ──────────────────────────────────────────────────────────────────────
+requests==2.31.0
+httpx==0.26.0
+
+# ── AWS SDK ───────────────────────────────────────────────────────────────────
+# botocore pins urllib3<1.27 — do not add an explicit urllib3 pin here
+boto3==1.42.64
+
+# ── PDF ───────────────────────────────────────────────────────────────────────
+pypdf==4.3.1
+
+# ── Redis / Rate Limiting ─────────────────────────────────────────────────────
+redis==5.2.1
+flask-limiter[redis]==4.1.1
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.0

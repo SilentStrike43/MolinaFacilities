@@ -343,13 +343,13 @@
                     </td>
                     <td>
                         {% if user.current_level == 'S1' %}
-                        <span class="level-badge s1">S1 - System</span>
+                        <span class="level-badge s1">S1 - System Administrator</span>
                         {% elif user.current_level == 'L3' %}
-                        <span class="level-badge l3">L3 - App Developer</span>
+                        <span class="level-badge l3">L3 - Gridline Operator</span>
                         {% elif user.current_level == 'L2' %}
-                        <span class="level-badge l2">L2 - Systems Admin</span>
+                        <span class="level-badge l2">L2 - Instance Administrator</span>
                         {% elif user.current_level == 'L1' %}
-                        <span class="level-badge l1">L1 - Module Admin</span>
+                        <span class="level-badge l1">L1 - Module Administrator</span>
                         {% else %}
                         <span class="level-badge none">Module User</span>
                         {% endif %}

@@ -263,7 +263,17 @@
                 {% if cu.permission_level %}
                     {{ cu.permission_level_desc }}
                 {% else %}
-                    Facilities Hub
+                    {% set ns = namespace(mods=[]) %}
+                    {% if cu.can_send %}{% set ns.mods = ns.mods + ['Send'] %}{% endif %}
+                    {% if cu.can_inventory %}{% set ns.mods = ns.mods + ['Flow'] %}{% endif %}
+                    {% if cu.can_fulfillment_manager or cu.can_fulfillment_service or cu.can_fulfillment_customer %}{% set ns.mods = ns.mods + ['Fulfillment'] %}{% endif %}
+                    {% if ns.mods | length > 1 %}
+                        You have access to {{ ns.mods | join(', ') }}. See your profile for more details.
+                    {% elif ns.mods | length == 1 %}
+                        {{ ns.mods[0] }} Module Access
+                    {% else %}
+                        Module User
+                    {% endif %}
                 {% endif %}
             </div>
             {% if cu.permission_level %}

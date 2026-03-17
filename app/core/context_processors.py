@@ -81,14 +81,21 @@ def register_context_processors(app):
             'topbar_bg': '#ffffff',
         }
 
-        # Resolve instance_id
+        # Resolve instance_id — same priority chain as middleware:
+        # 1. Explicit URL param  2. Session (persisted after switch)  3. Defaults
         instance_id = request.args.get('instance_id', type=int)
         is_sandbox = False
-        sandbox_instance_name = None
+        active_instance_name = None
 
         cu = current_user()
 
-        # S1/L3 without explicit instance_id → Sandbox (skip Horizon routes)
+        # Priority 2: session (set by switch_instance / middleware)
+        if not instance_id:
+            instance_id = session.get('active_instance_id')
+            # Grab the cached name too — avoids an extra DB round-trip
+            active_instance_name = session.get('active_instance_name')
+
+        # Priority 3: S1/L3 without an instance → Sandbox (skip Horizon routes)
         if cu and not instance_id and not request.path.startswith('/horizon'):
             perm_level = cu.get('permission_level', '')
             if perm_level in ['S1', 'L3']:
@@ -108,9 +115,10 @@ def register_context_processors(app):
                     if inst:
                         if inst.get('is_sandbox'):
                             is_sandbox = True
-                        sandbox_instance_name = inst.get('display_name') or inst.get('name')
+                        # Always prefer the fresh DB name over the cached session name
+                        active_instance_name = inst.get('display_name') or inst.get('name')
             except Exception as e:
-                logger.warning(f"Failed to check sandbox status: {e}")
+                logger.warning(f"Failed to resolve instance context: {e}")
 
         # Unauthenticated — return minimal context
         if not cu:
@@ -122,7 +130,7 @@ def register_context_processors(app):
                 'elevated': False,
                 'is_sandbox': is_sandbox,
                 'instance_id': instance_id,
-                'instance_name': sandbox_instance_name or default_settings['instance_name'],
+                'instance_name': active_instance_name or default_settings['instance_name'],
                 'instance_subtitle': 'SANDBOX MODE' if is_sandbox else default_settings['instance_subtitle'],
                 'instance_logo': default_settings['logo_url'],
                 'instance_favicon': default_settings['favicon_url'],
@@ -179,7 +187,7 @@ def register_context_processors(app):
             'accessible_instances': accessible_instances,
             'is_sandbox': is_sandbox,
             'instance_id': instance_id,
-            'instance_name': sandbox_instance_name or default_settings['instance_name'],
+            'instance_name': active_instance_name or default_settings['instance_name'],
             'instance_subtitle': 'SANDBOX MODE' if is_sandbox else default_settings['instance_subtitle'],
             'instance_logo': default_settings['logo_url'],
             'instance_favicon': default_settings['favicon_url'],

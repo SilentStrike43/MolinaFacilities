@@ -60,17 +60,17 @@ class PermissionManager:
         """Get human-readable description of permission level"""
         descriptions = {
             # Module Permissions
-            "M1": "Send Module - Access to Send/Ledger module and its insights",
-            "M2": "Inventory Module - Access to Inventory/Flow module and its insights",
-            "M3A": "Fulfillment Customer - Submit new fulfillment requests only",
-            "M3B": "Fulfillment Service - Access to service queue, archive, and request management",
-            "M3C": "Fulfillment Manager - Full fulfillment module access including insights and reports",
-            
+            "M1": "Send Operator - Send Module Access",
+            "M2": "Flow Operator - Flow Module Access",
+            "M3A": "Fulfillment Customer - Able to send Fulfillment Request Forms",
+            "M3B": "Fulfillment Staff - Able to view Fulfillment Service Queue and Archive",
+            "M3C": "Fulfillment Manager - All access to the Fulfillment Module",
+
             # Administrative Permissions
-            "L1": "Module Administrator - Manage users within assigned instance, full module access",
-            "L2": "Systems Administrator - Manage multiple instances, database access, audit logs",
-            "L3": "App Operator - Global oversight via Horizon, cross-instance analytics, instance creation",
-            "S1": "System Administrator - Unrestricted system access, all permissions"
+            "L1": "Module Administrator - Able to create and assign users to modules",
+            "L2": "Instance Administrator - Able to control multiple instances and assign L1 to users",
+            "L3": "Gridline Operator - Platform Support and Management",
+            "S1": "System Administrator - Unrestricted Access to the Platform",
         }
         return descriptions.get(level, "Unknown permission level")
     
