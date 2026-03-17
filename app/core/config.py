@@ -4,6 +4,12 @@ Application configuration.
 All environment-driven settings live here, keeping app.py lean.
 """
 import os
+from dotenv import load_dotenv
+
+# Load .env before any os.environ.get() calls.
+# Safe to call multiple times — subsequent calls are no-ops.
+# override=False means real env vars (EB / system) always win over .env values.
+load_dotenv(override=False)
 
 
 def configure_app(app):

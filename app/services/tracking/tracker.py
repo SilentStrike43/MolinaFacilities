@@ -9,6 +9,7 @@ from .base import TrackingResult
 from .usps import USPSTracker
 from .fedex import FedExTracker
 from .ups import UPSTracker
+from .dhl import DHLTracker
 from app.utils.carrier_detector import CarrierDetector
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class TrackingService:
         self.usps = USPSTracker(config)
         self.fedex = FedExTracker(config)
         self.ups = UPSTracker(config)
+        self.dhl = DHLTracker(config)
     
     def track(self, tracking_number: str, carrier: Optional[str] = None) -> TrackingResult:
         """
@@ -51,13 +53,7 @@ class TrackingService:
         elif carrier == 'UPS':
             return self.ups.track(tracking_number)
         elif carrier == 'DHL':
-            # DHL detected but no API configured — return carrier info without live tracking
-            result = TrackingResult()
-            result.carrier = 'DHL'
-            result.tracking_number = tracking_number
-            result.success = False
-            result.error = 'DHL tracking API not configured. Visit the DHL website to track this shipment.'
-            return result
+            return self.dhl.track(tracking_number)
         else:
             # Unknown carrier
             result = TrackingResult()

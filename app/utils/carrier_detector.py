@@ -41,15 +41,28 @@ class CarrierDetector:
     
     @staticmethod
     def _is_usps(tracking: str) -> bool:
-        """Check if tracking number matches USPS format"""
+        """
+        Check if tracking number matches USPS format.
+        All patterns are prefix-anchored — no generic digit-count fallbacks
+        that could steal numbers from FedEx or UPS.
+        """
         patterns = [
-            r'^94\d{20}$',          # Priority Mail
-            r'^93\d{20}$',          # Priority Mail International
-            r'^92\d{20}$',          # Certified Mail
-            r'^82\d{8}$',           # Registered Mail
-            r'^[A-Z]{2}\d{9}US$',   # International (EA123456789US)
-            r'^\d{20}$',            # 20-digit tracking
-            r'^\d{22}$',            # 22-digit tracking
+            # 22-digit IMpb (prefix + 20 digits)
+            r'^94\d{20}$',           # Priority Mail, Signature Confirmation
+            r'^93\d{20}$',           # Signature Confirmation (intl)
+            r'^92\d{20}$',           # Certified Mail
+            r'^91\d{20}$',           # Priority Mail Express
+            r'^90\d{20}$',           # Priority Mail (alt)
+            # 30-digit IMpb (extended barcode — e.g. certified mail labels)
+            r'^94\d{28}$',
+            r'^93\d{28}$',
+            r'^92\d{28}$',
+            r'^91\d{28}$',
+            r'^90\d{28}$',
+            # Other USPS-specific formats
+            r'^82\d{8}$',            # Registered Mail (10-digit)
+            r'^70\d{14}$',           # Certified Mail (older 16-digit)
+            r'^[A-Z]{2}\d{9}US$',    # International (EA123456789US format)
         ]
         return any(re.match(pattern, tracking) for pattern in patterns)
     

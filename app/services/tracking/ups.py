@@ -2,6 +2,7 @@
 UPS Tracking API Integration (OAuth 2.0)
 """
 
+import uuid
 import requests
 from typing import Optional
 from datetime import datetime, timedelta
@@ -34,7 +35,9 @@ class UPSTracker(BaseCarrier):
             if datetime.now() < self._token_expiry:
                 return self._access_token
         
-        token_url = f"{self.api_url}/security/v1/oauth/token"
+        # UPS OAuth endpoint is at the root host, not under /api
+        base_host = self.api_url.rstrip('/').replace('/api', '')
+        token_url = f"{base_host}/security/v1/oauth/token"
         
         try:
             response = requests.post(
@@ -53,7 +56,7 @@ class UPSTracker(BaseCarrier):
             token_data = response.json()
             
             self._access_token = token_data['access_token']
-            expires_in = token_data.get('expires_in', 3600)
+            expires_in = int(float(token_data.get('expires_in', 3600)))
             self._token_expiry = datetime.now() + timedelta(seconds=int(expires_in * 0.95))
             
             return self._access_token
@@ -84,12 +87,14 @@ class UPSTracker(BaseCarrier):
             
             headers = {
                 'Authorization': f'Bearer {token}',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'transId': str(uuid.uuid4()),        # required: unique per request
+                'transactionSrc': 'GridlineService', # required: identifies the app
             }
-            
+
             params = {
                 'locale': 'en_US',
-                'returnSignature': 'true'
+                'returnSignature': 'false',
             }
             
             response = requests.get(tracking_url, headers=headers, params=params, timeout=15)
@@ -102,11 +107,39 @@ class UPSTracker(BaseCarrier):
             if 'trackResponse' in data and 'shipment' in data['trackResponse']:
                 shipment = data['trackResponse']['shipment'][0]
                 package = shipment['package'][0]
-                
-                # Current status
+
+                # Current status — UPS uses 'type' (single letter) on activity items
+                # and may use 'code' or 'type' on currentStatus depending on API version.
                 current_status = package.get('currentStatus', {})
-                result.status = self._standardize_status(current_status.get('code', ''))
-                result.status_description = current_status.get('description', '')
+                logger.info(f"UPS currentStatus raw: {current_status}")
+
+                status_code = (
+                    current_status.get('type')          # preferred: single-letter type
+                    or current_status.get('code')        # fallback: may be numeric
+                    or current_status.get('statusCode')  # alt field name
+                )
+
+                # If currentStatus gave nothing useful, fall back to the first activity
+                if not status_code and package.get('activity'):
+                    first = package['activity'][0]
+                    activity_status = first.get('status', {})
+                    logger.info(f"UPS first activity status raw: {activity_status}")
+                    status_code = (
+                        activity_status.get('type')
+                        or activity_status.get('code')
+                    )
+
+                status_desc = (
+                    current_status.get('description')
+                    or current_status.get('simplifiedTextDescription', '')
+                )
+                logger.info(f"UPS resolved status_code: {status_code!r} -> {self._standardize_status(status_code or '', status_desc)}")
+
+                result.status_description = (
+                    current_status.get('description')
+                    or current_status.get('simplifiedTextDescription', '')
+                )
+                result.status = self._standardize_status(status_code or '', result.status_description)
                 
                 # Delivery dates
                 if 'deliveryDate' in package:
@@ -146,6 +179,7 @@ class UPSTracker(BaseCarrier):
                 
                 result.success = True
             else:
+                logger.info(f"UPS response top-level keys: {list(data.keys())}")
                 result.error = "No tracking information found"
                 result.success = False
                 
@@ -164,16 +198,79 @@ class UPSTracker(BaseCarrier):
         
         return result
     
-    def _standardize_status(self, ups_code: str) -> str:
-        """Convert UPS status code to standard status"""
+    def _standardize_status(self, ups_code: str, description: str = '') -> str:
+        """Convert UPS status code to standard status.
+
+        UPS currentStatus returns 3-digit activity codes (e.g. '011').
+        Activity items use single-letter type codes (e.g. 'D', 'I').
+        Both are handled here; description is used as a final fallback.
+        """
+        if not ups_code and not description:
+            return self.STATUS_UNKNOWN
+
+        code = str(ups_code).upper().strip()
+
         status_map = {
-            'M': self.STATUS_PRE_TRANSIT,
-            'P': self.STATUS_IN_TRANSIT,
-            'I': self.STATUS_IN_TRANSIT,
-            'X': self.STATUS_OUT_FOR_DELIVERY,
-            'D': self.STATUS_DELIVERED,
+            # ── 3-digit activity codes (currentStatus.code) ──────────────
+            '001': self.STATUS_IN_TRANSIT,          # Pickup scan
+            '003': self.STATUS_IN_TRANSIT,          # Pickup scan (alt)
+            '007': self.STATUS_IN_TRANSIT,          # Arrived at facility
+            '008': self.STATUS_IN_TRANSIT,          # Destination scan
+            '010': self.STATUS_OUT_FOR_DELIVERY,    # Out for delivery
+            '011': self.STATUS_DELIVERED,           # Delivered
+            '013': self.STATUS_FAILED_ATTEMPT,      # Delivery attempted
+            '014': self.STATUS_AVAILABLE_FOR_PICKUP,# Available for pickup
+            '015': self.STATUS_EXCEPTION,           # Exception
+            '016': self.STATUS_EXCEPTION,           # Exception
+            '017': self.STATUS_EXCEPTION,           # Exception
+            '018': self.STATUS_EXCEPTION,           # Exception
+            '021': self.STATUS_RETURN_TO_SENDER,    # Return to sender
+            '022': self.STATUS_EXCEPTION,           # Undeliverable
+            '031': self.STATUS_IN_TRANSIT,          # Transferred to dest facility
+            '033': self.STATUS_IN_TRANSIT,          # Departed facility
+            '034': self.STATUS_IN_TRANSIT,          # Arrived at facility
+            '040': self.STATUS_IN_TRANSIT,          # Departure scan
+            '041': self.STATUS_IN_TRANSIT,          # Arrival scan
+            '042': self.STATUS_IN_TRANSIT,          # In transit
+            '045': self.STATUS_OUT_FOR_DELIVERY,    # Out for delivery (alt)
+            '051': self.STATUS_DELIVERED,           # Delivered (left at door)
+            '052': self.STATUS_DELIVERED,           # Delivered (signed)
+            '053': self.STATUS_PRE_TRANSIT,         # Label created
+            '055': self.STATUS_PRE_TRANSIT,         # Order processed
+            '056': self.STATUS_PRE_TRANSIT,         # Label created (alt)
+            # ── Single-letter type codes (activity.status.type) ──────────
+            'M':  self.STATUS_PRE_TRANSIT,
+            'P':  self.STATUS_IN_TRANSIT,
+            'I':  self.STATUS_IN_TRANSIT,
+            'O':  self.STATUS_OUT_FOR_DELIVERY,
+            'D':  self.STATUS_DELIVERED,
+            'X':  self.STATUS_EXCEPTION,
             'RS': self.STATUS_RETURN_TO_SENDER,
-            'DE': self.STATUS_EXCEPTION,
+            'NA': self.STATUS_FAILED_ATTEMPT,
+            'PA': self.STATUS_AVAILABLE_FOR_PICKUP,
         }
-        
-        return status_map.get(ups_code, self.STATUS_UNKNOWN)
+
+        if code in status_map:
+            return status_map[code]
+
+        # Description text fallback (uses same logic as FedEx)
+        if description:
+            desc = description.lower()
+            if 'delivered' in desc:
+                return self.STATUS_DELIVERED
+            if 'out for delivery' in desc:
+                return self.STATUS_OUT_FOR_DELIVERY
+            if 'in transit' in desc or 'arrival scan' in desc or 'departed' in desc:
+                return self.STATUS_IN_TRANSIT
+            if 'attempted' in desc or 'notice left' in desc:
+                return self.STATUS_FAILED_ATTEMPT
+            if 'available for pickup' in desc:
+                return self.STATUS_AVAILABLE_FOR_PICKUP
+            if 'return' in desc:
+                return self.STATUS_RETURN_TO_SENDER
+            if 'exception' in desc or 'delay' in desc:
+                return self.STATUS_EXCEPTION
+            if 'label created' in desc or 'order processed' in desc:
+                return self.STATUS_PRE_TRANSIT
+
+        return self.STATUS_UNKNOWN

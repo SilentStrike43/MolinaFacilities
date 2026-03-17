@@ -50,7 +50,7 @@ class FedExTracker(BaseCarrier):
             token_data = response.json()
             
             self._access_token = token_data['access_token']
-            expires_in = token_data.get('expires_in', 3600)
+            expires_in = int(float(token_data.get('expires_in', 3600)))
             self._token_expiry = datetime.now() + timedelta(seconds=int(expires_in * 0.95))
             
             return self._access_token
