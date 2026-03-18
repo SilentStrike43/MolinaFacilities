@@ -277,7 +277,7 @@ def get_accessible_instances(user):
     user_level = get_user_permission_level(user)
     
     # L3/S1 can access all instances
-    if user_level in ['L3', 'S1']:
+    if user_level in ['A1', 'A2', 'S1']:
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -341,7 +341,7 @@ def index():
             instance_id = cu.get('instance_id')
 
     # Build grouped user roster
-    LEVELS = ['S1', 'L3', 'L2', 'L1', '']
+    LEVELS = ['S1', 'A2', 'A1', 'L2', 'O1', 'L1', '']
     groups = {lvl: [] for lvl in LEVELS}
     now = datetime.utcnow()
 
@@ -767,8 +767,8 @@ def elevation_management():
     cu = current_user()
     cu_level = get_user_permission_level(cu)
     
-    if cu_level not in ['L2', 'L3', 'S1']:
-        flash("You need L2 (Systems Administrator) permissions or higher to access elevation management.", "danger")
+    if cu_level not in ['L2', 'O1', 'A1', 'A2', 'S1']:
+        flash("You need L2 (Instance Administrator) permissions or higher to access elevation management.", "danger")
         return redirect(url_for("users.index"))
     
     # Get instance context
@@ -793,7 +793,7 @@ def elevation_management():
         # Filter users by viewer level:
         #   L2 sees Module users + L1 only
         #   L3/S1 sees Module + L1 + L2 (L3/S1 managed in Horizon)
-        _level_rank = {'': 0, 'L1': 1, 'L2': 2, 'L3': 3, 'S1': 4}
+        _level_rank = {'': 0, 'L1': 1, 'O1': 2, 'L2': 2, 'A1': 3, 'A2': 4, 'S1': 5}
         _max_show = 1 if cu_level == 'L2' else 2
         rows = [row for row in rows
                 if _level_rank.get(row_to_dict(row).get('permission_level') or '', 0) <= _max_show]
@@ -812,7 +812,7 @@ def elevation_management():
             all_levels = [
                 ("L1", "Module Administrator"),
                 ("L2", "Systems Administrator"), 
-                ("L3", "App Operator"),
+                ("A1", "Gridline Operator"), ("A2", "Platform Administrator"),
                 ("S1", "System")
             ]
 
@@ -885,7 +885,7 @@ def elevate_user(uid: int):
     )
     
     # 🆕 AUTO-ASSIGN S1/L3 to Sandbox
-    if new_level in ['S1', 'L3']:
+    if new_level in ['S1', 'A2', 'A1']:
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             
@@ -913,7 +913,7 @@ def elevate_user(uid: int):
         "elevate_user", 
         "users",
         f"Elevated {target['username']} to {new_level}" + 
-        (f" (auto-assigned to Sandbox)" if new_level in ['S1', 'L3'] else ""),
+        (f" (auto-assigned to Sandbox)" if new_level in ['S1', 'A2', 'A1'] else ""),
         target_user_id=uid,
         target_username=target["username"]
     )
@@ -1104,7 +1104,7 @@ def get_user_permissions_api(user_id):
     cu = current_user()
     
     # Permission check - only L1+ can view permissions
-    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+    if cu.get('permission_level') not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return jsonify({"error": "Insufficient permissions"}), 403
     
     try:
@@ -1165,7 +1165,7 @@ def update_user_permissions_api(user_id):
     cu = current_user()
     
     # Permission check - only L1+ can modify permissions
-    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+    if cu.get('permission_level') not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return jsonify({"error": "Insufficient permissions"}), 403
     
     try:
@@ -1232,7 +1232,7 @@ def edit_permissions(user_id):
     cu = current_user()
     
     # Only L1+ can edit permissions
-    if cu.get('permission_level') not in ['L1', 'L2', 'L3', 'S1']:
+    if cu.get('permission_level') not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         flash("You don't have permission to edit user permissions.", "danger")
         return redirect(url_for('users.list_users'))
     
@@ -1315,6 +1315,7 @@ def submit_request():
             first_name=cu.get('first_name', ''), last_name=cu.get('last_name', ''),
             inquiry_id=inquiry_id,
             instance_name=cu.get('instance_name', ''),
+            user_id=cu.get('id', 0),
         )
 
         flash("Your request has been submitted. An administrator will review it shortly.", "success")
@@ -1371,6 +1372,7 @@ def submit_support_ticket():
             cu.get('email', ''), cu['username'], ticket_id, subject, category,
             first_name=cu.get('first_name', ''), last_name=cu.get('last_name', ''),
             inquiry_link=_inq_link,
+            user_id=cu.get('id', 0),
         )
 
         flash(f"Support ticket #{ticket_id} submitted. You'll receive a reply by email.", "success")

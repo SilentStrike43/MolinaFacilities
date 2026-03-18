@@ -297,13 +297,41 @@
         }
     </style>
     
+    <style>
+    /* ── Permission level badge palette (global across all Horizon pages) ── */
+    .perm-badge {
+        display: inline-block;
+        padding: 0.22em 0.6em;
+        border-radius: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+    .perm-s1 { background: #111827; color: #f9fafb; }
+    .perm-a2 { background: linear-gradient(135deg,#78350f,#b45309); color: #fef3c7; }
+    .perm-a1 { background: #dc2626; color: #ffffff; }
+    .perm-o1 { background: #1e3a5f; color: #bfdbfe; }
+    .perm-l2 { background: #14532d; color: #bbf7d0; }
+    .perm-l1 { background: #4c1d95; color: #ede9fe; }
+    .perm-m  { background: #374151; color: #e5e7eb; }
+    /* lv- aliases for inline badge spans (instance_support etc.) */
+    .lv { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700; }
+    .lv-S1 { background: #111827;                                   color: #f9fafb; }
+    .lv-A2 { background: linear-gradient(135deg,#78350f,#b45309);  color: #fef3c7; }
+    .lv-A1 { background: #dc2626;                                   color: #fff; }
+    .lv-O1 { background: #1e3a5f;                                   color: #bfdbfe; }
+    .lv-L2 { background: #14532d;                                   color: #bbf7d0; }
+    .lv-L1 { background: #4c1d95;                                   color: #ede9fe; }
+    .lv-M  { background: #374151;                                   color: #e5e7eb; }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Horizon Sidebar -->
     <div class="horizon-sidebar">
         <div class="horizon-brand">
-            <a href="{{ url_for('horizon.dashboard') if cu and cu.get('permission_level') in ['L3', 'S1'] else url_for('horizon.instance_management') }}" class="horizon-brand-logo">
+            <a href="{{ url_for('horizon.dashboard') if cu and cu.get('permission_level') in ['A1', 'A2', 'S1'] else url_for('horizon.instance_management') }}" class="horizon-brand-logo">
                 <div class="horizon-brand-icon">
                     🌅
                 </div>
@@ -315,7 +343,7 @@
         </div>
         
         <div class="horizon-nav">
-            {% if cu and cu.get('permission_level') in ['L3', 'S1'] %}
+            {% if cu and cu.get('permission_level') in ['A1', 'A2', 'S1'] %}
             <div class="horizon-nav-section">
                 <a href="{{ url_for('horizon.dashboard') }}" class="horizon-nav-link {{ 'active' if active=='dashboard' else '' }}">
                     <i class="bi bi-speedometer2 horizon-nav-icon"></i>
@@ -330,7 +358,7 @@
                     <i class="bi bi-building horizon-nav-icon"></i>
                     <span>Instances</span>
                 </a>
-                {% if cu and cu.get('permission_level') in ['L3', 'S1'] %}
+                {% if cu and cu.get('permission_level') in ['A1', 'A2', 'S1'] %}
                 <a href="{{ url_for('horizon.create_instance') }}" class="horizon-nav-link {{ 'active' if active=='create-instance' else '' }}">
                     <i class="bi bi-plus-circle horizon-nav-icon"></i>
                     <span>Create Instance</span>
@@ -342,7 +370,7 @@
                 {% endif %}
             </div>
 
-            {% if cu and cu.get('permission_level') in ['L3', 'S1'] %}
+            {% if cu and cu.get('permission_level') in ['A1', 'A2', 'S1'] %}
             <div class="horizon-nav-section">
                 <div class="horizon-nav-title">Analytics & Monitoring</div>
                 <a href="{{ url_for('horizon.global_insights') }}" class="horizon-nav-link {{ 'active' if active=='insights' else '' }}">
@@ -405,7 +433,8 @@
                     <div class="horizon-user-name">{{ cu.username }}</div>
                     <div class="horizon-user-role">
                         {% if cu.permission_level == 'S1' %}System Administrator
-                        {% elif cu.permission_level == 'L3' %}Gridline Operator
+                        {% elif cu.permission_level == 'A1' %}Gridline Operator
+                        {% elif cu.permission_level == 'A2' %}Platform Administrator
                         {% elif cu.permission_level == 'L2' %}Instance Administrator
                         {% else %}Module Administrator{% endif %}
                     </div>

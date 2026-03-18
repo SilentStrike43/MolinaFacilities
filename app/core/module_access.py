@@ -91,7 +91,7 @@ def user_has_module_access(user_data, module_code):
         return False
     
     # L3/S1 can access everything
-    if user_data.get('permission_level') in ['L3', 'S1']:
+    if user_data.get('permission_level') in ['A1', 'A2', 'S1']:
         return True
     
     instance_id = user_data.get('instance_id')

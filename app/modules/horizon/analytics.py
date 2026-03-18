@@ -134,7 +134,7 @@ class GlobalAnalytics:
                     ORDER BY 
                         CASE permission_level
                             WHEN 'S1' THEN 1
-                            WHEN 'L3' THEN 2
+                            WHEN 'A1' THEN 2 WHEN 'A2' THEN 3
                             WHEN 'L2' THEN 3
                             WHEN 'L1' THEN 4
                             ELSE 5

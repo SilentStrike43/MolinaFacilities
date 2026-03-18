@@ -17,7 +17,7 @@ def reports():
     # Determine instance scope
     perm = cu.get('permission_level', '')
     instance_id_filter = None
-    if perm not in ('L3', 'S1'):
+    if perm not in ('A1', 'A2', 'S1'):
         try:
             instance_id_filter = get_current_instance()
         except RuntimeError:
@@ -207,7 +207,7 @@ def export():
 
     perm = cu.get('permission_level', '')
     instance_id_filter = None
-    if perm not in ('L3', 'S1'):
+    if perm not in ('A1', 'A2', 'S1'):
         try:
             instance_id_filter = get_current_instance()
         except RuntimeError:

@@ -16,7 +16,7 @@ def _get_instance_scope(cu):
     L3/S1 see all data (filter=None). Others are scoped to their instance.
     """
     perm = cu.get('permission_level', '') if cu else ''
-    if perm in ('L3', 'S1'):
+    if perm in ('A1', 'A2', 'S1'):
         return None, cu.get('instance_id')
     try:
         iid = get_current_instance()

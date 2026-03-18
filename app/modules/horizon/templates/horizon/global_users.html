@@ -383,7 +383,7 @@
                                 <strong>{{ user.username }}</strong>
                                 {% if pl == 'S1' %}
                                 <i class="bi bi-shield-fill-check text-danger ms-1" title="System Admin"></i>
-                                {% elif pl == 'L3' %}
+                                {% elif pl in ('A1', 'A2') %}
                                 <i class="bi bi-gear-fill ms-1" style="color:#d97706;" title="App Operator"></i>
                                 {% endif %}
                             </td>
@@ -404,7 +404,7 @@
                             <td>
                                 {% if pl == 'S1' %}
                                     <span class="perm-badge perm-s1"><i class="bi bi-shield-fill-check"></i> S1</span>
-                                {% elif pl == 'L3' %}
+                                {% elif pl in ('A1', 'A2') %}
                                     <span class="perm-badge perm-l3"><i class="bi bi-gear-fill"></i> L3</span>
                                 {% elif pl == 'L2' %}
                                     <span class="perm-badge perm-l2"><i class="bi bi-server"></i> L2</span>
@@ -417,7 +417,7 @@
 
                             <!-- Instance Access -->
                             <td>
-                                {% if pl in ('L3', 'S1') %}
+                                {% if pl in ('A1', 'A2', 'S1') %}
                                     <span class="text-muted" style="font-size:0.8rem;">
                                         <i class="bi bi-infinity"></i> All Instances
                                     </span>

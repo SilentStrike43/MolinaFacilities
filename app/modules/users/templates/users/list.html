@@ -799,7 +799,7 @@
 // ── State ────────────────────────────────────────────────────
 const CU_LEVEL  = '{{ cu_level }}';
 const CU_ID     = {{ cu.id }};
-const LEVEL_RANK = {'': 0, 'L1': 1, 'L2': 2, 'L3': 3, 'S1': 4};
+const LEVEL_RANK = {'': 0, 'L1': 1, 'O1': 2, 'L2': 2, 'A1': 3, 'A2': 4, 'S1': 5};
 const LEVEL_LABELS = {
     'S1': 'S1 — System Admin', 'L3': 'L3 — Platform Ops',
     'L2': 'L2 — Administrator', 'L1': 'L1 — Manager', '': 'Module User'
@@ -899,7 +899,7 @@ function populateDetail(u) {
     document.getElementById('generalFooter').style.display = canEdit ? '' : 'none';
 
     // Permissions — module toggles
-    const isAdmin = ['L1','L2','L3','S1'].includes(lvl);
+    const isAdmin = ['L1','L2','O1','A1','A2','S1'].includes(lvl);
     const canEditPerms = canEdit && !isAdmin;
     const allPerms = ['M1','M2','M3A','M3B','M3C'];
     const userPerms = u.module_permissions || [];

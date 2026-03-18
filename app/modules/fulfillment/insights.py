@@ -16,7 +16,7 @@ def can_view_fulfillment_insights(user):
     
     # Check permission level (L1+ can access)
     permission_level = user.get('permission_level', '')
-    if permission_level in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return True
     
     # Check module permissions for M3C

@@ -255,11 +255,11 @@ def get_user_permissions(user_id: int) -> Dict[str, bool]:
         perms['is_admin'] = True
         perms['permission_level'] = permission_level
         
-        if permission_level in ['S1', 'L3', 'L2', 'L1']:
+        if permission_level in ['S1', 'A2', 'A1', 'L2', 'O1', 'L1']:
             perms['can_admin_users'] = True
             perms['can_view_audit_logs'] = True
         
-        if permission_level in ['S1', 'L3']:
+        if permission_level in ['S1', 'A2', 'A1']:
             perms['can_manage_system'] = True
     
     return perms

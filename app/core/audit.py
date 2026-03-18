@@ -7,7 +7,7 @@ This is the single source of truth for writing to audit_logs.
 
 Instance Audit Logs  -> audit_logs, filtered by instance_id
 Global Audit Logs    -> audit_logs, filtered by module IN ('horizon', 'instance_access')
-                        OR by permission_level IN ('L3', 'S1')
+                        OR by permission_level IN ('A1', 'A2', 'S1')
 """
 
 import logging

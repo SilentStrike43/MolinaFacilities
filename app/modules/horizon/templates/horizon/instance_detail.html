@@ -246,8 +246,8 @@
                 </div>
                 <div class="col-3">
                     <div class="badge bg-warning p-3 w-100">
-                        <h3 class="mb-0">{{ stats.admins.l3 }}</h3>
-                        <small>Platform Ops (L3)</small>
+                        <h3 class="mb-0">{{ (stats.admins.a1 or 0) + (stats.admins.a2 or 0) }}</h3>
+                        <small>Operators (A1/A2)</small>
                     </div>
                 </div>
                 <div class="col-3">
@@ -295,7 +295,7 @@
                             <td>
                                 {% if user.permission_level == 'S1' %}
                                     <span class="badge bg-danger">System Admin</span>
-                                {% elif user.permission_level == 'L3' %}
+                                {% elif user.permission_level in ('A1', 'A2') %}
                                     <span class="badge bg-warning">Platform Ops</span>
                                 {% elif user.permission_level == 'L2' %}
                                     <span class="badge bg-info">Administrator</span>

@@ -9,6 +9,7 @@ import os
 import json
 import datetime
 import mimetypes
+from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, send_file, abort
@@ -323,7 +324,7 @@ def _user_can_staff(u) -> bool:
         return False
     
     permission_level = u.get('permission_level', '')
-    if permission_level in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return True
     
     effective_perms = PermissionManager.get_effective_permissions(u)
@@ -336,7 +337,7 @@ def _user_can_customer(u) -> bool:
         return False
     
     permission_level = u.get('permission_level', '')
-    if permission_level in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return True
     
     effective_perms = PermissionManager.get_effective_permissions(u)
@@ -423,6 +424,40 @@ def request_form():
         
         date_due = request.form.get("date_due", "").strip() or None
         notes = request.form.get("notes", "").strip() or None
+
+        # ── Due-date minimums by request type ─────────────────────────────
+        if date_due:
+            _ET = ZoneInfo("America/New_York")
+            _now_et  = datetime.datetime.now(_ET)
+            _today   = _now_et.date()
+            try:
+                _due = datetime.date.fromisoformat(date_due)
+            except ValueError:
+                flash("Invalid due date.", "danger")
+                return redirect(url_for("fulfillment.request_form"))
+
+            if request_category == "Standard Mail / Letter":
+                _cutoff = _now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+                _min = _today if _now_et < _cutoff else _today + datetime.timedelta(days=1)
+                if _due < _min:
+                    if _now_et >= _cutoff:
+                        flash("Standard Mail requests submitted after 4:00 PM ET must be due the next business day or later.", "danger")
+                    else:
+                        flash("Due date cannot be in the past.", "danger")
+                    return redirect(url_for("fulfillment.request_form"))
+
+            elif request_category == "Mail Merge":
+                _min = _today + datetime.timedelta(days=5)
+                if _due < _min:
+                    flash("Minimum Due Date must be at least 5 days from request day.", "danger")
+                    return redirect(url_for("fulfillment.request_form"))
+
+            elif request_category in ("Flyers and Posters", "Special Types"):
+                _min = _today + datetime.timedelta(days=3)
+                if _due < _min:
+                    flash("Minimum Due Date must be at least 3 days from request day.", "danger")
+                    return redirect(url_for("fulfillment.request_form"))
+        # ──────────────────────────────────────────────────────────────────
 
         if not description:
             flash("Description is required.", "danger")
@@ -977,7 +1012,7 @@ def _can_view_fulfillment_insights(user):
         return False
     
     permission_level = user.get('permission_level', '')
-    if permission_level in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return True
     
     try:

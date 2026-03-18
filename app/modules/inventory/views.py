@@ -556,7 +556,7 @@ def delete_asset(asset_id: int):
     cu = current_user()
     
     permission_level = cu.get('permission_level', '')
-    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return jsonify({"success": False, "error": "Only L1+ administrators can delete assets"}), 403
     
     try:
@@ -1259,7 +1259,7 @@ def delete_ledger_entry(entry_id: int):
     cu = current_user()
     
     permission_level = cu.get('permission_level', '')
-    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         return jsonify({"success": False, "error": "Only L1+ administrators can delete ledger entries"}), 403
     
     try:
@@ -1309,7 +1309,7 @@ def edit_ledger_entry(entry_id: int):
     cu = current_user()
     
     permission_level = cu.get('permission_level', '')
-    if permission_level not in ['L1', 'L2', 'L3', 'S1']:
+    if permission_level not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
         flash("Only L1+ administrators can edit ledger entries", "danger")
         return redirect(url_for('inventory.ledger'))
     

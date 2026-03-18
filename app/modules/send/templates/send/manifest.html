@@ -677,7 +677,7 @@
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
                             
-                            {% if cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
+                            {% if cu.get('permission_level') in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1'] %}
                             <button 
                                 class="action-btn btn-delete" 
                                 onclick="deletePackage({{ pkg.id }}, '{{ pkg.package_id }}')"

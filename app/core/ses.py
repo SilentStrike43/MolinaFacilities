@@ -35,12 +35,12 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 _ENABLED       = os.environ.get("SES_ENABLED", "").strip().lower() == "true"
-_DEFAULT_FROM  = os.environ.get("SES_SENDER_EMAIL", "noreply@gridlineservice.com").strip()
+_DOMAIN        = "gridlineservice.com"
+_DEFAULT_FROM  = os.environ.get("SES_SENDER_EMAIL", f"noreply@{_DOMAIN}").strip()
 _REGION        = os.environ.get("SES_REGION", "us-east-1").strip()
 _CONFIG_SET    = os.environ.get("SES_CONFIG_SET", "").strip()   # optional
 
 # ── Sender addresses ──────────────────────────────────────────────────────────
-_DOMAIN = "gridlineservice.com"
 SENDER_NOREPLY     = f"noreply@{_DOMAIN}"       # general notifications
 SENDER_FULFILLMENT = f"fulfillment@{_DOMAIN}"   # print job / request updates
 SENDER_USERSUPPORT = f"usersupport@{_DOMAIN}"   # user inquiries, password resets
@@ -48,10 +48,56 @@ SENDER_SUPPORT     = f"support@{_DOMAIN}"       # L3/S1 support ticket replies
 SENDER_SYSTEM      = f"system@{_DOMAIN}"        # S1 system-wide alerts
 SENDER_DEVELOPMENT = f"development@{_DOMAIN}"   # bug reports and suggestions
 
+# ── Email notification preference flags (bitmask stored in users.email_notifications) ──
+EMAIL_PREF_FULFILLMENT       = 1   # Fulfillment request alerts (created / hold / completed)
+EMAIL_PREF_SUPPORT_TICKET    = 2   # Support ticket submission confirmation
+EMAIL_PREF_DEV_TICKET        = 4   # Developer ticket submission confirmation
+EMAIL_PREF_SYSTEM_ALERTS     = 8   # System-wide broadcast alerts
+EMAIL_PREF_INQUIRY_SUBMITTED = 16  # UserSupport inquiry submission confirmation
+EMAIL_PREF_INQUIRY_APPROVAL  = 32  # UserSupport inquiry approval notifications
+EMAIL_PREF_ALL               = 63  # All preferences enabled (default)
+
+# Preferences that cannot be opted out of (direct replies, denials, security):
+#   send_ticket_reply, send_password_reset_link, _send_inquiry_denied
+
 
 def ses_configured() -> bool:
     """Return True when SES is enabled (i.e. running on EB with SES_ENABLED=true)."""
     return _ENABLED
+
+
+def user_wants_email(user_id: int, flag: int) -> bool:
+    """
+    Return True if the user has the given notification preference enabled.
+
+    Reads the ``email_notifications`` bitmask from the users table.
+    Defaults to True (send) if the user is unknown, the column is NULL,
+    or any DB error occurs — so a missing preference never silently blocks mail.
+
+    Args:
+        user_id: The user's primary key. Pass 0 to skip the check (always True).
+        flag:    One of the EMAIL_PREF_* constants.
+    """
+    if not user_id:
+        return True
+    try:
+        from app.core.database import get_db_connection
+        with get_db_connection("core") as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT email_notifications FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                row = cur.fetchone()
+        if row is None:
+            return True
+        val = row["email_notifications"]
+        if val is None:
+            return True
+        return bool(int(val) & flag)
+    except Exception as exc:
+        logger.warning(f"[ses] user_wants_email check failed for user_id={user_id}: {exc}")
+        return True
 
 
 def _client():

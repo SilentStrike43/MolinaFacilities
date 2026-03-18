@@ -371,7 +371,7 @@
                             {% if log.permission_level %}
                                 <span class="badge 
                                     {% if log.permission_level == 'S1' %}bg-danger
-                                    {% elif log.permission_level == 'L3' %}bg-warning
+                                    {% elif log.permission_level in ('A1', 'A2') %}bg-warning
                                     {% elif log.permission_level == 'L2' %}bg-info
                                     {% elif log.permission_level == 'L1' %}bg-primary
                                     {% else %}bg-secondary{% endif %}">
@@ -458,7 +458,7 @@
                             {% if log.permission_level %}
                                 <span class="badge 
                                     {% if log.permission_level == 'S1' %}bg-danger
-                                    {% elif log.permission_level == 'L3' %}bg-warning
+                                    {% elif log.permission_level in ('A1', 'A2') %}bg-warning
                                     {% elif log.permission_level == 'L2' %}bg-info
                                     {% elif log.permission_level == 'L1' %}bg-primary
                                     {% else %}bg-secondary{% endif %}">

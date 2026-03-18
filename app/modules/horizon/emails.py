@@ -20,7 +20,9 @@ Both are fire-and-forget: they log on failure but never raise.
 
 import logging
 
-from app.core.ses import send_email, SENDER_SUPPORT, SENDER_DEVELOPMENT, SENDER_SYSTEM
+from app.core.ses import (send_email, SENDER_SUPPORT, SENDER_DEVELOPMENT, SENDER_SYSTEM,
+                          user_wants_email, EMAIL_PREF_SUPPORT_TICKET,
+                          EMAIL_PREF_DEV_TICKET, EMAIL_PREF_SYSTEM_ALERTS)
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +47,17 @@ def _body(content: str, footer: str = "This is an automated message. Do not repl
 def send_ticket_confirmation(user_email: str, username: str,
                              ticket_id: int, subject: str, category: str,
                              first_name: str = '', last_name: str = '',
-                             inquiry_link: str = '') -> None:
+                             inquiry_link: str = '', user_id: int = 0) -> None:
     """Send a submission confirmation when a user opens a support ticket."""
+    is_dev = category in _DEV_CATEGORIES
+    pref_flag = EMAIL_PREF_DEV_TICKET if is_dev else EMAIL_PREF_SUPPORT_TICKET
+    if not user_wants_email(user_id, pref_flag):
+        logger.info(f"[horizon.emails] user_id={user_id} opted out of ticket notifications — skipping ticket #{ticket_id} confirmation")
+        return
     if not user_email:
         logger.info(f"[horizon.emails] No email for {username} — skipping ticket #{ticket_id} confirmation")
         return
 
-    is_dev   = category in _DEV_CATEGORIES
     sender   = _sender_for(category)
     greeting = (
         f"Hello {first_name} {last_name},"
@@ -192,12 +198,16 @@ def send_ticket_reply(user_email: str, username: str, ticket_id: int,
 
 def send_system_alert(user_email: str, username: str,
                       alert_type: str, title: str, message: str,
-                      scope_label: str, sender_name: str = '') -> None:
+                      scope_label: str, sender_name: str = '',
+                      user_id: int = 0) -> None:
     """Send a system alert broadcast to a single recipient.
 
     Call once per recipient — the caller is responsible for iterating users.
     ``scope_label`` is a human-readable string like "All Users" or "Instance: Acme Corp".
     """
+    if not user_wants_email(user_id, EMAIL_PREF_SYSTEM_ALERTS):
+        logger.info(f"[horizon.emails] user_id={user_id} opted out of system alerts — skipping")
+        return
     if not user_email:
         return
 

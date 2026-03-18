@@ -75,20 +75,22 @@ def status_badge(status):
 
 def permission_badge(level):
     """
-    Return Bootstrap badge class for permission level.
-    
+    Return CSS class string for a permission-level badge.
+
+    Uses the perm-badge / perm-xx palette defined in horizon_base.html.
     Examples:
-        'S1' -> 'badge bg-danger'
-        'L3' -> 'badge bg-warning'
+        'S1' -> 'perm-badge perm-s1'
+        'A2' -> 'perm-badge perm-a2'
     """
     level_map = {
-        'S1': 'badge bg-danger',
-        'L3': 'badge bg-warning',
-        'L2': 'badge bg-info',
-        'L1': 'badge bg-primary',
-        '': 'badge bg-secondary'
+        'S1': 'perm-badge perm-s1',
+        'A2': 'perm-badge perm-a2',
+        'A1': 'perm-badge perm-a1',
+        'O1': 'perm-badge perm-o1',
+        'L2': 'perm-badge perm-l2',
+        'L1': 'perm-badge perm-l1',
     }
-    return level_map.get(str(level), 'badge bg-secondary')
+    return level_map.get(str(level), 'perm-badge perm-m')
 
 
 def register_filters(app):
@@ -104,11 +106,13 @@ def register_filters(app):
         {{ 1048576|format_bytes }} -> 1.0 MB
         {{ status|status_badge }} -> 'badge bg-success'
     """
+    import json as _json
     app.jinja_env.filters['format_number'] = format_number
     app.jinja_env.filters['format_bytes'] = format_bytes
     app.jinja_env.filters['format_percentage'] = format_percentage
     app.jinja_env.filters['status_badge'] = status_badge
     app.jinja_env.filters['permission_badge'] = permission_badge
+    app.jinja_env.filters['from_json'] = lambda s: (_json.loads(s) if s else [])
     
     # Also add global functions for templates
     app.jinja_env.globals['get_permission_display'] = get_permission_display
@@ -116,22 +120,17 @@ def register_filters(app):
 
 
 def get_permission_display(level):
-    """
-    Get human-readable permission level name.
-    
-    Examples:
-        'S1' -> 'System'
-        'L3' -> 'App Operator'
-        'L2' -> 'Instance Admin'
-    """
+    """Get human-readable permission level label."""
     levels = {
-        '': 'Module User',
+        'S1': 'System',
+        'A2': 'Administrator',
+        'A1': 'Operator',
+        'O1': 'Org Owner',
+        'L2': 'Instance Manager',
         'L1': 'Module Admin',
-        'L2': 'Instance Admin',
-        'L3': 'App Operator',
-        'S1': 'System'
+        '':   'Standard User',
     }
-    return levels.get(level, 'User')
+    return levels.get(level, 'Standard User')
 
 
 def get_instance_name(instance_id):

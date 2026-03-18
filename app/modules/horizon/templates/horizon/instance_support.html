@@ -196,13 +196,7 @@
         vertical-align: middle;
     }
 
-    /* ── Level badges ── */
-    .lv { display: inline-block; padding: 0.2rem 0.55rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700; }
-    .lv-S1 { background: rgba(239,68,68,0.1);   color: #dc2626; }
-    .lv-L3 { background: rgba(139,92,246,0.1);  color: #7c3aed; }
-    .lv-L2 { background: rgba(59,130,246,0.1);  color: #2563eb; }
-    .lv-L1 { background: rgba(245,158,11,0.1);  color: #d97706; }
-    .lv-M  { background: rgba(16,185,129,0.1);  color: #059669; }
+    /* lv-* badge styles inherited from horizon_base.html */
     .lv-req { background: rgba(99,102,241,0.1); color: #4f46e5; }
 
     /* ── Action buttons ── */
@@ -639,7 +633,7 @@
                             <td><strong>{{ entry.username }}</strong></td>
                             <td>
                                 {% set lv = entry.permission_level or '' %}
-                                <span class="lv lv-{{ lv if lv in ['S1','L3','L2','L1'] else 'M' }}">{{ lv or 'M' }}</span>
+                                <span class="lv lv-{{ lv if lv in ['S1','A2','A1','L2','O1','L1'] else 'M' }}">{{ lv or 'M' }}</span>
                             </td>
                             <td style="font-size:0.82rem;">
                                 {{ entry.instance_name or ('Instance ' ~ entry.instance_id) if entry.instance_id else '—' }}
@@ -909,7 +903,7 @@ function runLookup() {
                 '</tr></thead><tbody>';
             users.forEach(function (u) {
                 var perm = u.permission_level || '';
-                var lvClass = ['S1','L3','L2','L1'].indexOf(perm) !== -1 ? 'lv-' + perm : 'lv-M';
+                var lvClass = ['S1','A2','A1','L2','O1','L1'].indexOf(perm) !== -1 ? 'lv-' + perm : 'lv-M';
                 var lvLabel = perm || (u.module_permissions || 'Module');
                 html += '<tr>' +
                     '<td><strong>' + esc(u.username) + '</strong></td>' +

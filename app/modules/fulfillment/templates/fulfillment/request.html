@@ -447,7 +447,7 @@
 
 <!-- Request Form -->
 <div class="form-container">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="requestForm">
         <!-- Basic Information Section -->
         <div class="form-section">
             <h3 class="form-section-title">
@@ -489,15 +489,17 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label-modern">Date Due (Optional)</label>
-                    <input 
-                        type="date" 
-                        class="form-control-modern" 
+                    <input
+                        type="date"
+                        class="form-control-modern"
                         name="date_due"
+                        id="dateDueInput"
                     >
-                    <div class="form-text">
+                    <div class="form-text" id="dateDueHint">
                         <i class="bi bi-calendar-event"></i>
                         When do you need this completed?
                     </div>
+                    <div id="dateDueError" style="display:none;margin-top:0.375rem;font-size:0.8125rem;color:#ef4444;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -721,6 +723,9 @@ const pageCountInput     = document.getElementById('pageCountInput');
 const pageCountRequired  = document.getElementById('pageCountRequired');
 const pageCountOptional  = document.getElementById('pageCountOptional');
 const pageCountHint      = document.getElementById('pageCountHint');
+const dateDueInput       = document.getElementById('dateDueInput');
+const dateDueError       = document.getElementById('dateDueError');
+const dateDueHint        = document.getElementById('dateDueHint');
 
 // ── Page count required toggle ─────────────────────────────────────────────
 function updatePageCountRequired() {
@@ -748,12 +753,81 @@ function currentConfig() {
     return REQUEST_TYPE_CONFIG[requestTypeSelect.value] || REQUEST_TYPE_CONFIG['Special Types'];
 }
 
+// ── Due-date enforcement ────────────────────────────────────────────────────
+function getEtToday() {
+    // Returns {date: Date (midnight local), hour: ET hour}
+    const now = new Date();
+    const etParts = {};
+    new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false
+    }).formatToParts(now).forEach(p => etParts[p.type] = p.value);
+    return {
+        today: new Date(`${etParts.year}-${etParts.month}-${etParts.day}`),
+        hour:  parseInt(etParts.hour, 10)
+    };
+}
+
+function getMinDueDate() {
+    const { today, hour } = getEtToday();
+    const type = requestTypeSelect.value;
+    let minDate = new Date(today);
+    if (type === 'Standard Mail / Letter') {
+        if (hour >= 16) minDate.setDate(minDate.getDate() + 1);
+    } else if (type === 'Mail Merge') {
+        minDate.setDate(minDate.getDate() + 5);
+    } else {
+        // Flyers and Posters / Special Types
+        minDate.setDate(minDate.getDate() + 3);
+    }
+    return minDate.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+function getDueDateHint(type) {
+    const { hour } = getEtToday();
+    if (type === 'Standard Mail / Letter') {
+        return hour >= 16
+            ? '<i class="bi bi-clock"></i> After 4 PM ET — earliest due date is tomorrow'
+            : '<i class="bi bi-calendar-event"></i> Same-day allowed before 4 PM ET';
+    }
+    if (type === 'Mail Merge') return '<i class="bi bi-calendar-event"></i> Minimum 5 days advance required';
+    return '<i class="bi bi-calendar-event"></i> Minimum 3 days advance required';
+}
+
+function dueDateErrorMsg(type) {
+    if (type === 'Mail Merge')            return 'Minimum Due Date must be at least 5 days from request day.';
+    if (type === 'Standard Mail / Letter') return 'Standard Mail requests submitted after 4:00 PM ET must be due the next business day or later.';
+    return 'Minimum Due Date must be at least 3 days from request day.';
+}
+
+function updateDueDateConstraints() {
+    const min = getMinDueDate();
+    dateDueInput.min = min;
+    dateDueHint.innerHTML = getDueDateHint(requestTypeSelect.value);
+    validateDueDate(); // re-check if user already picked a date
+}
+
+function validateDueDate() {
+    const val = dateDueInput.value;
+    if (!val) { dateDueError.style.display = 'none'; return true; }
+    if (val < getMinDueDate()) {
+        dateDueError.textContent = dueDateErrorMsg(requestTypeSelect.value);
+        dateDueError.style.display = 'block';
+        return false;
+    }
+    dateDueError.style.display = 'none';
+    return true;
+}
+
+dateDueInput.addEventListener('change', validateDueDate);
+
 // ── Update accept + badge when request type changes ────────────────────────
 function applyTypeConstraints() {
     const cfg = currentConfig();
     fileInput.accept  = cfg.accept;
     formatBadgeText.textContent = cfg.label;
     updatePageCountRequired();
+    updateDueDateConstraints();
 
     // Re-validate any already-selected files against the new type
     if (fileInput.files && fileInput.files.length > 0) {
@@ -872,8 +946,16 @@ fileUpload.addEventListener('drop', (e) => {
     validateAndRefresh(files);
 }, false);
 
+// ── Block submit if due date fails validation ───────────────────────────────
+document.getElementById('requestForm').addEventListener('submit', function(e) {
+    if (!validateDueDate()) {
+        e.preventDefault();
+        dateDueInput.focus();
+    }
+});
+
 // ── Init: apply constraints for the default selected type ──────────────────
-applyTypeConstraints();   // also calls updatePageCountRequired()
+applyTypeConstraints();   // also calls updatePageCountRequired() + updateDueDateConstraints()
 </script>
 
 {% endblock %}

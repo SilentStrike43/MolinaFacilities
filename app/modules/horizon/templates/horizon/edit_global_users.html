@@ -61,20 +61,33 @@
         
         <select class="form-select" id="permission_level" name="permission_level">
             <option value="" {% if not user.permission_level %}selected{% endif %}>
-                Module User (No Admin Access)
+                Standard User (No Admin Access)
             </option>
             <option value="L1" {% if user.permission_level == 'L1' %}selected{% endif %}>
-                L1 - Module Administrator
+                L1 — Module Administrator
             </option>
             <option value="L2" {% if user.permission_level == 'L2' %}selected{% endif %}>
-                L2 - Systems Administrator
+                L2 — Instance Administrator
             </option>
+            <option value="O1" {% if user.permission_level == 'O1' %}selected{% endif %}>
+                O1 — Organization Owner
+            </option>
+            {# A1 and above: only A1/A2/S1 callers can assign these #}
+            {% if cu.permission_level in ('A1', 'A2', 'S1') %}
+            <option value="A1" {% if user.permission_level == 'A1' %}selected{% endif %}>
+                A1 — Gridline Operator
+            </option>
+            {% endif %}
+            {# A2 and S1 only: cannot be granted by A1 #}
+            {% if cu.permission_level in ('A2', 'S1') %}
+            <option value="A2" {% if user.permission_level == 'A2' %}selected{% endif %}>
+                A2 — Platform Administrator
+            </option>
+            {% endif %}
+            {# S1 only #}
             {% if cu.permission_level == 'S1' %}
-            <option value="L3" {% if user.permission_level == 'L3' %}selected{% endif %}>
-                L3 - App Operator
-            </option>
             <option value="S1" {% if user.permission_level == 'S1' %}selected{% endif %}>
-                S1 - System Admin
+                S1 — System Administrator
             </option>
             {% endif %}
         </select>

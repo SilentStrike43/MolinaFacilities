@@ -285,7 +285,7 @@
             </nav>
             
             <div class="back-to-horizon">
-                <a href="{{ url_for('horizon.dashboard') if cu and cu.get('permission_level') in ['L3', 'S1'] else url_for('horizon.instance_management') }}" class="btn-back">
+                <a href="{{ url_for('horizon.dashboard') if cu and cu.get('permission_level') in ['A1', 'A2', 'S1'] else url_for('horizon.instance_management') }}" class="btn-back">
                     <i class="bi bi-arrow-left"></i>
                     Back to Horizon
                 </a>

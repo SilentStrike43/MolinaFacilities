@@ -148,6 +148,31 @@ MIGRATIONS: list[tuple[str, str, str]] = [
 
     # ── settings ─────────────────────────────────────────────────────────────
     # (user_preferences already covered by core_users_add_user_preferences above)
+
+    # ── email notification preferences ────────────────────────────────────────
+    # Bitmask: 1=Fulfillment, 2=Support Ticket, 4=Dev Ticket,
+    #          8=System Alerts, 16=Inquiry Submitted, 32=Inquiry Approval
+    # Default 63 = all enabled.
+    (
+        "core_users_add_email_notifications",
+        "core",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_notifications INTEGER DEFAULT 63"
+    ),
+
+    # ── Permission level rename: L3 → A1 ──────────────────────────────────────
+    # L3 (Gridline Operator) is renamed to A1.  Two new levels are introduced:
+    #   A2  — Gridline Platform Administrator (S1 powers, cannot grant S1/A2)
+    #   O1  — Organisation Owner (stale — future feature, L2-equivalent for now)
+    # This migration renames any existing L3 users to A1.
+    # audit_logs rows are also updated so historical records stay consistent.
+    (
+        "core_rename_L3_to_A1",
+        "core",
+        """
+        UPDATE users      SET permission_level = 'A1' WHERE permission_level = 'L3';
+        UPDATE audit_logs SET permission_level = 'A1' WHERE permission_level = 'L3'
+        """
+    ),
 ]
 
 

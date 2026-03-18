@@ -12,7 +12,9 @@ All are fire-and-forget: they log on failure but never raise.
 
 import logging
 
-from app.core.ses import send_email, SENDER_USERSUPPORT
+from app.core.ses import (send_email, SENDER_USERSUPPORT,
+                          user_wants_email,
+                          EMAIL_PREF_INQUIRY_SUBMITTED, EMAIL_PREF_INQUIRY_APPROVAL)
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +43,12 @@ def _body(content: str, footer: str = "This is an automated message. Do not repl
 def send_inquiry_submitted(user_email: str, username: str,
                            request_type: str, details: str | None = None,
                            first_name: str = '', last_name: str = '',
-                           inquiry_id: int = 0, instance_name: str = '') -> None:
+                           inquiry_id: int = 0, instance_name: str = '',
+                           user_id: int = 0) -> None:
     """Send a confirmation email when a user submits a new inquiry."""
+    if not user_wants_email(user_id, EMAIL_PREF_INQUIRY_SUBMITTED):
+        logger.info(f"[admin.emails] user_id={user_id} opted out of inquiry notifications — skipping submission notice")
+        return
     if not user_email:
         logger.info(f"[admin.emails] No email for {username} — skipping inquiry submission notice")
         return
@@ -118,7 +124,8 @@ def send_password_reset_link(user_email: str, username: str,
 def send_inquiry_reviewed(user_email: str, username: str,
                           request_type: str, action: str,
                           reason: str | None = None,
-                          first_name: str = '', last_name: str = '') -> None:
+                          first_name: str = '', last_name: str = '',
+                          user_id: int = 0) -> None:
     """Send an approve/deny notification when an admin reviews an inquiry."""
     if not user_email:
         logger.info(f"[admin.emails] No email for {username} — skipping inquiry review notice")
@@ -128,15 +135,21 @@ def send_inquiry_reviewed(user_email: str, username: str,
     greeting   = f"Hello {first_name}," if first_name else f"Hello {username},"
 
     if action == 'deny':
+        # Denials are always delivered — not subject to opt-out
         _send_inquiry_denied(user_email, username, type_label, reason or 'No reason provided.',
                              greeting)
-    elif request_type == 'profile_adjustment':
-        _send_profile_update_approved(user_email, greeting)
-    elif request_type == 'account_deletion':
-        _send_account_deletion_approved(user_email, greeting)
     else:
-        # Generic approval for elevation_request, module_access_request, etc.
-        _send_generic_approved(user_email, type_label, greeting)
+        # Approvals are opt-outable
+        if not user_wants_email(user_id, EMAIL_PREF_INQUIRY_APPROVAL):
+            logger.info(f"[admin.emails] user_id={user_id} opted out of inquiry approval notifications — skipping")
+            return
+        if request_type == 'profile_adjustment':
+            _send_profile_update_approved(user_email, greeting)
+        elif request_type == 'account_deletion':
+            _send_account_deletion_approved(user_email, greeting)
+        else:
+            # Generic approval for elevation_request, module_access_request, etc.
+            _send_generic_approved(user_email, type_label, greeting)
 
 
 def _send_profile_update_approved(user_email: str, greeting: str) -> None:

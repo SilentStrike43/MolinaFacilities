@@ -67,7 +67,7 @@ def require_admin_level(min_level: str):
             user_level = user.get('permission_level', '')
             
             # Check if user has admin privileges
-            if user_level not in ['L1', 'L2', 'L3', 'S1']:
+            if user_level not in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']:
                 flash("Access denied. Admin privileges required.", "danger")
                 logger.warning(
                     f"Admin access denied: {user.get('username')} attempted to access "
@@ -129,12 +129,12 @@ def require_instance_access(instance_id_param: str = 'instance_id'):
             user_level = user.get('permission_level', '')
             user_instance_id = user.get('instance_id')
             
-            # L3/S1 can access any instance
-            if user_level in ['L3', 'S1']:
+            # A1/A2/S1 can access any instance
+            if user_level in ['A1', 'A2', 'S1']:
                 return f(*args, **kwargs)
             
-            # L2 can access multiple instances (check user_instance_access table)
-            if user_level == 'L2':
+            # L2/O1 can access multiple instances (check user_instance_access table)
+            if user_level in ('L2', 'O1'):
                 try:
                     with get_db_connection("core") as conn:
                         cursor = conn.cursor()
@@ -196,8 +196,8 @@ def require_instance_owner(instance_id_param: str = 'instance_id'):
             user_level = user.get('permission_level', '')
             user_instance_id = user.get('instance_id')
             
-            # L3/S1 bypass (global admins)
-            if user_level in ['L3', 'S1']:
+            # A1/A2/S1 bypass (global admins)
+            if user_level in ['A1', 'A2', 'S1']:
                 return f(*args, **kwargs)
             
             # Must be assigned to this exact instance

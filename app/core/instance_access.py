@@ -28,7 +28,7 @@ def get_user_instances(user_data):
     permission_level = user_data.get('permission_level', '')
     
     # L3 and S1: Access ALL instances
-    if permission_level in ['L3', 'S1']:
+    if permission_level in ['A1', 'A2', 'S1']:
         with get_db_connection("core") as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -86,7 +86,7 @@ def user_can_access_instance(user_data, instance_id):
     permission_level = user_data.get('permission_level', '')
     
     # L3/S1: Access everything
-    if permission_level in ['L3', 'S1']:
+    if permission_level in ['A1', 'A2', 'S1']:
         return True
     
     # L2: Check junction table

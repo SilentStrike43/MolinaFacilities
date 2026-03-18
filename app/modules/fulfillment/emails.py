@@ -12,7 +12,7 @@ All functions are fire-and-forget: they log on failure but never raise.
 
 import logging
 
-from app.core.ses import send_email, SENDER_FULFILLMENT
+from app.core.ses import send_email, SENDER_FULFILLMENT, user_wants_email, EMAIL_PREF_FULFILLMENT
 from app.core.database import get_db_connection
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,9 @@ def _body(content: str, footer: str = _AUTO) -> str:
 def send_request_created(request_id: int, created_by_id: int, created_by_name: str,
                          description: str, date_due=None, notes: str | None = None) -> None:
     """Send a confirmation email when a new fulfillment request is submitted."""
+    if not user_wants_email(created_by_id, EMAIL_PREF_FULFILLMENT):
+        logger.info(f"[fulfillment.emails] user_id={created_by_id} opted out of fulfillment alerts — skipping created notice for request #{request_id}")
+        return
     info = _get_user_info(created_by_id)
     email = (info.get('email') or '').strip()
     if not email:
@@ -99,6 +102,9 @@ def send_request_created(request_id: int, created_by_id: int, created_by_name: s
 def send_request_hold(request_id: int, created_by_id: int, created_by_name: str,
                       description: str, notes: str | None = None) -> None:
     """Send a hold notification when a request is moved to Hold status."""
+    if not user_wants_email(created_by_id, EMAIL_PREF_FULFILLMENT):
+        logger.info(f"[fulfillment.emails] user_id={created_by_id} opted out of fulfillment alerts — skipping hold notice for request #{request_id}")
+        return
     info = _get_user_info(created_by_id)
     email = (info.get('email') or '').strip()
     if not email:
@@ -142,6 +148,9 @@ def send_request_hold(request_id: int, created_by_id: int, created_by_name: str,
 def send_request_completed(request_id: int, created_by_id: int, created_by_name: str,
                             description: str) -> None:
     """Send a completion notice when a request is marked Completed."""
+    if not user_wants_email(created_by_id, EMAIL_PREF_FULFILLMENT):
+        logger.info(f"[fulfillment.emails] user_id={created_by_id} opted out of fulfillment alerts — skipping completion notice for request #{request_id}")
+        return
     info = _get_user_info(created_by_id)
     email = (info.get('email') or '').strip()
     if not email:

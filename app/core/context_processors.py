@@ -98,7 +98,7 @@ def register_context_processors(app):
         # Priority 3: S1/L3 without an instance → Sandbox (skip Horizon routes)
         if cu and not instance_id and not request.path.startswith('/horizon'):
             perm_level = cu.get('permission_level', '')
-            if perm_level in ['S1', 'L3']:
+            if perm_level in ['S1', 'A2', 'A1']:
                 instance_id = 4
                 is_sandbox = True
 
@@ -152,10 +152,10 @@ def register_context_processors(app):
         # Authenticated
         effective_perms = PermissionManager.get_effective_permissions(cu)
         permission_level = cu.get('permission_level', '')
-        is_elevated = permission_level in ['L1', 'L2', 'L3', 'S1']
+        is_elevated = permission_level in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']
 
         # L3/S1 get full module access in sandbox
-        if is_sandbox and permission_level in ['L3', 'S1']:
+        if is_sandbox and permission_level in ['A1', 'A2', 'S1']:
             effective_perms = {
                 'can_send': True, 'can_inventory': True, 'can_asset': True,
                 'can_fulfillment_customer': True, 'can_fulfillment_service': True,
@@ -169,7 +169,7 @@ def register_context_processors(app):
 
         # Accessible instances for L3/S1
         accessible_instances = []
-        if permission_level in ['L3', 'S1']:
+        if permission_level in ['A1', 'A2', 'S1']:
             accessible_instances = get_user_instances(cu)
 
         return {

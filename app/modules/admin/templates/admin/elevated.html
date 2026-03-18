@@ -286,7 +286,7 @@
             {% if current_user_level == 'L2' %}
             <strong style="color: var(--text-primary);">L2 Administrator</strong> &mdash;
             You can elevate Module Users to <strong>L1</strong>, and demote L1 users back to Module.
-            {% elif current_user_level == 'L3' %}
+            {% elif current_user_level in ('A1', 'A2') %}
             <strong style="color: var(--text-primary);">L3 Access</strong> &mdash;
             You can elevate users to <strong>L1</strong> or <strong>L2</strong>, and demote any user below your level back to Module.
             {% elif current_user_level == 'S1' %}
@@ -344,7 +344,7 @@
                     <td>
                         {% if user.current_level == 'S1' %}
                         <span class="level-badge s1">S1 - System Administrator</span>
-                        {% elif user.current_level == 'L3' %}
+                        {% elif user.current_level in ('A1', 'A2') %}
                         <span class="level-badge l3">L3 - Gridline Operator</span>
                         {% elif user.current_level == 'L2' %}
                         <span class="level-badge l2">L2 - Instance Administrator</span>

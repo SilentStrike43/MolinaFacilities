@@ -74,7 +74,7 @@ def register_middleware(app):
         # PRIORITY 3: Default for S1/L3 → Sandbox; others → assigned instance
         if not instance_id and not request.path.startswith('/horizon'):
             perm_level = cu.get('permission_level', '')
-            if perm_level in ['S1', 'L3']:
+            if perm_level in ['S1', 'A2', 'A1']:
                 instance_id = 4
                 logger.debug(f"🧪 Defaulting S1/L3 to Sandbox: {instance_id}")
             else:
@@ -88,7 +88,7 @@ def register_middleware(app):
             prev_instance_id = session.get('active_instance_id')
             if (
                 request.args.get('instance_id', type=int)
-                and cu.get('permission_level') in ['L3', 'S1']
+                and cu.get('permission_level') in ['A1', 'A2', 'S1']
                 and instance_id != prev_instance_id
             ):
                 try:

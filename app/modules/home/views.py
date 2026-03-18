@@ -198,7 +198,7 @@ def index():
     # Redirect logic for users without instance_id in URL
     perm_level = cu.get('permission_level')
     
-    if perm_level in ['L3', 'S1']:
+    if perm_level in ['A1', 'A2', 'S1']:
         try:
             with get_db_connection("core") as conn:
                 cursor = conn.cursor()

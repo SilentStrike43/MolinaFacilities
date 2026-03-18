@@ -110,7 +110,8 @@ def get_instance_stats(instance_id: int) -> Dict:
             SELECT 
                 SUM(CASE WHEN permission_level = 'L1' THEN 1 ELSE 0 END) as l1_count,
                 SUM(CASE WHEN permission_level = 'L2' THEN 1 ELSE 0 END) as l2_count,
-                SUM(CASE WHEN permission_level = 'L3' THEN 1 ELSE 0 END) as l3_count,
+                SUM(CASE WHEN permission_level = 'A1' THEN 1 ELSE 0 END) as a1_count,
+                SUM(CASE WHEN permission_level = 'A2' THEN 1 ELSE 0 END) as a2_count,
                 SUM(CASE WHEN permission_level = 'S1' THEN 1 ELSE 0 END) as s1_count
             FROM users 
             WHERE instance_id = %s 
@@ -205,9 +206,10 @@ def get_instance_stats(instance_id: int) -> Dict:
         'admins': {
             'l1': admin_counts['l1_count'] or 0,
             'l2': admin_counts['l2_count'] or 0,
-            'l3': admin_counts['l3_count'] or 0,
+            'a1': admin_counts['a1_count'] or 0,
+            'a2': admin_counts['a2_count'] or 0,
             's1': admin_counts['s1_count'] or 0,
-            'total': sum([admin_counts[k] or 0 for k in ['l1_count', 'l2_count', 'l3_count', 's1_count']])
+            'total': sum([admin_counts[k] or 0 for k in ['l1_count', 'l2_count', 'a1_count', 'a2_count', 's1_count']])
         },
         'modules': {
             'ledger': ledger_records,

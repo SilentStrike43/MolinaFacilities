@@ -348,6 +348,50 @@
     }
 
     .session-info span { color: var(--text-primary); font-weight: 500; }
+
+    /* ── Email notification toggles ── */
+    .notif-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.65rem 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .notif-row:hover { background: var(--bg-tertiary); }
+    .notif-info { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+    .notif-label { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+    .notif-desc  { font-size: 0.775rem; color: var(--text-muted); }
+    .notif-toggle {
+        flex-shrink: 0;
+        width: 2.5rem;
+        height: 1.35rem;
+        appearance: none;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 999px;
+        cursor: pointer;
+        position: relative;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .notif-toggle::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        transform: translateY(-50%);
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background: var(--text-muted);
+        transition: left 0.2s, background 0.2s;
+    }
+    .notif-toggle:checked { background: #16a34a; border-color: #16a34a; }
+    .notif-toggle:checked::before { left: calc(100% - 0.9rem - 3px); background: #fff; }
 </style>
 
 <div class="settings-page">
@@ -398,7 +442,7 @@
             {% set perm = cu.permission_level %}
             {% if perm == 'S1' %}
                 <span class="perm-badge s1"><i class="bi bi-shield-fill-exclamation"></i> System Administrator (S1)</span>
-            {% elif perm == 'L3' %}
+            {% elif perm in ('A1', 'A2') %}
                 <span class="perm-badge l3"><i class="bi bi-globe2"></i> Global Operator (L3)</span>
             {% elif perm == 'L2' %}
                 <span class="perm-badge l2"><i class="bi bi-diagram-3"></i> Systems Administrator (L2)</span>
@@ -536,7 +580,93 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- CARD 3: Account                                              -->
+    <!-- CARD 3: Email Notifications                                  -->
+    <!-- ============================================================ -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="card-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="bi bi-bell"></i>
+            </div>
+            <div>
+                <h4>Email Notifications</h4>
+            </div>
+        </div>
+        <div class="settings-card-body">
+            <p style="font-size:0.8rem;color:var(--text-muted);margin:0 0 1rem;">
+                Choose which automated email alerts you receive. Direct replies, denials,
+                and security emails (e.g. password resets) are always delivered.
+            </p>
+
+            {% set en = email_notifications | int %}
+            <div style="display:flex;flex-direction:column;gap:0.75rem;" id="email-notif-list">
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">Fulfillment Email Alerts</span>
+                        <span class="notif-desc">Confirmations, hold notices, and completion updates for your print requests.</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="fulfillment"
+                           {% if en & 1 %}checked{% endif %}>
+                </label>
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">Support Ticket Notifications</span>
+                        <span class="notif-desc">Submission confirmation when you open a support ticket.</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="support_ticket"
+                           {% if en & 2 %}checked{% endif %}>
+                </label>
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">Developer Ticket Notifications</span>
+                        <span class="notif-desc">Submission confirmation when you open a bug or feature request ticket.</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="dev_ticket"
+                           {% if en & 4 %}checked{% endif %}>
+                </label>
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">System Alerts</span>
+                        <span class="notif-desc">Platform-wide maintenance, outage, and security broadcast emails.</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="system_alerts"
+                           {% if en & 8 %}checked{% endif %}>
+                </label>
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">UserSupport Inquiry Notifications</span>
+                        <span class="notif-desc">Confirmation when you submit a user inquiry (profile, elevation, module access).</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="inquiry_submitted"
+                           {% if en & 16 %}checked{% endif %}>
+                </label>
+
+                <label class="notif-row">
+                    <div class="notif-info">
+                        <span class="notif-label">UserSupport Approval Notifications</span>
+                        <span class="notif-desc">Email when an admin approves one of your inquiries.</span>
+                    </div>
+                    <input type="checkbox" class="notif-toggle" data-key="inquiry_approval"
+                           {% if en & 32 %}checked{% endif %}>
+                </label>
+
+            </div>
+
+            <div class="save-row" style="margin-top:1.25rem;">
+                <button class="btn-save-colors" id="save-notif-btn" onclick="saveNotifications()">
+                    <i class="bi bi-floppy"></i> Save Preferences
+                </button>
+                <span class="save-status" id="notif-save-status"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CARD 4: Account                                              -->
     <!-- ============================================================ -->
     <div class="settings-card">
         <div class="settings-card-header">
@@ -728,5 +858,44 @@
     }
 
 })();
+
+function saveNotifications() {
+    var btn    = document.getElementById('save-notif-btn');
+    var status = document.getElementById('notif-save-status');
+    var toggles = document.querySelectorAll('.notif-toggle');
+    var payload = {};
+    toggles.forEach(function(t) { payload[t.dataset.key] = t.checked; });
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving…';
+    status.textContent = '';
+    status.className = 'save-status';
+
+    fetch('/settings/email-notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-floppy"></i> Save Preferences';
+        if (data.success) {
+            status.textContent = 'Saved';
+            status.className = 'save-status success';
+        } else {
+            status.textContent = data.error || 'Error saving';
+            status.className = 'save-status error';
+        }
+        setTimeout(function() { status.textContent = ''; status.className = 'save-status'; }, 3000);
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-floppy"></i> Save Preferences';
+        status.textContent = 'Network error';
+        status.className = 'save-status error';
+        setTimeout(function() { status.textContent = ''; status.className = 'save-status'; }, 3000);
+    });
+}
 </script>
 {% endblock %}

@@ -317,7 +317,7 @@
                 {% endif %}
                 
                 <!-- Administration -->
-                {% if cu and cu.get('permission_level') in ['L1', 'L2', 'L3', 'S1'] %}
+                {% if cu and cu.get('permission_level') in ['L1', 'L2', 'O1', 'A1', 'A2', 'S1'] %}
                 <div class="nav-section">
                     <span class="nav-section-label">Administration</span>
                     <ul class="nav-list">
@@ -328,7 +328,7 @@
                                 <span>Users</span>
                             </a>
                         </li>
-                        {% if cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
+                        {% if cu.get('permission_level') in ['L2', 'O1', 'A1', 'A2', 'S1'] %}
                         <li class="nav-item">
                             <a href="{{ url_for('users.elevation_management', instance_id=session.get('active_instance_id') or cu.instance_id) }}"
                                class="nav-link {{ 'active' if active=='elevation' else '' }}">
@@ -359,11 +359,11 @@
                 {% endif %}
                 
                 <!-- Horizon -->
-                {% if cu and cu.get('permission_level') in ['L2', 'L3', 'S1'] %}
+                {% if cu and cu.get('permission_level') in ['L2', 'O1', 'A1', 'A2', 'S1'] %}
                 <div class="nav-section">
                     <span class="nav-section-label">Horizon</span>
                     <ul class="nav-list">
-                        {% if cu.get('permission_level') in ['L3', 'S1'] %}
+                        {% if cu.get('permission_level') in ['A1', 'A2', 'S1'] %}
                         <li class="nav-item">
                             <a href="{{ url_for('horizon.dashboard') }}"
                                class="nav-link {{ 'active' if active=='horizon' else '' }}">
@@ -392,7 +392,8 @@
                     <div class="user-name">{{ cu.username }}</div>
                     <div class="user-role">
                         {% if cu.get('permission_level') == 'S1' %}System Administrator
-                        {% elif cu.get('permission_level') == 'L3' %}Gridline Operator
+                        {% elif cu.get('permission_level') == 'A1' %}Gridline Operator
+                        {% elif cu.get('permission_level') == 'A2' %}Platform Administrator
                         {% elif cu.get('permission_level') == 'L2' %}Instance Administrator
                         {% elif cu.get('permission_level') == 'L1' %}Module Administrator
                         {% elif cu.can_fulfillment_manager %}Fulfillment Manager

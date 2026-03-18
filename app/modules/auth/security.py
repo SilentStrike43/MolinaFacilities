@@ -171,7 +171,7 @@ def get_user_instance_context(instance_id=None):
                 # If it's the sandbox and user is L3/S1, give full access
                 if inst and inst.get('is_sandbox'):
                     perm_level = user.get('permission_level')
-                    if perm_level in ['L3', 'S1']:
+                    if perm_level in ['A1', 'A2', 'S1']:
                         logger.debug(f"Granting sandbox access to {perm_level} user {user.get('username')}")
                         return {
                             **user,

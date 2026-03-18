@@ -16,7 +16,7 @@ def update_permission_display():
         # Map permission levels to display names
         permission_map = {
             'S1': 'System',
-            'L3': 'App Operator', 
+            'A1': 'Gridline Operator', 'A2': 'Platform Administrator', 
             'L2': 'Instance Administrator',
             'L1': 'Module Administrator',
             '': 'Module User'
@@ -134,7 +134,7 @@ def can_user_manage_instance(user_permission: str, target_instance_id: int, user
     if user_permission == 'S1':
         return True
     
-    if user_permission == 'L3':
+    if user_permission == 'A1':
         return True
     
     if user_permission == 'L2':

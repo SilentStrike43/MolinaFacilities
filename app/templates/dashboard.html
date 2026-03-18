@@ -400,7 +400,7 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if cu.permission_level in ['L2', 'L3', 'S1'] %}
+                {% if cu.permission_level in ['L2', 'O1', 'A1', 'A2', 'S1'] %}
                 <li>
                     <i class="bi bi-journal-text"></i>
                     <a href="{{ url_for('admin.audit_logs') }}" style="color: #00A3AD; text-decoration: none;">

@@ -51,16 +51,21 @@ def index():
     ep = cu.get('effective_permissions') or {}
 
     access = {
-        'send':                   ep.get('can_send', False) or perm in ('L1','L2','L3','S1'),
-        'inventory':              ep.get('can_inventory', False) or perm in ('L1','L2','L3','S1'),
-        'fulfillment_customer':   ep.get('can_fulfillment_customer', False) or perm in ('L1','L2','L3','S1'),
-        'fulfillment_staff':      ep.get('can_fulfillment_service', False) or perm in ('L1','L2','L3','S1'),
-        'fulfillment_manager':    ep.get('can_fulfillment_manager', False) or perm in ('L1','L2','L3','S1'),
-        'admin_users':            perm in ('L1','L2','L3','S1'),
-        'multi_instance':         perm in ('L2','L3','S1'),
-        'horizon':                perm in ('L3','S1'),
+        'send':                   ep.get('can_send', False) or perm in ('L1','L2','O1','A1','A2','S1'),
+        'inventory':              ep.get('can_inventory', False) or perm in ('L1','L2','O1','A1','A2','S1'),
+        'fulfillment_customer':   ep.get('can_fulfillment_customer', False) or perm in ('L1','L2','O1','A1','A2','S1'),
+        'fulfillment_staff':      ep.get('can_fulfillment_service', False) or perm in ('L1','L2','O1','A1','A2','S1'),
+        'fulfillment_manager':    ep.get('can_fulfillment_manager', False) or perm in ('L1','L2','O1','A1','A2','S1'),
+        'admin_users':            perm in ('L1','L2','O1','A1','A2','S1'),
+        'multi_instance':         perm in ('L2','O1','A1','A2','S1'),
+        'horizon':                perm in ('A1','A2','S1'),
         'sysadmin':               perm == 'S1',
     }
+
+    # Email notification bitmask — default 63 (all on) if not yet set
+    email_notifications = cu.get('email_notifications')
+    if email_notifications is None:
+        email_notifications = 63
 
     return render_template(
         "settings/index.html",
@@ -69,6 +74,7 @@ def index():
         prefs=prefs,
         access=access,
         is_sandbox=is_sandbox,
+        email_notifications=email_notifications,
     )
 
 
@@ -130,4 +136,48 @@ def save_preferences():
 
     except Exception as e:
         logger.error(f"Failed to save user preferences for user {cu.get('id')}: {e}")
+        return jsonify({"success": False, "error": "Database error"}), 500
+
+
+@bp.route("/email-notifications", methods=["POST"])
+@login_required
+def save_email_notifications():
+    """Save email notification preference bitmask."""
+    cu = current_user()
+    data = request.get_json(silent=True) or {}
+
+    # Reconstruct bitmask from submitted flag values
+    from app.core.ses import (EMAIL_PREF_FULFILLMENT, EMAIL_PREF_SUPPORT_TICKET,
+                               EMAIL_PREF_DEV_TICKET, EMAIL_PREF_SYSTEM_ALERTS,
+                               EMAIL_PREF_INQUIRY_SUBMITTED, EMAIL_PREF_INQUIRY_APPROVAL)
+    flags = {
+        'fulfillment':       EMAIL_PREF_FULFILLMENT,
+        'support_ticket':    EMAIL_PREF_SUPPORT_TICKET,
+        'dev_ticket':        EMAIL_PREF_DEV_TICKET,
+        'system_alerts':     EMAIL_PREF_SYSTEM_ALERTS,
+        'inquiry_submitted': EMAIL_PREF_INQUIRY_SUBMITTED,
+        'inquiry_approval':  EMAIL_PREF_INQUIRY_APPROVAL,
+    }
+    bitmask = 0
+    for key, flag in flags.items():
+        if data.get(key, True):  # default on if not provided
+            bitmask |= flag
+
+    try:
+        with get_db_connection("core") as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE users SET email_notifications = %s WHERE id = %s",
+                (bitmask, cu['id'])
+            )
+            conn.commit()
+            cursor.close()
+
+        if hasattr(g, '_current_user_cache'):
+            delattr(g, '_current_user_cache')
+
+        return jsonify({"success": True, "bitmask": bitmask})
+
+    except Exception as e:
+        logger.error(f"Failed to save email notifications for user {cu.get('id')}: {e}")
         return jsonify({"success": False, "error": "Database error"}), 500

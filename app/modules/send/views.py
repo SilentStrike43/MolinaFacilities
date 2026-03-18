@@ -725,7 +725,7 @@ def delete_package(package_id):
         
         # Check if user has L1+ permissions
         user_level = cu.get('permission_level', '')
-        allowed_levels = ['L1', 'L2', 'L3', 'S1']
+        allowed_levels = ['L1', 'L2', 'O1', 'A1', 'A2', 'S1']
         
         if user_level not in allowed_levels:
             return jsonify({

@@ -77,7 +77,7 @@ def require_horizon(f):
             pass
         
         # Check if user is L3 (App Operator) or S1 (System)
-        if permission_level not in ['L3', 'S1']:
+        if permission_level not in ['A1', 'A2', 'S1']:
             flash("Access denied. App Operator privileges required.", "danger")
             return redirect(url_for("home.index"))
         
@@ -221,12 +221,12 @@ def back_to_app():
     cu = current_user()
     perm_level = cu.get('permission_level', '') if cu else ''
 
-    if perm_level not in ['L2', 'L3', 'S1']:
+    if perm_level not in ['L2', 'O1', 'A1', 'A2', 'S1']:
         flash("Access denied.", "danger")
         return redirect(url_for("home.index"))
 
     # L3/S1 go to sandbox
-    if perm_level in ['L3', 'S1']:
+    if perm_level in ['A1', 'A2', 'S1']:
         try:
             with get_db_connection("core") as conn:
                 cursor = conn.cursor()
@@ -260,11 +260,11 @@ def instance_management():
     cu = current_user()
     permission_level = cu.get('permission_level', '') if cu else ''
 
-    if permission_level not in ['L2', 'L3', 'S1']:
+    if permission_level not in ['L2', 'O1', 'A1', 'A2', 'S1']:
         flash("Access denied.", "danger")
         return redirect(url_for("home.index"))
 
-    is_l3_plus = permission_level in ['L3', 'S1']
+    is_l3_plus = permission_level in ['A1', 'A2', 'S1']
 
     if is_l3_plus:
         instances = get_all_instances()
@@ -304,7 +304,7 @@ def switch_instance(instance_id):
     cu = current_user()
     permission_level = cu.get('permission_level', '') if cu else ''
 
-    if permission_level not in ['L2', 'L3', 'S1']:
+    if permission_level not in ['L2', 'O1', 'A1', 'A2', 'S1']:
         flash("Access denied.", "danger")
         return redirect(url_for("home.index"))
 
@@ -348,7 +348,7 @@ def exit_instance():
     cu = current_user()
     permission_level = cu.get('permission_level', '') if cu else ''
 
-    if permission_level not in ['L2', 'L3', 'S1']:
+    if permission_level not in ['L2', 'O1', 'A1', 'A2', 'S1']:
         flash("Access denied.", "danger")
         return redirect(url_for("home.index"))
 
@@ -363,7 +363,7 @@ def exit_instance():
 
     flash("Exited instance mode.", "info")
 
-    if permission_level in ['L3', 'S1']:
+    if permission_level in ['A1', 'A2', 'S1']:
         return redirect(url_for('horizon.index'))
     else:
         return redirect(url_for('horizon.instance_management'))
@@ -1522,7 +1522,8 @@ def global_users():
             cursor.execute("""
                 SELECT
                     COUNT(CASE WHEN permission_level = 'S1' THEN 1 END)                     AS s1_count,
-                    COUNT(CASE WHEN permission_level = 'L3' THEN 1 END)                     AS l3_count,
+                    COUNT(CASE WHEN permission_level = 'A1' THEN 1 END)                     AS a1_count,
+            COUNT(CASE WHEN permission_level = 'A2' THEN 1 END)                     AS a2_count,
                     COUNT(CASE WHEN permission_level = 'L2' THEN 1 END)                     AS l2_count,
                     COUNT(CASE WHEN permission_level = 'L1' THEN 1 END)                     AS l1_count,
                     COUNT(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 END) AS module_count,
@@ -1575,7 +1576,7 @@ def create_global_user():
                 return redirect(url_for("horizon.create_global_user"))
             
             # 🆕 AUTO-ASSIGN S1/L3 to Sandbox (override form selection)
-            if permission_level in ['S1', 'L3']:
+            if permission_level in ['S1', 'A2', 'A1']:
                 with get_db_connection("core") as conn:
                     cursor = conn.cursor()
                     cursor.execute("""
@@ -1644,7 +1645,7 @@ def create_global_user():
                 cursor.close()
             
             assignment_note = ""
-            if permission_level in ['S1', 'L3']:
+            if permission_level in ['S1', 'A2', 'A1']:
                 assignment_note = " (auto-assigned to Sandbox)"
             
             log_action(cu, "create_user", "horizon",
@@ -2135,7 +2136,7 @@ def global_audits():
                 OR al.module = 'instance_access'
 
                 -- All actions taken by L3/S1 platform operators (always globally visible)
-                OR al.permission_level IN ('L3', 'S1')
+                OR al.permission_level IN ('A1', 'A2', 'S1')
 
                 -- Sign-in and sign-out events for all users (session tracking)
                 OR al.action IN ('sign_in', 'sign_out')
@@ -2627,6 +2628,7 @@ def send_system_alert():
                     message=message,
                     scope_label=scope_label,
                     sender_name=cu.get('first_name', '') or cu['username'],
+                    user_id=row.get("id", 0),
                 )
                 sent += 1
             except Exception as exc:

@@ -259,7 +259,8 @@ def dashboard():
         cursor.execute("""
             SELECT 
                 SUM(CASE WHEN permission_level = 'S1' THEN 1 ELSE 0 END) as s1_count,
-                SUM(CASE WHEN permission_level = 'L3' THEN 1 ELSE 0 END) as l3_count,
+                SUM(CASE WHEN permission_level = 'A1' THEN 1 ELSE 0 END) as a1_count,
+                SUM(CASE WHEN permission_level = 'A2' THEN 1 ELSE 0 END) as a2_count,
                 SUM(CASE WHEN permission_level = 'L2' THEN 1 ELSE 0 END) as l2_count,
                 SUM(CASE WHEN permission_level = 'L1' THEN 1 ELSE 0 END) as l1_count,
                 SUM(CASE WHEN permission_level = '' OR permission_level IS NULL THEN 1 ELSE 0 END) as module_count,
@@ -310,7 +311,7 @@ def audit_logs():
     cu_level = get_user_permission_level(cu)
 
     # L3/S1 should use Horizon
-    if cu_level in ['L3', 'S1']:
+    if cu_level in ['A1', 'A2', 'S1']:
         flash("Please use Horizon Global Audits for cross-instance audit logs.", "info")
         return redirect(url_for('horizon.global_audits'))
     
@@ -396,7 +397,7 @@ def audit_logs():
                 -- instance (elevation, assignment, deletion, etc.) but only when
                 -- those actions are not pure Horizon bookkeeping.
                 OR (
-                    al.permission_level IN ('L3', 'S1')
+                    al.permission_level IN ('A1', 'A2', 'S1')
                     AND al.module NOT IN ('horizon', 'instance_access')
                     AND al.target_user_id IN (
                         SELECT id FROM users WHERE instance_id = %s
@@ -557,7 +558,7 @@ def export_audit_logs():
                 al.instance_id = %s
                 OR (al.instance_id IS NULL AND u.instance_id = %s)
                 OR (
-                    al.permission_level IN ('L3', 'S1')
+                    al.permission_level IN ('A1', 'A2', 'S1')
                     AND al.target_user_id IN (
                         SELECT id FROM users WHERE instance_id = %s
                     )
@@ -905,6 +906,7 @@ def review_inquiry(inquiry_id):
         send_inquiry_reviewed(user_email, inquiry['username'],
                               inquiry['request_type'], action, reason or None,
                               first_name=inquiry.get('first_name', ''),
-                              last_name=inquiry.get('last_name', ''))
+                              last_name=inquiry.get('last_name', ''),
+                              user_id=inquiry.get('user_id', 0))
 
     return jsonify({"success": True})

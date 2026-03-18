@@ -59,16 +59,21 @@
                     {% for level in users_by_level %}
                     <tr>
                         <td>
-                            {% if level['permission_level'] == 'S1' %}
-                                <span class="badge bg-danger">Super Admin</span>
-                            {% elif level['permission_level'] == 'L3' %}
-                                <span class="badge bg-warning">Global Admin</span>
-                            {% elif level['permission_level'] == 'L2' %}
-                                <span class="badge bg-info">Administrator</span>
-                            {% elif level['permission_level'] == 'L1' %}
-                                <span class="badge bg-primary">Manager</span>
+                            {% set pl = level['permission_level'] %}
+                            {% if pl == 'S1' %}
+                                <span class="perm-badge perm-s1">S1 — System</span>
+                            {% elif pl == 'A2' %}
+                                <span class="perm-badge perm-a2">A2 — Administrator</span>
+                            {% elif pl == 'A1' %}
+                                <span class="perm-badge perm-a1">A1 — Operator</span>
+                            {% elif pl == 'O1' %}
+                                <span class="perm-badge perm-o1">O1 — Org Owner</span>
+                            {% elif pl == 'L2' %}
+                                <span class="perm-badge perm-l2">L2 — Instance Manager</span>
+                            {% elif pl == 'L1' %}
+                                <span class="perm-badge perm-l1">L1 — Module Admin</span>
                             {% else %}
-                                <span class="badge bg-secondary">Module User</span>
+                                <span class="perm-badge perm-m">Standard User</span>
                             {% endif %}
                         </td>
                         <td class="text-end"><strong>{{ level['count'] }}</strong></td>

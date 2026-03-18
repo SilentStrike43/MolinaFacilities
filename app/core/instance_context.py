@@ -41,7 +41,7 @@ def get_current_instance():
     permission_level = cu.get('permission_level', '')
     
     # L3/S1: Check session for selected instance
-    if permission_level in ['L3', 'S1']:
+    if permission_level in ['A1', 'A2', 'S1']:
         from flask import session
         selected_instance = session.get('active_instance_id')
         
